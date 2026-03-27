@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import CursorCanvas from "@/components/CursorCanvas";
+import Simulation from "@/components/Simulation";
 import StudioBar from "@/components/StudioBar";
 import ThemeToggle from "@/components/ThemeToggle";
 import UploadZone from "@/components/UploadZone";
@@ -243,25 +244,28 @@ export default function StudioPage() {
       {/* Bottom Bar — Simulation */}
       <footer
         style={{
-          height: "8rem",
+          height: "10rem",
           borderTop: "1px solid var(--color-border)",
           backgroundColor: "var(--color-bg-secondary)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--color-text-muted)",
-          fontSize: "0.8125rem",
           flexShrink: 0,
+          overflow: "hidden",
         }}
       >
         {state === "editing" && cursor ? (
-          <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-            <SimBox label="Normal" imageUrl={cursor.processedUrl} />
-            <SimBox label="Text" imageUrl={cursor.processedUrl} />
-            <SimBox label="Link" imageUrl={cursor.processedUrl} />
-          </div>
+          <Simulation imageUrl={cursor.processedUrl} />
         ) : (
-          "Simulation preview"
+          <div
+            style={{
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--color-text-muted)",
+              fontSize: "0.8125rem",
+            }}
+          >
+            Simulation preview
+          </div>
         )}
       </footer>
 
@@ -352,48 +356,3 @@ function PanelRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SimBox({ label, imageUrl }: { label: string; imageUrl: string }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "0.5rem",
-      }}
-    >
-      <div
-        style={{
-          width: "4rem",
-          height: "4rem",
-          border: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-bg-primary)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src={imageUrl}
-          alt={label}
-          style={{
-            width: "32px",
-            height: "32px",
-            objectFit: "contain",
-            imageRendering: "pixelated",
-          }}
-        />
-      </div>
-      <span
-        style={{
-          fontSize: "0.625rem",
-          color: "var(--color-text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
