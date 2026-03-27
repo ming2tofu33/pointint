@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pointint - Subscription &amp; Billing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 md:px-20 py-4 sticky top-0 z-50">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight">Pointint</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<div class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Assets</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Drops</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary pb-1" href="#">Settings</a>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User avatar with purple abstract patterns" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAlFwy8rNkdOuvyEmqbzc7pU3IOo0euPaEWDI8Rh2JYmyRxW4QgwOgiRyinuUmeEwDGNZX3Zoln5JbeIO-jWZ1cgVIgTFTEf6ReLl09sR_xWGGtWbmdHlRLKqFAQk1aac5GFnJv88JaDFv09IMbJlzPGjtcAggar4OGBxVmTljWgK11yfqi0H-sofeu_qMfCjZF6-XYzpX2rRwZYTTc22XT-4DOTflBj0fQ3ONfGgmIbR0HwUT-JulDvqXDeGtUgxAGfaHbHfArkg6t");'></div>
+</div>
+</header>
+<main class="flex flex-1 justify-center py-10 px-4 md:px-10">
+<div class="layout-content-container flex flex-col max-w-[1200px] flex-1 gap-8">
+<!-- Sidebar + Content Layout -->
+<div class="flex flex-col lg:flex-row gap-8">
+<!-- Sidebar Navigation -->
+<aside class="flex flex-col gap-6 min-w-[240px]">
+<div class="flex flex-col gap-4 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="flex gap-3 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 border-2 border-primary" data-alt="Professional profile picture of the user" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJzwt47VvBS_Ltg3fj-IVRe9Z23BPDkin4g5By-MDAxsRGPqAGiR9JldoV_u7LPsl-uMIQvcT5ziipuPSDjaaeMbWzwa2JRykpMEIEL3jw99lStgRt1fYP1WtcO6_JeHQFWDOZE6iYBmOCUP7KFiuh9PQF5XP6Z68hJQ1t7VwoANl-R9YpcispE0jucakhBrPH1sAmvz51JINLDN97hwlXlb4EyvtNxaDd1V0-AN1J4HfSrdZaS7lzKs0P6OVJsqDlQiNpPNkdDpFR");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-none">Alex Rivera</h1>
+<p class="text-primary text-xs font-medium mt-1 uppercase tracking-wider">Pro Member</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 mt-4">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">person</span>
+<p class="text-sm font-medium">Profile</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">credit_card</span>
+<p class="text-sm font-bold">Subscription</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">security</span>
+<p class="text-sm font-medium">Security</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<p class="text-sm font-medium">Notifications</p>
+</a>
+</nav>
+</div>
+<!-- Storage Status Card -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="flex justify-between items-center mb-2">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Cloud Storage</p>
+<p class="text-xs font-bold text-slate-900 dark:text-white">82%</p>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mb-3">
+<div class="bg-primary h-1.5 rounded-full" style="width: 82%"></div>
+</div>
+<p class="text-[11px] text-slate-500">41GB of 50GB used. Upgrade to Pointint Studio for 1TB.</p>
+</div>
+</aside>
+<!-- Main Subscription Content -->
+<div class="flex-1 flex flex-col gap-8">
+<div class="flex flex-col gap-2">
+<h2 class="text-slate-900 dark:text-white text-3xl font-black leading-tight tracking-tight">Subscription &amp; Billing</h2>
+<p class="text-slate-500 dark:text-slate-400 text-base">You are currently on the <span class="text-primary font-bold">Pro Plan</span>. Your next billing date is December 12, 2023.</p>
+</div>
+<!-- Pricing Tiers -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Basic Plan -->
+<div class="flex flex-col gap-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest">Basic</h3>
+<div class="flex items-baseline gap-1">
+<span class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tighter">$0</span>
+<span class="text-slate-500 text-sm font-medium">/mo</span>
+</div>
+</div>
+<button class="flex w-full cursor-not-allowed items-center justify-center rounded-lg h-11 px-4 bg-slate-100 dark:bg-slate-800 text-slate-400 text-sm font-bold">
+                                        Downgrade
+                                    </button>
+<ul class="flex flex-col gap-4 mt-2">
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            5GB Cloud Storage
+                                        </li>
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            Community Access
+                                        </li>
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            Standard Drops
+                                        </li>
+</ul>
+</div>
+<!-- Pro Plan (Active) -->
+<div class="flex flex-col gap-6 rounded-xl border-2 border-primary bg-white dark:bg-slate-900 p-8 shadow-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-primary text-white text-[10px] font-black uppercase py-1 px-4 rounded-bl-lg tracking-widest">Current</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-primary text-sm font-bold uppercase tracking-widest">Pro</h3>
+<div class="flex items-baseline gap-1">
+<span class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tighter">$19</span>
+<span class="text-slate-500 text-sm font-medium">/mo</span>
+</div>
+</div>
+<button class="flex w-full items-center justify-center rounded-lg h-11 px-4 bg-primary text-white text-sm font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
+                                        Active Plan
+                                    </button>
+<ul class="flex flex-col gap-4 mt-2">
+<li class="text-[13px] font-bold flex gap-3 text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                            Unlimited Saves
+                                        </li>
+<li class="text-[13px] font-bold flex gap-3 text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                            Exclusive Drops
+                                        </li>
+<li class="text-[13px] font-bold flex gap-3 text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                            Cloud Sync
+                                        </li>
+<li class="text-[13px] font-bold flex gap-3 text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                            50GB Cloud Storage
+                                        </li>
+</ul>
+</div>
+<!-- Pointint Studio Plan -->
+<div class="flex flex-col gap-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
+<div class="flex flex-col gap-1">
+<h3 class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest">Pointint Studio</h3>
+<div class="flex items-baseline gap-1">
+<span class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tighter">$49</span>
+<span class="text-slate-500 text-sm font-medium">/mo</span>
+</div>
+</div>
+<button class="flex w-full items-center justify-center rounded-lg h-11 px-4 border-2 border-primary text-primary text-sm font-bold hover:bg-primary/5 transition-colors">
+                                        Upgrade to Pointint Studio
+                                    </button>
+<ul class="flex flex-col gap-4 mt-2">
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            Unlimited Everything
+                                        </li>
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            Early Access
+                                        </li>
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            Priority Support
+                                        </li>
+<li class="text-[13px] font-medium flex gap-3 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-slate-400 text-lg">check_circle</span>
+                                            1TB Storage
+                                        </li>
+</ul>
+</div>
+</div>
+<!-- Manage Subscription & History -->
+<div class="flex flex-col gap-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+<div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold">Payment Method</h2>
+<p class="text-slate-500 text-sm mt-1">Visa ending in 4242</p>
+</div>
+<button class="flex items-center justify-center rounded-lg px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                        Edit Method
+                                    </button>
+</div>
+<div class="flex flex-col gap-4">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold">Billing History</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-slate-400 text-[11px] font-black uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+<th class="py-3 px-2">Date</th>
+<th class="py-3 px-2">Description</th>
+<th class="py-3 px-2">Amount</th>
+<th class="py-3 px-2 text-right">Invoice</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="text-sm">
+<td class="py-4 px-2 font-medium">Nov 12, 2023</td>
+<td class="py-4 px-2">Pointint Pro Subscription - Monthly</td>
+<td class="py-4 px-2 font-bold">$19.00</td>
+<td class="py-4 px-2 text-right">
+<a class="text-primary hover:underline font-bold" href="#">PDF</a>
+</td>
+</tr>
+<tr class="text-sm">
+<td class="py-4 px-2 font-medium">Oct 12, 2023</td>
+<td class="py-4 px-2">Pointint Pro Subscription - Monthly</td>
+<td class="py-4 px-2 font-bold">$19.00</td>
+<td class="py-4 px-2 text-right">
+<a class="text-primary hover:underline font-bold" href="#">PDF</a>
+</td>
+</tr>
+<tr class="text-sm">
+<td class="py-4 px-2 font-medium">Sep 12, 2023</td>
+<td class="py-4 px-2">Pointint Pro Subscription - Monthly</td>
+<td class="py-4 px-2 font-bold">$19.00</td>
+<td class="py-4 px-2 text-right">
+<a class="text-primary hover:underline font-bold" href="#">PDF</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+<p class="text-slate-400 text-xs italic">Looking to cancel? We're sad to see you go.</p>
+<button class="text-red-500 text-sm font-bold hover:underline">Cancel Subscription</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Section -->
+<footer class="mt-auto px-6 md:px-20 py-10 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="size-5 opacity-50">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z"></path>
+</svg>
+</div>
+<span class="text-sm font-medium">© 2023 Pointint. All rights reserved.</span>
+</div>
+<div class="flex gap-8 text-xs font-bold uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">Terms</a>
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</div>
+</footer>
+</div>
+</div>
+</body></html>

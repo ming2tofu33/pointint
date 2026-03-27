@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pointint - Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "sm": "0px",
+                        "md": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "2xl": "0px",
+                        "3xl": "0px",
+                        "full": "0px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #F9F9F9;
+            color: #1A1A1A;
+        }
+        
+        /* Hide scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid #E5E5E5;
+        }
+        
+        .swipe-content {
+            position: relative;
+            z-index: 10;
+            background-color: #FFFFFF;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Simulating swipe state for demonstration */
+        .swipe-container:hover .swipe-content {
+            transform: translateX(-80px);
+        }
+        
+        .swipe-action {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 80px;
+            background-color: #FF3333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            font-weight: 500;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F9F9F9] text-[#1A1A1A] antialiased min-h-screen flex flex-col font-display">
+<!-- Top Nav -->
+<header class="h-[48px] bg-white border-b border-[#E5E5E5] flex items-center justify-between px-4 sticky top-0 z-50">
+<div class="text-[13px] font-medium tracking-[1px] uppercase">Pointint</div>
+<a class="text-[13px] font-medium tracking-[1px] uppercase text-[#8A8A8A] hover:text-[#1A1A1A]" href="#">Gallery</a>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col pb-24">
+<!-- Header Section -->
+<div class="px-8 pt-12 pb-8">
+<h1 class="text-[32px] font-semibold leading-tight tracking-tight mb-8">My Archive</h1>
+<!-- Segmented Control -->
+<div class="flex border-b border-[#E5E5E5]">
+<button class="flex-1 pb-4 text-[15px] font-bold border-b-2 border-[#111111] text-[#111111] text-center">Active</button>
+<button class="flex-1 pb-4 text-[15px] font-normal text-[#8A8A8A] hover:text-[#111111] text-center">Saved</button>
+</div>
+</div>
+<!-- Active View Container -->
+<div class="px-8 flex flex-col gap-8">
+<!-- Currently Equipped -->
+<div class="flex flex-col gap-4">
+<p class="text-[13px] font-medium tracking-[1px] uppercase text-[#8A8A8A]">Currently Equipped</p>
+<div class="bg-white border border-[#E5E5E5] p-8 flex flex-col items-center justify-center relative min-h-[240px]">
+<!-- Large Cursor Preview -->
+<div class="w-24 h-24 bg-[#F9F9F9] flex items-center justify-center mb-6">
+<svg fill="none" height="48" viewbox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+<path d="M5.5 3.5L18.5 16.5L13.5 17.5L11.5 22.5L5.5 3.5Z" fill="#111111" stroke="#111111" stroke-linejoin="round" stroke-width="1"></path>
+</svg>
+</div>
+<h2 class="text-[24px] font-semibold mb-1">Monochrome Core</h2>
+<p class="text-[15px] text-[#8A8A8A] mb-8">Base Collection</p>
+<button class="w-full h-[48px] border border-[#111111] text-[#111111] font-medium text-[14px] hover:bg-[#111111] hover:text-white transition-colors">
+                        Remove
+                    </button>
+</div>
+</div>
+<!-- Saved List (Simulated Tab Content) -->
+<div class="flex flex-col mt-8 hidden">
+<p class="text-[13px] font-medium tracking-[1px] uppercase text-[#8A8A8A] mb-4">Saved Collection</p>
+<div class="flex flex-col border-t border-[#E5E5E5]">
+<!-- List Item 1 -->
+<div class="swipe-container">
+<div class="swipe-action">Delete</div>
+<div class="swipe-content h-[80px] bg-white flex items-center px-4 justify-between cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-[48px] h-[48px] bg-[#F9F9F9] flex items-center justify-center border border-[#E5E5E5]">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4L20 12L12 14L8 22L4 4Z" stroke="#0055FF" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h3 class="text-[15px] font-medium text-[#1A1A1A]">Neon Velocity</h3>
+<p class="text-[13px] text-[#8A8A8A]">Creator Pack</p>
+</div>
+</div>
+<button class="h-[32px] px-4 border border-[#E5E5E5] text-[13px] font-medium hover:border-[#111111] transition-colors">
+                                Equip
+                            </button>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="swipe-container">
+<div class="swipe-action">Delete</div>
+<div class="swipe-content h-[80px] bg-white flex items-center px-4 justify-between cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-[48px] h-[48px] bg-[#111111] flex items-center justify-center border border-[#E5E5E5]">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" fill="#FFFFFF" r="6"></circle>
+<circle cx="12" cy="12" r="10" stroke="#FFFFFF" stroke-dasharray="2 2" stroke-width="1"></circle>
+</svg>
+</div>
+<div>
+<h3 class="text-[15px] font-medium text-[#1A1A1A]">Void Reticle</h3>
+<p class="text-[13px] text-[#8A8A8A]">Minimalist</p>
+</div>
+</div>
+<button class="h-[32px] px-4 border border-[#E5E5E5] text-[13px] font-medium hover:border-[#111111] transition-colors">
+                                Equip
+                            </button>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="swipe-container">
+<div class="swipe-action">Delete</div>
+<div class="swipe-content h-[80px] bg-white flex items-center px-4 justify-between cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-[48px] h-[48px] bg-[#F9F9F9] flex items-center justify-center border border-[#E5E5E5]">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" stroke="#111111" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</div>
+<div>
+<h3 class="text-[15px] font-medium text-[#1A1A1A]">Star Cross</h3>
+<p class="text-[13px] text-[#8A8A8A]">Essential</p>
+</div>
+</div>
+<button class="h-[32px] px-4 border border-[#E5E5E5] text-[13px] font-medium hover:border-[#111111] transition-colors">
+                                Equip
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden by default, shown when Saved is empty) -->
+<div class="hidden flex-col items-center justify-center text-center py-16 px-4">
+<div class="w-16 h-16 mb-6 flex items-center justify-center opacity-20">
+<span class="material-symbols-outlined text-4xl">folder_off</span>
+</div>
+<p class="text-[15px] text-[#8A8A8A] mb-8 max-w-[200px]">Your vault is empty. Discover cursors in the gallery.</p>
+<button class="h-[48px] px-8 bg-[#111111] text-white font-medium text-[14px] hover:bg-[#1A1A1A] transition-colors">
+                    Go to Gallery
+                </button>
+</div>
+</div>
+</main>
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 w-full h-[64px] bg-white border-t border-[#E5E5E5] flex z-50">
+<a class="flex-1 flex flex-col items-center justify-center gap-1 text-[#8A8A8A] hover:text-[#111111]" href="#">
+<span class="material-symbols-outlined text-[24px]">grid_view</span>
+<span class="text-[10px] font-medium tracking-[0.5px] uppercase">Gallery</span>
+</a>
+<a class="flex-1 flex flex-col items-center justify-center gap-1 text-[#8A8A8A] hover:text-[#111111]" href="#">
+<span class="material-symbols-outlined text-[24px]">tune</span>
+<span class="text-[10px] font-medium tracking-[0.5px] uppercase">Pointint</span>
+</a>
+<a class="flex-1 flex flex-col items-center justify-center gap-1 text-[#111111]" href="#">
+<span class="material-symbols-outlined text-[24px] bg-[#F9F9F9] w-12 h-8 rounded-full flex items-center justify-center border border-[#E5E5E5]">inventory_2</span>
+<span class="text-[10px] font-medium tracking-[0.5px] uppercase">Archive</span>
+</a>
+</nav>
+</body></html>

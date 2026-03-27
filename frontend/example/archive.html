@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pointint - Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-8 py-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">polyline</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Cursor Archive</h2>
+</div>
+<div class="hidden md:flex items-center">
+<div class="relative w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-500" placeholder="Search archive..." type="text"/>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">notifications</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 dark:border-slate-700 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="hidden sm:inline text-sm font-medium">Alex Rivera</span>
+<div class="size-9 rounded-full bg-primary/10 border-2 border-primary/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="User profile avatar illustration" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHMCpFqo66N25moASkYeQ0wo5WsgaUMK2XBG8cqJJkBIJG7DzrhK_323w1O4Dj_1Tjg6mo9myAJZx3VRmpSPyUtPdsVoYasSx2X3EJq5VQq4VfzGH7dqzl1_Ywmvbgop56nHW6kAJXI6OfhHobnH0qWnkyUEr_9l_UJLxD1Y_1521hxA91kAvoq9FvewoCEO526ua3AlOas7TxFsrOP43EvoVg6UomDPq2V-jnACbPfLizO0Nqb80-bnbT6dkV4N4r1wA2qZqcusx6"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50 p-6 flex flex-col gap-8">
+<div class="space-y-1">
+<h3 class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Collections</h3>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors">sync_alt</span>
+<span class="text-sm font-medium">Active</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">archive</span>
+<span class="text-sm font-semibold">Saved Archive</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors">favorite</span>
+<span class="text-sm font-medium">Favorites</span>
+</a>
+</nav>
+</div>
+<div class="space-y-1">
+<h3 class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Categories</h3>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-1.5 rounded-full bg-amber-400"></span>
+                            Premium Skins
+                        </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-1.5 rounded-full bg-emerald-400"></span>
+                            Retro Styles
+                        </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-1.5 rounded-full bg-indigo-400"></span>
+                            Special Effects
+                        </a>
+</nav>
+</div>
+<div class="mt-auto">
+<div class="bg-primary rounded-xl p-4 text-white overflow-hidden relative">
+<div class="relative z-10">
+<p class="text-xs font-medium opacity-80 mb-1">Storage used</p>
+<p class="text-lg font-bold">128 of 500</p>
+<div class="w-full bg-white/20 h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-white h-full w-[25%]"></div>
+</div>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-white/10 text-8xl pointer-events-none">cloud</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-10 overflow-y-auto custom-scrollbar">
+<div class="max-w-6xl mx-auto">
+<!-- Title Area -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">Member Archive</span>
+</div>
+<h1 class="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">My Archive</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-3 text-lg max-w-xl">
+                                Curate and manage your personal collection of digital precision tools. Select an item to equip or manage your library.
+                            </p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                                Filter
+                            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                                Add New
+                            </button>
+</div>
+</div>
+<!-- Cursor Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+<!-- Item 1 -->
+<div class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+<div class="aspect-square bg-slate-50 dark:bg-slate-800 p-8 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/5 to-transparent"></div>
+<div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary">near_me</span>
+</div>
+<div class="absolute top-4 right-4">
+<span class="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded">EQUIPPED</span>
+</div>
+</div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800">
+<div class="mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">Classic Precision</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Standard Edition • v2.1</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded bg-primary text-white text-xs font-bold tracking-wide uppercase hover:bg-primary/90 transition-colors">Equip</button>
+<button class="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+<div class="aspect-square bg-slate-50 dark:bg-slate-800 p-8 flex items-center justify-center relative">
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/5 to-transparent"></div>
+<div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-inner">
+<span class="material-symbols-outlined text-4xl text-amber-600">flare</span>
+</div>
+<div class="absolute top-4 right-4">
+<span class="bg-amber-500/10 text-amber-600 text-[10px] font-bold px-2 py-1 rounded">RARE</span>
+</div>
+</div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800">
+<div class="mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">Neon Glow</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Special Effect • Animation</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold tracking-wide uppercase hover:bg-primary hover:text-white transition-all">Equip</button>
+<button class="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+<div class="aspect-square bg-slate-50 dark:bg-slate-800 p-8 flex items-center justify-center relative">
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/5 to-transparent"></div>
+<div class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-indigo-600">grid_view</span>
+</div>
+</div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800">
+<div class="mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">Pixel Master</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Retro Style • 8-bit</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold tracking-wide uppercase hover:bg-primary hover:text-white transition-all">Equip</button>
+<button class="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+<div class="aspect-square bg-slate-50 dark:bg-slate-800 p-8 flex items-center justify-center relative">
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/5 to-transparent"></div>
+<div class="w-20 h-20 bg-slate-900 dark:bg-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-white dark:text-slate-900">navigation</span>
+</div>
+</div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800">
+<div class="mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">Shadow Blade</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Dark Mode • Minimalist</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold tracking-wide uppercase hover:bg-primary hover:text-white transition-all">Equip</button>
+<button class="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+<div class="aspect-square bg-slate-50 dark:bg-slate-800 p-8 flex items-center justify-center relative">
+<div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-primary/5 to-transparent"></div>
+<div class="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-rose-600">radio_button_checked</span>
+</div>
+</div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800">
+<div class="mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">Minimalist Dot</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Utility • Professional</p>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold tracking-wide uppercase hover:bg-primary hover:text-white transition-all">Equip</button>
+<button class="px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 6 (Empty Placeholder / Add New) -->
+<div class="group border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer">
+<div class="size-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<h3 class="font-bold text-slate-900 dark:text-white">Import New</h3>
+<p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">Upload Archive</p>
+</div>
+</div>
+<!-- Pagination / Footer Info -->
+<div class="mt-16 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-8 pb-12">
+<p class="text-sm text-slate-500">Showing 5 of 12 saved cursors</p>
+<div class="flex items-center gap-2">
+<button class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-800 disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="size-9 bg-primary text-white text-sm font-bold rounded-lg">1</button>
+<button class="size-9 hover:bg-white dark:hover:bg-slate-800 text-sm font-bold rounded-lg border border-transparent hover:border-slate-200">2</button>
+<button class="size-9 hover:bg-white dark:hover:bg-slate-800 text-sm font-bold rounded-lg border border-transparent hover:border-slate-200">3</button>
+<button class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/amy -type d -iname *0to1*)",
+      "Bash(find /c/Users/amy/.claude -type f \\\\\\(-name *.md -o -name *.json -o -name *.txt \\\\\\))",
+      "Bash(find /c/Users/amy/Desktop/0to1log/.claude -name *.md -type f)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(python -m json.tool)",
+      "Bash(mkdir -p .agent/skills/06-Brand .agent/skills/07-Business .agent/skills/08-Research .agent/skills/09-Plans)",
+      "Bash(cp agent/plugin.json .agent/plugin.json)",
+      "Bash(cp -r agent/.claude-plugin .agent/.claude-plugin)",
+      "Bash(cp agent/skills/visual-design.md .agent/skills/06-Brand/)",
+      "Bash(cp agent/skills/canvas-design.md .agent/skills/06-Brand/)",
+      "Bash(cp agent/skills/frontend-design.md .agent/skills/06-Brand/)",
+      "Bash(cp agent/skills/tailwind-design-system.md .agent/skills/06-Brand/)",
+      "Bash(cp agent/skills/shadcn-ui.md .agent/skills/06-Brand/)",
+      "Bash(find C:Usersamy.claudeskills -type f -name *.md)",
+      "WebFetch(domain:www.seaart.ai)",
+      "WebFetch(domain:docs.seaart.ai)",
+      "Bash(mkdir -p frontend/src/app frontend/src/components frontend/src/lib frontend/src/i18n frontend/public)",
+      "Bash(mkdir -p backend/app/api backend/app/services backend/app/core backend/tests)",
+      "Bash(find /c/Users/amy/Desktop/0to1log -type f \\\\\\(-iname *implementation* -o -iname *plan* \\\\\\))"
+    ]
+  },
+  "enabledPlugins": {
+    "pointint-business@pointint-local": true
+  },
+  "extraKnownMarketplaces": {
+    "pointint-local": {
+      "source": {
+        "source": "directory",
+        "path": "./.agent"
+      }
+    }
+  }
+}

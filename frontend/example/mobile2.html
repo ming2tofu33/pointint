@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cursor Detail - Pointint</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#F9F9F9",
+                        "background-dark": "#161022",
+                        "surface": "#FFFFFF",
+                        "text-main": "#1A1A1A",
+                        "text-muted": "#8A8A8A",
+                        "border-color": "#E5E5E5"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "sm": "0px",
+                        "md": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    backgroundImage: {
+                        'grid-pattern': 'linear-gradient(to right, #E5E5E5 1px, transparent 1px), linear-gradient(to bottom, #E5E5E5 1px, transparent 1px)'
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .grid-bg {
+            background-size: 40px 40px;
+        }
+        
+        /* Simulating the touch interaction for visual purpose */
+        .test-pad:active .custom-cursor {
+            transform: translate(50px, -50px) scale(1.1);
+            transition: transform 0.1s ease-out;
+        }
+        .test-pad:active .hint-text {
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        
+        /* Simulating equip state via CSS for demo */
+        .equip-btn:active, .equip-btn:focus {
+            background-color: #5b13ec; /* primary */
+        }
+        .equip-btn:active .btn-text-default, .equip-btn:focus .btn-text-default {
+            display: none;
+        }
+        .equip-btn:active .btn-text-active, .equip-btn:focus .btn-text-active {
+            display: inline;
+        }
+        .btn-text-active {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main font-display antialiased min-h-screen flex flex-col m-0 p-0 selection:bg-primary selection:text-white">
+<!-- Mobile Container -->
+<div class="relative flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-surface overflow-hidden border-x border-border-color shadow-2xl">
+<!-- Top Nav -->
+<header class="absolute top-0 left-0 w-full z-20 flex items-center justify-between p-4 bg-transparent mix-blend-difference text-white">
+<button aria-label="Go back" class="flex items-center justify-center size-12 hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-3xl">arrow_back</span>
+</button>
+<div class="text-xs font-medium tracking-[1px] uppercase">Details</div>
+<div class="size-12"></div> <!-- Spacer for centering -->
+</header>
+<!-- Test Pad (Top Half) -->
+<section class="test-pad relative h-[50vh] w-full bg-background-light bg-grid-pattern grid-bg border-b border-border-color flex items-center justify-center cursor-crosshair overflow-hidden touch-none group">
+<!-- Hint Text -->
+<p class="hint-text text-text-muted text-sm font-medium tracking-wide transition-opacity duration-300 group-hover:opacity-50 pointer-events-none z-10">
+                Tap and drag to test
+            </p>
+<!-- Custom Cursor Graphic (Static representation) -->
+<div class="custom-cursor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none z-20 drop-shadow-lg">
+<svg fill="none" height="64" viewbox="0 0 24 24" width="64" xmlns="http://www.w3.org/2000/svg">
+<path d="M5.5 3.25L18.5 11.75L12 13.5L10 20.5L5.5 3.25Z" fill="#111111" stroke="#FFFFFF" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</div>
+<!-- Faded secondary cursor to suggest movement/trail -->
+<div class="absolute top-[45%] left-[45%] -translate-x-1/2 -translate-y-1/2 opacity-20 pointer-events-none z-10 blur-[1px]">
+<svg fill="none" height="48" viewbox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+<path d="M5.5 3.25L18.5 11.75L12 13.5L10 20.5L5.5 3.25Z" fill="#111111" stroke="#FFFFFF" stroke-linejoin="round" stroke-width="1"></path>
+</svg>
+</div>
+</section>
+<!-- Metadata & Actions (Bottom Half) -->
+<section class="flex flex-col flex-1 bg-surface p-8 pb-6 justify-between">
+<!-- Info -->
+<div class="space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 border border-border-color text-xs font-medium uppercase tracking-wider text-text-muted mb-2">
+<span class="size-2 bg-text-main rounded-full"></span> Premium
+                </div>
+<h1 class="text-[32px] font-bold leading-tight tracking-tight text-text-main">
+                    Monochrome<br/>Pack Vol.2
+                </h1>
+<div class="flex items-center gap-3 pt-4 border-t border-border-color mt-6">
+<div class="size-10 bg-background-light border border-border-color flex items-center justify-center">
+<span class="material-symbols-outlined text-text-muted">brush</span>
+</div>
+<div>
+<p class="text-xs text-text-muted font-medium uppercase tracking-widest mb-0.5">Creator</p>
+<p class="text-sm font-semibold text-text-main">Studio Null</p>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-8 w-full pt-4">
+<button class="equip-btn group relative w-full h-[56px] bg-[#111111] text-white flex items-center justify-center overflow-hidden transition-colors duration-300">
+<span class="btn-text-default text-sm font-medium tracking-wide flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">ads_click</span>
+                        Equip Cursor
+                    </span>
+<span class="btn-text-active text-sm font-medium tracking-wide flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                        Equipped
+                    </span>
+<!-- Hover/Active overlay effect -->
+<div class="absolute inset-0 bg-white/10 translate-y-full group-active:translate-y-0 transition-transform duration-200"></div>
+</button>
+</div>
+</section>
+</div>
+</body></html>

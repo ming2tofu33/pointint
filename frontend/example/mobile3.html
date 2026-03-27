@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pointint - Cursor Customization</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "sm": "2px",
+                        "md": "4px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            background: #5b13ec; /* Primary color */
+            cursor: pointer;
+            border-radius: 0px; /* Sharp square thumb */
+            margin-top: -7px; 
+        }
+        input[type=range]::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            background: #5b13ec;
+            cursor: pointer;
+            border-radius: 0px;
+            border: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #e2e8f0; /* slate-200 */
+        }
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #e2e8f0;
+        }
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #334155; /* slate-700 */
+        }
+        .dark input[type=range]::-moz-range-track {
+            background: #334155;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen antialiased selection:bg-primary/30 selection:text-primary">
+<div class="relative flex h-screen w-full flex-col max-w-md mx-auto bg-white dark:bg-[#1A1525] border-x border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl">
+<!-- Top Nav -->
+<header class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1A1525] z-10 shrink-0">
+<button aria-label="Go back" class="flex size-10 items-center justify-center text-slate-900 dark:text-slate-100 hover:text-primary dark:hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="text-base font-bold tracking-[0.05em] uppercase text-slate-900 dark:text-slate-100">Pointint</h1>
+<button class="flex items-center justify-center text-sm font-medium tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm px-2 py-1">
+                Reset
+            </button>
+</header>
+<!-- Live Preview Area -->
+<section class="h-[280px] w-full bg-[#FAFAFA] dark:bg-[#120D1C] flex items-center justify-center border-b border-slate-200 dark:border-slate-800 relative overflow-hidden shrink-0 group">
+<!-- Subtle Grid Background -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:24px_24px] opacity-30 dark:opacity-20 pointer-events-none"></div>
+<!-- Target Crosshair Indicator -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 dark:opacity-10">
+<div class="w-[120px] h-[1px] bg-slate-900 dark:bg-slate-100"></div>
+<div class="h-[120px] w-[1px] bg-slate-900 dark:bg-slate-100 absolute"></div>
+</div>
+<!-- The Cursor Preview -->
+<div class="relative z-10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+<!-- Using a visually distinct, sharp cursor SVG -->
+<svg class="drop-shadow-xl drop-shadow-primary/20" fill="none" height="84" viewbox="0 0 24 24" width="84" xmlns="http://www.w3.org/2000/svg">
+<path d="M4.5 3L18.5 10.5L11.5 13L9.5 20.5L4.5 3Z" fill="#5b13ec" stroke="#ffffff" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</div>
+<!-- Coordinates/Info Overlay -->
+<div class="absolute bottom-4 left-4 flex flex-col gap-0.5 pointer-events-none">
+<span class="text-[10px] font-medium tracking-[0.1em] text-slate-400 dark:text-slate-500 uppercase">Vector</span>
+<span class="text-xs font-bold text-slate-900 dark:text-slate-100">Monochrome Vol. 2</span>
+</div>
+<div class="absolute bottom-4 right-4 pointer-events-none">
+<span class="text-[10px] font-mono tracking-widest text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-black/50 px-2 py-1 border border-slate-200 dark:border-slate-800">x:120 y:240</span>
+</div>
+</section>
+<!-- Editor Controls Container -->
+<main class="flex-1 flex flex-col bg-white dark:bg-[#1A1525] overflow-y-auto">
+<!-- Tool Selection Tabs -->
+<nav class="flex border-b border-slate-200 dark:border-slate-800 px-6 shrink-0 sticky top-0 bg-white/95 dark:bg-[#1A1525]/95 backdrop-blur-sm z-20">
+<button class="flex flex-col items-center justify-center flex-1 pt-5 pb-4 relative group focus:outline-none">
+<span class="text-sm font-bold tracking-[0.05em] text-primary transition-colors uppercase">Color</span>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-primary"></div>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 pt-5 pb-4 relative group focus:outline-none">
+<span class="text-sm font-medium tracking-[0.05em] text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors uppercase">Scale</span>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-transparent group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>
+</button>
+<button class="flex flex-col items-center justify-center flex-1 pt-5 pb-4 relative group focus:outline-none">
+<span class="text-sm font-medium tracking-[0.05em] text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors uppercase">Trail</span>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-transparent group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>
+</button>
+</nav>
+<!-- Active Tool Panel (Color) -->
+<div class="flex-1 p-8 flex flex-col gap-10">
+<!-- Color Section -->
+<section class="flex flex-col gap-6">
+<header class="flex items-end justify-between">
+<div>
+<h3 class="text-xs font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-slate-100 mb-1">Fill Color</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Select the primary hue.</p>
+</div>
+<span class="text-xs font-mono text-slate-400 dark:text-slate-500">HEX #5B13EC</span>
+</header>
+<div class="grid grid-cols-6 gap-4">
+<!-- Active Swatch -->
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input checked="" class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border-2 border-white dark:border-[#1A1525] outline outline-2 outline-primary bg-primary transition-transform group-hover:scale-110 shadow-sm" style="background-color: #5b13ec;"></div>
+</label>
+<!-- Inactive Swatches -->
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-[#111111] transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-white transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-[#FF3366] transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-[#00E5FF] transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="cursor-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-[#FFD700] transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+</div>
+</section>
+<div class="w-full h-px bg-slate-200 dark:bg-slate-800"></div>
+<!-- Stroke Section -->
+<section class="flex flex-col gap-6">
+<header class="flex items-end justify-between">
+<div>
+<h3 class="text-xs font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-slate-100 mb-1">Stroke Color</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Outline defining the edge.</p>
+</div>
+</header>
+<div class="grid grid-cols-6 gap-4">
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="stroke-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-primary transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input class="sr-only" name="stroke-color" type="radio"/>
+<div class="size-10 rounded-full border border-slate-200 dark:border-slate-700 bg-[#111111] transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<label class="group relative flex items-center justify-center cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 dark:focus-within:ring-offset-[#1A1525] rounded-full">
+<input checked="" class="sr-only" name="stroke-color" type="radio"/>
+<div class="size-10 rounded-full border-2 border-slate-200 dark:border-[#1A1525] outline outline-2 outline-slate-900 dark:outline-slate-100 bg-white transition-transform group-hover:scale-110 shadow-sm"></div>
+</label>
+<!-- Empty slots for layout balance -->
+<div class="size-10"></div>
+<div class="size-10"></div>
+<div class="size-10"></div>
+</div>
+</section>
+<div class="w-full h-px bg-slate-200 dark:bg-slate-800"></div>
+<!-- Scale Preview (Sneak peek of other tab) -->
+<section class="flex flex-col gap-6 opacity-50 grayscale pointer-events-none">
+<header class="flex items-end justify-between">
+<div>
+<h3 class="text-xs font-bold tracking-[0.1em] uppercase text-slate-900 dark:text-slate-100 mb-1">Base Scale</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Adjust overall size.</p>
+</div>
+<span class="text-xs font-mono text-slate-400 dark:text-slate-500">1.2x</span>
+</header>
+<div class="py-4">
+<input aria-label="Scale cursor size" max="2.0" min="0.5" step="0.1" type="range" value="1.2"/>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Action Bar -->
+<footer class="p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1A1525] shrink-0">
+<button class="w-full h-14 bg-primary text-white font-bold tracking-[0.05em] uppercase hover:bg-primary/90 transition-colors focus:outline-none focus:ring-4 focus:ring-primary/30 flex items-center justify-center gap-2 shadow-[0_4px_14px_0_rgba(91,19,236,0.39)]">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                Save Changes
+            </button>
+</footer>
+</div>
+</body></html>

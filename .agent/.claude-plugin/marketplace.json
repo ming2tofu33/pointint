@@ -1,0 +1,9 @@
+{
+  "name": "pointint-local",
+  "plugins": [
+    {
+      "name": "pointint-business",
+      "source": "./"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pointint - Gallery Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#111111",
+          "background-light": "#F9F9F9",
+          "background-dark": "#161022",
+          "surface": "#FFFFFF",
+          "muted": "#8A8A8A",
+          "accent": "#0055FF",
+          "border-color": "#E5E5E5"
+        },
+        fontFamily: {
+          "display": ["Space Grotesk", "sans-serif"]
+        },
+        borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "0px"},
+      },
+    },
+  }
+</script>
+<style>
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light text-slate-900 font-display min-h-screen pb-16">
+<!-- Fixed Top Nav -->
+<nav class="fixed top-0 left-0 right-0 h-12 bg-surface/80 backdrop-blur-md border-b border-border-color z-50 flex items-center justify-between px-4">
+<h1 class="text-primary text-lg font-bold tracking-tight">POINTINT</h1>
+<button class="text-primary text-sm font-medium tracking-wide uppercase hover:text-accent transition-colors">Archive</button>
+</nav>
+<!-- Main Content -->
+<main class="pt-12">
+<!-- Hero Collection -->
+<section class="mt-8 px-4">
+<div class="w-full h-[320px] bg-surface border border-border-color relative overflow-hidden group cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Abstract black and white wireframe waves" style="background-image: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuBeTszn1oOGe6zDsYP1kQTpqGmqFgvAttSIE_2DkNGkhPYGhclrZtXtiynk03pHOg5bpsv6U6J7Fh5maytz2_vDR9oM3mFFqZ3v4XDp4glpqJKz9Rkkuvla1TRbY349t32Bd2erQhg_2aAN3VE0r5wZbz6L4yEHo_VwK7_qNJvOn4I5xTvzi6Kxc5riEVoHIeiYvn9lm6FMmVShx5mJFVLUKz4OAwGAR3SEJJAWuVIT0GIr8QyHHaZsNCY5ayt_-kbU0ePe540Kw2Ba');"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<p class="text-white text-xs font-medium uppercase tracking-[0.05em] mb-2 opacity-80">Featured Exhibit</p>
+<h2 class="text-white text-3xl font-bold leading-tight">Monochrome Pack Vol.2</h2>
+</div>
+</div>
+</section>
+<!-- Filters -->
+<section class="mt-8 px-4">
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="h-8 px-4 border border-primary bg-primary text-surface text-sm font-medium whitespace-nowrap">All</button>
+<button class="h-8 px-4 border border-border-color bg-transparent text-primary text-sm font-medium whitespace-nowrap hover:border-primary transition-colors">Minimal</button>
+<button class="h-8 px-4 border border-border-color bg-transparent text-primary text-sm font-medium whitespace-nowrap hover:border-primary transition-colors">Abstract</button>
+<button class="h-8 px-4 border border-border-color bg-transparent text-primary text-sm font-medium whitespace-nowrap hover:border-primary transition-colors">Colorful</button>
+</div>
+</section>
+<!-- Feed Grid -->
+<section class="mt-8 px-4 mb-16">
+<div class="grid grid-cols-2 gap-4">
+<!-- Cursor Card 1 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">arrow_selector_tool</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Classic Dark</p>
+</div>
+<!-- Cursor Card 2 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">open_with</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Crosshair</p>
+</div>
+<!-- Cursor Card 3 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">pan_tool_alt</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Pixel Hand</p>
+</div>
+<!-- Cursor Card 4 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">radio_button_unchecked</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Minimal Ring</p>
+</div>
+<!-- Cursor Card 5 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">navigation</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Aero Arrow</p>
+</div>
+<!-- Cursor Card 6 -->
+<div class="aspect-square bg-surface border border-border-color flex flex-col justify-between p-3 relative group cursor-pointer hover:border-primary transition-colors">
+<div class="flex-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-primary transition-transform duration-300 group-hover:scale-110">highlight_alt</span>
+</div>
+<p class="text-[12px] font-medium text-primary uppercase tracking-wide">Neon Box</p>
+</div>
+</div>
+</section>
+</main>
+</body></html>

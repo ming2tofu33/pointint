@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex flex-col w-full min-h-screen">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 md:px-12">
+<div class="flex items-center gap-10">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined !text-xl">point_scan</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Pointint</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium" href="#">Gallery</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary pb-1" href="#">Lab</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium" href="#">Community</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium" href="#">About</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<label class="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 rounded px-3 py-1.5 border border-transparent focus-within:border-primary transition-all">
+<span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-slate-400" placeholder="Search..." type="text"/>
+</label>
+<button class="material-symbols-outlined text-slate-600 dark:text-slate-400">notifications</button>
+<div class="size-9 rounded-full bg-primary/10 border border-primary/20 bg-cover bg-center" data-alt="User profile avatar circle" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDxWGx6IKHDCv0CjdDycwAAUHQItzdYnafIXRKqNuZ_-Jkr40JPrhbSb7Uvwzmd9YdAS6-tk9MLv7_P_MGeEIFuBJLhcUcfo5pRdZAX4RR0jRMQdQ_7Pf48DVZBNk6ZGO51l_SWZWR9Ub-X208hnvlcQsI7Ejm3Kc_UEeJr5ecQmyJzgEx7NdSE1ZiIN7w_rZ2P9ITtff0glgN7NcT-aekGpbUFSj_FUR7WXW77dL3ZLHKYz0TaJudRuNL7Az9fYJCcBQEW2d557N1i')"></div>
+</div>
+</header>
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-10 md:px-12">
+<!-- Hero Section -->
+<div class="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
+<div class="max-w-2xl">
+<div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest mb-3">
+<span class="material-symbols-outlined !text-sm">science</span>
+                        Community Lab
+                    </div>
+<h1 class="text-5xl font-black leading-tight tracking-tighter mb-4 italic">Community Showcase</h1>
+<p class="text-slate-500 dark:text-slate-400 text-lg leading-relaxed">
+                        Explore, vote, and download unique cursor sets created by the community. 
+                        A experimental playground for modern interface interactions.
+                    </p>
+</div>
+<div class="flex gap-2">
+<button class="bg-primary text-white px-6 py-3 font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity rounded">
+<span class="material-symbols-outlined">add</span>
+                        Upload Design
+                    </button>
+</div>
+</div>
+<!-- Filters & Search -->
+<div class="flex flex-col md:flex-row gap-4 mb-8 border-b border-slate-200 dark:border-slate-800 pb-6">
+<div class="flex gap-2 overflow-x-auto no-scrollbar">
+<button class="px-5 py-2 bg-primary text-white text-sm font-bold rounded">New</button>
+<button class="px-5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded">Trending</button>
+<button class="px-5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded">Top Voted</button>
+<button class="px-5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors rounded">Verified</button>
+</div>
+<div class="md:ml-auto w-full md:w-80">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 pl-10 pr-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary rounded" placeholder="Search cursor designs..." type="text"/>
+</div>
+</div>
+</div>
+<!-- Cursor Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-background-light dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary !text-4xl">near_me</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Cyber Neon Blue</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">PixelWiz</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm fill-0">favorite</span>
+<span class="text-xs font-bold">1.2k</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">v2.1 Stable</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-slate-900 dark:text-white !text-4xl">arrow_outward</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Minimal Mono</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">Satoshi_Design</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">842</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Alpha 0.4</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary !text-4xl">ads_click</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Haptic Pro</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">InterfaceGod</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">2.5k</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Premium Set</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-slate-400 !text-4xl">pen_size_2</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Pencil Sketch</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">ArtyUser</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">312</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">v1.0 Basic</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary !text-4xl">flare</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Stellar Glow</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">SpaceWalker</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">1.8k</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Featured</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-slate-900 dark:text-white !text-4xl">gesture</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Organic Flow</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">NatureUX</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">560</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Experimental</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 7 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary !text-4xl">blur_on</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Glassmorphism</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">BlurryEye</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">3.2k</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">v3.0 Final</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 8 -->
+<div class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary transition-all rounded-lg overflow-hidden flex flex-col">
+<div class="h-48 bg-slate-100 dark:bg-background-dark flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#5b13ec_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="z-10 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-slate-900 dark:text-white !text-4xl">token</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-bold text-base">Token Cursor</h3>
+<p class="text-xs text-slate-400">by <span class="text-primary font-medium hover:underline cursor-pointer">Web3Dev</span></p>
+</div>
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors rounded border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined !text-sm">favorite</span>
+<span class="text-xs font-bold">144</span>
+</button>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Beta Build</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                VIEW DETAILS
+                                <span class="material-symbols-outlined !text-xs">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-16 flex items-center justify-center gap-2">
+<button class="size-10 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded hover:border-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="size-10 flex items-center justify-center bg-primary text-white rounded font-bold">1</button>
+<button class="size-10 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded hover:border-primary transition-colors font-bold">2</button>
+<button class="size-10 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded hover:border-primary transition-colors font-bold">3</button>
+<span class="mx-2 text-slate-400">...</span>
+<button class="size-10 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded hover:border-primary transition-colors font-bold">12</button>
+<button class="size-10 flex items-center justify-center border border-slate-200 dark:border-slate-800 rounded hover:border-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="border-t border-slate-200 dark:border-slate-800 px-6 py-12 md:px-12 mt-12 bg-white dark:bg-background-dark">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-10">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="size-6 bg-primary rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined !text-sm">point_scan</span>
+</div>
+<span class="font-bold tracking-tight">Pointint</span>
+</div>
+<p class="text-sm text-slate-500 max-w-xs">
+                        A collaborative platform for UI designers to share and discover custom interaction components.
+                    </p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-12">
+<div class="flex flex-col gap-4">
+<h4 class="font-bold text-xs uppercase tracking-widest">Platform</h4>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Browse Gallery</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Lab Sandbox</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Documentation</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-bold text-xs uppercase tracking-widest">Community</h4>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Forums</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Discord</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Showcase</a>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-bold text-xs uppercase tracking-widest">Legal</h4>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Terms</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Licensing</a>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs text-slate-400">© 2024 Pointint. Built for the modern web.</p>
+<div class="flex gap-6">
+<a class="text-slate-400 hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined !text-lg">language</span></a>
+<a class="text-slate-400 hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined !text-lg">rss_feed</span></a>
+<a class="text-slate-400 hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined !text-lg">share</span></a>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

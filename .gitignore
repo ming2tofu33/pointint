@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+frontend/.next/
+frontend/out/
+frontend/build/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+
+# Virtual environment
+backend/.venv/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Obsidian (keep config, ignore workspace state)
+point/.obsidian/workspace.json
+
+# Testing
+coverage/
+htmlcov/
+.pytest_cache/
+.coverage
+
+# Misc
+*.log
+*.pid
+*.seed

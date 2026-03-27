@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<title>Support Center | Pointint</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen flex-col">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">Pointint Support</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="hidden text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-primary md:block" href="#">Documentation</a>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/90">
+<span class="material-symbols-outlined text-[18px]">account_circle</span>
+                        My Account
+                    </button>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-white dark:bg-background-dark py-20 px-6">
+<div class="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(91,19,236,0.05)_0%,transparent_100%)]"></div>
+<div class="mx-auto max-w-3xl text-center">
+<h1 class="mb-6 text-5xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-6xl">
+                        How can we help?
+                    </h1>
+<p class="mb-10 text-lg text-slate-600 dark:text-slate-400">
+                        Search our knowledge base for quick solutions or reach out to our dedicated support team.
+                    </p>
+<!-- Search Bar Component -->
+<div class="group relative mx-auto max-w-2xl">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-primary">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full rounded-xl border-2 border-primary/10 bg-white dark:bg-slate-900/50 py-4 pl-12 pr-4 text-slate-900 placeholder-slate-400 outline-none ring-primary/20 transition-all focus:border-primary focus:ring-4 dark:text-white" placeholder="Type keywords like 'billing', 'api', or 'setup'..." type="text"/>
+<div class="absolute inset-y-2 right-2 hidden md:block">
+<kbd class="inline-flex items-center rounded border border-primary/20 bg-background-light px-2 py-1 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                ⌘ K
+                            </kbd>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Access Grid -->
+<section class="mx-auto max-w-7xl px-6 py-12">
+<div class="grid gap-6 md:grid-cols-3">
+<div class="group rounded-xl border border-primary/5 bg-white p-8 transition-all hover:border-primary/20 hover:shadow-xl dark:bg-slate-900/40">
+<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<h3 class="mb-2 text-xl font-bold">Getting Started</h3>
+<p class="text-slate-600 dark:text-slate-400">Essential guides to get your studio up and running in minutes.</p>
+</div>
+<div class="group rounded-xl border border-primary/5 bg-white p-8 transition-all hover:border-primary/20 hover:shadow-xl dark:bg-slate-900/40">
+<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<h3 class="mb-2 text-xl font-bold">Billing &amp; Plans</h3>
+<p class="text-slate-600 dark:text-slate-400">Manage subscriptions, invoices, and payment methods easily.</p>
+</div>
+<div class="group rounded-xl border border-primary/5 bg-white p-8 transition-all hover:border-primary/20 hover:shadow-xl dark:bg-slate-900/40">
+<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">security</span>
+</div>
+<h3 class="mb-2 text-xl font-bold">Security &amp; Privacy</h3>
+<p class="text-slate-600 dark:text-slate-400">Learn how we protect your data and studio assets.</p>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="mx-auto max-w-4xl px-6 py-16">
+<div class="mb-10 flex items-center justify-between">
+<h2 class="text-3xl font-bold tracking-tight">Frequently Asked Questions</h2>
+<a class="text-sm font-semibold text-primary hover:underline" href="#">View all articles</a>
+</div>
+<div class="space-y-4">
+<details class="group rounded-xl border border-primary/10 bg-white dark:bg-slate-900/20" open="">
+<summary class="flex cursor-pointer items-center justify-between p-6 list-none">
+<span class="text-lg font-medium">How do I manage my studio subscription?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="border-t border-primary/5 p-6 pt-0 text-slate-600 dark:text-slate-400 leading-relaxed">
+                            You can manage your subscription directly from the Settings &gt; Billing section of your dashboard. There you can update payment methods, view past invoices, and change your current plan tier at any time.
+                        </div>
+</details>
+<details class="group rounded-xl border border-primary/10 bg-white dark:bg-slate-900/20">
+<summary class="flex cursor-pointer items-center justify-between p-6 list-none">
+<span class="text-lg font-medium">Can I invite team members to my workspace?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="border-t border-primary/5 p-6 pt-0 text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Yes, depending on your plan, you can invite multiple collaborators. Go to Workspace Settings &gt; Members and enter their email addresses to send invitations with specific role permissions.
+                        </div>
+</details>
+<details class="group rounded-xl border border-primary/10 bg-white dark:bg-slate-900/20">
+<summary class="flex cursor-pointer items-center justify-between p-6 list-none">
+<span class="text-lg font-medium">What is your refund policy?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="border-t border-primary/5 p-6 pt-0 text-slate-600 dark:text-slate-400 leading-relaxed">
+                            We offer a 14-day money-back guarantee for all new annual subscriptions. If you're not satisfied, please contact our support team within 14 days of your purchase for a full refund.
+                        </div>
+</details>
+<details class="group rounded-xl border border-primary/10 bg-white dark:bg-slate-900/20">
+<summary class="flex cursor-pointer items-center justify-between p-6 list-none">
+<span class="text-lg font-medium">Do you offer custom enterprise solutions?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="border-t border-primary/5 p-6 pt-0 text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Absolutely. For large studios requiring dedicated support, custom integrations, and unlimited storage, please reach out to our sales team for a tailored quote.
+                        </div>
+</details>
+</div>
+</section>
+<!-- Contact Options -->
+<section class="bg-primary/5 py-20 dark:bg-primary/10">
+<div class="mx-auto max-w-7xl px-6">
+<div class="text-center mb-12">
+<h2 class="text-3xl font-bold tracking-tight mb-4">Still need help?</h2>
+<p class="text-slate-600 dark:text-slate-400">Our support team is available 24/7 to assist you.</p>
+</div>
+<div class="grid gap-6 md:grid-cols-2">
+<div class="flex flex-col items-center rounded-2xl bg-white dark:bg-slate-900 p-10 text-center shadow-sm">
+<div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-3xl">mail</span>
+</div>
+<h3 class="mb-2 text-xl font-bold">Email Support</h3>
+<p class="mb-6 text-slate-600 dark:text-slate-400">Send us a detailed message and we'll get back to you within 24 hours.</p>
+<a class="rounded-lg bg-primary px-8 py-3 font-semibold text-white transition-opacity hover:opacity-90" href="mailto:support@pointint.com">
+                                Send an Email
+                            </a>
+</div>
+<div class="flex flex-col items-center rounded-2xl bg-white dark:bg-slate-900 p-10 text-center shadow-sm">
+<div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#5865F2]/10 text-[#5865F2]">
+<svg class="h-8 w-8" fill="currentColor" viewbox="0 0 24 24">
+<path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"></path>
+</svg>
+</div>
+<h3 class="mb-2 text-xl font-bold">Community Discord</h3>
+<p class="mb-6 text-slate-600 dark:text-slate-400">Join our active community to get help from other users and our developers.</p>
+<a class="rounded-lg bg-[#5865F2] px-8 py-3 font-semibold text-white transition-opacity hover:opacity-90" href="#">
+                                Join Discord
+                            </a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="border-t border-primary/10 bg-white dark:bg-background-dark py-12 px-6">
+<div class="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 opacity-50 grayscale">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-bold tracking-tight uppercase">Pointint Support</span>
+</div>
+<div class="flex gap-8 text-sm text-slate-500">
+<a class="hover:text-primary" href="#">Status Page</a>
+<a class="hover:text-primary" href="#">Terms of Service</a>
+<a class="hover:text-primary" href="#">Privacy Policy</a>
+</div>
+<p class="text-sm text-slate-400">© 2024 Pointint. All rights reserved.</p>
+</div>
+</footer>
+</div>
+</body></html>

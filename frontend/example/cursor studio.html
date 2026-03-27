@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        /* Custom slider style for minimalist look */
+        input[type='range'] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type='range']::-webkit-slider-runnable-track {
+            background: #e5e7eb;
+            height: 2px;
+        }
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -7px;
+            background-color: #5b13ec;
+            height: 16px;
+            width: 16px;
+            border-radius: 0px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-3 z-10">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">auto_awesome_motion</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight">Pointint Studio <span class="text-xs font-normal text-slate-400 ml-2">PRO</span></h2>
+</div>
+<nav class="flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors border-b-2 border-primary pb-1" href="#">Editor</a>
+<a class="text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors pb-1" href="#">Assets</a>
+<a class="text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors pb-1" href="#">Presets</a>
+<a class="text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors pb-1" href="#">Export</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="flex items-center justify-center p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<button class="flex min-w-[100px] items-center justify-center bg-primary text-white text-sm font-bold h-10 px-6 hover:brightness-110 transition-all">
+                    SAVE
+                </button>
+</div>
+</header>
+<!-- Main Layout Container -->
+<main class="flex flex-1 overflow-hidden">
+<!-- Left Sidebar: Tool Selector -->
+<aside class="w-16 flex flex-col items-center py-6 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 gap-6">
+<button class="p-3 text-primary bg-primary/10" title="Pointer">
+<span class="material-symbols-outlined">near_me</span>
+</button>
+<button class="p-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Trail">
+<span class="material-symbols-outlined">gesture</span>
+</button>
+<button class="p-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Effects">
+<span class="material-symbols-outlined">flare</span>
+</button>
+<button class="p-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Animation">
+<span class="material-symbols-outlined">play_circle</span>
+</button>
+<div class="mt-auto">
+<button class="p-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</aside>
+<!-- Central Preview Area -->
+<section class="flex-1 relative flex flex-col bg-background-light dark:bg-background-dark p-8 overflow-hidden">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h1 class="text-2xl font-bold">Workspace</h1>
+<p class="text-sm text-slate-500">Live preview of your custom cursor</p>
+</div>
+<div class="flex gap-2">
+<button class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span> Live Preview
+                        </button>
+<button class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+</button>
+</div>
+</div>
+<!-- Preview Canvas -->
+<div class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 relative flex items-center justify-center cursor-none group">
+<!-- Grid Background Overlay -->
+<div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" data-alt="Subtle grid pattern background" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 20px 20px;"></div>
+<!-- The Cursor Placeholder -->
+<div class="relative z-10 flex flex-col items-center">
+<div class="text-primary transform scale-[2.5] drop-shadow-xl">
+<span class="material-symbols-outlined fill-1" style="font-size: 48px;">near_me</span>
+</div>
+<p class="mt-12 text-slate-300 dark:text-slate-600 text-sm uppercase tracking-[0.2em] font-medium">Preview Area</p>
+</div>
+<!-- Canvas Controls -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 bg-slate-900/90 text-white px-6 py-3 shadow-2xl">
+<button class="text-xs font-bold hover:text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">undo</span> UNDO
+                        </button>
+<div class="w-px h-4 bg-slate-700"></div>
+<button class="text-xs font-bold hover:text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">redo</span> REDO
+                        </button>
+<div class="w-px h-4 bg-slate-700"></div>
+<span class="text-xs font-mono text-slate-400">1920 x 1080</span>
+</div>
+</div>
+</section>
+<!-- Right Control Panel -->
+<aside class="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
+<div class="p-6 space-y-8">
+<!-- Color Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Color Palette</h3>
+<span class="material-symbols-outlined text-slate-300 text-sm">palette</span>
+</div>
+<div class="grid grid-cols-5 gap-2 mb-4">
+<button class="aspect-square bg-primary ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-900"></button>
+<button class="aspect-square bg-blue-500 hover:scale-105 transition-transform"></button>
+<button class="aspect-square bg-emerald-500 hover:scale-105 transition-transform"></button>
+<button class="aspect-square bg-amber-500 hover:scale-105 transition-transform"></button>
+<button class="aspect-square bg-rose-500 hover:scale-105 transition-transform"></button>
+<button class="aspect-square bg-slate-900 hover:scale-105 transition-transform"></button>
+<button class="aspect-square bg-slate-200 hover:scale-105 transition-transform"></button>
+<button class="aspect-square border border-dashed border-slate-300 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 border border-slate-200 dark:border-slate-700">
+<div class="w-6 h-6 bg-primary"></div>
+<input class="bg-transparent border-none text-xs font-mono p-0 focus:ring-0 w-full" readonly="" type="text" value="#5B13EC"/>
+</div>
+</section>
+<!-- Scale Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Transform</h3>
+<span class="material-symbols-outlined text-slate-300 text-sm">open_with</span>
+</div>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<label>Scale</label>
+<span class="text-primary">1.5x</span>
+</div>
+<input class="w-full" max="3" min="0.5" step="0.1" type="range" value="1.5"/>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<label>Rotation</label>
+<span class="text-slate-500">0°</span>
+</div>
+<input class="w-full" max="360" min="0" type="range" value="0"/>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium">
+<label>Opacity</label>
+<span class="text-slate-500">100%</span>
+</div>
+<input class="w-full" max="100" min="0" type="range" value="100"/>
+</div>
+</div>
+</section>
+<!-- Trail Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Trail Effects</h3>
+<span class="material-symbols-outlined text-slate-300 text-sm">auto_fix_high</span>
+</div>
+<div class="space-y-4">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="text-xs font-medium">Enable Trail</span>
+<div class="w-10 h-5 bg-primary relative flex items-center px-1">
+<div class="w-3 h-3 bg-white"></div>
+</div>
+</label>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium text-slate-400">
+<label>Length</label>
+<span>24px</span>
+</div>
+<input class="w-full" max="100" min="0" type="range" value="24"/>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium text-slate-400">
+<label>Decay</label>
+<span>Fast</span>
+</div>
+<div class="grid grid-cols-3 gap-1">
+<button class="bg-slate-100 dark:bg-slate-800 text-[10px] py-1 font-bold">SLOW</button>
+<button class="bg-primary text-white text-[10px] py-1 font-bold">MED</button>
+<button class="bg-slate-100 dark:bg-slate-800 text-[10px] py-1 font-bold">FAST</button>
+</div>
+</div>
+</div>
+</section>
+<div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+<button class="w-full py-4 border-2 border-primary text-primary font-bold text-sm tracking-widest hover:bg-primary hover:text-white transition-all uppercase">
+                            Reset to Default
+                        </button>
+<div class="mt-6 p-4 bg-primary/5 border border-primary/10">
+<p class="text-[10px] text-primary/60 uppercase font-bold mb-1">Current Version</p>
+<div class="flex justify-between items-center">
+<span class="text-sm font-bold">V2.4.0-BETA</span>
+<span class="material-symbols-outlined text-primary text-sm">verified</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>
