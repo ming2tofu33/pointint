@@ -25,7 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
+      <head>
+        <meta name="theme-color" content="#0E0A0C" />
+      </head>
       <body>{children}</body>
     </html>
   );
