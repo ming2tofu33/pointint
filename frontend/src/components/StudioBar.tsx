@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import SideMenu from "./SideMenu";
 
 export default function StudioBar() {
   return (
@@ -17,26 +17,7 @@ export default function StudioBar() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            color: "var(--color-text-muted)",
-            textDecoration: "none",
-            fontSize: "0.8125rem",
-            transition: "color 0.2s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "var(--color-accent)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "var(--color-text-muted)")
-          }
-        >
-          ← poin+tint
-        </Link>
+        <SideMenu />
         <span
           style={{
             width: "1px",
