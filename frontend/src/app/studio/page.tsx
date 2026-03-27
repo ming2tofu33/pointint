@@ -1,13 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import CursorCanvas from "@/components/CursorCanvas";
 import StudioBar from "@/components/StudioBar";
 import ThemeToggle from "@/components/ThemeToggle";
 import UploadZone from "@/components/UploadZone";
 import { useStudio } from "@/lib/useStudio";
 
+type Tool = "move" | "hotspot";
+
 export default function StudioPage() {
   const { state, cursor, error, upload, setHotspot, setOffset, setScale, reset } =
     useStudio();
+  const [activeTool, setActiveTool] = useState<Tool>("move");
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === "v" || e.key === "V") setActiveTool("move");
+      if (e.key === "h" || e.key === "H") setActiveTool("hotspot");
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   return (
     <div
@@ -31,18 +46,26 @@ export default function StudioPage() {
             flexDirection: "column",
             alignItems: "center",
             paddingTop: "1rem",
-            gap: "0.5rem",
+            gap: "0.25rem",
             flexShrink: 0,
           }}
         >
           {state === "editing" && (
             <>
-              <ToolButton label="Move" active />
-              <ToolButton label="Size" />
-              <ToolButton label="Hot" />
-              <ToolButton label="Rot" />
+              <ToolButton
+                label="Move"
+                shortcut="V"
+                active={activeTool === "move"}
+                onClick={() => setActiveTool("move")}
+              />
+              <ToolButton
+                label="Hot"
+                shortcut="H"
+                active={activeTool === "hotspot"}
+                onClick={() => setActiveTool("hotspot")}
+              />
               <div style={{ flex: 1 }} />
-              <ToolButton label="New" onClick={reset} />
+              <ToolButton label="New" shortcut="" onClick={reset} />
             </>
           )}
         </aside>
@@ -60,69 +83,41 @@ export default function StudioPage() {
             gap: "1rem",
           }}
         >
-          {state === "idle" && (
-            <UploadZone onFile={upload} processing={false} />
-          )}
-
-          {state === "processing" && (
-            <UploadZone onFile={upload} processing={true} />
-          )}
+          {state === "idle" && <UploadZone onFile={upload} processing={false} />}
+          {state === "processing" && <UploadZone onFile={upload} processing={true} />}
 
           {state === "editing" && cursor && (
-            <div
-              style={{
-                position: "relative",
-                width: "256px",
-                height: "256px",
-                border: "1px solid var(--color-border)",
-                backgroundColor: "var(--color-bg-tertiary)",
-                backgroundImage:
-                  "linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%), linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%)",
-                backgroundSize: "16px 16px",
-                backgroundPosition: "0 0, 8px 8px",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img
-                src={cursor.processedUrl}
-                alt="Cursor preview"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  objectFit: "contain",
-                  imageRendering: "pixelated",
-                }}
-                draggable={false}
+            <>
+              <CursorCanvas
+                imageUrl={cursor.processedUrl}
+                offsetX={cursor.offsetX}
+                offsetY={cursor.offsetY}
+                scale={cursor.scale}
+                hotspotX={cursor.hotspotX}
+                hotspotY={cursor.hotspotY}
+                onOffsetChange={setOffset}
+                onHotspotChange={setHotspot}
+                activeTool={activeTool}
               />
-              {/* Hotspot marker */}
               <div
                 style={{
-                  position: "absolute",
-                  left: `calc(50% + ${cursor.hotspotX}px)`,
-                  top: `calc(50% + ${cursor.hotspotY}px)`,
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: "var(--color-accent)",
-                  border: "1.5px solid #fff",
-                  transform: "translate(-50%, -50%)",
-                  pointerEvents: "none",
-                  boxShadow: "0 0 4px var(--color-accent-glow)",
+                  fontSize: "0.6875rem",
+                  color: "var(--color-text-muted)",
+                  display: "flex",
+                  gap: "1.5rem",
                 }}
-              />
-            </div>
+              >
+                <span>
+                  {activeTool === "move" ? "Drag to move" : "Click to set hotspot"}
+                </span>
+                <span>V: Move</span>
+                <span>H: Hotspot</span>
+              </div>
+            </>
           )}
 
           {error && (
-            <p
-              style={{
-                fontSize: "0.8125rem",
-                color: "var(--color-error)",
-              }}
-            >
+            <p style={{ fontSize: "0.8125rem", color: "var(--color-error)" }}>
               {error}
             </p>
           )}
@@ -139,28 +134,48 @@ export default function StudioPage() {
             display: "flex",
             flexDirection: "column",
             gap: "1.5rem",
+            overflowY: "auto",
           }}
         >
           {state === "editing" && cursor ? (
             <>
               <PanelSection title="Cursor">
-                <PanelRow label="Original" value={`${cursor.width} × ${cursor.height}`} />
-                <PanelRow label="Output" value="32 × 32" />
                 <PanelRow
-                  label="Hotspot"
+                  label="Original"
+                  value={`${cursor.width} × ${cursor.height}`}
+                />
+                <PanelRow label="Output" value="32 × 32" />
+              </PanelSection>
+
+              <PanelSection title="Hotspot">
+                <PanelRow
+                  label="Position"
                   value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
                 />
+                <button
+                  onClick={() => setHotspot(0, 0)}
+                  style={{
+                    fontSize: "0.6875rem",
+                    color: "var(--color-text-muted)",
+                    background: "none",
+                    border: "1px solid var(--color-border)",
+                    padding: "0.25rem 0.5rem",
+                    cursor: "pointer",
+                    marginTop: "0.25rem",
+                    transition: "border-color 0.15s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-accent)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-border)")
+                  }
+                >
+                  Reset to 0, 0
+                </button>
               </PanelSection>
 
-              <PanelSection title="Preview">
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <PreviewChip label="Normal" active />
-                  <PreviewChip label="Text" />
-                  <PreviewChip label="Link" />
-                </div>
-              </PanelSection>
-
-              <PanelSection title="Size">
+              <PanelSection title="Scale">
                 <input
                   type="range"
                   min="0.25"
@@ -168,10 +183,7 @@ export default function StudioPage() {
                   step="0.05"
                   value={cursor.scale}
                   onChange={(e) => setScale(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    accentColor: "var(--color-accent)",
-                  }}
+                  style={{ width: "100%", accentColor: "var(--color-accent)" }}
                 />
                 <div
                   style={{
@@ -183,6 +195,32 @@ export default function StudioPage() {
                 >
                   {Math.round(cursor.scale * 100)}%
                 </div>
+              </PanelSection>
+
+              <PanelSection title="Position">
+                <PanelRow label="Offset X" value={`${cursor.offsetX}`} />
+                <PanelRow label="Offset Y" value={`${cursor.offsetY}`} />
+                <button
+                  onClick={() => setOffset(0, 0)}
+                  style={{
+                    fontSize: "0.6875rem",
+                    color: "var(--color-text-muted)",
+                    background: "none",
+                    border: "1px solid var(--color-border)",
+                    padding: "0.25rem 0.5rem",
+                    cursor: "pointer",
+                    marginTop: "0.25rem",
+                    transition: "border-color 0.15s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-accent)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-border)")
+                  }
+                >
+                  Center
+                </button>
               </PanelSection>
             </>
           ) : (
@@ -234,33 +272,40 @@ export default function StudioPage() {
 
 function ToolButton({
   label,
+  shortcut,
   active,
   onClick,
 }: {
   label: string;
+  shortcut: string;
   active?: boolean;
   onClick?: () => void;
 }) {
   return (
     <button
-      title={label}
+      title={shortcut ? `${label} (${shortcut})` : label}
       onClick={onClick}
       style={{
-        width: "2.25rem",
-        height: "2.25rem",
+        width: "2.5rem",
+        height: "2.5rem",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "0.625rem",
+        fontSize: "0.5625rem",
         fontWeight: 600,
         border: "none",
         cursor: "pointer",
         backgroundColor: active ? "var(--color-accent-subtle)" : "transparent",
         color: active ? "var(--color-accent)" : "var(--color-text-muted)",
         transition: "all 0.15s",
+        gap: "1px",
       }}
     >
-      {label}
+      <span>{label}</span>
+      {shortcut && (
+        <span style={{ fontSize: "0.5rem", opacity: 0.6 }}>{shortcut}</span>
+      )}
     </button>
   );
 }
@@ -304,23 +349,6 @@ function PanelRow({ label, value }: { label: string; value: string }) {
       <span style={{ color: "var(--color-text-secondary)" }}>{label}</span>
       <span style={{ color: "var(--color-text-primary)" }}>{value}</span>
     </div>
-  );
-}
-
-function PreviewChip({ label, active }: { label: string; active?: boolean }) {
-  return (
-    <span
-      style={{
-        fontSize: "0.6875rem",
-        padding: "0.25rem 0.625rem",
-        backgroundColor: active ? "var(--color-accent-subtle)" : "transparent",
-        color: active ? "var(--color-accent)" : "var(--color-text-muted)",
-        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </span>
   );
 }
 
