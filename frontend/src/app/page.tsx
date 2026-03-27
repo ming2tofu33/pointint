@@ -1,3 +1,5 @@
+import ThemeToggle from "@/components/ThemeToggle";
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -11,6 +13,7 @@ export default function Home() {
         className="mt-8 h-1 w-16"
         style={{ backgroundColor: "var(--color-accent)" }}
       />
+      <ThemeToggle />
     </main>
   );
 }
