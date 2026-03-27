@@ -22,8 +22,10 @@ app.add_middleware(
 
 
 from app.api.background import router as background_router
+from app.api.cursor import router as cursor_router
 
 app.include_router(background_router, prefix="/api")
+app.include_router(cursor_router, prefix="/api")
 
 
 @app.get("/health")
