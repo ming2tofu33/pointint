@@ -27,7 +27,7 @@ export default function Header() {
           letterSpacing: "-0.02em",
         }}
       >
-        Pointint
+        poin+tint
       </Link>
 
       <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>

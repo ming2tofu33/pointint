@@ -13,7 +13,7 @@ export default function Home() {
           className="text-4xl font-bold"
           style={{ color: "var(--color-text-primary)" }}
         >
-          Pointint
+          poin+tint
         </h1>
         <p
           className="mt-4 text-lg"

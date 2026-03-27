@@ -35,7 +35,7 @@ export default function StudioBar() {
             (e.currentTarget.style.color = "var(--color-text-muted)")
           }
         >
-          ← Pointint
+          ← poin+tint
         </Link>
         <span
           style={{
