@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { removeBackground } from "./api";
+import { generateCursor, removeBackground } from "./api";
 
 export type StudioState = "idle" | "uploading" | "processing" | "editing";
 
@@ -78,5 +78,45 @@ export function useStudio() {
     setError(null);
   }, [cursor]);
 
-  return { state, cursor, error, upload, setHotspot, setOffset, setScale, reset };
+  const [downloading, setDownloading] = useState(false);
+
+  const download = useCallback(async () => {
+    if (!cursor) return;
+    setDownloading(true);
+    setError(null);
+
+    try {
+      const curBlob = await generateCursor(
+        cursor.processedBlob,
+        cursor.hotspotX,
+        cursor.hotspotY
+      );
+
+      const url = URL.createObjectURL(curBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cursor.cur";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [cursor]);
+
+  return {
+    state,
+    cursor,
+    error,
+    downloading,
+    upload,
+    setHotspot,
+    setOffset,
+    setScale,
+    reset,
+    download,
+  };
 }

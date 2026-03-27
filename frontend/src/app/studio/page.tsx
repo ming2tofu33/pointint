@@ -11,8 +11,18 @@ import { useStudio } from "@/lib/useStudio";
 type Tool = "move" | "hotspot";
 
 export default function StudioPage() {
-  const { state, cursor, error, upload, setHotspot, setOffset, setScale, reset } =
-    useStudio();
+  const {
+    state,
+    cursor,
+    error,
+    downloading,
+    upload,
+    setHotspot,
+    setOffset,
+    setScale,
+    reset,
+    download,
+  } = useStudio();
   const [activeTool, setActiveTool] = useState<Tool>("move");
 
   useEffect(() => {
@@ -34,7 +44,11 @@ export default function StudioPage() {
         overflow: "hidden",
       }}
     >
-      <StudioBar />
+      <StudioBar
+        onDownload={download}
+        downloading={downloading}
+        canDownload={state === "editing"}
+      />
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Left Toolbar */}

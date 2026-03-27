@@ -2,7 +2,17 @@
 
 import SideMenu from "./SideMenu";
 
-export default function StudioBar() {
+interface StudioBarProps {
+  onDownload?: () => void;
+  downloading?: boolean;
+  canDownload?: boolean;
+}
+
+export default function StudioBar({
+  onDownload,
+  downloading,
+  canDownload,
+}: StudioBarProps) {
   return (
     <header
       style={{
@@ -37,25 +47,32 @@ export default function StudioBar() {
       </div>
 
       <button
+        onClick={onDownload}
+        disabled={!canDownload || downloading}
         style={{
           fontSize: "0.8125rem",
           fontWeight: 600,
           padding: "0.375rem 1rem",
-          backgroundColor: "var(--color-accent)",
-          color: "#fff",
+          backgroundColor: canDownload
+            ? "var(--color-accent)"
+            : "var(--color-border)",
+          color: canDownload ? "#fff" : "var(--color-text-muted)",
           border: "none",
-          cursor: "pointer",
-          transition: "background-color 0.2s",
+          cursor: canDownload ? "pointer" : "default",
+          transition: "background-color 0.2s, opacity 0.2s",
+          opacity: downloading ? 0.6 : 1,
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor =
-            "var(--color-accent-hover)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = "var(--color-accent)")
-        }
+        onMouseEnter={(e) => {
+          if (canDownload)
+            e.currentTarget.style.backgroundColor =
+              "var(--color-accent-hover)";
+        }}
+        onMouseLeave={(e) => {
+          if (canDownload)
+            e.currentTarget.style.backgroundColor = "var(--color-accent)";
+        }}
       >
-        Download
+        {downloading ? "Generating…" : "Download .cur"}
       </button>
     </header>
   );
