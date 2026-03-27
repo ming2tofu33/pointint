@@ -21,6 +21,11 @@ app.add_middleware(
 )
 
 
+from app.api.background import router as background_router
+
+app.include_router(background_router, prefix="/api")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "pointint-api"}
