@@ -1,3 +1,4 @@
+import os
 from io import BytesIO
 
 from PIL import Image
@@ -11,7 +12,8 @@ def get_session():
     """BiRefNet 세션을 lazy-load로 초기화."""
     global _session
     if _session is None:
-        _session = new_session("birefnet-general")
+        model = os.getenv("REMBG_MODEL", "u2net")
+        _session = new_session(model)
     return _session
 
 
