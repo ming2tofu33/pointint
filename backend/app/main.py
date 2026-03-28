@@ -15,6 +15,9 @@ app = FastAPI(
 cors_origins = [
     os.getenv("FRONTEND_URL", "http://localhost:3000"),
     "http://localhost:3000",
+    "https://pointtint.com",
+    "https://www.pointtint.com",
+    "https://pointint.vercel.app",
 ]
 
 app.add_middleware(
