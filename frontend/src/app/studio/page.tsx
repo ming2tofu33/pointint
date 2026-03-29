@@ -8,6 +8,7 @@ import HealthCheck from "@/components/HealthCheck";
 import Simulation from "@/components/Simulation";
 import StudioBar from "@/components/StudioBar";
 import MobileGuard from "@/components/MobileGuard";
+import NameInput from "@/components/NameInput";
 import SettingsBar from "@/components/SettingsBar";
 import UploadZone from "@/components/UploadZone";
 import { useStudio, CursorSize } from "@/lib/useStudio";
@@ -326,19 +327,10 @@ export default function StudioPage() {
 
               {/* UX-6: 파일명 */}
               <PanelSection title={tp("name")}>
-                <input
-                  type="text"
+                <NameInput
                   value={cursor.cursorName}
-                  onChange={(e) => setCursorName(e.target.value)}
+                  onChange={setCursorName}
                   placeholder={tp("namePlaceholder")}
-                  style={{
-                    width: "100%",
-                    fontSize: "0.8125rem",
-                    padding: "0.375rem 0.5rem",
-                    backgroundColor: "var(--color-input-surface)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
                 />
               </PanelSection>
 
