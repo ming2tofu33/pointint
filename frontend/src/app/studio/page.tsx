@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import CursorCanvas from "@/components/CursorCanvas";
+import GuideModal from "@/components/GuideModal";
+import HealthCheck from "@/components/HealthCheck";
 import Simulation from "@/components/Simulation";
 import StudioBar from "@/components/StudioBar";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -16,12 +18,14 @@ export default function StudioPage() {
     cursor,
     error,
     downloading,
+    showGuide,
     upload,
     setHotspot,
     setOffset,
     setScale,
     reset,
     download,
+    closeGuide,
   } = useStudio();
   const [activeTool, setActiveTool] = useState<Tool>("move");
 
@@ -237,6 +241,12 @@ export default function StudioPage() {
                   Center
                 </button>
               </PanelSection>
+
+              <HealthCheck
+                imageBlob={cursor.processedBlob}
+                hotspotX={cursor.hotspotX}
+                hotspotY={cursor.hotspotY}
+              />
             </>
           ) : (
             <div
@@ -284,6 +294,7 @@ export default function StudioPage() {
       </footer>
 
       <ThemeToggle />
+      <GuideModal open={showGuide} onClose={closeGuide} />
     </div>
   );
 }

@@ -79,6 +79,7 @@ export function useStudio() {
   }, [cursor]);
 
   const [downloading, setDownloading] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const download = useCallback(async () => {
     if (!cursor) return;
@@ -95,11 +96,12 @@ export function useStudio() {
       const url = URL.createObjectURL(curBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "cursor.cur";
+      a.download = "pointint-cursor.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      setShowGuide(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed");
     } finally {
@@ -107,16 +109,20 @@ export function useStudio() {
     }
   }, [cursor]);
 
+  const closeGuide = useCallback(() => setShowGuide(false), []);
+
   return {
     state,
     cursor,
     error,
     downloading,
+    showGuide,
     upload,
     setHotspot,
     setOffset,
     setScale,
     reset,
     download,
+    closeGuide,
   };
 }

@@ -72,7 +72,7 @@ export default function StudioBar({
             e.currentTarget.style.backgroundColor = "var(--color-accent)";
         }}
       >
-        {downloading ? "Generating…" : "Download .cur"}
+        {downloading ? "Generating…" : "Download"}
       </button>
     </header>
   );
