@@ -1,7 +1,104 @@
 {
+  "meta": {
+    "title": "Pointint — Your Point, Your Tint.",
+    "description": "이미지를 나만의 Windows 커서로 만드는 가장 쉬운 방법."
+  },
   "home": {
     "title": "Pointint",
     "tagline": "Your Point, Your Tint.",
     "description": "이미지를 나만의 Windows 커서로 만드는 가장 쉬운 방법."
+  },
+  "nav": {
+    "home": "홈",
+    "studio": "스튜디오",
+    "gallery": "갤러리",
+    "guide": "가이드",
+    "comingSoon": "준비 중",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기"
+  },
+  "upload": {
+    "dropOrClick": "이미지를 끌어 놓거나 클릭하여 업로드",
+    "formats": "PNG, JPG, WebP",
+    "removingBg": "배경 제거 중…",
+    "preview": "미리보기",
+    "removeBg": "배경 제거",
+    "removeBgSub": "AI가 배경을 자동으로 제거합니다",
+    "useAsIs": "그대로 사용",
+    "skipBgSub": "배경 제거 건너뛰기"
+  },
+  "studio": {
+    "title": "스튜디오",
+    "download": "다운로드",
+    "generating": "생성 중…",
+    "move": "이동",
+    "hotspot": "핫스팟",
+    "hotspotShort": "핫",
+    "new": "새로",
+    "dragToMove": "드래그하여 이동",
+    "clickToSetHotspot": "클릭하여 핫스팟 설정",
+    "shortcutMove": "V: 이동",
+    "shortcutHotspot": "H: 핫스팟",
+    "showProcessed": "결과 보기",
+    "showOriginal": "원본 보기",
+    "retryBg": "배경 재시도",
+    "cursorPreview": "커서 미리보기",
+    "uploadToStart": "이미지를 업로드하여 시작하세요",
+    "simulationPreview": "시뮬레이션 미리보기",
+    "mobileTitle": "poin+tint 스튜디오",
+    "mobileMessage": "커서 제작은 데스크톱에서 가장 잘 동작합니다. 컴퓨터에서 이 페이지를 열어주세요.",
+    "goHome": "홈으로"
+  },
+  "panel": {
+    "actualSize": "실제 크기",
+    "lightPreview": "밝은 배경 미리보기",
+    "darkPreview": "어두운 배경 미리보기",
+    "cursor": "커서",
+    "original": "원본",
+    "output": "출력",
+    "name": "이름",
+    "namePlaceholder": "커서",
+    "nameInvalidChars": "은(는) 파일 이름에 사용할 수 없습니다",
+    "hotspot": "핫스팟",
+    "position": "위치",
+    "resetHotspot": "0, 0으로 초기화",
+    "scale": "크기",
+    "offsetX": "X 오프셋",
+    "offsetY": "Y 오프셋",
+    "center": "중앙"
+  },
+  "guide": {
+    "title": "커서 적용 방법",
+    "close": "닫기",
+    "step1": "다운로드한 파일의 압축을 풀어주세요",
+    "step2": "install.inf를 마우스 오른쪽 클릭 → \"설치\"",
+    "step3": "설정 → 마우스 → \"추가 마우스 설정\" → 포인터 탭",
+    "step4": "구성표 드롭다운에서 \"Pointint\" 선택 → 확인",
+    "restore": "기본 커서로 되돌리려면",
+    "restoreFile": "restore-default.inf",
+    "restoreAction": "\"설치\"를 마우스 오른쪽 클릭",
+    "gotIt": "확인",
+    "downloaded": "다운로드 완료"
+  },
+  "simulation": {
+    "normal": "일반",
+    "text": "텍스트",
+    "link": "링크",
+    "instruction": "이 영역에서 커서를 움직여 보세요",
+    "sampleText": "선택할 수 있는 텍스트입니다. 여기에 마우스를 올리면 텍스트 선택 커서를 확인할 수 있습니다. 텍스트를 선택해 보세요.",
+    "sampleLink": "클릭 가능한 링크 — 마우스를 올려 미리보기",
+    "button": "버튼",
+    "cancel": "취소",
+    "bgLight": "밝은 배경",
+    "bgDark": "어두운 배경"
+  },
+  "health": {
+    "title": "상태",
+    "visibility": "가시성",
+    "hotspot": "핫스팟",
+    "readability": "가독성",
+    "pass": "양호",
+    "warn": "확인",
+    "fail": "문제"
   }
 }

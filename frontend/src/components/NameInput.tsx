@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const INVALID_CHARS = /[\\/:*?"<>|]/;
 const INVALID_DISPLAY = '\\ / : * ? " < > |';
@@ -14,10 +15,10 @@ interface NameInputProps {
 export default function NameInput({ value, onChange, placeholder }: NameInputProps) {
   const [warning, setWarning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const t = useTranslations("panel");
 
   function handleChange(raw: string) {
     if (INVALID_CHARS.test(raw)) {
-      // 위험 문자 자동 제거 + 경고 표시
       const clean = raw.replace(INVALID_CHARS, "");
       onChange(clean);
       setWarning(true);
@@ -54,7 +55,6 @@ export default function NameInput({ value, onChange, placeholder }: NameInputPro
         }}
       />
 
-      {/* Warning popup */}
       <div
         style={{
           position: "absolute",
@@ -74,10 +74,8 @@ export default function NameInput({ value, onChange, placeholder }: NameInputPro
           zIndex: 10,
         }}
       >
-        <span style={{ fontWeight: 600 }}>
-          {INVALID_DISPLAY}
-        </span>
-        {" "}cannot be used in file names
+        <span style={{ fontWeight: 600 }}>{INVALID_DISPLAY}</span>{" "}
+        {t("nameInvalidChars")}
       </div>
     </div>
   );

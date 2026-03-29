@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function MobileGuard({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("studio");
+
   return (
     <>
       {/* 1024px 미만: 모바일 안내 */}
@@ -17,7 +20,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
             color: "var(--color-text-primary)",
           }}
         >
-          poin+tint Studio
+          {t("mobileTitle")}
         </span>
         <p
           style={{
@@ -27,8 +30,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
             maxWidth: "20rem",
           }}
         >
-          Cursor creation works best on desktop. Open this page on a computer to
-          start making your cursor.
+          {t("mobileMessage")}
         </p>
         <Link
           href="/"
@@ -40,7 +42,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
             border: "1px solid var(--color-accent)",
           }}
         >
-          Go to Home
+          {t("goHome")}
         </Link>
       </div>
 

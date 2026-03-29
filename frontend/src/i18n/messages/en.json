@@ -1,7 +1,104 @@
 {
+  "meta": {
+    "title": "Pointint — Your Point, Your Tint.",
+    "description": "Turn your image into a custom Windows cursor. The easiest way to make your own cursor."
+  },
   "home": {
     "title": "Pointint",
     "tagline": "Your Point, Your Tint.",
     "description": "Turn your image into a custom Windows cursor."
+  },
+  "nav": {
+    "home": "Home",
+    "studio": "Studio",
+    "gallery": "Gallery",
+    "guide": "Guide",
+    "comingSoon": "Coming soon",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "upload": {
+    "dropOrClick": "Drop image or click to upload",
+    "formats": "PNG, JPG, WebP",
+    "removingBg": "Removing background…",
+    "preview": "Preview",
+    "removeBg": "Remove background",
+    "removeBgSub": "AI removes the background automatically",
+    "useAsIs": "Use as-is",
+    "skipBgSub": "Skip background removal"
+  },
+  "studio": {
+    "title": "Studio",
+    "download": "Download",
+    "generating": "Generating…",
+    "move": "Move",
+    "hotspot": "Hotspot",
+    "hotspotShort": "Hot",
+    "new": "New",
+    "dragToMove": "Drag to move",
+    "clickToSetHotspot": "Click to set hotspot",
+    "shortcutMove": "V: Move",
+    "shortcutHotspot": "H: Hotspot",
+    "showProcessed": "Show processed",
+    "showOriginal": "Show original",
+    "retryBg": "Retry BG",
+    "cursorPreview": "Cursor preview",
+    "uploadToStart": "Upload an image to start",
+    "simulationPreview": "Simulation preview",
+    "mobileTitle": "poin+tint Studio",
+    "mobileMessage": "Cursor creation works best on desktop. Open this page on a computer to start making your cursor.",
+    "goHome": "Go to Home"
+  },
+  "panel": {
+    "actualSize": "Actual size",
+    "lightPreview": "Light preview",
+    "darkPreview": "Dark preview",
+    "cursor": "Cursor",
+    "original": "Original",
+    "output": "Output",
+    "name": "Name",
+    "namePlaceholder": "cursor",
+    "nameInvalidChars": "cannot be used in file names",
+    "hotspot": "Hotspot",
+    "position": "Position",
+    "resetHotspot": "Reset to 0, 0",
+    "scale": "Scale",
+    "offsetX": "Offset X",
+    "offsetY": "Offset Y",
+    "center": "Center"
+  },
+  "guide": {
+    "title": "Apply your cursor",
+    "close": "Close",
+    "step1": "Unzip the downloaded file",
+    "step2": "Right-click install.inf → \"Install\"",
+    "step3": "Open Settings → Mouse → \"Additional mouse settings\" → Pointers tab",
+    "step4": "Select \"Pointint\" from the Scheme dropdown → OK",
+    "restore": "To restore default cursor, right-click",
+    "restoreFile": "restore-default.inf",
+    "restoreAction": "\"Install\"",
+    "gotIt": "Got it",
+    "downloaded": "Download complete"
+  },
+  "simulation": {
+    "normal": "Normal",
+    "text": "Text",
+    "link": "Link",
+    "instruction": "Move your cursor around this area",
+    "sampleText": "This is selectable text. Hover here to see your cursor as a text selection cursor. Try selecting some of this text to see how it feels in real use.",
+    "sampleLink": "This is a clickable link — hover to preview",
+    "button": "Button",
+    "cancel": "Cancel",
+    "bgLight": "light background",
+    "bgDark": "dark background"
+  },
+  "health": {
+    "title": "Health",
+    "visibility": "Visibility",
+    "hotspot": "Hotspot",
+    "readability": "Readability",
+    "pass": "Good",
+    "warn": "Check",
+    "fail": "Issue"
   }
 }
