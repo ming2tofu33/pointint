@@ -16,14 +16,14 @@
 
 ## Planning Rules
 
-- **Plan first.** 모든 작업은 구현 전 계획이 필요하다. 예외: 오타 수정, 1줄 변경, 단순 vault 동기화.
+- **Plan first.** 모든 작업은 구현 전 계획이 필요하다. 예외: 오타 수정, 1줄 변경, 단순 point 동기화.
 - 새 계획 문서는 반드시 `point/06-Implementation/plans/YYYY-MM-DD-<topic>.md` 형식으로 만든다.
 - `point/06-Implementation/plans/`가 plan의 유일한 진실 소스(Single Source of Truth)이다.
 - `docs/plans/`는 외부 공유용 사본만 둔다. 내부 작업 기준은 항상 `point/`를 우선한다.
 - 활성 계획만 `point/06-Implementation/plans/`에 유지한다. 완료된 plan은 `point/90-Archive/plans-completed/`로 이동한다.
 - task를 done으로 표시할 때 근거(변경 내역, 결과 확인)를 간략히 남긴다.
 
-## Vault Rules
+## Point Rules
 
 - Obsidian 노트 운영 규칙은 `point/POINT_RULES.md`를 따른다
 - 노트는 삭제하지 않고 `point/90-Archive/`로 이동한다

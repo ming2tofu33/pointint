@@ -52,7 +52,7 @@ Current Doing: 2개 (docs 승격, P1-SETUP-01)
    - `[ ]` → `[x]` 완료 항목
    - Current Doing 테이블 상태 갱신
    - 다음 세션 권장 작업 갱신
-3. 관련 vault 노트 목록 제시 (자동 수정 안 함)
+3. 관련 point 노트 목록 제시 (자동 수정 안 함)
 4. 묻는다: "커밋하시겠어요?"
 
 ---
@@ -61,7 +61,7 @@ Current Doing: 2개 (docs 승격, P1-SETUP-01)
 
 Stage only:
 - `point/06-Implementation/ACTIVE_SPRINT.md`
-- 사용자가 확인한 vault 노트만
+- 사용자가 확인한 point 노트만
 
 Commit message:
 ```

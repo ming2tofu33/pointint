@@ -99,7 +99,7 @@ tags:
 1. 새 계획서 → `point/06-Implementation/plans/` 에 저장
 2. Plans-Index 업데이트
 3. ACTIVE_SPRINT 연동
-4. 관련 vault 노트 최소 범위로 업데이트
+4. 관련 point 노트 최소 범위로 업데이트
 
 ## Constraints
 
