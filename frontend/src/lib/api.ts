@@ -48,12 +48,16 @@ export async function checkCursorHealth(
 export async function generateCursor(
   pngBlob: Blob,
   hotspotX: number,
-  hotspotY: number
+  hotspotY: number,
+  cursorSize: number = 32,
+  cursorName: string = "cursor"
 ): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", pngBlob, "cursor.png");
   formData.append("hotspot_x", String(hotspotX));
   formData.append("hotspot_y", String(hotspotY));
+  formData.append("cursor_size", String(cursorSize));
+  formData.append("cursor_name", cursorName);
 
   const res = await fetch(`${BACKEND_URL}/api/generate-cursor`, {
     method: "POST",

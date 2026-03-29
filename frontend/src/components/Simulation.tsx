@@ -4,11 +4,13 @@ import { useState } from "react";
 
 interface SimulationProps {
   imageUrl: string;
+  hotspotX?: number;
+  hotspotY?: number;
 }
 
 type BgMode = "light" | "dark";
 
-export default function Simulation({ imageUrl }: SimulationProps) {
+export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: SimulationProps) {
   const [bgMode, setBgMode] = useState<BgMode>("dark");
 
   const bgColor = bgMode === "dark" ? "#1a1a1a" : "#f0f0f0";
@@ -16,7 +18,7 @@ export default function Simulation({ imageUrl }: SimulationProps) {
   const linkColor = bgMode === "dark" ? "#6eaaf5" : "#1a6ed8";
   const mutedColor = bgMode === "dark" ? "#666" : "#999";
 
-  const cursorStyle = `url(${imageUrl}) 0 0, auto`;
+  const cursorStyle = `url(${imageUrl}) ${hotspotX} ${hotspotY}, auto`;
 
   return (
     <div
@@ -94,7 +96,7 @@ export default function Simulation({ imageUrl }: SimulationProps) {
             style={{
               fontSize: "0.75rem",
               color: mutedColor,
-              cursor: cursorStyle,
+              cursor: `url(${imageUrl}) ${hotspotX} ${hotspotY}, auto`,
               userSelect: "none",
             }}
           >
@@ -105,7 +107,7 @@ export default function Simulation({ imageUrl }: SimulationProps) {
             style={{
               fontSize: "0.8125rem",
               color: textColor,
-              cursor: `url(${imageUrl}) 0 0, text`,
+              cursor: `url(${imageUrl}) ${hotspotX} ${hotspotY}, text`,
               lineHeight: 1.5,
             }}
           >
@@ -122,7 +124,7 @@ export default function Simulation({ imageUrl }: SimulationProps) {
                 color: linkColor,
                 textDecoration: "underline",
                 textUnderlineOffset: "2px",
-                cursor: `url(${imageUrl}) 0 0, pointer`,
+                cursor: `url(${imageUrl}) ${hotspotX} ${hotspotY}, pointer`,
               }}
             >
               This is a clickable link — hover to preview
@@ -136,8 +138,8 @@ export default function Simulation({ imageUrl }: SimulationProps) {
               marginTop: "0.25rem",
             }}
           >
-            <SimButton label="Button" imageUrl={imageUrl} bgMode={bgMode} />
-            <SimButton label="Cancel" imageUrl={imageUrl} bgMode={bgMode} secondary />
+            <SimButton label="Button" imageUrl={imageUrl} bgMode={bgMode} hotspotX={hotspotX} hotspotY={hotspotY} />
+            <SimButton label="Cancel" imageUrl={imageUrl} bgMode={bgMode} secondary hotspotX={hotspotX} hotspotY={hotspotY} />
           </div>
         </div>
       </div>
@@ -230,11 +232,15 @@ function SimButton({
   imageUrl,
   bgMode,
   secondary,
+  hotspotX = 0,
+  hotspotY = 0,
 }: {
   label: string;
   imageUrl: string;
   bgMode: BgMode;
   secondary?: boolean;
+  hotspotX?: number;
+  hotspotY?: number;
 }) {
   const bg = secondary
     ? "transparent"
@@ -254,7 +260,7 @@ function SimButton({
         backgroundColor: bg,
         color,
         border,
-        cursor: `url(${imageUrl}) 0 0, pointer`,
+        cursor: `url(${imageUrl}) ${hotspotX} ${hotspotY}, pointer`,
         transition: "opacity 0.15s",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}

@@ -7,9 +7,21 @@ const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
 interface UploadZoneProps {
   onFile: (file: File) => void;
   processing: boolean;
+  /** "uploaded" 상태일 때 배경 제거 선택지 표시 */
+  showChoice?: boolean;
+  onRemoveBg?: () => void;
+  onSkipBg?: () => void;
+  previewUrl?: string;
 }
 
-export default function UploadZone({ onFile, processing }: UploadZoneProps) {
+export default function UploadZone({
+  onFile,
+  processing,
+  showChoice,
+  onRemoveBg,
+  onSkipBg,
+  previewUrl,
+}: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,6 +45,7 @@ export default function UploadZone({ onFile, processing }: UploadZoneProps) {
     if (file) handleFile(file);
   }
 
+  // 처리 중 스피너
   if (processing) {
     return (
       <div
@@ -64,6 +77,55 @@ export default function UploadZone({ onFile, processing }: UploadZoneProps) {
     );
   }
 
+  // UX-1: 파일 선택 후 — 배경 제거 여부 선택
+  if (showChoice && previewUrl) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "1.5rem",
+          width: "320px",
+        }}
+      >
+        <img
+          src={previewUrl}
+          alt="Preview"
+          style={{
+            width: "160px",
+            height: "160px",
+            objectFit: "contain",
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-bg-tertiary)",
+          }}
+        />
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            width: "100%",
+          }}
+        >
+          <ChoiceButton
+            label="Remove background"
+            sub="AI removes the background automatically"
+            onClick={onRemoveBg}
+            accent
+          />
+          <ChoiceButton
+            label="Use as-is"
+            sub="Skip background removal"
+            onClick={onSkipBg}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 기본: 드래그앤드롭 업로드 존
   return (
     <div
       onClick={() => inputRef.current?.click()}
@@ -92,20 +154,13 @@ export default function UploadZone({ onFile, processing }: UploadZoneProps) {
       <div
         style={{
           fontSize: "2rem",
-          color: dragging
-            ? "var(--color-accent)"
-            : "var(--color-text-muted)",
+          color: dragging ? "var(--color-accent)" : "var(--color-text-muted)",
           transition: "color 0.2s",
         }}
       >
         +
       </div>
-      <span
-        style={{
-          fontSize: "0.8125rem",
-          color: "var(--color-text-muted)",
-        }}
-      >
+      <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
         Drop image or click to upload
       </span>
       <span
@@ -125,5 +180,57 @@ export default function UploadZone({ onFile, processing }: UploadZoneProps) {
         style={{ display: "none" }}
       />
     </div>
+  );
+}
+
+function ChoiceButton({
+  label,
+  sub,
+  onClick,
+  accent,
+}: {
+  label: string;
+  sub: string;
+  onClick?: () => void;
+  accent?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: "0.125rem",
+        padding: "0.75rem 1rem",
+        backgroundColor: accent
+          ? "var(--color-accent-subtle)"
+          : "transparent",
+        border: `1px solid ${accent ? "var(--color-accent)" : "var(--color-border)"}`,
+        cursor: "pointer",
+        transition: "border-color 0.15s",
+        textAlign: "left",
+      }}
+    >
+      <span
+        style={{
+          fontSize: "0.8125rem",
+          fontWeight: 600,
+          color: accent
+            ? "var(--color-accent)"
+            : "var(--color-text-primary)",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: "0.6875rem",
+          color: "var(--color-text-muted)",
+        }}
+      >
+        {sub}
+      </span>
+    </button>
   );
 }
