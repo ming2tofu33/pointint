@@ -1,19 +1,19 @@
 ---
-title: Pointint Vault Index
+title: Pointint Point Index
 tags:
   - pointint
-  - vault
+  - point
   - index
 aliases:
   - Point Index
   - Pointint Index
 ---
 
-# Pointint Vault Index
+# Pointint Point Index
 
 > [!info]
 > **Last Updated:** 2026-03-27  
-> **Vault Name:** `point`  
+> **Point Name:** `point`
 > **Current Focus:** Brand, MVP, Business, Obsidian note system
 
 Pointint 옵시디언 볼트의 기본 원칙은 아래와 같다.

@@ -5,7 +5,7 @@ tags:
   - meta
   - rules
 aliases:
-  - Vault Rules
+  - Point Rules
   - Pointint Rules
 ---
 
