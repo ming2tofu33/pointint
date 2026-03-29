@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark">
       <head>
-        <meta name="theme-color" content="#0E0A0C" />
+        <meta name="theme-color" content="#080C18" />
       </head>
       <body>{children}</body>
     </html>
