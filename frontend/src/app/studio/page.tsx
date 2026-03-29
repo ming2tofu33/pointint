@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import CursorCanvas from "@/components/CursorCanvas";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import Simulation from "@/components/Simulation";
 import StudioBar from "@/components/StudioBar";
+import MobileGuard from "@/components/MobileGuard";
 import SettingsBar from "@/components/SettingsBar";
 import UploadZone from "@/components/UploadZone";
 import { useStudio, CursorSize } from "@/lib/useStudio";
@@ -36,6 +38,8 @@ export default function StudioPage() {
     closeGuide,
   } = useStudio();
   const [activeTool, setActiveTool] = useState<Tool>("move");
+  const t = useTranslations("studio");
+  const tp = useTranslations("panel");
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -56,14 +60,7 @@ export default function StudioPage() {
       : "";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
+    <MobileGuard>
       <StudioBar
         onDownload={download}
         downloading={downloading}
@@ -88,19 +85,19 @@ export default function StudioPage() {
           {state === "editing" && (
             <>
               <ToolButton
-                label="Move"
+                label={t("move")}
                 shortcut="V"
                 active={activeTool === "move"}
                 onClick={() => setActiveTool("move")}
               />
               <ToolButton
-                label="Hot"
+                label={t("hotspotShort")}
                 shortcut="H"
                 active={activeTool === "hotspot"}
                 onClick={() => setActiveTool("hotspot")}
               />
               <div style={{ flex: 1 }} />
-              <ToolButton label="New" shortcut="" onClick={reset} />
+              <ToolButton label={t("new")} shortcut="" onClick={reset} />
             </>
           )}
         </aside>
@@ -165,11 +162,11 @@ export default function StudioPage() {
               >
                 <span>
                   {activeTool === "move"
-                    ? "Drag to move"
-                    : "Click to set hotspot"}
+                    ? t("dragToMove")
+                    : t("clickToSetHotspot")}
                 </span>
-                <span>V: Move</span>
-                <span>H: Hotspot</span>
+                <span>{t("shortcutMove")}</span>
+                <span>{t("shortcutHotspot")}</span>
 
                 {/* UX-4: 원본/결과 토글 */}
                 <button
@@ -185,7 +182,7 @@ export default function StudioPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {showOriginal ? "Show processed" : "Show original"}
+                  {showOriginal ? t("showProcessed") : t("showOriginal")}
                 </button>
 
                 {/* UX-4: 배경 제거 재시도 */}
@@ -200,14 +197,17 @@ export default function StudioPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Retry BG
+                  {t("retryBg")}
                 </button>
               </div>
             </>
           )}
 
           {error && (
-            <p style={{ fontSize: "0.8125rem", color: "var(--color-error)" }}>
+            <p
+              role="alert"
+              style={{ fontSize: "0.8125rem", color: "var(--color-error)" }}
+            >
               {error}
             </p>
           )}
@@ -231,7 +231,7 @@ export default function StudioPage() {
             <>
               {/* UX-3: 실제 크기 미리보기 */}
               {previewUrl && (
-                <PanelSection title="Actual size">
+                <PanelSection title={tp("actualSize")}>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <div
                       style={{
@@ -246,7 +246,7 @@ export default function StudioPage() {
                     >
                       <img
                         src={previewUrl}
-                        alt="Light preview"
+                        alt={tp("lightPreview")}
                         style={{
                           width: `${cursor.cursorSize}px`,
                           height: `${cursor.cursorSize}px`,
@@ -267,7 +267,7 @@ export default function StudioPage() {
                     >
                       <img
                         src={previewUrl}
-                        alt="Dark preview"
+                        alt={tp("darkPreview")}
                         style={{
                           width: `${cursor.cursorSize}px`,
                           height: `${cursor.cursorSize}px`,
@@ -279,9 +279,9 @@ export default function StudioPage() {
                 </PanelSection>
               )}
 
-              <PanelSection title="Cursor">
+              <PanelSection title={tp("cursor")}>
                 <PanelRow
-                  label="Original"
+                  label={tp("original")}
                   value={`${cursor.width} × ${cursor.height}`}
                 />
                 {/* UX-5: 커서 크기 선택 */}
@@ -295,7 +295,7 @@ export default function StudioPage() {
                   }}
                 >
                   <span style={{ color: "var(--color-text-secondary)" }}>
-                    Output
+                    {tp("output")}
                   </span>
                   <div style={{ display: "flex", gap: "0.25rem" }}>
                     {([32, 48, 64] as CursorSize[]).map((s) => (
@@ -325,12 +325,12 @@ export default function StudioPage() {
               </PanelSection>
 
               {/* UX-6: 파일명 */}
-              <PanelSection title="Name">
+              <PanelSection title={tp("name")}>
                 <input
                   type="text"
                   value={cursor.cursorName}
                   onChange={(e) => setCursorName(e.target.value)}
-                  placeholder="cursor"
+                  placeholder={tp("namePlaceholder")}
                   style={{
                     width: "100%",
                     fontSize: "0.8125rem",
@@ -338,14 +338,13 @@ export default function StudioPage() {
                     backgroundColor: "var(--color-input-surface)",
                     border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
-                    outline: "none",
                   }}
                 />
               </PanelSection>
 
-              <PanelSection title="Hotspot">
+              <PanelSection title={tp("hotspot")}>
                 <PanelRow
-                  label="Position"
+                  label={tp("position")}
                   value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
                 />
                 <button
@@ -367,11 +366,11 @@ export default function StudioPage() {
                     (e.currentTarget.style.borderColor = "var(--color-border)")
                   }
                 >
-                  Reset to 0, 0
+                  {tp("resetHotspot")}
                 </button>
               </PanelSection>
 
-              <PanelSection title="Scale">
+              <PanelSection title={tp("scale")}>
                 <input
                   type="range"
                   min="0.25"
@@ -396,9 +395,9 @@ export default function StudioPage() {
                 </div>
               </PanelSection>
 
-              <PanelSection title="Position">
-                <PanelRow label="Offset X" value={`${cursor.offsetX}`} />
-                <PanelRow label="Offset Y" value={`${cursor.offsetY}`} />
+              <PanelSection title={tp("position")}>
+                <PanelRow label={tp("offsetX")} value={`${cursor.offsetX}`} />
+                <PanelRow label={tp("offsetY")} value={`${cursor.offsetY}`} />
                 <button
                   onClick={() => setOffset(0, 0)}
                   style={{
@@ -418,7 +417,7 @@ export default function StudioPage() {
                     (e.currentTarget.style.borderColor = "var(--color-border)")
                   }
                 >
-                  Center
+                  {tp("center")}
                 </button>
               </PanelSection>
 
@@ -439,7 +438,7 @@ export default function StudioPage() {
                 fontSize: "0.8125rem",
               }}
             >
-              Upload an image to start
+              {t("uploadToStart")}
             </div>
           )}
         </aside>
@@ -472,14 +471,14 @@ export default function StudioPage() {
               fontSize: "0.8125rem",
             }}
           >
-            Simulation preview
+            {t("simulationPreview")}
           </div>
         )}
       </footer>
 
       <SettingsBar />
       <GuideModal open={showGuide} onClose={closeGuide} />
-    </div>
+    </MobileGuard>
   );
 }
 
@@ -497,10 +496,11 @@ function ToolButton({
   return (
     <button
       title={shortcut ? `${label} (${shortcut})` : label}
+      aria-label={shortcut ? `${label} (${shortcut})` : label}
       onClick={onClick}
       style={{
-        width: "2.5rem",
-        height: "2.5rem",
+        width: "2.75rem",
+        height: "2.75rem",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

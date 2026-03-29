@@ -1,11 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface GuideModalProps {
   open: boolean;
   onClose: () => void;
 }
 
 export default function GuideModal({ open, onClose }: GuideModalProps) {
+  const t = useTranslations("guide");
+
   if (!open) return null;
 
   return (
@@ -39,6 +43,21 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           gap: "1.5rem",
         }}
       >
+        {/* Success badge */}
+        <div
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            color: "var(--color-success)",
+            padding: "0.25rem 0.625rem",
+            backgroundColor: "rgba(78, 154, 107, 0.1)",
+            border: "1px solid rgba(78, 154, 107, 0.2)",
+            alignSelf: "flex-start",
+          }}
+        >
+          {t("downloaded")}
+        </div>
+
         {/* Header */}
         <div
           style={{
@@ -54,11 +73,11 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
               color: "var(--color-text-primary)",
             }}
           >
-            Apply your cursor
+            {t("title")}
           </h2>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("close")}
             style={{
               background: "none",
               border: "none",
@@ -80,13 +99,10 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
             gap: "1rem",
           }}
         >
-          <Step number={1} text="Unzip the downloaded file" />
-          <Step number={2} text='Right-click install.inf → "Install"' />
-          <Step
-            number={3}
-            text='Open Settings → Mouse → "Additional mouse settings" → Pointers tab'
-          />
-          <Step number={4} text='Select "Pointint" from the Scheme dropdown → OK' />
+          <Step number={1} text={t("step1")} />
+          <Step number={2} text={t("step2")} />
+          <Step number={3} text={t("step3")} />
+          <Step number={4} text={t("step4")} />
         </div>
 
         {/* Divider */}
@@ -105,11 +121,11 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
             lineHeight: 1.6,
           }}
         >
-          To restore default cursor, right-click{" "}
+          {t("restore")}{" "}
           <span style={{ color: "var(--color-text-secondary)" }}>
-            restore-default.inf
+            {t("restoreFile")}
           </span>{" "}
-          → &quot;Install&quot;
+          → {t("restoreAction")}
         </p>
 
         {/* Close button */}
@@ -133,7 +149,7 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
             (e.currentTarget.style.backgroundColor = "var(--color-accent)")
           }
         >
-          Got it
+          {t("gotIt")}
         </button>
       </div>
     </>

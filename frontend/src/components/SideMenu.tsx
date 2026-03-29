@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export default function SideMenu() {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("nav");
 
   return (
     <>
       {/* Hamburger Button */}
       <button
         onClick={() => setOpen(true)}
-        aria-label="Open menu"
+        aria-label={t("openMenu")}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -75,7 +77,7 @@ export default function SideMenu() {
           borderRight: "1px solid var(--color-border)",
           zIndex: 100,
           transform: open ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.25s ease",
+          transition: open ? "transform 0.25s ease-out" : "transform 0.2s ease-in",
           display: "flex",
           flexDirection: "column",
         }}
@@ -106,7 +108,7 @@ export default function SideMenu() {
           </Link>
           <button
             onClick={() => setOpen(false)}
-            aria-label="Close menu"
+            aria-label={t("closeMenu")}
             style={{
               background: "none",
               border: "none",
@@ -129,10 +131,10 @@ export default function SideMenu() {
             flex: 1,
           }}
         >
-          <MenuItem href="/" label="Home" onClick={() => setOpen(false)} />
+          <MenuItem href="/" label={t("home")} onClick={() => setOpen(false)} />
           <MenuItem
             href="/studio"
-            label="Studio"
+            label={t("studio")}
             active
             onClick={() => setOpen(false)}
           />
@@ -145,9 +147,9 @@ export default function SideMenu() {
             }}
           />
 
-          <MenuLabel>Coming soon</MenuLabel>
-          <MenuItem href="#" label="Gallery" disabled />
-          <MenuItem href="#" label="Guide" disabled />
+          <MenuLabel>{t("comingSoon")}</MenuLabel>
+          <MenuItem href="#" label={t("gallery")} disabled />
+          <MenuItem href="#" label={t("guide")} disabled />
         </nav>
 
         {/* Menu Footer */}
