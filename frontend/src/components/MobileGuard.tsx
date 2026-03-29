@@ -7,7 +7,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
     <>
       {/* 모바일에서만 보이는 안내 */}
       <div
-        className="block md:hidden"
+        className="block lg:hidden"
         style={{
           position: "fixed",
           inset: 0,
@@ -57,7 +57,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
       </div>
 
       {/* 데스크톱에서만 보이는 스튜디오 */}
-      <div className="hidden md:flex" style={{ flexDirection: "column", height: "100vh" }}>
+      <div className="hidden lg:flex" style={{ flexDirection: "column", height: "100vh" }}>
         {children}
       </div>
     </>
