@@ -97,6 +97,7 @@ Phase 5: Marketplace + Moniterior
 | P1-GUIDE-01 | 적용 가이드 화면 (다운로드 직후 표시) | todo | P0 |
 | P1-LANDING-01 | 랜딩 페이지 ("Your Point, Your Tint.") | todo | P0 |
 | P1-SHOWCASE-01 | 커서 쇼케이스 카드 이미지 자동 생성 (소셜 공유용) | todo | P1 |
+| P1-ANALYTICS-01 | GA4 + Microsoft Clarity 연동 (단계별 이벤트 추적) | todo | P0 |
 | P1-DEFENSE-01 | 파일 크기/해상도 제한 (기본 validation) | todo | P1 |
 
 ### Phase 1 Gate — Phase 1.5 진입 조건
@@ -152,19 +153,23 @@ Phase 5: Marketplace + Moniterior
 
 ### 태스크
 
+> **17종 자동 변형은 Phase 2에서 Member 무료.** Tint 경제는 Phase 3에서 시작하므로, Phase 2에서는 과금 없이 기능 가치만 검증한다. Phase 3 이후 17종 고급 옵션(AI 기반 변형 등)을 Tint로 게이팅할 수 있다.
+
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P2-AUTH-01 | Supabase Auth 연동 (이메일 + 소셜) | todo | P0 |
-| P2-DB-01 | Supabase 스키마 설계 (유저, 프로젝트) | todo | P0 |
+| P2-AUTH-01 | Supabase Auth 연동 (Google + GitHub OAuth, 이메일 없음) | todo | P0 |
+| P2-DB-01 | Supabase 스키마 설계 (유저, 프로젝트, Tint 지갑 컬럼 예비) | todo | P0 |
 | P2-STORAGE-01 | 원본 이미지 + 결과물 저장 | todo | P0 |
 | P2-PROJECT-01 | 프로젝트 저장 / 목록 / 재수정 UI | todo | P0 |
-| P2-17ROLE-01 | 17종 자동 변형 엔진 (규칙 기반) | todo | P0 |
+| P2-17ROLE-DESIGN | 17종 변형 규칙 스펙 작성 (Normal→Text/Link/Working 등 변환 로직) | todo | P0 |
+| P2-17ROLE-01 | 17종 자동 변형 엔진 (규칙 기반, Member 무료) | todo | P0 |
 | P2-17ROLE-02 | 17종 개별 확인/수정 UI | todo | P0 |
 | P2-17ROLE-03 | 17종 세트 다운로드 + .inf 포함 zip | todo | P0 |
+| P2-CONVERT-01 | Guest→Member 전환 프롬프트 UI (저장/17종 시도 시 가입 유도) | todo | P0 |
 | P2-GALLERY-01 | 커서 갤러리 (공개 쇼케이스) | todo | P0 |
-| P2-TINT-PREP-01 | 일일 출석 +50 Tint 적립 시스템 구현 | todo | P1 |
+| P2-MODERATION-01 | 갤러리 기본 신고 + 관리자 검토 시스템 | todo | P0 |
 | P2-TERMS-01 | 기본 약관 + 면책 조항 작성 | todo | P0 |
-| P2-METRICS-01 | Guest→Member 전환율 추적 | todo | P1 |
+| P2-METRICS-01 | Guest→Member 전환율 추적 (GA4 퍼널) | todo | P0 |
 
 ### Phase 2 Gate — Phase 3 진입 조건
 
@@ -187,15 +192,15 @@ Phase 5: Marketplace + Moniterior
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P3-AI-EDGE-01 | AI 가장자리 보정 (200 Tint) | todo | P0 |
-| P3-AI-CROP-01 | AI 자동 크롭 (200 Tint) | todo | P0 |
-| P3-AI-BG-01 | AI 배경 제거 고도화 (200 Tint) | todo | P0 |
-| P3-AI-READ-01 | AI 가독성 개선 / 실루엣 정리 (200 Tint) | todo | P1 |
+| P3-AI-EDGE-01 | AI 가장자리 보정 (500 Tint) | todo | P0 |
+| P3-AI-CROP-01 | AI 자동 크롭 (500 Tint) | todo | P0 |
+| P3-AI-BG-01 | AI 배경 제거 고도화 (500 Tint) | todo | P0 |
+| P3-AI-READ-01 | AI 가독성 개선 / 실루엣 정리 (500 Tint) | todo | P1 |
 | P3-HOTSPOT-02 | Hotspot AI 추천 고도화 | todo | P1 |
-| P3-TINT-01 | Tint 팩 결제 연동 (₩2,900~₩29,900) | todo | P0 |
+| P3-TINT-01 | Tint 팩 결제 연동 (₩4,900~₩39,900) | todo | P0 |
 | P3-TINT-02 | Tint 지갑 + 소모 시스템 구현 | todo | P0 |
 | P3-TINT-03 | 출석 +50 / 제작 +50 / 갤러리 +200 / 챌린지 +500 보상 시스템 | todo | P0 |
-| P3-HEALTH-02 | 건강 체크에 AI 기반 권장 사항 연결 ("윤곽선 추가 권장 → AI 보정 200 Tint") | todo | P1 |
+| P3-HEALTH-02 | 건강 체크에 AI 기반 권장 사항 연결 ("윤곽선 추가 권장 → AI 보정 500 Tint") | todo | P1 |
 | P3-PAY-KR-01 | 한국 결제 연동 (토스페이먼츠) | todo | P0 |
 | P3-METRICS-01 | Member→Tint 구매 전환율 추적 | todo | P0 |
 
@@ -219,12 +224,13 @@ Phase 5: Marketplace + Moniterior
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P4-GEN-TEXT-01 | 텍스트 → 커서 생성 (800 Tint) | todo | P0 |
-| P4-GEN-IMG-01 | 이미지 → 커서 생성 (500 Tint) | todo | P0 |
+| P4-MODEL-01 | AI 생성 모델 선택 + 비용 측정 | todo | P0 |
+| P4-PRICING-01 | AI 생성 Tint 가격 확정 (모델 비용 기반) | todo | P0 |
+| P4-GEN-TEXT-01 | 텍스트 → 커서 생성 (가격 TBD) | todo | P0 |
+| P4-GEN-IMG-01 | 이미지 → 커서 생성 (가격 TBD) | todo | P0 |
 | P4-GEN-MIX-01 | 참고 이미지 + 텍스트 → 커서 생성 | todo | P1 |
-| P4-GEN-VAR-01 | 3종 변형안 자동 추천 (800 Tint) | todo | P0 |
+| P4-GEN-VAR-01 | 3종/17종 변형안 자동 추천 (가격 TBD) | todo | P0 |
 | P4-GEN-EDIT-01 | 생성 결과 → 편집기 연결 | todo | P0 |
-| P4-HIRES-01 | HiDPI 멀티사이즈 출력 (64/128px, 300 Tint) | todo | P1 |
 | P4-LEGAL-01 | AI 생성물 소유권 법률 검토 | todo | BLOCKING |
 | P4-METRICS-01 | AI 생성 사용률 + Tint 반복 구매율 추적 | todo | P1 |
 
@@ -304,8 +310,8 @@ Phase 5: Marketplace + Moniterior
 | Phase | 수익 모델 | 기대 |
 |---|---|---|
 | 1~2 | 없음 | 유저 확보, 제작 흐름 검증 |
-| 3 | Tint 팩 판매 | 첫 수익 (~손익분기) |
-| 4 | Tint 소모처 확대 | 소폭 흑자 |
+| 3 | Tint 팩 판매 (₩4,900~) | 첫 수익 (보수적 소폭 흑자) |
+| 4 | Tint 소모처 확대 | 흑자 확대 |
 | 5 | 마켓 수수료 + 콘텐츠 판매 | 본격 수익 |
 
 ## Related
