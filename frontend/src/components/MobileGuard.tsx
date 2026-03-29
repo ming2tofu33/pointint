@@ -5,22 +5,10 @@ import Link from "next/link";
 export default function MobileGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* 모바일에서만 보이는 안내 */}
+      {/* 1024px 미만: 모바일 안내 */}
       <div
-        className="block lg:hidden"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 200,
-          backgroundColor: "var(--color-bg-primary)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "1.5rem",
-          padding: "2rem",
-          textAlign: "center",
-        }}
+        className="flex lg:hidden fixed inset-0 z-[200] flex-col items-center justify-center gap-6 p-8 text-center"
+        style={{ backgroundColor: "var(--color-bg-primary)" }}
       >
         <span
           style={{
@@ -56,8 +44,8 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
         </Link>
       </div>
 
-      {/* 데스크톱에서만 보이는 스튜디오 */}
-      <div className="hidden lg:flex" style={{ flexDirection: "column", height: "100vh" }}>
+      {/* 1024px 이상: 스튜디오 */}
+      <div className="hidden lg:flex flex-col h-screen">
         {children}
       </div>
     </>
