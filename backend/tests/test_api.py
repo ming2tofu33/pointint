@@ -175,13 +175,13 @@ async def test_generate_cursor_inf_content(client: AsyncClient):
 
     install = zf.read("install.inf").decode("utf-8")
     assert "CHICAGO" in install
-    assert "Arrow" in install
-    assert "IBeam" in install
-    assert "Hand" in install
+    assert "Schemes" in install
+    assert "Pointint" in install
     assert "\r\n" in install
 
     restore = zf.read("restore-default.inf").decode("utf-8")
-    assert "Windows Default" in restore
+    assert "DelReg" in restore
+    assert "Pointint" in restore
     assert "\r\n" in restore
 
 

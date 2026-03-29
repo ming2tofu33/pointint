@@ -82,7 +82,11 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
         >
           <Step number={1} text="Unzip the downloaded file" />
           <Step number={2} text='Right-click install.inf → "Install"' />
-          <Step number={3} text="Done. Your cursor is now active." />
+          <Step
+            number={3}
+            text='Open Settings → Mouse → "Additional mouse settings" → Pointers tab'
+          />
+          <Step number={4} text='Select "Pointint" from the Scheme dropdown → OK' />
         </div>
 
         {/* Divider */}
