@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { setLandingFile } from "@/lib/landingStore";
-import ParticleCanvas from "./ParticleCanvas";
+import WaterCanvas from "./WaterCanvas";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
@@ -16,7 +16,6 @@ export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isDesktop, setIsDesktop] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -26,18 +25,6 @@ export default function Hero() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
   }, []);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (reducedMotion) return;
-      const rect = heroRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      setMousePos({ x, y });
-    },
-    [reducedMotion]
-  );
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -73,16 +60,9 @@ export default function Hero() {
     router.push("/studio?fromLanding=true");
   }
 
-  const glowStyle = reducedMotion
-    ? {}
-    : {
-        background: `radial-gradient(600px circle at ${mousePos.x}% ${mousePos.y}%, var(--color-accent-glow), transparent 70%)`,
-      };
-
   return (
     <section
       ref={heroRef}
-      onMouseMove={handleMouseMove}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -100,19 +80,8 @@ export default function Hero() {
         transition: "border-color 0.2s",
       }}
     >
-      {/* Glow background */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          ...glowStyle,
-          pointerEvents: "none",
-          transition: "opacity 0.3s",
-        }}
-      />
-
-      {/* Particles */}
-      {isDesktop && !reducedMotion && <ParticleCanvas />}
+      {/* Water surface */}
+      {!reducedMotion && <WaterCanvas />}
 
       {/* Content */}
       <div
