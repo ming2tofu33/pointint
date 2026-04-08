@@ -1,35 +1,52 @@
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Pointint — Your Point, Your Tint.",
-  description:
-    "Turn your image into a custom Windows cursor. The easiest way to make your own cursor.",
-  openGraph: {
-    title: "Pointint — Your Point, Your Tint.",
-    description:
-      "Turn your image into a custom Windows cursor. The easiest way to make your own cursor.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Pointint — Your Point, Your Tint.",
-    description:
-      "Turn your image into a custom Windows cursor. The easiest way to make your own cursor.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: t("title"),
+    description: t("description"),
+    metadataBase: new URL("https://pointtint.com"),
+    alternates: {
+      canonical: "https://pointtint.com",
+    },
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      type: "website",
+      url: "https://pointtint.com",
+      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: ["/og-image.png"],
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" data-theme="dark">
+    <html lang={locale} data-theme="dark">
       <head>
         <meta name="theme-color" content="#080C18" />
       </head>
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { getLandingFile, clearLandingFile } from "@/lib/landingStore";
 import CursorCanvas from "@/components/CursorCanvas";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
@@ -41,6 +43,19 @@ export default function StudioPage() {
   const [activeTool, setActiveTool] = useState<Tool>("move");
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // fromLanding: 랜딩에서 드롭한 파일 자동 로드
+  useEffect(() => {
+    if (searchParams.get("fromLanding") !== "true") return;
+    const file = getLandingFile();
+    if (file) {
+      selectFile(file);
+      clearLandingFile();
+    }
+    router.replace("/studio");
+  }, [searchParams, selectFile, router]);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
