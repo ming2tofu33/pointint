@@ -15,64 +15,77 @@ const FRAGMENT_SHADER = `
   uniform vec2 u_resolution;
   uniform float u_time;
   uniform vec2 u_mouse;
-  uniform vec3 u_accent;
 
   void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution;
     vec2 p = (gl_FragCoord.xy - u_resolution * 0.5) / u_resolution.y;
 
-    // Perspective distortion — compress toward top for depth
+    // Perspective — compress toward top for depth
     float perspective = 0.5 + uv.y * 0.5;
     p.x /= perspective;
 
-    // Base water waves — multiple sine layers
+    // Base water waves
     float wave = 0.0;
     wave += sin(p.x * 6.0 + u_time * 0.4) * 0.15;
     wave += sin(p.x * 10.0 - u_time * 0.6 + p.y * 3.0) * 0.08;
     wave += sin(p.y * 8.0 + u_time * 0.3) * 0.1;
     wave += sin((p.x + p.y) * 12.0 + u_time * 0.5) * 0.05;
 
-    // Mouse ripple — distance-based wave from cursor
-    vec2 mouseNorm = u_mouse / u_resolution;
+    // Mouse ripple
     vec2 mouseP = (u_mouse - u_resolution * 0.5) / u_resolution.y;
     float dist = length(p - mouseP);
-    float ripple = sin(dist * 30.0 - u_time * 3.0) * 0.12 * smoothstep(0.6, 0.0, dist);
+    float ripple = sin(dist * 25.0 - u_time * 4.0) * 0.2 * smoothstep(0.8, 0.0, dist);
     wave += ripple;
 
-    // Color: dark base + accent highlights on wave peaks
-    float brightness = wave * 0.5 + 0.5;
-    vec3 darkBase = vec3(0.03, 0.045, 0.09); // matches --color-bg-primary
-    vec3 highlight = u_accent * brightness * brightness * 0.35;
+    // Color: deep ocean blue palette
+    vec3 deepBlue = vec3(0.02, 0.04, 0.12);
+    vec3 midBlue = vec3(0.05, 0.12, 0.28);
+    vec3 lightBlue = vec3(0.15, 0.3, 0.55);
 
-    // Subtle specular on wave crests
-    float specular = pow(max(wave, 0.0), 3.0) * 0.4;
-    vec3 specColor = u_accent * specular;
+    float brightness = wave * 0.5 + 0.5;
+    vec3 waterColor = mix(deepBlue, midBlue, brightness);
+
+    // Specular highlights on crests — lighter blue
+    float specular = pow(max(wave, 0.0), 3.0) * 0.6;
+    waterColor += lightBlue * specular;
+
+    // Mouse glow — subtle light circle around cursor
+    float mouseGlow = smoothstep(0.4, 0.0, dist) * 0.15;
+    waterColor += vec3(0.1, 0.2, 0.4) * mouseGlow;
 
     // Depth fade — darker at top (far), brighter at bottom (near)
-    float depthFade = mix(0.3, 1.0, uv.y);
-
-    vec3 color = darkBase + (highlight + specColor) * depthFade;
+    float depthFade = mix(0.4, 1.0, uv.y);
+    waterColor *= depthFade;
 
     // Vignette
-    float vignette = 1.0 - length((uv - 0.5) * 1.2);
+    float vignette = 1.0 - length((uv - 0.5) * 1.3);
     vignette = smoothstep(0.0, 0.7, vignette);
-    color *= vignette;
+    waterColor *= vignette;
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(waterColor, 1.0);
   }
 `;
 
-function hexToRgbNormalized(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return [r, g, b];
+interface WaterCanvasProps {
+  mouseX: number;
+  mouseY: number;
 }
 
-export default function WaterCanvas() {
+export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const rafRef = useRef<number>(0);
+
+  // Update mouse from parent
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    mouseRef.current = {
+      x: mouseX * dpr,
+      y: mouseY * dpr,
+    };
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -84,12 +97,7 @@ export default function WaterCanvas() {
     if (!canvas) return;
 
     const gl = canvas.getContext("webgl", { alpha: false });
-    if (!gl) return; // WebGL not supported — graceful fallback
-
-    // Read accent color
-    const computedStyle = getComputedStyle(document.documentElement);
-    const accentHex = computedStyle.getPropertyValue("--color-accent").trim() || "#E8496A";
-    const accentRgb = hexToRgbNormalized(accentHex);
+    if (!gl) return;
 
     // Compile shaders
     function createShader(type: number, source: string) {
@@ -122,9 +130,6 @@ export default function WaterCanvas() {
     const uResolution = gl.getUniformLocation(program, "u_resolution");
     const uTime = gl.getUniformLocation(program, "u_time");
     const uMouse = gl.getUniformLocation(program, "u_mouse");
-    const uAccent = gl.getUniformLocation(program, "u_accent");
-
-    gl.uniform3f(uAccent, accentRgb[0], accentRgb[1], accentRgb[2]);
 
     function resize() {
       if (!canvas) return;
@@ -133,7 +138,6 @@ export default function WaterCanvas() {
       canvas.height = canvas.offsetHeight * dpr;
       gl!.viewport(0, 0, canvas.width, canvas.height);
       gl!.uniform2f(uResolution, canvas.width, canvas.height);
-      // Set default mouse to center
       mouseRef.current = { x: canvas.width / 2, y: canvas.height / 2 };
     }
 
@@ -148,23 +152,12 @@ export default function WaterCanvas() {
       rafRef.current = requestAnimationFrame(animate);
     }
 
-    function handleMouseMove(e: MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio, 2);
-      mouseRef.current = {
-        x: (e.clientX - rect.left) * dpr,
-        y: (e.clientY - rect.top) * dpr,
-      };
-    }
-
     resize();
     window.addEventListener("resize", resize);
-    canvas.addEventListener("mousemove", handleMouseMove);
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);

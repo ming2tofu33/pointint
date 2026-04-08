@@ -18,6 +18,7 @@ export default function Hero() {
   const [error, setError] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsDesktop(window.matchMedia("(pointer: fine)").matches);
@@ -25,6 +26,15 @@ export default function Hero() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
   }, []);
+
+  function handleMouseMove(e: React.MouseEvent) {
+    const rect = heroRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -63,6 +73,7 @@ export default function Hero() {
   return (
     <section
       ref={heroRef}
+      onMouseMove={handleMouseMove}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -81,7 +92,9 @@ export default function Hero() {
       }}
     >
       {/* Water surface */}
-      {!reducedMotion && <WaterCanvas />}
+      {!reducedMotion && (
+        <WaterCanvas mouseX={mousePos.x} mouseY={mousePos.y} />
+      )}
 
       {/* Content */}
       <div
