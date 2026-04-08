@@ -100,5 +100,32 @@
     "pass": "Good",
     "warn": "Check",
     "fail": "Issue"
+  },
+  "landing": {
+    "logo": "poin+tint",
+    "tagline": "Your Point, Your Tint.",
+    "dropHint": "Drop an image to start",
+    "dropActive": "Drop to create your cursor",
+    "startCreating": "Start Creating",
+    "fileTooLarge": "File must be under 10MB",
+    "step1Title": "Upload",
+    "step1Sub": "PNG, JPG, or WebP — background removed automatically",
+    "step2Title": "Edit",
+    "step2Sub": "Position, resize, and set your hotspot. Preview at 32, 48, or 64px",
+    "step3Title": "Download",
+    "step3Sub": "Get your .cur file with one-click Windows installer",
+    "faq1Q": "How do I make a custom Windows cursor?",
+    "faq1A": "Upload an image to Pointint, edit the position and hotspot, simulate how it looks, and download a .cur file with a one-click installer.",
+    "faq2Q": "What file formats are supported?",
+    "faq2A": "PNG, JPG, and WebP. Pointint automatically removes the background and converts your image.",
+    "faq3Q": "Is it free to use?",
+    "faq3A": "Yes. Upload, edit, simulate, and download — all free, no account required.",
+    "faq4Q": "How do I apply the cursor to Windows?",
+    "faq4A": "Unzip the downloaded file, right-click install.inf, select \"Install\", then choose \"Pointint\" in Mouse Settings > Pointers.",
+    "faq5Q": "What is a hotspot?",
+    "faq5A": "The exact pixel where your click registers. Pointint lets you set it visually with a drag tool.",
+    "faq6Q": "Can I make animated cursors?",
+    "faq6A": "Animated cursor (.ani) support is coming soon.",
+    "footerTagline": "Your Point, Your Tint."
   }
 }

@@ -100,5 +100,32 @@
     "pass": "양호",
     "warn": "확인",
     "fail": "문제"
+  },
+  "landing": {
+    "logo": "poin+tint",
+    "tagline": "Your Point, Your Tint.",
+    "dropHint": "이미지를 드래그하여 시작하세요",
+    "dropActive": "놓으면 커서를 만들 수 있어요",
+    "startCreating": "시작하기",
+    "fileTooLarge": "파일은 10MB 이하여야 합니다",
+    "step1Title": "업로드",
+    "step1Sub": "PNG, JPG, WebP — 배경이 자동으로 제거됩니다",
+    "step2Title": "편집",
+    "step2Sub": "위치, 크기, 핫스팟을 설정하세요. 32, 48, 64px 미리보기",
+    "step3Title": "다운로드",
+    "step3Sub": ".cur 파일과 Windows 원클릭 설치 파일을 받으세요",
+    "faq1Q": "커서를 어떻게 만들 수 있나요?",
+    "faq1A": "Pointint에 이미지를 업로드하고, 위치와 핫스팟을 편집하고, 시뮬레이션으로 확인한 뒤 .cur 파일을 다운로드하세요.",
+    "faq2Q": "어떤 파일 형식을 지원하나요?",
+    "faq2A": "PNG, JPG, WebP를 지원합니다. 배경 제거와 변환은 자동으로 처리됩니다.",
+    "faq3Q": "무료인가요?",
+    "faq3A": "네. 업로드, 편집, 시뮬레이션, 다운로드 모두 무료이며 계정이 필요 없습니다.",
+    "faq4Q": "Windows에 어떻게 적용하나요?",
+    "faq4A": "다운로드한 파일의 압축을 풀고, install.inf를 우클릭하여 \"설치\"를 선택한 뒤, 마우스 설정 > 포인터에서 \"Pointint\"를 선택하세요.",
+    "faq5Q": "핫스팟이 뭔가요?",
+    "faq5A": "클릭이 실제로 인식되는 정확한 픽셀 위치입니다. Pointint에서 드래그로 시각적으로 설정할 수 있습니다.",
+    "faq6Q": "애니메이션 커서도 만들 수 있나요?",
+    "faq6A": "애니메이션 커서(.ani) 지원이 곧 추가될 예정입니다.",
+    "footerTagline": "Your Point, Your Tint."
   }
 }
