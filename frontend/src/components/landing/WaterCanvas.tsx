@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+const MAX_RIPPLES = 16;
+
 const VERTEX_SHADER = `
   attribute vec2 a_position;
   void main() {
@@ -9,51 +11,74 @@ const VERTEX_SHADER = `
   }
 `;
 
+// Ripple uniforms: each ripple has (x, y, birth_time, _pad)
 const FRAGMENT_SHADER = `
   precision mediump float;
 
   uniform vec2 u_resolution;
   uniform float u_time;
-  uniform vec2 u_mouse;
+  uniform vec3 u_baseColor;
+  uniform vec3 u_midColor;
+  uniform vec3 u_highlightColor;
+  uniform vec4 u_ripples[${MAX_RIPPLES}];
+  uniform int u_rippleCount;
 
   void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution;
     vec2 p = (gl_FragCoord.xy - u_resolution * 0.5) / u_resolution.y;
 
-    // Perspective — compress toward top for depth
+    // Perspective depth
     float perspective = 0.5 + uv.y * 0.5;
     p.x /= perspective;
 
-    // Base water waves
+    // Base water waves (ambient, always moving)
     float wave = 0.0;
-    wave += sin(p.x * 6.0 + u_time * 0.4) * 0.15;
-    wave += sin(p.x * 10.0 - u_time * 0.6 + p.y * 3.0) * 0.08;
-    wave += sin(p.y * 8.0 + u_time * 0.3) * 0.1;
-    wave += sin((p.x + p.y) * 12.0 + u_time * 0.5) * 0.05;
+    wave += sin(p.x * 5.0 + u_time * 0.3) * 0.12;
+    wave += sin(p.x * 9.0 - u_time * 0.5 + p.y * 2.5) * 0.06;
+    wave += sin(p.y * 7.0 + u_time * 0.25) * 0.08;
+    wave += sin((p.x + p.y) * 11.0 + u_time * 0.4) * 0.04;
 
-    // Mouse ripple
-    vec2 mouseP = (u_mouse - u_resolution * 0.5) / u_resolution.y;
-    float dist = length(p - mouseP);
-    float ripple = sin(dist * 25.0 - u_time * 4.0) * 0.2 * smoothstep(0.8, 0.0, dist);
-    wave += ripple;
+    // Ripples — each one expands outward and fades
+    for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+      if (i >= u_rippleCount) break;
 
-    // Color: deep ocean blue palette
-    vec3 deepBlue = vec3(0.02, 0.04, 0.12);
-    vec3 midBlue = vec3(0.05, 0.12, 0.28);
-    vec3 lightBlue = vec3(0.15, 0.3, 0.55);
+      vec2 ripplePos = (u_ripples[i].xy - u_resolution * 0.5) / u_resolution.y;
+      ripplePos.x /= perspective;
+      float birthTime = u_ripples[i].z;
+      float age = u_time - birthTime;
 
+      if (age < 0.0 || age > 3.0) continue;
+
+      float dist = length(p - ripplePos);
+
+      // Expanding ring radius
+      float ringRadius = age * 0.25;
+      float ringWidth = 0.04 + age * 0.02;
+
+      // Concentric rings (multiple)
+      float ring1 = smoothstep(ringWidth, 0.0, abs(dist - ringRadius));
+      float ring2 = smoothstep(ringWidth * 0.8, 0.0, abs(dist - ringRadius * 0.6)) * 0.6;
+      float ring3 = smoothstep(ringWidth * 0.6, 0.0, abs(dist - ringRadius * 0.35)) * 0.3;
+
+      // Fade over time
+      float fade = smoothstep(3.0, 0.5, age);
+
+      // Wave displacement
+      float rippleWave = (ring1 + ring2 + ring3) * fade * 0.25;
+      rippleWave *= sin(dist * 20.0 - age * 5.0) * 0.5 + 0.5;
+
+      wave += rippleWave;
+    }
+
+    // Color from theme
     float brightness = wave * 0.5 + 0.5;
-    vec3 waterColor = mix(deepBlue, midBlue, brightness);
+    vec3 waterColor = mix(u_baseColor, u_midColor, brightness);
 
-    // Specular highlights on crests — lighter blue
-    float specular = pow(max(wave, 0.0), 3.0) * 0.6;
-    waterColor += lightBlue * specular;
+    // Specular on crests
+    float specular = pow(max(wave, 0.0), 3.0) * 0.5;
+    waterColor += u_highlightColor * specular;
 
-    // Mouse glow — subtle light circle around cursor
-    float mouseGlow = smoothstep(0.4, 0.0, dist) * 0.15;
-    waterColor += vec3(0.1, 0.2, 0.4) * mouseGlow;
-
-    // Depth fade — darker at top (far), brighter at bottom (near)
+    // Depth fade
     float depthFade = mix(0.4, 1.0, uv.y);
     waterColor *= depthFade;
 
@@ -66,6 +91,12 @@ const FRAGMENT_SHADER = `
   }
 `;
 
+interface Ripple {
+  x: number;
+  y: number;
+  birthTime: number;
+}
+
 interface WaterCanvasProps {
   mouseX: number;
   mouseY: number;
@@ -73,18 +104,41 @@ interface WaterCanvasProps {
 
 export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0 });
+  const ripplesRef = useRef<Ripple[]>([]);
+  const lastRipplePosRef = useRef({ x: 0, y: 0 });
+  const startTimeRef = useRef(0);
   const rafRef = useRef<number>(0);
+  const glRef = useRef<{
+    gl: WebGLRenderingContext;
+    uTime: WebGLUniformLocation;
+    uRipples: WebGLUniformLocation;
+    uRippleCount: WebGLUniformLocation;
+    canvas: HTMLCanvasElement;
+  } | null>(null);
 
-  // Update mouse from parent
+  // Add ripples as mouse moves (every ~30px distance)
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!glRef.current) return;
+    const { canvas } = glRef.current;
     const dpr = Math.min(window.devicePixelRatio, 2);
-    mouseRef.current = {
-      x: mouseX * dpr,
-      y: mouseY * dpr,
-    };
+    const mx = mouseX * dpr;
+    const my = mouseY * dpr;
+
+    const dx = mx - lastRipplePosRef.current.x;
+    const dy = my - lastRipplePosRef.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > 30 * dpr) {
+      const now = (performance.now() - startTimeRef.current) / 1000;
+      ripplesRef.current.push({ x: mx, y: canvas.height - my, birthTime: now });
+
+      // Keep only recent ripples
+      if (ripplesRef.current.length > MAX_RIPPLES) {
+        ripplesRef.current.shift();
+      }
+
+      lastRipplePosRef.current = { x: mx, y: my };
+    }
   }, [mouseX, mouseY]);
 
   useEffect(() => {
@@ -99,7 +153,22 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     const gl = canvas.getContext("webgl", { alpha: false });
     if (!gl) return;
 
-    // Compile shaders
+    // Read theme colors
+    const cs = getComputedStyle(document.documentElement);
+    const bgHex = cs.getPropertyValue("--color-bg-primary").trim() || "#080C18";
+    const base = hexToRgb(bgHex);
+    // Water mid/highlight — slightly brighter/bluer than bg
+    const mid = [
+      Math.min(base[0] + 0.04, 1),
+      Math.min(base[1] + 0.08, 1),
+      Math.min(base[2] + 0.18, 1),
+    ];
+    const highlight = [
+      Math.min(base[0] + 0.1, 1),
+      Math.min(base[1] + 0.2, 1),
+      Math.min(base[2] + 0.4, 1),
+    ];
+
     function createShader(type: number, source: string) {
       const shader = gl!.createShader(type)!;
       gl!.shaderSource(shader, source);
@@ -116,7 +185,6 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     gl.linkProgram(program);
     gl.useProgram(program);
 
-    // Full-screen quad
     const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -126,10 +194,17 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     gl.enableVertexAttribArray(posLoc);
     gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-    // Uniforms
-    const uResolution = gl.getUniformLocation(program, "u_resolution");
-    const uTime = gl.getUniformLocation(program, "u_time");
-    const uMouse = gl.getUniformLocation(program, "u_mouse");
+    const uResolution = gl.getUniformLocation(program, "u_resolution")!;
+    const uTime = gl.getUniformLocation(program, "u_time")!;
+    const uBaseColor = gl.getUniformLocation(program, "u_baseColor")!;
+    const uMidColor = gl.getUniformLocation(program, "u_midColor")!;
+    const uHighlightColor = gl.getUniformLocation(program, "u_highlightColor")!;
+    const uRipples = gl.getUniformLocation(program, "u_ripples")!;
+    const uRippleCount = gl.getUniformLocation(program, "u_rippleCount")!;
+
+    gl.uniform3f(uBaseColor, base[0], base[1], base[2]);
+    gl.uniform3f(uMidColor, mid[0], mid[1], mid[2]);
+    gl.uniform3f(uHighlightColor, highlight[0], highlight[1], highlight[2]);
 
     function resize() {
       if (!canvas) return;
@@ -138,16 +213,34 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
       canvas.height = canvas.offsetHeight * dpr;
       gl!.viewport(0, 0, canvas.width, canvas.height);
       gl!.uniform2f(uResolution, canvas.width, canvas.height);
-      mouseRef.current = { x: canvas.width / 2, y: canvas.height / 2 };
     }
 
-    const startTime = performance.now();
+    startTimeRef.current = performance.now();
+
+    glRef.current = { gl, uTime, uRipples, uRippleCount, canvas };
 
     function animate() {
       if (!gl || !canvas) return;
-      const elapsed = (performance.now() - startTime) / 1000;
+      const elapsed = (performance.now() - startTimeRef.current) / 1000;
       gl.uniform1f(uTime, elapsed);
-      gl.uniform2f(uMouse, mouseRef.current.x, canvas.height - mouseRef.current.y);
+
+      // Upload ripple data
+      const ripples = ripplesRef.current;
+      const count = Math.min(ripples.length, MAX_RIPPLES);
+      gl.uniform1i(uRippleCount, count);
+
+      const rippleData = new Float32Array(MAX_RIPPLES * 4);
+      for (let i = 0; i < count; i++) {
+        rippleData[i * 4] = ripples[i].x;
+        rippleData[i * 4 + 1] = ripples[i].y;
+        rippleData[i * 4 + 2] = ripples[i].birthTime;
+        rippleData[i * 4 + 3] = 0;
+      }
+      gl.uniform4fv(uRipples, rippleData);
+
+      // Clean old ripples (older than 3 seconds)
+      ripplesRef.current = ripples.filter((r) => elapsed - r.birthTime < 3.0);
+
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       rafRef.current = requestAnimationFrame(animate);
     }
@@ -159,6 +252,7 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     return () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(rafRef.current);
+      glRef.current = null;
     };
   }, []);
 
@@ -174,4 +268,11 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
       }}
     />
   );
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return [r, g, b];
 }
