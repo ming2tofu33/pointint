@@ -51,31 +51,27 @@ const FRAGMENT_SHADER = `
 
       float dist = length(p - ripplePos);
 
-      // Expanding ring radius
-      float ringRadius = age * 0.25;
-      float ringWidth = 0.04 + age * 0.02;
-
-      // Concentric rings (multiple)
-      float ring1 = smoothstep(ringWidth, 0.0, abs(dist - ringRadius));
-      float ring2 = smoothstep(ringWidth * 0.8, 0.0, abs(dist - ringRadius * 0.6)) * 0.6;
-      float ring3 = smoothstep(ringWidth * 0.6, 0.0, abs(dist - ringRadius * 0.35)) * 0.3;
-
-      // Fade over time
-      float fade = smoothstep(3.0, 0.5, age);
-
-      // Wave displacement
-      float rippleWave = (ring1 + ring2 + ring3) * fade * 0.25;
-      rippleWave *= sin(dist * 20.0 - age * 5.0) * 0.5 + 0.5;
-
-      wave += rippleWave;
+      // Natural expanding ring physics
+      float ringRadius = age * 0.35; // Speed of the wavefront
+      
+      // Spatial envelope: intensity peaks exactly at the ringRadius
+      float envelope = exp(-abs(dist - ringRadius) * 18.0);
+      
+      // Temporal damping: fades naturally over 3 seconds
+      float temporalDamping = exp(-age * 1.5);
+      
+      // High-frequency ripple traveling alongside the wavefront
+      float rippleWave = sin((dist - ringRadius) * 80.0) * envelope;
+      
+      wave += rippleWave * temporalDamping * 0.35;
     }
 
     // Color from theme
     float brightness = wave * 0.5 + 0.5;
     vec3 waterColor = mix(u_baseColor, u_midColor, brightness);
 
-    // Specular on crests
-    float specular = pow(max(wave, 0.0), 3.0) * 0.5;
+    // Specular on crests (tighter and slightly sharper for water)
+    float specular = pow(max(wave * 1.2, 0.0), 5.0) * 0.7;
     waterColor += u_highlightColor * specular;
 
     // Depth fade
