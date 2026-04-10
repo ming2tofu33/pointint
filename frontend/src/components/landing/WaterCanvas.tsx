@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-const MAX_RIPPLES = 16;
+const MAX_RIPPLES = 64;
 
 const VERTEX_SHADER = `
   attribute vec2 a_position;
@@ -63,7 +63,8 @@ const FRAGMENT_SHADER = `
       // High-frequency ripple traveling alongside the wavefront
       float rippleWave = sin((dist - ringRadius) * 80.0) * envelope;
       
-      wave += rippleWave * temporalDamping * 0.35;
+      float intensity = u_ripples[i].w;
+      wave += rippleWave * temporalDamping * 0.35 * intensity;
     }
 
     // Color from theme
@@ -91,6 +92,7 @@ interface Ripple {
   x: number;
   y: number;
   birthTime: number;
+  intensity: number;
 }
 
 interface WaterCanvasProps {
@@ -101,7 +103,7 @@ interface WaterCanvasProps {
 export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ripplesRef = useRef<Ripple[]>([]);
-  const lastRipplePosRef = useRef({ x: 0, y: 0 });
+  const lastRipplePosRef = useRef({ x: 0, y: 0, time: 0 });
   const startTimeRef = useRef(0);
   const rafRef = useRef<number>(0);
   const glRef = useRef<{
@@ -112,7 +114,7 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     canvas: HTMLCanvasElement;
   } | null>(null);
 
-  // Add ripples as mouse moves (every ~30px distance)
+  // Add ripples as mouse moves (interpolated trails + velocity intensity)
   useEffect(() => {
     if (!glRef.current) return;
     const { canvas } = glRef.current;
@@ -120,20 +122,49 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     const mx = mouseX * dpr;
     const my = mouseY * dpr;
 
+    const now = (performance.now() - startTimeRef.current) / 1000;
+
+    // Initialize first position to prevent jumping
+    if (lastRipplePosRef.current.time === 0) {
+      lastRipplePosRef.current = { x: mx, y: my, time: now };
+      return;
+    }
+
     const dx = mx - lastRipplePosRef.current.x;
     const dy = my - lastRipplePosRef.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist > 30 * dpr) {
-      const now = (performance.now() - startTimeRef.current) / 1000;
-      ripplesRef.current.push({ x: mx, y: canvas.height - my, birthTime: now });
+    // Closer spacing for completely smooth trail
+    const MIN_DIST = 8 * dpr;
+
+    if (dist > MIN_DIST) {
+      const dt = Math.max(0.001, now - lastRipplePosRef.current.time);
+      const speed = dist / dt;
+
+      // Map speed to ripple height/intensity (e.g., slow move = 0.15, fast swipe = 1.5)
+      const intensity = Math.min(Math.max(speed * 0.0015, 0.15), 1.5);
+
+      // Interpolate the line to spawn dense ripples and avoid disjointed rings
+      const steps = Math.floor(dist / MIN_DIST);
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const interpX = lastRipplePosRef.current.x + dx * t;
+        const interpY = lastRipplePosRef.current.y + dy * t;
+
+        ripplesRef.current.push({
+          x: interpX,
+          y: canvas.height - interpY,
+          birthTime: now,
+          intensity
+        });
+      }
 
       // Keep only recent ripples
-      if (ripplesRef.current.length > MAX_RIPPLES) {
+      while (ripplesRef.current.length > MAX_RIPPLES) {
         ripplesRef.current.shift();
       }
 
-      lastRipplePosRef.current = { x: mx, y: my };
+      lastRipplePosRef.current = { x: mx, y: my, time: now };
     }
   }, [mouseX, mouseY]);
 
@@ -230,7 +261,7 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
         rippleData[i * 4] = ripples[i].x;
         rippleData[i * 4 + 1] = ripples[i].y;
         rippleData[i * 4 + 2] = ripples[i].birthTime;
-        rippleData[i * 4 + 3] = 0;
+        rippleData[i * 4 + 3] = ripples[i].intensity;
       }
       gl.uniform4fv(uRipples, rippleData);
 
