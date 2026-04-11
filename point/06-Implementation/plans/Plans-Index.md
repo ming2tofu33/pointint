@@ -45,3 +45,4 @@ aliases:
 
 새로운 계획 문서는 이 폴더 아래에 `YYYY-MM-DD-<topic>.md` 형식으로 작성한다.
 완료된 계획은 `point/90-Archive/plans-completed/`로 이동한다.
+- [[2026-04-11-studio-workflow-picker-cur-ani]] ??**CUR/ANI workflow picker entry (active/in review)**

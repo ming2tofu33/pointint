@@ -168,3 +168,8 @@ aliases:
 - [[Implementation-Plan]]
 - [[Phase-Flow]]
 - [[plans/2026-03-27-pointint-economy-design]]
+
+## Studio Workflow Picker Follow-up
+
+- Studio now enters through a CUR/ANI workflow picker before the CUR upload path.
+- ANI options are visible but disabled as Soon until real ANI inputs/export exist.
