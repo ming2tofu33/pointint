@@ -295,7 +295,14 @@ export function useStudio() {
     setError(null);
 
     try {
+      const requestVersion = renderVersionRef.current;
       const renderedAsset = await buildRenderedAsset(cursor);
+
+      if (renderVersionRef.current !== requestVersion) {
+        URL.revokeObjectURL(renderedAsset.url);
+        return;
+      }
+
       replaceRendered(renderedAsset);
 
       const curBlob = await generateCursor(
