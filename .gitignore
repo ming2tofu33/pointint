@@ -33,6 +33,7 @@ venv/
 *.swp
 *.swo
 *~
+.worktrees/
 
 # OS
 .DS_Store
