@@ -24,6 +24,7 @@ aliases:
 ## Current Goal
 
 - 이미 배포된 Phase 1 코어와 랜딩 결과를 문서 기준선에 맞게 고정한다.
+- 편집기 신뢰도 보강 작업(`P1-EDITOR-03`)을 `preview = export` 계약 기준으로 리뷰/마무리한다.
 - 다음 제품 작업은 `P1-SHOWCASE-01`을 우선으로 두고, 이어서 `P1-HOTSPOT-01`과 `P1-MOCKUP-01`을 연결한다.
 - Phase 1 게이트는 닫혔지만, Phase 1.5로 바로 넘어가기 전 acquisition/quality follow-up을 정리한다.
 
@@ -33,13 +34,15 @@ aliases:
 
 | Lane | Task | 상태 | 비고 |
 |---|---|---|---|
-| Now | `P1-SHOWCASE-01` | ready | 랜딩 이후 가장 직접적인 유입/공유 보강 작업 |
+| Now | `P1-EDITOR-03` | in_review | 편집기 프레이밍 선택 + `preview = export` 일치화. 근거: `680584c`, `0d25d98`, `9dd1637`, `ac4a98f`, `86097bc`, `16c2402` |
+| Next | `P1-SHOWCASE-01` | ready | 랜딩 이후 가장 직접적인 유입/공유 보강 작업 |
 | Next | `P1-HOTSPOT-01` | scoped | 다운로드 직전 망설임을 줄일 수 있는 편집기 보조 기능 |
 | Next | `P1-MOCKUP-01` | queued | 쇼케이스 비주얼 방향 확정 후 연결 |
 | Watch | `P1-ANALYTICS-01` | queued | 후속 유입/완료율 측정은 showcase 범위 확정 뒤 착수 |
 
 ## Next Session
 
+- `P1-EDITOR-03` 리뷰 코멘트를 반영하고 브라우저 상호작용 검증(비정사각형 입력 + contain/cover + hotspot 매핑)을 최종 확인한다
 - `P1-SHOWCASE-01` 범위를 확정한다: 카드 비율, 장면 스타일, 카피 페어링, 생성 방식
 - 쇼케이스를 정적 curated 카드로 먼저 갈지, 커서별 공유 자산 생성으로 먼저 갈지 결정한다
 - `P1-HOTSPOT-01` 규칙 기반 추천의 입력값, 실패 케이스, UI 노출 수준을 스코프한다
@@ -54,22 +57,22 @@ aliases:
 
 - `P1-LANDING-01` 완료: 랜딩 페이지, hero drop entry, how-it-works, FAQ, JSON-LD, i18n, sitemap, robots, OG 메타를 반영했다. 근거: `1a60df0`, `frontend/src/app/page.tsx`, `frontend/src/app/layout.tsx`, `frontend/src/app/sitemap.ts`
 - `P1-LANDING-02` 완료: 랜딩 hero를 particle 기반에서 water surface 기반으로 업그레이드하고 파동 튜닝을 반복했다. 근거: `834290f`, `836c7ec`, `832f8be`, `89e2b61`, `452249f`
+- `P1-EDITOR-03` 구현/테스트를 feature branch에서 완료하고 리뷰 단계로 올렸다(in review): 편집기 내 프레이밍 선택(전체 보이기/가득 채우기), pan/zoom 유지, 정사각형 preview-export 일치화, hotspot 매핑, backend 회귀 테스트 보강. 근거: `680584c`, `0d25d98`, `9dd1637`, `ac4a98f`, `86097bc`, `16c2402`
 - `.cur` 다운로드 패키지와 `.inf` 설치/원복 흐름을 완결했다
 - 적용 가이드, 모바일 가드, 접근성 개선, prefers-reduced-motion, 다국어 한/영 지원을 마쳤다
 
 ## Decision Follow-up
 
 - 2026-04-11: Pointint 문서 운영 체계를 `Idea Mine` + `0to1log` 패턴으로 재정비한다. `Current Doing`은 active only로 유지하고, sprint/plan/phase/decision 문서를 같은 세션에서 함께 sync한다. 상세 기록: [[10-Journal/QUICK-DECISIONS]]
+- 2026-04-11: 프레이밍 선택은 업로드 단계가 아니라 편집기에서 수행하고, `preview = export`를 제품 계약으로 고정한다. 원본 비교는 레퍼런스 뷰로만 유지한다. 상세 기록: [[10-Journal/QUICK-DECISIONS]]
 
 ## Document Follow-up
 
 | Document | 이번 세션 반영 내용 | 상태 |
 |---|---|---|
-| `ACTIVE_SPRINT.md` | 실제 배포 상태 기준으로 landing/gate/next work 재동기화 | synced |
-| `Implementation-Plan.md` | 문서 역할 분리 + follow-up 규칙 + stale/ghost 운영 규칙 추가 | synced |
-| `Phase-Flow.md` | 현재 단계와 다음 Phase 후보를 고수준 기준으로 재정리 | synced |
-| `plans/2026-03-27-implementation-phase-flow.md` | Phase 1 상세 태스크 및 게이트 상태를 실제 shipped 결과로 보정 | synced |
-| `10-Journal/QUICK-DECISIONS.md` | 운영 체계 재정비 결정 기록 | synced |
+| `ACTIVE_SPRINT.md` | `P1-EDITOR-03` 활성 스냅샷(in review)과 next queue를 재동기화 | synced |
+| `10-Journal/QUICK-DECISIONS.md` | 편집기 프레이밍 선택 + `preview = export` 계약을 append 기록 | synced |
+| `plans/2026-04-11-framing-preview-export-parity.md` | 구현/검증 근거 커밋과 맞는 기준 문서로 유지 | up-to-date |
 
 ---
 
@@ -91,6 +94,7 @@ aliases:
 | P1-UPLOAD-01 | 이미지 업로드 UI | ✅ done | 드래그앤드롭 + 배경 제거 선택 |
 | P1-EDITOR-01 | 캔버스 위치/크기 조정 | ✅ done | |
 | P1-EDITOR-02 | Hotspot 드래그 지정 | ✅ done | |
+| P1-EDITOR-03 | 프레이밍 선택 + preview/export 일치화 | 🟡 in_review | 편집기 내 `전체 보이기`(contain)/`가득 채우기`(cover), pan/zoom 유지, 정사각형 WYSIWYG 계약 |
 | P1-HOTSPOT-01 | Hotspot 자동 추천 | ❌ todo | 규칙 기반 추천 로직 설계 필요 |
 | P1-SIM-01 | 시뮬레이션 3종 | ✅ done | 미리보기 + 인터랙티브 + Light/Dark |
 | P1-MOCKUP-01 | 실제 크기 데스크톱 목업 | ❌ todo | 쇼케이스 방향 확정 후 연결 |
@@ -131,6 +135,7 @@ aliases:
 
 | Task | 우선도 | 비고 |
 |---|---|---|
+| **P1-EDITOR-03** | P0 (in review) | 편집기 정사각형 프리뷰와 최종 export 일치 계약 마무리/리뷰 반영 |
 | **P1-SHOWCASE-01** | P0 | 랜딩 이후 공유/신뢰 보강용 쇼케이스 카드 시스템 |
 | P1-HOTSPOT-01 | P1 | Hotspot 자동 추천 (규칙 기반) |
 | P1-MOCKUP-01 | P1 | 데스크톱 목업 |
@@ -152,13 +157,15 @@ aliases:
 ## Transition Note
 
 - Phase 1 게이트는 닫혔다.
-- 다음 선택지는 두 가지다: `P1-SHOWCASE-01`과 editor confidence follow-up을 마무리한 뒤 새 스프린트를 열거나, 지금 상태를 기준으로 `Phase 1.5` 계획을 시작한다.
-- 현재 기준 추천은 showcase/hotspot follow-up을 짧게 정리한 뒤 다음 스프린트 선언이다.
+- 현재 editor confidence follow-up(`P1-EDITOR-03`)은 feature branch에서 구현/검증 완료 후 리뷰 단계다. main 반영 전까지는 active snapshot으로 관리한다.
+- 다음 선택지는 두 가지다: `P1-EDITOR-03` 리뷰를 닫고 `P1-SHOWCASE-01`까지 연결한 뒤 새 스프린트를 열거나, 지금 상태를 기준으로 `Phase 1.5` 계획을 시작한다.
+- 현재 기준 추천은 `P1-EDITOR-03` 리뷰를 먼저 닫고 showcase/hotspot follow-up을 짧게 정리한 뒤 다음 스프린트 선언이다.
 
 ## References
 
 - [[plans/2026-03-27-implementation-phase-flow]]
 - [[plans/2026-04-11-document-ops-refresh]]
+- [[plans/2026-04-11-framing-preview-export-parity]]
 - [[Implementation-Plan]]
 - [[Phase-Flow]]
 - [[plans/2026-03-27-pointint-economy-design]]

@@ -20,7 +20,7 @@ aliases:
 - [[06-Implementation/Phase-Flow]] ← **Phase 조감도 (머메이드 차트)**
 - [[2026-03-27-implementation-phase-flow]] ← **태스크 상세 (Task ID, Wave)**
 - [[2026-04-11-document-ops-refresh]] ← **문서 운영 체계 재정비**
-- [[2026-04-11-framing-preview-export-parity]] ← **정사각형 프레이밍 + preview/export 일치화**
+- [[2026-04-11-framing-preview-export-parity]] ← **정사각형 프레이밍 + preview/export 일치화 (active/in review)**
 - [[2026-03-27-pointint-product-direction-design]]
 - [[2026-03-27-pointint-strategy-detail]]
 - [[2026-03-27-docs-to-point-promotion-design]] ← **docs→point 승격 매핑**
@@ -39,7 +39,7 @@ aliases:
 - `2026-03-27-pointint-product-direction-design.md`: 방향 요약
 - `2026-03-27-pointint-strategy-detail.md`: 상세 전략
 - `2026-04-11-document-ops-refresh.md`: 문서 follow-up 운영 재정비
-- `2026-04-11-framing-preview-export-parity.md`: 정사각형 프레이밍과 최종 export 일치화 구현 계획
+- `2026-04-11-framing-preview-export-parity.md`: 정사각형 프레이밍과 최종 export 일치화 구현 계획 (현재 feature branch 리뷰 단계)
 - `2026-03-27-docs-to-point-promotion-design.md`: docs→point 승격 설계
 - `2026-03-27-pointint-economy-design.md`: Tint 경제 구조, 모순 검증, 수익 추정
 
