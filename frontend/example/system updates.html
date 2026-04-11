@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5b13ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#161022",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<title>Changelog | Studio</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">deployed_code</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Studio</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Features</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Showcase</a>
+<a class="text-sm font-medium text-primary" href="#">Changelog</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Pricing</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:block text-sm font-medium hover:text-primary transition-colors px-4 py-2">Log in</button>
+<button class="bg-primary text-white text-sm font-bold px-5 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                        Sign Up
+                    </button>
+</div>
+</div>
+</header>
+<main class="max-w-3xl mx-auto px-6 py-16 w-full">
+<!-- Header Section -->
+<div class="mb-16">
+<h2 class="text-5xl font-bold tracking-tight mb-4">What's New</h2>
+<p class="text-slate-600 dark:text-slate-400 text-lg max-w-xl">
+                    The latest updates, cursor drops, and system improvements from the Studio team.
+                </p>
+</div>
+<!-- Timeline Feed -->
+<div class="relative space-y-16">
+<!-- Vertical Line -->
+<div class="absolute left-4 top-2 bottom-0 w-px bg-slate-200 dark:border-slate-800"></div>
+<!-- Update Item 1 -->
+<div class="relative pl-12">
+<!-- Dot Indicator -->
+<div class="absolute left-[13px] top-1.5 size-2.5 rounded-full bg-primary ring-4 ring-background-light dark:ring-background-dark"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold uppercase tracking-widest text-primary">Oct 24, 2023</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary uppercase">New Feature</span>
+</div>
+<h3 class="text-2xl font-bold tracking-tight">Custom Cursor Collections</h3>
+<p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Introducing a curated set of high-performance cursor styles. Now you can swap between 12 unique motion-tracked designs or upload your own SVG assets for total brand alignment.
+                        </p>
+<div class="mt-2 grid grid-cols-2 gap-4">
+<div class="aspect-video rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-800 group">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Abstract colorful fluid liquid motion design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsVzy7PeWYiVonmNkcPsg1B36wF_Mdf2LYmTUxs1AUJCua1DtBEcG4PBHioR2kPTrQFLk1eMyW4uK7yvqvrCiUIRFoTKnonKGL2HyRXN39eRpUhwjTTvgLKBxVysSayxjLq7K-GU3zIfltAGin0KdZgSFvzzJSSBN8GyDnvQdQZIDkq6m466PBA15X3BncVQ-CopFAVIB3XARgqavrGJ39VqhMEeuJRjabgyZ_w2e5bFldthuJ3mIndwYIFQmuAUJgtZbEybY_ywTP"/>
+</div>
+<div class="aspect-video rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-800 group">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Minimalist geometric black and white pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoRaV9yxy-xbVbBEEwNkx2sWXCC2BR83KqaJ9CewUB0nSljbJ9x6fScVBFwXmZZT8wJN6XZPfhzpo40K8_DvRxKucxrAY7BjIeLjdGkh-A99nveMYyHeJwbMyIFuFE0NUYzV-nlEeNchjtgY39WrPXSI_26UBI_Ay9nAcc8_V2vxQ8wwXOf8hTYA_171Ae1mLXVMXfm2m0XLZSh7tCJakcLJV_i4c0bv1OYIlEJpk6Q-gWOch3U8cYAXI9z2ObA5D34MVXagFMcxBk"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Update Item 2 -->
+<div class="relative pl-12">
+<div class="absolute left-[13px] top-1.5 size-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-background-light dark:ring-background-dark"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold uppercase tracking-widest text-slate-500">Oct 12, 2023</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase">Performance</span>
+</div>
+<h3 class="text-2xl font-bold tracking-tight">Performance Optimization v2.1</h3>
+<p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            We've completely rewritten the rendering engine using Rust and WebAssembly. Expect up to 4x faster load times on mobile devices and significantly smoother transitions during heavy interactions.
+                        </p>
+<div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 flex items-center gap-4">
+<div class="size-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<div>
+<p class="text-sm font-bold">Lighthouse Scores</p>
+<p class="text-xs text-slate-500">Average performance increased from 82 to 98.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Update Item 3 -->
+<div class="relative pl-12">
+<div class="absolute left-[13px] top-1.5 size-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-background-light dark:ring-background-dark"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold uppercase tracking-widest text-slate-500">Sept 30, 2023</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase">Design</span>
+</div>
+<h3 class="text-2xl font-bold tracking-tight">New Minimalist Templates</h3>
+<p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Five new templates designed for portfolios and minimalist agencies. Focus on typography-heavy layouts and spacious white areas.
+                        </p>
+<div class="rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-800 aspect-[21/9]">
+<img class="w-full h-full object-cover" data-alt="Modern minimalist interior workspace layout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaP2RqwmY4mgR-th460RHXy_hlIS-k_3fVE6juTVy22p5A4DSs5ZkhbBUjgQHt5U_9zUBeGjOcfvAG5-Jx3TV7WGqpkLc0bkRqkHnJbNpoMVEUqH9UsjVqBBCDuSDM98CG92f-4RGyRv0LSantYPIibpqrw5ENv-A7nMbx51DcptTW4IGZLjaLs4GNpKBWx9MqjfEjGWNlz5Mg7aKqOdR0ac1JZEPQ9FzLzB6NnbGv0LA9USY1FbzncTGcT1ZOVpOsrlgazmkMZlws"/>
+</div>
+</div>
+</div>
+<!-- Update Item 4 -->
+<div class="relative pl-12">
+<div class="absolute left-[13px] top-1.5 size-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-background-light dark:ring-background-dark"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold uppercase tracking-widest text-slate-500">Sept 15, 2023</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase">System</span>
+</div>
+<h3 class="text-2xl font-bold tracking-tight">Workspace Customization</h3>
+<p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Personalize your workflow with the new workspace manager. Save custom layout presets, toggle persistent sidebars, and choose your favorite accent colors for the UI.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Load More -->
+<div class="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800 flex justify-center">
+<button class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-medium">
+                    View full archive
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 py-12">
+<div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 opacity-50">
+<span class="material-symbols-outlined">deployed_code</span>
+<span class="text-sm font-bold">Studio © 2023</span>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Twitter</a>
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Github</a>
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Terms</a>
+</div>
+<button class="text-xs bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-full font-bold">
+                    Subscribe to Updates
+                </button>
+</div>
+</footer>
+</div>
+</body></html>
