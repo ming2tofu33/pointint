@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { checkCursorHealth, HealthResult } from "@/lib/api";
 
 interface HealthCheckProps {
@@ -15,12 +16,6 @@ const STATUS_COLORS: Record<string, string> = {
   fail: "var(--color-error)",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  pass: "Good",
-  warn: "Check",
-  fail: "Issue",
-};
-
 export default function HealthCheck({
   imageBlob,
   hotspotX,
@@ -28,6 +23,7 @@ export default function HealthCheck({
 }: HealthCheckProps) {
   const [health, setHealth] = useState<HealthResult | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const t = useTranslations("health");
 
   useEffect(() => {
     if (!imageBlob) return;
@@ -46,6 +42,12 @@ export default function HealthCheck({
 
   if (!health) return null;
 
+  const statusLabels: Record<string, string> = {
+    pass: t("pass"),
+    warn: t("warn"),
+    fail: t("fail"),
+  };
+
   return (
     <div>
       <h3
@@ -58,13 +60,13 @@ export default function HealthCheck({
           marginBottom: "0.75rem",
         }}
       >
-        Health
+        {t("title")}
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-        <HealthRow label="Visibility" status={health.visibility} />
-        <HealthRow label="Hotspot" status={health.hotspot} />
-        <HealthRow label="Readability" status={health.readability} />
+        <HealthRow label={t("visibility")} status={health.visibility} statusLabels={statusLabels} />
+        <HealthRow label={t("hotspot")} status={health.hotspot} statusLabels={statusLabels} />
+        <HealthRow label={t("readability")} status={health.readability} statusLabels={statusLabels} />
       </div>
 
       {health.messages.length > 0 && (
@@ -94,7 +96,7 @@ export default function HealthCheck({
   );
 }
 
-function HealthRow({ label, status }: { label: string; status: string }) {
+function HealthRow({ label, status, statusLabels }: { label: string; status: string; statusLabels: Record<string, string> }) {
   return (
     <div
       style={{
@@ -112,7 +114,7 @@ function HealthRow({ label, status }: { label: string; status: string }) {
           color: STATUS_COLORS[status] || "var(--color-text-muted)",
         }}
       >
-        {STATUS_LABELS[status] || status}
+        {statusLabels[status] || status}
       </span>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 type Tool = "move" | "hotspot";
 
@@ -29,6 +30,7 @@ export default function CursorCanvas({
   onHotspotChange,
   activeTool,
 }: CursorCanvasProps) {
+  const t = useTranslations("studio");
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, startOffsetX: 0, startOffsetY: 0 });
@@ -109,7 +111,7 @@ export default function CursorCanvas({
       {/* Image */}
       <img
         src={imageUrl}
-        alt="Cursor preview"
+        alt={t("cursorPreview")}
         draggable={false}
         style={{
           position: "absolute",

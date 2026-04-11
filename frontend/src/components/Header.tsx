@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function Header() {
+  const t = useTranslations("nav");
+
   return (
     <header
       style={{
@@ -46,7 +49,7 @@ export default function Header() {
             (e.currentTarget.style.color = "var(--color-text-secondary)")
           }
         >
-          Studio
+          {t("studio")}
         </Link>
       </nav>
     </header>

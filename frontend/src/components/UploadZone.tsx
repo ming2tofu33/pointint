@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
 
 interface UploadZoneProps {
   onFile: (file: File) => void;
   processing: boolean;
-  /** "uploaded" 상태일 때 배경 제거 선택지 표시 */
   showChoice?: boolean;
   onRemoveBg?: () => void;
   onSkipBg?: () => void;
@@ -24,6 +24,7 @@ export default function UploadZone({
 }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("upload");
 
   const handleFile = useCallback(
     (file: File) => {
@@ -45,7 +46,6 @@ export default function UploadZone({
     if (file) handleFile(file);
   }
 
-  // 처리 중 스피너
   if (processing) {
     return (
       <div
@@ -71,13 +71,12 @@ export default function UploadZone({
             animation: "spin 0.8s linear infinite",
           }}
         />
-        <span>Removing background…</span>
+        <span>{t("removingBg")}</span>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
   }
 
-  // UX-1: 파일 선택 후 — 배경 제거 여부 선택
   if (showChoice && previewUrl) {
     return (
       <div
@@ -91,7 +90,7 @@ export default function UploadZone({
       >
         <img
           src={previewUrl}
-          alt="Preview"
+          alt={t("preview")}
           style={{
             width: "160px",
             height: "160px",
@@ -110,14 +109,14 @@ export default function UploadZone({
           }}
         >
           <ChoiceButton
-            label="Remove background"
-            sub="AI removes the background automatically"
+            label={t("removeBg")}
+            sub={t("removeBgSub")}
             onClick={onRemoveBg}
             accent
           />
           <ChoiceButton
-            label="Use as-is"
-            sub="Skip background removal"
+            label={t("useAsIs")}
+            sub={t("skipBgSub")}
             onClick={onSkipBg}
           />
         </div>
@@ -125,7 +124,6 @@ export default function UploadZone({
     );
   }
 
-  // 기본: 드래그앤드롭 업로드 존
   return (
     <div
       onClick={() => inputRef.current?.click()}
@@ -161,7 +159,7 @@ export default function UploadZone({
         +
       </div>
       <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-        Drop image or click to upload
+        {t("dropOrClick")}
       </span>
       <span
         style={{
@@ -170,7 +168,7 @@ export default function UploadZone({
           opacity: 0.6,
         }}
       >
-        PNG, JPG, WebP
+        {t("formats")}
       </span>
       <input
         ref={inputRef}

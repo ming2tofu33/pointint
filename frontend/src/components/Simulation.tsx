@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface SimulationProps {
   imageUrl: string;
@@ -12,6 +13,7 @@ type BgMode = "light" | "dark";
 
 export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: SimulationProps) {
   const [bgMode, setBgMode] = useState<BgMode>("dark");
+  const t = useTranslations("simulation");
 
   const bgColor = bgMode === "dark" ? "#1a1a1a" : "#f0f0f0";
   const textColor = bgMode === "dark" ? "#ccc" : "#333";
@@ -40,9 +42,9 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
           flexShrink: 0,
         }}
       >
-        <PreviewBox label="Normal" imageUrl={imageUrl} />
-        <PreviewBox label="Text" imageUrl={imageUrl} />
-        <PreviewBox label="Link" imageUrl={imageUrl} />
+        <PreviewBox label={t("normal")} imageUrl={imageUrl} />
+        <PreviewBox label={t("text")} imageUrl={imageUrl} />
+        <PreviewBox label={t("link")} imageUrl={imageUrl} />
       </div>
 
       {/* Right: 인터랙티브 존 */}
@@ -69,11 +71,13 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
             mode="light"
             active={bgMode === "light"}
             onClick={() => setBgMode("light")}
+            label={t("bgLight")}
           />
           <BgToggle
             mode="dark"
             active={bgMode === "dark"}
             onClick={() => setBgMode("dark")}
+            label={t("bgDark")}
           />
         </div>
 
@@ -100,7 +104,7 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
               userSelect: "none",
             }}
           >
-            Move your cursor around this area
+            {t("instruction")}
           </p>
 
           <p
@@ -111,9 +115,7 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
               lineHeight: 1.5,
             }}
           >
-            This is selectable text. Hover here to see your cursor as a text
-            selection cursor. Try selecting some of this text to see how it
-            feels in real use.
+            {t("sampleText")}
           </p>
 
           <p style={{ fontSize: "0.8125rem" }}>
@@ -127,7 +129,7 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
                 cursor: `url(${imageUrl}) ${hotspotX} ${hotspotY}, pointer`,
               }}
             >
-              This is a clickable link — hover to preview
+              {t("sampleLink")}
             </a>
           </p>
 
@@ -138,8 +140,8 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
               marginTop: "0.25rem",
             }}
           >
-            <SimButton label="Button" imageUrl={imageUrl} bgMode={bgMode} hotspotX={hotspotX} hotspotY={hotspotY} />
-            <SimButton label="Cancel" imageUrl={imageUrl} bgMode={bgMode} secondary hotspotX={hotspotX} hotspotY={hotspotY} />
+            <SimButton label={t("button")} imageUrl={imageUrl} bgMode={bgMode} hotspotX={hotspotX} hotspotY={hotspotY} />
+            <SimButton label={t("cancel")} imageUrl={imageUrl} bgMode={bgMode} secondary hotspotX={hotspotX} hotspotY={hotspotY} />
           </div>
         </div>
       </div>
@@ -203,15 +205,17 @@ function BgToggle({
   mode,
   active,
   onClick,
+  label,
 }: {
   mode: BgMode;
   active: boolean;
   onClick: () => void;
+  label: string;
 }) {
   return (
     <button
       onClick={onClick}
-      aria-label={`${mode} background`}
+      aria-label={label}
       style={{
         width: "1.25rem",
         height: "1.25rem",

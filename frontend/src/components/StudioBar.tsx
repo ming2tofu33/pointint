@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import SideMenu from "./SideMenu";
 
 interface StudioBarProps {
@@ -13,6 +14,8 @@ export default function StudioBar({
   downloading,
   canDownload,
 }: StudioBarProps) {
+  const t = useTranslations("studio");
+
   return (
     <header
       style={{
@@ -42,7 +45,7 @@ export default function StudioBar({
             color: "var(--color-text-primary)",
           }}
         >
-          Studio
+          {t("title")}
         </span>
       </div>
 
@@ -72,7 +75,7 @@ export default function StudioBar({
             e.currentTarget.style.backgroundColor = "var(--color-accent)";
         }}
       >
-        {downloading ? "Generating…" : "Download"}
+        {downloading ? t("generating") : t("download")}
       </button>
     </header>
   );
