@@ -386,11 +386,13 @@ export default function StudioPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
                   <FramingButton
                     label={tp("showFullImage")}
+                    description={tp("showFullImageSub")}
                     active={cursor.fitMode === "contain"}
                     onClick={() => setFitMode("contain")}
                   />
                   <FramingButton
                     label={tp("fillSquare")}
+                    description={tp("fillSquareSub")}
                     active={cursor.fitMode === "cover"}
                     onClick={() => setFitMode("cover")}
                   />
@@ -612,10 +614,12 @@ function PanelRow({ label, value }: { label: string; value: string }) {
 
 function FramingButton({
   label,
+  description,
   active,
   onClick,
 }: {
   label: string;
+  description: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -633,7 +637,17 @@ function FramingButton({
         cursor: "pointer",
       }}
     >
-      {label}
+      <div style={{ fontWeight: 600 }}>{label}</div>
+      <div
+        style={{
+          marginTop: "0.125rem",
+          fontSize: "0.6875rem",
+          color: "var(--color-text-muted)",
+          lineHeight: 1.35,
+        }}
+      >
+        {description}
+      </div>
     </button>
   );
 }

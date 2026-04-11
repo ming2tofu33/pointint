@@ -69,6 +69,7 @@ export function useStudio() {
       imageWidth: source.width,
       imageHeight: source.height,
       outputSize: source.cursorSize,
+      sourceViewportSize: EDITOR_VIEWPORT_SIZE,
       fitMode: source.fitMode,
       scale: source.scale,
       offsetX: source.offsetX,

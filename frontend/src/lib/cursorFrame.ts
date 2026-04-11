@@ -4,6 +4,7 @@ export const EDITOR_VIEWPORT_SIZE = 256;
 
 export interface FrameGeometryInput {
   viewportSize: number;
+  sourceViewportSize?: number;
   imageWidth: number;
   imageHeight: number;
   fitMode: FitMode;
@@ -33,6 +34,7 @@ export interface RasterizeSquarePngInput {
   imageWidth: number;
   imageHeight: number;
   outputSize: number;
+  sourceViewportSize?: number;
   fitMode: FitMode;
   scale: number;
   offsetX: number;
@@ -66,19 +68,26 @@ export function getBaseFitScale(
 
 export function getFrameGeometry(input: FrameGeometryInput): FrameGeometry {
   const safeViewport = toFinitePositive(input.viewportSize, 1);
+  const safeSourceViewport = toFinitePositive(
+    input.sourceViewportSize ?? safeViewport,
+    safeViewport
+  );
+  const viewportRatio = safeViewport / safeSourceViewport;
   const safeScale = toFinitePositive(input.scale, 1);
   const baseScale = getBaseFitScale(
     input.imageWidth,
     input.imageHeight,
-    safeViewport,
+    safeSourceViewport,
     input.fitMode
   );
-  const effectiveScale = baseScale * safeScale;
+  const effectiveScale = baseScale * safeScale * viewportRatio;
+  const scaledOffsetX = input.offsetX * viewportRatio;
+  const scaledOffsetY = input.offsetY * viewportRatio;
 
   const width = input.imageWidth * effectiveScale;
   const height = input.imageHeight * effectiveScale;
-  const x = (safeViewport - width) / 2 + input.offsetX;
-  const y = (safeViewport - height) / 2 + input.offsetY;
+  const x = (safeViewport - width) / 2 + scaledOffsetX;
+  const y = (safeViewport - height) / 2 + scaledOffsetY;
 
   return {
     x,
@@ -132,6 +141,7 @@ export async function rasterizeSquarePng(
 
   const geometry = getFrameGeometry({
     viewportSize: safeOutputSize,
+    sourceViewportSize: input.sourceViewportSize,
     imageWidth: input.imageWidth,
     imageHeight: input.imageHeight,
     fitMode: input.fitMode,
