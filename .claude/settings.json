@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /c/Users/amy -type d -iname *0to1*)",
       "Bash(find /c/Users/amy/.claude -type f \\\\\\(-name *.md -o -name *.json -o -name *.txt \\\\\\))",
-      "Bash(find /c/Users/amy/Desktop/0to1log/.claude -name *.md -type f)",
       "Skill(update-config)",
       "Skill(update-config:*)",
       "Bash(python -m json.tool)",
@@ -20,7 +18,6 @@
       "WebFetch(domain:docs.seaart.ai)",
       "Bash(mkdir -p frontend/src/app frontend/src/components frontend/src/lib frontend/src/i18n frontend/public)",
       "Bash(mkdir -p backend/app/api backend/app/services backend/app/core backend/tests)",
-      "Bash(find /c/Users/amy/Desktop/0to1log -type f \\\\\\(-iname *implementation* -o -iname *plan* \\\\\\))",
       "Bash(ssh -T git@github.com)",
       "Bash(python -m venv .venv)",
       "Bash(.venv/Scripts/activate)",
@@ -31,15 +28,11 @@
       "Bash(.venv/Scripts/python -c \"import supabase; print\\(''Supabase OK''\\)\")",
       "WebFetch(domain:www.etsy.com)",
       "WebFetch(domain:chrome-stats.com)",
-      "Bash(unzip -q \"/c/Users/amy/Desktop/0to1log/0to1-prompt-audit.skill\")",
-      "Bash(unzip -q \"/c/Users/amy/Desktop/0to1log/0to1-sprint-sync.skill\")",
       "Bash(vercel --version)",
       "Bash(railway --version)",
       "Bash(xargs ls:*)",
       "Bash(.venv/Scripts/python -c \":*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(find c:/Users/amy/Desktop/0to1log -type f \\\\\\(-name *.css -o -name *theme* -o -name *tailwind* -o -name *.json \\\\\\))",
-      "Bash(grep -r data-theme c:/Users/amy/Desktop/0to1log/frontend/src --include=*.ts --include=*.tsx --include=*.astro)",
       "Bash(.venv/Scripts/python -c \"import onnxruntime; print\\(''onnxruntime'', onnxruntime.__version__\\)\")",
       "Bash(.venv/Scripts/python -c \"from rembg import new_session; s = new_session\\(''birefnet-general''\\); print\\(''OK''\\)\")",
       "Bash(.venv/Scripts/python -c \"import fastapi; import rembg; import PIL; print\\(''fastapi:'', fastapi.__version__\\); print\\(''pillow: ok''\\); print\\(''rembg: ok''\\)\")",
@@ -64,10 +57,6 @@
       "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\nTime: %{time_total}s\" -X POST -F \"file=@/tmp/test_cursor.png;type=image/png\" https://pointint-production.up.railway.app/api/remove-background -o /tmp/result.png)",
       "Bash(curl -s -w \"\\\\nHTTP: %{http_code}, Time: %{time_total}s\" -X POST -F \"file=@/tmp/test_cursor.png;type=image/png\" https://pointint-production.up.railway.app/api/remove-background -o /dev/null)",
       "Bash(grep -E \"\\\\.\\(ts|js|json|mjs\\)$\")",
-      "Bash(find /c/Users/amy/Desktop/0to1log -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name globals.css \\\\\\))",
-      "Bash(find /c/Users/amy/Desktop/job/0to1log -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name globals.css \\\\\\))",
-      "Bash(find /c/Users/amy/Desktop/project-0to1log -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name globals.css \\\\\\))",
-      "Bash(find /c/Users/amy/Desktop/blog/x0to1log -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name globals.css \\\\\\))",
       "Bash(huggingface-cli --version)",
       "Bash(hf whoami:*)",
       "Bash(huggingface-cli whoami:*)",
@@ -76,7 +65,16 @@
       "Bash(python -c \"from huggingface_hub import HfApi; api = HfApi\\(\\); info = api.whoami\\(\\); print\\(f''User: {info[\"\"name\"\"]}''\\); print\\(f''Token role: {info[\"\"auth\"\"][\"\"accessToken\"\"][\"\"role\"\"]}''\\)\")",
       "Bash(python -c \":*)",
       "Bash(curl -s -w \"\\\\nHTTP: %{http_code}, Time: %{time_total}s\" -X POST -F \"file=@/tmp/test_cursor.png;type=image/png\" https://pointint-production.up.railway.app/api/remove-background -o /tmp/result_live.png)",
-      "Bash(python -c \"print\\(''hello''\\)\")"
+      "Bash(python -c \"print\\(''hello''\\)\")",
+      "Bash(.venv/Scripts/pytest tests/test_api.py -v --tb=short -k \"inf or zip\")",
+      "Bash(.venv/Scripts/pytest tests/test_api.py -v --tb=short -k \"cursor\")",
+      "Bash(grep -l \"use client\" \"c:/Users/amy/Desktop/pointint/frontend/src/components\"/*.tsx)",
+      "Bash(grep -L \"use client\" \"c:/Users/amy/Desktop/pointint/frontend/src/components\"/*.tsx)",
+      "Bash(python3 \"C:\\\\Users\\\\amy\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"cursor creation tool studio dark mode minimal creative\" --design-system -p \"Pointint\")",
+      "Bash(python \"C:\\\\Users\\\\amy\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"cursor creation tool studio dark mode minimal creative\" --design-system -p \"Pointint\")",
+      "Bash(python \"C:\\\\Users\\\\amy\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"accessibility animation loading\" --domain ux -n 15)",
+      "Bash(python \"C:\\\\Users\\\\amy\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"form input keyboard focus drag drop file upload\" --domain ux -n 10)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d.keys\\(\\)\\), indent=2\\)\\)\")"
     ]
   },
   "enabledPlugins": {

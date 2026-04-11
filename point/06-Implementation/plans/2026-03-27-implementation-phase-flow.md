@@ -13,8 +13,8 @@ aliases:
 # Implementation Phase Flow
 
 > **Status:** Active — 전체 구현 흐름의 메인 문서
-> **Last Updated:** 2026-03-27
-> **Current Phase:** Phase 1 — MVP Core (준비 중)
+> **Last Updated:** 2026-04-11
+> **Current Phase:** Phase 1 — MVP Core (게이트 클로즈, follow-up running)
 > **Economy:** [[2026-03-27-pointint-economy-design]]
 
 ## Phase Flow Overview
@@ -68,47 +68,48 @@ Phase 5: Marketplace + Moniterior
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P1-SETUP-01 | Next.js 프로젝트 초기화 + Vercel 연결 | todo | P0 |
-| P1-SETUP-02 | FastAPI 프로젝트 초기화 + Railway 배포 | todo | P0 |
-| P1-SETUP-03 | 프론트↔백엔드 API 통신 구조 확정 | todo | P0 |
-| P1-BG-01 | 자동 배경 제거 엔드포인트 (rembg 자체호스팅) | todo | P0 |
-| P1-CONVERT-01 | 파일 변환 (JPG/WebP → 투명 PNG) | todo | P0 |
-| P1-CUR-01 | .cur 바이너리 생성 로직 | todo | P0 |
+| P1-SETUP-01 | Next.js 프로젝트 초기화 + Vercel 연결 | done | P0 |
+| P1-SETUP-02 | FastAPI 프로젝트 초기화 + Railway 배포 | done | P0 |
+| P1-SETUP-03 | 프론트↔백엔드 API 통신 구조 확정 | done | P0 |
+| P1-BG-01 | 자동 배경 제거 엔드포인트 (rembg 자체호스팅) | done | P0 |
+| P1-CONVERT-01 | 파일 변환 (JPG/WebP → 투명 PNG) | done | P0 |
+| P1-CUR-01 | .cur 바이너리 생성 로직 | done | P0 |
 
 ### Wave 2: 편집기 + 시뮬레이션 + 품질 검증
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P1-UPLOAD-01 | 이미지 업로드 UI (PNG/JPG/WebP) | todo | P0 |
-| P1-EDITOR-01 | 정적 커서 편집기 — 캔버스, 위치/크기 조정 | todo | P0 |
-| P1-EDITOR-02 | Hotspot 드래그 지정 UI | todo | P0 |
+| P1-UPLOAD-01 | 이미지 업로드 UI (PNG/JPG/WebP) | done | P0 |
+| P1-EDITOR-01 | 정적 커서 편집기 — 캔버스, 위치/크기 조정 | done | P0 |
+| P1-EDITOR-02 | Hotspot 드래그 지정 UI | done | P0 |
 | P1-HOTSPOT-01 | Hotspot 자동 추천 (규칙 기반: 뾰족한 끝점 탐지) | todo | P1 |
-| P1-SIM-01 | 시뮬레이션 — 3종 미리보기 (Normal/Text/Link) | todo | P0 |
+| P1-SIM-01 | 시뮬레이션 — 3종 미리보기 (Normal/Text/Link) | done | P0 |
 | P1-MOCKUP-01 | 실제 크기 데스크톱 목업 (밝은/어두운 배경 위 32px) | todo | P1 |
-| P1-HEALTH-01 | 커서 건강 체크 (배경별 가시성, Hotspot 위치, 32px 가독성) | todo | P0 |
+| P1-HEALTH-01 | 커서 건강 체크 (배경별 가시성, Hotspot 위치, 32px 가독성) | done | P0 |
 
 ### Wave 3: 다운로드 + 적용 + 랜딩
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P1-DL-01 | .cur 다운로드 | todo | P0 |
-| P1-INF-01 | .inf 자동 설치 파일 생성 (원클릭 적용) | todo | P0 |
-| P1-RESTORE-01 | 기본 커서 원복 .inf 포함 (다운로드 zip에 동봉) | todo | P0 |
-| P1-GUIDE-01 | 적용 가이드 화면 (다운로드 직후 표시) | todo | P0 |
-| P1-LANDING-01 | 랜딩 페이지 ("Your Point, Your Tint.") | todo | P0 |
+| P1-DL-01 | .cur 다운로드 | done | P0 |
+| P1-INF-01 | .inf 자동 설치 파일 생성 (원클릭 적용) | done | P0 |
+| P1-RESTORE-01 | 기본 커서 원복 .inf 포함 (다운로드 zip에 동봉) | done | P0 |
+| P1-GUIDE-01 | 적용 가이드 화면 (다운로드 직후 표시) | done | P0 |
+| P1-LANDING-01 | 랜딩 페이지 ("Your Point, Your Tint.") | done | P0 |
 | P1-SHOWCASE-01 | 커서 쇼케이스 카드 이미지 자동 생성 (소셜 공유용) | todo | P1 |
 | P1-ANALYTICS-01 | GA4 + Microsoft Clarity 연동 (단계별 이벤트 추적) | todo | P0 |
-| P1-DEFENSE-01 | 파일 크기/해상도 제한 (기본 validation) | todo | P1 |
+| P1-DEFENSE-01 | 파일 크기/해상도 제한 (기본 validation) | done | P1 |
 
 ### Phase 1 Gate — Phase 1.5 진입 조건
 
 | # | 게이트 | 상태 | 기준 |
 |---|---|---|---|
-| 1 | .cur 제작 흐름 완결 | ⏳ | 업로드→편집→Hotspot→다운로드 끊김 없음 |
-| 2 | 시뮬레이션 동작 | ⏳ | 3종 미리보기 동작 |
-| 3 | 건강 체크 동작 | ⏳ | 다운로드 전 가시성/Hotspot 진단 표시 |
-| 4 | .inf 적용 동작 | ⏳ | 더블클릭으로 커서 적용 + 원복 동작 |
-| 5 | 배포 안정성 | ⏳ | Vercel + Railway 안정 운영 |
+| 1 | .cur 제작 흐름 완결 | ✅ | 업로드→편집→Hotspot→다운로드 끊김 없음 |
+| 2 | 시뮬레이션 동작 | ✅ | 3종 미리보기 동작 |
+| 3 | 건강 체크 동작 | ✅ | 다운로드 전 가시성/Hotspot 진단 표시 |
+| 4 | .inf 적용 동작 | ✅ | 더블클릭으로 커서 적용 + 원복 동작 |
+| 5 | 배포 안정성 | ✅ | Vercel + Railway 안정 운영 |
+| 6 | 랜딩 페이지 | ✅ | hero + FAQ + SEO/GEO + OG metadata 동작 |
 
 ### North Star Metric: **제작 완료율** (업로드 시작 → 다운로드 완료)
 

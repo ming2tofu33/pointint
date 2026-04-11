@@ -11,8 +11,10 @@
 
 1. 세션 시작 시 `point/00-INDEX.md`를 먼저 확인한다
 2. 이어서 `point/06-Implementation/ACTIVE_SPRINT.md`를 확인한다
+   - `Current Goal`, `Current Doing`, `Next Session`, `Blockers`를 먼저 본다
 3. 작업과 직접 관련된 plan, brand, business, research 노트만 읽고 진행한다
 4. 구현이나 문서 작업이 끝나면 관련 노트만 최소 범위로 업데이트한다
+5. 상태나 해석이 바뀌면 문서 follow-up을 같은 세션에서 끝낸다
 
 ## Planning Rules
 
@@ -22,6 +24,14 @@
 - `docs/plans/`는 외부 공유용 사본만 둔다. 내부 작업 기준은 항상 `point/`를 우선한다.
 - 활성 계획만 `point/06-Implementation/plans/`에 유지한다. 완료된 plan은 `point/90-Archive/plans-completed/`로 이동한다.
 - task를 done으로 표시할 때 근거(변경 내역, 결과 확인)를 간략히 남긴다.
+
+## Documentation Follow-up
+
+- `ACTIVE_SPRINT.md`는 지금 실제로 굴러가는 상태만 적는다. `Current Doing`은 active work만 추적한다.
+- Gate나 Phase 상태가 바뀌면 `ACTIVE_SPRINT.md`뿐 아니라 `point/06-Implementation/Phase-Flow.md`와 관련 phase flow 노트도 함께 본다.
+- 새 다단계 작업을 만들면 plan 노트, `Plans-Index.md`, `ACTIVE_SPRINT.md`를 연결한다.
+- 중요한 전략/구조/운영 결정은 `point/10-Journal/QUICK-DECISIONS.md`에 append-only로 기록한다.
+- 7일 이상 근거 갱신이 없는 active task는 `stale`, 14일 이상이면 `ghost` 후보로 본다.
 
 ## Point Rules
 
@@ -65,3 +75,13 @@
 
 - 이 파일에는 실행 규칙만 적는다
 - 제품 스펙, 비전, 전략 상세는 `point/` 또는 `docs/`의 문서를 갱신한다
+
+## Claude Code Skills
+
+- Claude Code 프로젝트 스킬의 기준 위치는 `.claude/skills/`이다
+- `/pointint-sprint start` = 현재 스프린트 상태 확인, 다음 unblocked 작업 추천
+- `/pointint-sprint end` = 세션 종료 시 `ACTIVE_SPRINT.md` 동기화
+- `/pointint-plan <topic>` = 새 구현 계획 문서 작성 또는 기존 계획 정리
+- `/pointint-decisions` = 주요 결정 사항을 `QUICK-DECISIONS.md`에 기록
+- `/pointint-architect` = point 구조/링크/배치 점검
+- `.agent/skills/`는 레거시/호환용 자산으로 두고, Claude Code 기준 문구는 `.claude/skills/`를 우선한다

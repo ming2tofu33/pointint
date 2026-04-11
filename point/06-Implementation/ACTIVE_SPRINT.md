@@ -8,46 +8,68 @@ aliases:
   - Current Sprint
 ---
 
-# ACTIVE SPRINT — Phase 1 MVP Core
+# ACTIVE SPRINT — Phase 1 MVP Core / Post-Gate Follow-up
 
 > **스프린트 기간:** 2026-03-27~진행 중
-> **마지막 업데이트:** 2026-03-29
-> **목표:** 정적 커서(.cur) 제작 흐름 완결 + 배포
+> **마지막 업데이트:** 2026-04-11
+> **상태:** Phase 1 게이트 클로즈 완료, 후속 작업 스프린트 유지 중
+> **목표:** 랜딩 이후 유입 표면 강화 + 스튜디오 신뢰도 보강
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
+> **운영 보강 계획:** [[plans/2026-04-11-document-ops-refresh]]
 > **North Star:** 제작 완료율 (업로드 시작 → 다운로드 완료)
 
 ---
 
 ## Current Goal
 
-- Phase 1 MVP의 마지막 미구현 항목인 `P1-LANDING-01`을 완료해서 랜딩 페이지 게이트를 닫는다.
-- 랜딩 방향이 정리되면 `P1-SHOWCASE-01`과 후속 시각 자산 작업으로 연결한다.
+- 이미 배포된 Phase 1 코어와 랜딩 결과를 문서 기준선에 맞게 고정한다.
+- 다음 제품 작업은 `P1-SHOWCASE-01`을 우선으로 두고, 이어서 `P1-HOTSPOT-01`과 `P1-MOCKUP-01`을 연결한다.
+- Phase 1 게이트는 닫혔지만, Phase 1.5로 바로 넘어가기 전 acquisition/quality follow-up을 정리한다.
 
 ## Current Doing
 
+> **운영 규칙:** 이 섹션은 active work만 추적한다. 완료된 작업은 `Recently Done`으로 이동하고, 7일 이상 근거가 없으면 `stale`, 14일 이상이면 `ghost` 후보로 본다.
+
 | Lane | Task | 상태 | 비고 |
 |---|---|---|---|
-| Now | `P1-LANDING-01` | ready | Phase 1 gate를 닫기 위한 최우선 작업 |
-| Next | `P1-SHOWCASE-01` | queued | 랜딩 카피/비주얼 방향 확정 후 착수 |
-| Later | `P1-HOTSPOT-01` | queued | 규칙 기반 추천 로직 설계 필요 |
+| Now | `P1-SHOWCASE-01` | ready | 랜딩 이후 가장 직접적인 유입/공유 보강 작업 |
+| Next | `P1-HOTSPOT-01` | scoped | 다운로드 직전 망설임을 줄일 수 있는 편집기 보조 기능 |
+| Next | `P1-MOCKUP-01` | queued | 쇼케이스 비주얼 방향 확정 후 연결 |
+| Watch | `P1-ANALYTICS-01` | queued | 후속 유입/완료율 측정은 showcase 범위 확정 뒤 착수 |
 
 ## Next Session
 
-- `P1-LANDING-01` 범위를 확정한다: hero, 핵심 가치 제안, 사용 흐름, FAQ, SEO/GEO 카피
-- 랜딩 페이지 구현과 메타데이터/공유 카드 요구사항을 함께 정리한다
-- 랜딩 방향 확정 후 `P1-SHOWCASE-01`의 이미지 스타일과 제작 범위를 결정한다
+- `P1-SHOWCASE-01` 범위를 확정한다: 카드 비율, 장면 스타일, 카피 페어링, 생성 방식
+- 쇼케이스를 정적 curated 카드로 먼저 갈지, 커서별 공유 자산 생성으로 먼저 갈지 결정한다
+- `P1-HOTSPOT-01` 규칙 기반 추천의 입력값, 실패 케이스, UI 노출 수준을 스코프한다
+- 필요 시 `P1-MOCKUP-01`을 쇼케이스와 같은 비주얼 시스템으로 묶는다
 
 ## Blockers
 
 - 기술적 blocker는 없음
-- 제품 결정 필요: 랜딩 톤앤매너, FAQ 범위, 쇼케이스 비주얼 스타일
+- 제품 결정 필요: 쇼케이스 비주얼 스타일, 데스크톱 목업 현실감 수준, hotspot 추천 휴리스틱 범위
 
 ## Recently Done
 
+- `P1-LANDING-01` 완료: 랜딩 페이지, hero drop entry, how-it-works, FAQ, JSON-LD, i18n, sitemap, robots, OG 메타를 반영했다. 근거: `1a60df0`, `frontend/src/app/page.tsx`, `frontend/src/app/layout.tsx`, `frontend/src/app/sitemap.ts`
+- `P1-LANDING-02` 완료: 랜딩 hero를 particle 기반에서 water surface 기반으로 업그레이드하고 파동 튜닝을 반복했다. 근거: `834290f`, `836c7ec`, `832f8be`, `89e2b61`, `452249f`
 - `.cur` 다운로드 패키지와 `.inf` 설치/원복 흐름을 완결했다
-- 적용 가이드 모달, 모바일 가드, 접근성 개선, 다국어 한/영 지원을 마쳤다
-- 배경 제거, 편집기, 시뮬레이션, 건강 체크를 포함한 핵심 제작 플로우를 배포했다
+- 적용 가이드, 모바일 가드, 접근성 개선, prefers-reduced-motion, 다국어 한/영 지원을 마쳤다
+
+## Decision Follow-up
+
+- 2026-04-11: Pointint 문서 운영 체계를 `Idea Mine` + `0to1log` 패턴으로 재정비한다. `Current Doing`은 active only로 유지하고, sprint/plan/phase/decision 문서를 같은 세션에서 함께 sync한다. 상세 기록: [[10-Journal/QUICK-DECISIONS]]
+
+## Document Follow-up
+
+| Document | 이번 세션 반영 내용 | 상태 |
+|---|---|---|
+| `ACTIVE_SPRINT.md` | 실제 배포 상태 기준으로 landing/gate/next work 재동기화 | synced |
+| `Implementation-Plan.md` | 문서 역할 분리 + follow-up 규칙 + stale/ghost 운영 규칙 추가 | synced |
+| `Phase-Flow.md` | 현재 단계와 다음 Phase 후보를 고수준 기준으로 재정리 | synced |
+| `plans/2026-03-27-implementation-phase-flow.md` | Phase 1 상세 태스크 및 게이트 상태를 실제 shipped 결과로 보정 | synced |
+| `10-Journal/QUICK-DECISIONS.md` | 운영 체계 재정비 결정 기록 | synced |
 
 ---
 
@@ -62,14 +84,16 @@ aliases:
 | P1-CONVERT-01 | 파일 변환 (JPG/WebP → PNG) | ✅ done | |
 | P1-CUR-01 | .cur 바이너리 생성 | ✅ done | BMP/DIB 형식 |
 
-## Wave 2: 편집기 + 시뮬레이션 + 품질 검증 ✅
+## Wave 2: 편집기 + 시뮬레이션 + 품질 검증
 
 | Task ID | 제목 | 상태 | 비고 |
 |---|---|---|---|
 | P1-UPLOAD-01 | 이미지 업로드 UI | ✅ done | 드래그앤드롭 + 배경 제거 선택 |
 | P1-EDITOR-01 | 캔버스 위치/크기 조정 | ✅ done | |
 | P1-EDITOR-02 | Hotspot 드래그 지정 | ✅ done | |
+| P1-HOTSPOT-01 | Hotspot 자동 추천 | ❌ todo | 규칙 기반 추천 로직 설계 필요 |
 | P1-SIM-01 | 시뮬레이션 3종 | ✅ done | 미리보기 + 인터랙티브 + Light/Dark |
+| P1-MOCKUP-01 | 실제 크기 데스크톱 목업 | ❌ todo | 쇼케이스 방향 확정 후 연결 |
 | P1-HEALTH-01 | 커서 건강 체크 | ✅ done | 가시성/Hotspot/가독성 |
 
 ## Wave 3: 다운로드 + 적용 + 랜딩
@@ -81,8 +105,10 @@ aliases:
 | P1-RESTORE-01 | 원복 .inf | ✅ done | |
 | P1-GUIDE-01 | 적용 가이드 모달 | ✅ done | 4단계 안내 + 다운로드 성공 배지 |
 | P1-DEFENSE-01 | 파일 크기/해상도 제한 | ✅ done | 16~4096px |
-| P1-LANDING-01 | 랜딩 페이지 + SEO/GEO | ❌ todo | **미구현** |
+| P1-LANDING-01 | 랜딩 페이지 + SEO/GEO | ✅ done | `1a60df0` |
+| P1-LANDING-02 | 랜딩 hero water surface 업그레이드 | ✅ done | `834290f` → `452249f` |
 | P1-SHOWCASE-01 | 쇼케이스 카드 이미지 | ❌ todo | |
+| P1-ANALYTICS-01 | 단계별 이벤트 추적 | ❌ todo | landing 이후 완료율 추적 보강 |
 
 ## UX 개선 ✅
 
@@ -105,11 +131,10 @@ aliases:
 
 | Task | 우선도 | 비고 |
 |---|---|---|
-| **P1-LANDING-01** | P0 | 랜딩 페이지 + SEO/GEO + FAQ (CSS 빛 + Canvas 파티클) |
-| P1-LANDING-02 | P1 | 히어로 WebGL 셰이더 업그레이드 (현재 CSS+Canvas → WebGL) |
+| **P1-SHOWCASE-01** | P0 | 랜딩 이후 공유/신뢰 보강용 쇼케이스 카드 시스템 |
 | P1-HOTSPOT-01 | P1 | Hotspot 자동 추천 (규칙 기반) |
 | P1-MOCKUP-01 | P1 | 데스크톱 목업 |
-| P1-SHOWCASE-01 | P1 | 소셜 공유 카드 이미지 |
+| P1-ANALYTICS-01 | P1 | landing/showcase 이후 완료율 측정 |
 
 ---
 
@@ -122,13 +147,18 @@ aliases:
 | 3 | 건강 체크 동작 | ✅ | 다운로드 전 진단 표시 |
 | 4 | .inf 적용 동작 | ✅ | 스킴 레지스트리 등록 |
 | 5 | 배포 안정성 | ✅ | Vercel + Railway + HF Space |
-| 6 | 랜딩 페이지 | ⏳ | P1-LANDING-01 미구현 |
+| 6 | 랜딩 페이지 | ✅ | 랜딩 + SEO/GEO + FAQ + OG 동작 |
 
----
+## Transition Note
+
+- Phase 1 게이트는 닫혔다.
+- 다음 선택지는 두 가지다: `P1-SHOWCASE-01`과 editor confidence follow-up을 마무리한 뒤 새 스프린트를 열거나, 지금 상태를 기준으로 `Phase 1.5` 계획을 시작한다.
+- 현재 기준 추천은 showcase/hotspot follow-up을 짧게 정리한 뒤 다음 스프린트 선언이다.
 
 ## References
 
 - [[plans/2026-03-27-implementation-phase-flow]]
+- [[plans/2026-04-11-document-ops-refresh]]
 - [[Implementation-Plan]]
 - [[Phase-Flow]]
 - [[plans/2026-03-27-pointint-economy-design]]
