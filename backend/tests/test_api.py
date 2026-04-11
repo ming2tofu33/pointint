@@ -36,6 +36,49 @@ def _parse_cur_header_and_entry(
     return header, entry
 
 
+def _alpha_bounds_from_cur(cur_bytes: bytes) -> tuple[int, int, int, int]:
+    """Return min_x, max_x, min_y, max_y for non-zero alpha pixels in XOR data."""
+    _, entry = _parse_cur_header_and_entry(cur_bytes)
+    width, _, _, _, _, _, image_size, data_offset = entry
+    image_data = cur_bytes[data_offset : data_offset + image_size]
+
+    (
+        _bih_size,
+        bi_width,
+        bi_height,
+        _planes,
+        _bit_count,
+        _compression,
+        _size_image,
+        _xppm,
+        _yppm,
+        _clr_used,
+        _clr_important,
+    ) = struct.unpack("<IiiHHIIiiII", image_data[:40])
+    assert bi_width == width
+    assert bi_height == width * 2
+
+    xor_data = image_data[40 : 40 + (width * width * 4)]
+    min_x, min_y = width, width
+    max_x, max_y = -1, -1
+
+    # XOR rows are stored bottom-up in BGRA order.
+    for y in range(width):
+        storage_row = width - 1 - y
+        row_offset = storage_row * width * 4
+        for x in range(width):
+            alpha = xor_data[row_offset + x * 4 + 3]
+            if alpha > 0:
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+                min_y = min(min_y, y)
+                max_y = max(max_y, y)
+
+    assert max_x >= min_x
+    assert max_y >= min_y
+    return min_x, max_x, min_y, max_y
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -186,6 +229,7 @@ async def test_generate_cursor_accepts_wide_non_square_png(client: AsyncClient):
     cur = zf.read("cursor.cur")
     (reserved, type_val, count), entry = _parse_cur_header_and_entry(cur)
     width, height, _, _, _, _, image_size, data_offset = entry
+    min_x, max_x, min_y, max_y = _alpha_bounds_from_cur(cur)
 
     assert reserved == 0
     assert type_val == 2
@@ -194,6 +238,10 @@ async def test_generate_cursor_accepts_wide_non_square_png(client: AsyncClient):
     assert height == 48
     assert image_size > 0
     assert data_offset == 22
+    assert min_x == 0
+    assert max_x == 47
+    assert min_y == 12
+    assert max_y == 35
 
 
 @pytest.mark.anyio
@@ -215,6 +263,25 @@ async def test_generate_cursor_hotspot_is_clamped_to_cursor_size(client: AsyncCl
     assert height == 32
     assert hotspot_x == 31
     assert hotspot_y == 31
+
+
+@pytest.mark.anyio
+async def test_generate_cursor_hotspot_is_clamped_to_zero(client: AsyncClient):
+    png = _make_png(48, 96)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("tall.png", png, "image/png")},
+        data={"hotspot_x": "-999", "hotspot_y": "-999", "cursor_size": "32"},
+    )
+    assert res.status_code == 200
+
+    zf = zipfile.ZipFile(BytesIO(res.content))
+    cur = zf.read("cursor.cur")
+    _, entry = _parse_cur_header_and_entry(cur)
+    _, _, _, _, hotspot_x, hotspot_y, _, _ = entry
+
+    assert hotspot_x == 0
+    assert hotspot_y == 0
 
 
 @pytest.mark.anyio
