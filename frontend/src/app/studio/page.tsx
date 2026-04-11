@@ -34,11 +34,13 @@ export default function StudioPage() {
     setHotspot,
     setOffset,
     setScale,
+    setFitMode,
     setCursorSize,
     setCursorName,
     reset,
     download,
     closeGuide,
+    rendered,
   } = useStudio();
   const [activeTool, setActiveTool] = useState<Tool>("move");
   const t = useTranslations("studio");
@@ -158,9 +160,12 @@ export default function StudioPage() {
             <>
               <CursorCanvas
                 imageUrl={displayUrl}
+                imageWidth={cursor.width}
+                imageHeight={cursor.height}
                 offsetX={cursor.offsetX}
                 offsetY={cursor.offsetY}
                 scale={cursor.scale}
+                fitMode={cursor.fitMode}
                 hotspotX={cursor.hotspotX}
                 hotspotY={cursor.hotspotY}
                 onOffsetChange={setOffset}
@@ -377,6 +382,21 @@ export default function StudioPage() {
                 </button>
               </PanelSection>
 
+              <PanelSection title={tp("framing")}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                  <FramingButton
+                    label={tp("showFullImage")}
+                    active={cursor.fitMode === "contain"}
+                    onClick={() => setFitMode("contain")}
+                  />
+                  <FramingButton
+                    label={tp("fillSquare")}
+                    active={cursor.fitMode === "cover"}
+                    onClick={() => setFitMode("cover")}
+                  />
+                </div>
+              </PanelSection>
+
               <PanelSection title={tp("scale")}>
                 <input
                   type="range"
@@ -429,9 +449,9 @@ export default function StudioPage() {
               </PanelSection>
 
               <HealthCheck
-                imageBlob={cursor.processedBlob}
-                hotspotX={cursor.hotspotX}
-                hotspotY={cursor.hotspotY}
+                imageBlob={rendered?.blob ?? null}
+                hotspotX={rendered?.hotspotX ?? 0}
+                hotspotY={rendered?.hotspotY ?? 0}
               />
             </>
           ) : (
@@ -462,11 +482,27 @@ export default function StudioPage() {
         }}
       >
         {state === "editing" && cursor ? (
-          <Simulation
-            imageUrl={previewUrl || cursor.processedUrl}
-            hotspotX={cursor.hotspotX}
-            hotspotY={cursor.hotspotY}
-          />
+          previewUrl && rendered ? (
+            <Simulation
+              imageUrl={previewUrl}
+              hotspotX={rendered.hotspotX}
+              hotspotY={rendered.hotspotY}
+              cursorSize={cursor.cursorSize}
+            />
+          ) : (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--color-text-muted)",
+                fontSize: "0.8125rem",
+              }}
+            >
+              {t("simulationPreview")}
+            </div>
+          )
         ) : (
           <div
             style={{
@@ -571,5 +607,33 @@ function PanelRow({ label, value }: { label: string; value: string }) {
       <span style={{ color: "var(--color-text-secondary)" }}>{label}</span>
       <span style={{ color: "var(--color-text-primary)" }}>{value}</span>
     </div>
+  );
+}
+
+function FramingButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        fontSize: "0.75rem",
+        padding: "0.375rem 0.5rem",
+        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+        backgroundColor: active ? "var(--color-accent-subtle)" : "transparent",
+        color: active ? "var(--color-accent)" : "var(--color-text-secondary)",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
   );
 }

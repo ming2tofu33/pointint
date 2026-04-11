@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { generateCursor, removeBackground } from "./api";
+import {
+  EDITOR_VIEWPORT_SIZE,
+  FitMode,
+  clampCoordinate,
+  mapViewportHotspotToOutput,
+  rasterizeSquarePng,
+} from "./cursorFrame";
 
 export type StudioState =
   | "idle"
@@ -10,6 +17,14 @@ export type StudioState =
   | "editing";
 
 export type CursorSize = 32 | 48 | 64;
+
+export interface RenderedCursorAsset {
+  blob: Blob;
+  url: string;
+  hotspotX: number;
+  hotspotY: number;
+  size: CursorSize;
+}
 
 export interface CursorData {
   originalFile: File;
@@ -23,6 +38,7 @@ export interface CursorData {
   offsetX: number;
   offsetY: number;
   scale: number;
+  fitMode: FitMode;
   cursorSize: CursorSize;
   cursorName: string;
 }
@@ -30,41 +46,84 @@ export interface CursorData {
 export function useStudio() {
   const [state, setState] = useState<StudioState>("idle");
   const [cursor, setCursor] = useState<CursorData | null>(null);
+  const [rendered, setRendered] = useState<RenderedCursorAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const previewTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const renderTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const renderVersionRef = useRef(0);
 
-  // UX-1: 파일 선택 → "uploaded" 상태 (배경 제거 여부 선택 전)
-  const selectFile = useCallback((file: File) => {
-    setError(null);
-    const url = URL.createObjectURL(file);
-    setCursor({
-      originalFile: file,
-      originalUrl: url,
-      processedUrl: url,
-      processedBlob: file,
-      width: 0,
-      height: 0,
-      hotspotX: 0,
-      hotspotY: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 1,
-      cursorSize: 32,
-      cursorName: "cursor",
+  const replaceRendered = useCallback((next: RenderedCursorAsset | null) => {
+    setRendered((prev) => {
+      if (prev?.url && prev.url !== next?.url) {
+        URL.revokeObjectURL(prev.url);
+      }
+      return next;
     });
-    setState("uploaded");
   }, []);
 
-  // UX-1: 배경 제거 실행
+  const buildRenderedAsset = useCallback(async (source: CursorData) => {
+    const blob = await rasterizeSquarePng({
+      imageUrl: source.processedUrl,
+      imageWidth: source.width,
+      imageHeight: source.height,
+      outputSize: source.cursorSize,
+      fitMode: source.fitMode,
+      scale: source.scale,
+      offsetX: source.offsetX,
+      offsetY: source.offsetY,
+    });
+
+    const mappedHotspot = mapViewportHotspotToOutput({
+      hotspotX: source.hotspotX,
+      hotspotY: source.hotspotY,
+      viewportSize: EDITOR_VIEWPORT_SIZE,
+      outputSize: source.cursorSize,
+    });
+
+    return {
+      blob,
+      url: URL.createObjectURL(blob),
+      hotspotX: mappedHotspot.x,
+      hotspotY: mappedHotspot.y,
+      size: source.cursorSize,
+    } satisfies RenderedCursorAsset;
+  }, []);
+
+  const selectFile = useCallback(
+    (file: File) => {
+      setError(null);
+      replaceRendered(null);
+      const url = URL.createObjectURL(file);
+      setCursor({
+        originalFile: file,
+        originalUrl: url,
+        processedUrl: url,
+        processedBlob: file,
+        width: 0,
+        height: 0,
+        hotspotX: 0,
+        hotspotY: 0,
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
+        fitMode: "contain",
+        cursorSize: 32,
+        cursorName: "cursor",
+      });
+      setState("uploaded");
+    },
+    [replaceRendered]
+  );
+
   const processBgRemoval = useCallback(async () => {
     if (!cursor) return;
     setError(null);
     setState("processing");
 
     try {
+      replaceRendered(null);
       const blob = await removeBackground(cursor.originalFile);
       const url = URL.createObjectURL(blob);
       const img = new Image();
@@ -90,11 +149,11 @@ export function useStudio() {
       setError(err instanceof Error ? err.message : "Background removal failed");
       setState("uploaded");
     }
-  }, [cursor]);
+  }, [cursor, replaceRendered]);
 
-  // UX-1: 배경 제거 건너뛰기
   const skipBgRemoval = useCallback(async () => {
     if (!cursor) return;
+    replaceRendered(null);
 
     const img = new Image();
     await new Promise<void>((resolve, reject) => {
@@ -103,7 +162,6 @@ export function useStudio() {
       img.src = cursor.originalUrl;
     });
 
-    // 원본을 Blob으로 변환
     const res = await fetch(cursor.originalUrl);
     const blob = await res.blob();
 
@@ -119,20 +177,25 @@ export function useStudio() {
         : null
     );
     setState("editing");
-  }, [cursor]);
+  }, [cursor, replaceRendered]);
 
-  // UX-4: 원본/결과 토글
-  const [showOriginal, setShowOriginal] = useState(false);
   const toggleOriginal = useCallback(() => setShowOriginal((v) => !v), []);
 
-  // UX-4: 배경 제거 재시도
   const retryBgRemoval = useCallback(async () => {
     setShowOriginal(false);
     await processBgRemoval();
   }, [processBgRemoval]);
 
   const setHotspot = useCallback((x: number, y: number) => {
-    setCursor((prev) => (prev ? { ...prev, hotspotX: x, hotspotY: y } : null));
+    setCursor((prev) =>
+      prev
+        ? {
+            ...prev,
+            hotspotX: clampCoordinate(x, EDITOR_VIEWPORT_SIZE - 1),
+            hotspotY: clampCoordinate(y, EDITOR_VIEWPORT_SIZE - 1),
+          }
+        : null
+    );
   }, []);
 
   const setOffset = useCallback((x: number, y: number) => {
@@ -143,12 +206,14 @@ export function useStudio() {
     setCursor((prev) => (prev ? { ...prev, scale } : null));
   }, []);
 
-  // UX-5: 커서 크기 변경
+  const setFitMode = useCallback((fitMode: FitMode) => {
+    setCursor((prev) => (prev ? { ...prev, fitMode } : null));
+  }, []);
+
   const setCursorSize = useCallback((size: CursorSize) => {
     setCursor((prev) => (prev ? { ...prev, cursorSize: size } : null));
   }, []);
 
-  // UX-6: 커서 이름 변경
   const setCursorName = useCallback((name: string) => {
     setCursor((prev) => (prev ? { ...prev, cursorName: name } : null));
   }, []);
@@ -160,54 +225,56 @@ export function useStudio() {
     if (cursor?.originalUrl) {
       URL.revokeObjectURL(cursor.originalUrl);
     }
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    replaceRendered(null);
     setCursor(null);
-    setPreviewUrl(null);
     setState("idle");
     setError(null);
     setShowOriginal(false);
-  }, [cursor, previewUrl]);
+  }, [cursor, replaceRendered]);
 
-  // UX-2 + UX-3: 32px 미리보기 URL 생성 (debounced)
   useEffect(() => {
     if (!cursor || state !== "editing") return;
+    if (!cursor.width || !cursor.height) return;
 
-    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    if (renderTimerRef.current) clearTimeout(renderTimerRef.current);
 
-    previewTimerRef.current = setTimeout(() => {
-      const size = cursor.cursorSize;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    const version = renderVersionRef.current + 1;
+    renderVersionRef.current = version;
 
-      const img = new Image();
-      img.onload = () => {
-        // 비율 유지하며 캔버스에 맞춤
-        const scale = Math.min(size / img.width, size / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        const x = (size - w) / 2;
-        const y = (size - h) / 2;
-        ctx.clearRect(0, 0, size, size);
-        ctx.drawImage(img, x, y, w, h);
-
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          if (previewUrl) URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(URL.createObjectURL(blob));
-        }, "image/png");
-      };
-      img.src = cursor.processedUrl;
-    }, 200);
+    renderTimerRef.current = setTimeout(() => {
+      buildRenderedAsset(cursor)
+        .then((asset) => {
+          if (renderVersionRef.current !== version) {
+            URL.revokeObjectURL(asset.url);
+            return;
+          }
+          replaceRendered(asset);
+        })
+        .catch((err) => {
+          if (renderVersionRef.current !== version) return;
+          setError(err instanceof Error ? err.message : "Preview render failed");
+        });
+    }, 120);
 
     return () => {
-      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      if (renderTimerRef.current) clearTimeout(renderTimerRef.current);
     };
-  }, [cursor?.processedUrl, cursor?.cursorSize, state]);
+  }, [
+    state,
+    cursor,
+    cursor?.width,
+    cursor?.height,
+    cursor?.processedUrl,
+    cursor?.cursorSize,
+    cursor?.fitMode,
+    cursor?.scale,
+    cursor?.offsetX,
+    cursor?.offsetY,
+    cursor?.hotspotX,
+    cursor?.hotspotY,
+    buildRenderedAsset,
+    replaceRendered,
+  ]);
 
   const download = useCallback(async () => {
     if (!cursor) return;
@@ -215,10 +282,13 @@ export function useStudio() {
     setError(null);
 
     try {
+      const renderedAsset = await buildRenderedAsset(cursor);
+      replaceRendered(renderedAsset);
+
       const curBlob = await generateCursor(
-        cursor.processedBlob,
-        cursor.hotspotX,
-        cursor.hotspotY,
+        renderedAsset.blob,
+        renderedAsset.hotspotX,
+        renderedAsset.hotspotY,
         cursor.cursorSize,
         cursor.cursorName
       );
@@ -237,13 +307,15 @@ export function useStudio() {
     } finally {
       setDownloading(false);
     }
-  }, [cursor]);
+  }, [cursor, buildRenderedAsset, replaceRendered]);
 
   const closeGuide = useCallback(() => setShowGuide(false), []);
+  const previewUrl = rendered?.url ?? null;
 
   return {
     state,
     cursor,
+    rendered,
     error,
     downloading,
     showGuide,
@@ -257,6 +329,7 @@ export function useStudio() {
     setHotspot,
     setOffset,
     setScale,
+    setFitMode,
     setCursorSize,
     setCursorName,
     reset,

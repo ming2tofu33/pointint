@@ -50,6 +50,9 @@
     "goHome": "홈으로"
   },
   "panel": {
+    "framing": "프레이밍",
+    "showFullImage": "전체 보이기",
+    "fillSquare": "가득 채우기",
     "actualSize": "실제 크기",
     "lightPreview": "밝은 배경 미리보기",
     "darkPreview": "어두운 배경 미리보기",

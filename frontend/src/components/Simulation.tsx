@@ -7,11 +7,17 @@ interface SimulationProps {
   imageUrl: string;
   hotspotX?: number;
   hotspotY?: number;
+  cursorSize?: number;
 }
 
 type BgMode = "light" | "dark";
 
-export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: SimulationProps) {
+export default function Simulation({
+  imageUrl,
+  hotspotX = 0,
+  hotspotY = 0,
+  cursorSize = 32,
+}: SimulationProps) {
   const [bgMode, setBgMode] = useState<BgMode>("dark");
   const t = useTranslations("simulation");
 
@@ -42,9 +48,9 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
           flexShrink: 0,
         }}
       >
-        <PreviewBox label={t("normal")} imageUrl={imageUrl} />
-        <PreviewBox label={t("text")} imageUrl={imageUrl} />
-        <PreviewBox label={t("link")} imageUrl={imageUrl} />
+        <PreviewBox label={t("normal")} imageUrl={imageUrl} cursorSize={cursorSize} />
+        <PreviewBox label={t("text")} imageUrl={imageUrl} cursorSize={cursorSize} />
+        <PreviewBox label={t("link")} imageUrl={imageUrl} cursorSize={cursorSize} />
       </div>
 
       {/* Right: 인터랙티브 존 */}
@@ -152,10 +158,14 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
 function PreviewBox({
   label,
   imageUrl,
+  cursorSize,
 }: {
   label: string;
   imageUrl: string;
+  cursorSize: number;
 }) {
+  const displaySize = Math.min(cursorSize, 32);
+
   return (
     <div
       style={{
@@ -180,9 +190,8 @@ function PreviewBox({
           src={imageUrl}
           alt={label}
           style={{
-            width: "32px",
-            height: "32px",
-            objectFit: "contain",
+            width: `${displaySize}px`,
+            height: `${displaySize}px`,
             imageRendering: "pixelated",
           }}
         />

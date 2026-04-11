@@ -2,14 +2,23 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import {
+  EDITOR_VIEWPORT_SIZE,
+  FitMode,
+  clampCoordinate,
+  getFrameGeometry,
+} from "@/lib/cursorFrame";
 
 type Tool = "move" | "hotspot";
 
 interface CursorCanvasProps {
   imageUrl: string;
+  imageWidth: number;
+  imageHeight: number;
   offsetX: number;
   offsetY: number;
   scale: number;
+  fitMode: FitMode;
   hotspotX: number;
   hotspotY: number;
   onOffsetChange: (x: number, y: number) => void;
@@ -17,13 +26,16 @@ interface CursorCanvasProps {
   activeTool: Tool;
 }
 
-const CANVAS_SIZE = 256;
+const CANVAS_SIZE = EDITOR_VIEWPORT_SIZE;
 
 export default function CursorCanvas({
   imageUrl,
+  imageWidth,
+  imageHeight,
   offsetX,
   offsetY,
   scale,
+  fitMode,
   hotspotX,
   hotspotY,
   onOffsetChange,
@@ -40,12 +52,22 @@ export default function CursorCanvas({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return { x: 0, y: 0 };
       return {
-        x: Math.round(e.clientX - rect.left),
-        y: Math.round(e.clientY - rect.top),
+        x: clampCoordinate(Math.round(e.clientX - rect.left), CANVAS_SIZE - 1),
+        y: clampCoordinate(Math.round(e.clientY - rect.top), CANVAS_SIZE - 1),
       };
     },
     []
   );
+
+  const geometry = getFrameGeometry({
+    viewportSize: CANVAS_SIZE,
+    imageWidth,
+    imageHeight,
+    fitMode,
+    scale,
+    offsetX,
+    offsetY,
+  });
 
   function handleMouseDown(e: React.MouseEvent) {
     e.preventDefault();
@@ -115,11 +137,10 @@ export default function CursorCanvas({
         draggable={false}
         style={{
           position: "absolute",
-          left: `${offsetX}px`,
-          top: `${offsetY}px`,
-          width: `${CANVAS_SIZE * scale}px`,
-          height: `${CANVAS_SIZE * scale}px`,
-          objectFit: "contain",
+          left: `${geometry.x}px`,
+          top: `${geometry.y}px`,
+          width: `${geometry.width}px`,
+          height: `${geometry.height}px`,
           imageRendering: scale > 1.5 ? "pixelated" : "auto",
           pointerEvents: "none",
         }}
