@@ -21,11 +21,11 @@ Detailed task, wave, and gate status stays in [[plans/2026-03-27-implementation-
 
 ## Current Snapshot
 
-> **Current State:** Phase 1 MVP Core is gate-closed and still running follow-up work around editor confidence and acquisition.
+> **Current State:** Phase 1 MVP Core is gate-closed and still running follow-up work around editor confidence, acquisition, and product-surface boundary cleanup.
 
 | Phase | Status | Summary |
 |---|---|---|
-| Phase 1: MVP Core | gate closed / follow-up | `.cur` creation, preview, health check, install flow, and landing are shipped |
+| Phase 1: MVP Core | gate closed / follow-up | `.cur` creation, preview, health check, install flow, landing, and browse/make IA follow-up are shipped |
 | Phase 1.5: ANI + Media Prep Foundation | next candidate | ANI export plus GIF/video/PNG-sequence ingestion foundation |
 | Phase 2: Auth + 17-role generation | queued | account system, projects, and 17-role conversion |
 | Phase 3: AI-Assisted + Tint | queued | AI editing assist plus paid utility loop |
@@ -76,7 +76,9 @@ graph TD
 
 ## Next Decision
 
-- The next official follow-up remains `P1-SHOWCASE-01`.
+- `P1-SHOWCASE-01` is closed.
+- The current follow-up order is `P1-HOTSPOT-01` -> `P1-ANALYTICS-01` -> `P1-MOCKUP-01`.
+- ANI is still a `Phase 1.5` candidate only. Current workflow cards expose ANI as `Soon`, but no animated ingestion or `.ani` export is implemented yet.
 - `Phase 1.5` is now defined more precisely as `ANI + Media Prep Foundation`.
 - The long-term roadmap stays in [[plans/2026-04-12-cursor-suite-roadmap-design]] and should only be promoted into official phase scope case by case.
 

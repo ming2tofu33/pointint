@@ -12,8 +12,8 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-04-12
-> **Status:** Phase 1 gate closed, post-gate follow-up sprint in progress
-> **Goal:** Strengthen post-landing trust surfaces and close the next editor-confidence follow-up
+> **Status:** Phase 1 gate closed, Phase 1 follow-up sprint still in progress
+> **Goal:** Tighten the product boundary after landing/showcase work and choose the next editor-confidence follow-up
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
@@ -25,6 +25,8 @@ aliases:
 
 - `P1-EDITOR-03` preview/export parity is closed.
 - `P1-SHOWCASE-01` is now closed with curated first-party sample bundles on landing.
+- `P1-IA-01` browse/make split is now landed: `Explore` is the browse surface, while `Studio` returns to make-only workflow entry.
+- ANI is not started yet. Workflow cards are visible as `Soon`, but no `.ani` pipeline, GIF/video ingestion, or ANI export exists.
 - The next execution choice is whether to do `P1-HOTSPOT-01` and `P1-ANALYTICS-01` before opening `Phase 1.5`.
 
 ## Current Doing
@@ -49,6 +51,7 @@ aliases:
 
 - No technical blocker is open right now
 - Product decision still needed: whether hotspot recommendation or analytics should be the next coded slice before ANI work
+- ANI is blocked on `Phase 1.5` foundation work. The current product can advertise ANI paths, but it cannot ingest or export animated cursors yet.
 
 ## Recently Done
 
@@ -57,12 +60,14 @@ aliases:
 - `P1-LANDING-03` complete: proof-first landing redesign with 4 sections: `Hero Proof -> Workflow Surface -> Mood Glimpse -> Trust CTA`
 - `P1-EDITOR-03` complete: square preview as source of truth, `contain` default framing, `cover` choice, preview/export parity, hotspot remap. Evidence: `0f2a2cb`, `c50d95d`
 - `P1-SHOWCASE-01` complete: curated first-party sample cursor bundles, install confidence strip, detailed install guide modal, studio CTA. Evidence: `7a40b63`
+- `P1-IA-01` complete: `Studio = make`, `Explore = browse`, `/studio` showcase removed, `/explore` added as a top-level browse surface, guide modal routed to `Explore`, logo retained as home entry.
 
 ## Decision Follow-up
 
 - 2026-04-11: Pointint doc ops now follow an `Idea Mine` + `0to1log` style model. Sprint, plan, phase, and decision docs must be synced in the same session.
 - 2026-04-11: `P1-EDITOR-03` became the active editor-confidence task. Square preview is the source of truth and `contain` is the default framing mode.
 - 2026-04-12: `P1-SHOWCASE-01` is defined as a curated first-party result showcase, not a user gallery. The section uses a short install-confidence strip plus a detailed install guide modal.
+- 2026-04-12: The hybrid studio-showcase entry was superseded. `Studio` is the make surface, `Explore` is the browse surface, and showcase discovery now routes through `/explore`.
 
 ## Document Follow-up
 
@@ -75,6 +80,8 @@ aliases:
 | `plans/2026-04-11-framing-preview-export-parity.md` | Editor-confidence task record | synced |
 | `plans/2026-04-12-landing-showcase-install-confidence.md` | Landing showcase implementation plan | synced |
 | `plans/2026-04-12-landing-showcase-install-confidence-design.md` | Landing showcase design decisions | synced |
+| `plans/2026-04-12-explore-surface-and-studio-boundary.md` | Explore surface + studio boundary implementation plan | synced |
+| `plans/2026-04-12-explore-surface-and-studio-boundary-design.md` | Explore surface + studio boundary design decisions | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
@@ -118,6 +125,7 @@ aliases:
 | P1-LANDING-02 | Water-surface landing hero | done | |
 | P1-LANDING-03 | Proof-first landing redesign | done | |
 | P1-SHOWCASE-01 | Landing showcase bundles | done | 2026-04-12 |
+| P1-IA-01 | Studio/Explore product boundary | done | landed on main |
 | P1-ANALYTICS-01 | Funnel event tracking | todo | landing/showcase completion follow-through |
 
 ## Next Priority Order
@@ -136,7 +144,7 @@ aliases:
 - The immediate branch point is:
   - close `P1-HOTSPOT-01` and `P1-ANALYTICS-01` first
   - or open `Phase 1.5` for ANI + Media Prep Foundation
-- Current recommendation: define hotspot and analytics minimum scope first, then decide whether to switch phases.
+- Current recommendation: define hotspot and analytics minimum scope, then decide whether to switch phases.
 
 ## References
 
@@ -145,6 +153,8 @@ aliases:
 - [[plans/2026-04-11-framing-preview-export-parity]]
 - [[plans/2026-04-12-landing-showcase-install-confidence]]
 - [[plans/2026-04-12-landing-showcase-install-confidence-design]]
+- [[plans/2026-04-12-explore-surface-and-studio-boundary]]
+- [[plans/2026-04-12-explore-surface-and-studio-boundary-design]]
 - [[Implementation-Plan]]
 - [[Phase-Flow]]
 - [[plans/2026-04-12-cursor-suite-roadmap-design]]

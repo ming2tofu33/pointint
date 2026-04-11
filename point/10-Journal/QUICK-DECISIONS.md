@@ -49,3 +49,6 @@ aliases:
 - `P1-SHOWCASE-01` is a curated first-party result showcase, not a user gallery or community feed.
 - The landing showcase uses a short install-confidence strip plus a detailed install guide modal instead of expanding full instructions inline.
 - Showcase cards should support both `Download bundle` and `Open studio` paths so the section proves outcome and routes users back into the making flow.
+- Studio showcase access should use a hybrid entry: compact sample downloads above the workflow picker in `/studio`, with the landing showcase kept as the larger explanation surface.
+- The hybrid studio-showcase entry is superseded. `Studio = make`, `Explore = browse`, and showcase discovery should move to a top-level `/explore` surface instead of living inside `/studio`.
+- Download completion should route users toward `Explore`, not back to a landing-section anchor, because browse surfaces now live outside the editor.
