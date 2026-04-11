@@ -57,7 +57,6 @@ aliases:
 
 - `P1-LANDING-01` 완료: 랜딩 페이지, hero drop entry, how-it-works, FAQ, JSON-LD, i18n, sitemap, robots, OG 메타를 반영했다. 근거: `1a60df0`, `frontend/src/app/page.tsx`, `frontend/src/app/layout.tsx`, `frontend/src/app/sitemap.ts`
 - `P1-LANDING-02` 완료: 랜딩 hero를 particle 기반에서 water surface 기반으로 업그레이드하고 파동 튜닝을 반복했다. 근거: `834290f`, `836c7ec`, `832f8be`, `89e2b61`, `452249f`
-- `P1-EDITOR-03` 구현/테스트를 feature branch에서 완료하고 리뷰 단계로 올렸다(in review): 편집기 내 프레이밍 선택(전체 보이기/가득 채우기), pan/zoom 유지, 정사각형 preview-export 일치화, hotspot 매핑, backend 회귀 테스트 보강. 근거: `680584c`, `0d25d98`, `9dd1637`, `ac4a98f`, `86097bc`, `16c2402`
 - `.cur` 다운로드 패키지와 `.inf` 설치/원복 흐름을 완결했다
 - 적용 가이드, 모바일 가드, 접근성 개선, prefers-reduced-motion, 다국어 한/영 지원을 마쳤다
 
