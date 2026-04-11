@@ -4,8 +4,8 @@
 - Status: Working draft
 - Scope: Validated homepage content direction, brand language rules, and home/editor shell structure
 - Related docs:
-  - `docs/plans/2026-03-27-pointint-homepage-structure-design.md`
-  - `docs/plans/2026-03-27-pointint-product-direction-design.md`
+  - `point/06-Implementation/plans/2026-03-27-pointint-homepage-structure-design.md`
+  - `point/06-Implementation/plans/2026-03-27-pointint-product-direction-design.md`
 
 ## 1. Why This Document Exists
 

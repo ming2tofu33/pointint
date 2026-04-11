@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 15, React 19, Tailwind v4, next-intl, Canvas 2D API, CSS custom properties
 
-**Spec:** `docs/superpowers/specs/2026-04-08-landing-page-design.md`
+**Spec:** `point/06-Implementation/plans/2026-04-08-landing-page-design.md`
 
 ---
 
