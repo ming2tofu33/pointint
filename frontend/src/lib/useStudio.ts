@@ -9,12 +9,11 @@ import {
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
 } from "./cursorFrame";
-
-export type StudioState =
-  | "idle"
-  | "uploaded"
-  | "processing"
-  | "editing";
+import {
+  isSelectableWorkflow,
+  type StudioState,
+  type WorkflowOptionId,
+} from "./studioWorkflow";
 
 export type CursorSize = 32 | 48 | 64;
 
@@ -44,7 +43,7 @@ export interface CursorData {
 }
 
 export function useStudio() {
-  const [state, setState] = useState<StudioState>("idle");
+  const [state, setState] = useState<StudioState>("workflow-pick");
   const [cursor, setCursor] = useState<CursorData | null>(null);
   const [rendered, setRendered] = useState<RenderedCursorAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +68,12 @@ export function useStudio() {
       }
       return next;
     });
+  }, []);
+
+  const selectWorkflow = useCallback((workflowId: WorkflowOptionId) => {
+    if (!isSelectableWorkflow(workflowId)) return;
+    setError(null);
+    setState("cur-upload");
   }, []);
 
   const buildRenderedAsset = useCallback(async (source: CursorData) => {
@@ -240,7 +245,7 @@ export function useStudio() {
     }
     replaceRendered(null);
     setCursor(null);
-    setState("idle");
+    setState("workflow-pick");
     setError(null);
     setShowOriginal(false);
   }, [cursor, invalidateRenderPipeline, replaceRendered]);
@@ -341,6 +346,7 @@ export function useStudio() {
     showGuide,
     showOriginal,
     previewUrl,
+    selectWorkflow,
     selectFile,
     processBgRemoval,
     skipBgRemoval,
