@@ -64,3 +64,6 @@ aliases:
 - [[2026-04-12-cursor-suite-roadmap-design]] - long-term cursor-making suite reference
 - [[2026-04-12-cursor-suite-phase-docs-integration]] - plan for syncing roadmap thinking into official phase docs
 
+
+- [[2026-04-12-landing-showcase-install-confidence-design]] - landing showcase section design
+- [[2026-04-12-landing-showcase-install-confidence]] - P1-SHOWCASE-01 implementation plan
