@@ -1,0 +1,26 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orbitBg" x1="160" y1="80" x2="1040" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D1020"/>
+      <stop offset="1" stop-color="#171A35"/>
+    </linearGradient>
+    <radialGradient id="orbitGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(780 250) rotate(90) scale(300 240)">
+      <stop stop-color="#B39CFF" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#B39CFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="orbitBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" rx="48" fill="url(#orbitBg)"/>
+  <circle cx="780" cy="250" r="170" fill="url(#orbitGlow)" filter="url(#orbitBlur)"/>
+  <circle cx="288" cy="606" r="138" fill="#B39CFF" fill-opacity="0.14" filter="url(#orbitBlur)"/>
+  <rect x="120" y="120" width="960" height="560" rx="36" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.14"/>
+  <path d="M332 210L538 414L487 444L456 556L406 522L424 456L306 498L332 210Z" fill="#F4F0FF"/>
+  <path d="M724 216C792 216 852 240 896 284C940 328 964 388 964 456C964 524 940 584 896 628C852 672 792 696 724 696C656 696 596 672 552 628C508 584 484 524 484 456C484 388 508 328 552 284C596 240 656 216 724 216Z" stroke="#B39CFF" stroke-width="14" stroke-opacity="0.82"/>
+  <path d="M724 304C768 304 806 320 834 348C862 376 878 414 878 456C878 498 862 536 834 564C806 592 768 608 724 608C680 608 642 592 614 564C586 536 570 498 570 456C570 414 586 376 614 348C642 320 680 304 724 304Z" stroke="white" stroke-width="8" stroke-opacity="0.42"/>
+  <circle cx="724" cy="456" r="22" fill="#B39CFF" fill-opacity="0.96"/>
+  <circle cx="864" cy="342" r="18" fill="#FFFFFF" fill-opacity="0.7"/>
+  <circle cx="872" cy="540" r="12" fill="#FFFFFF" fill-opacity="0.48"/>
+  <text x="166" y="700" fill="white" fill-opacity="0.76" font-family="Arial, sans-serif" font-size="26" letter-spacing="3">NIGHT ORBIT</text>
+</svg>

@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import LandingPage from "@/components/landing/LandingPage";
+import { showcaseSamples } from "@/lib/showcaseSamples";
 
 export default async function Home() {
   const t = await getTranslations("landing");
+  const guideT = await getTranslations("guide");
 
   const copy = {
     hero: {
@@ -33,6 +35,32 @@ export default async function Home() {
           sub: t("step3Sub"),
         },
       ],
+    },
+    showcase: {
+      title: t("showcaseTitle"),
+      sub: t("showcaseSub"),
+      installStripTitle: t("showcaseStripTitle"),
+      installStripBody: t("showcaseStripBody"),
+      installStripCta: t("showcaseStripCta"),
+      installGuide: {
+        title: t("showcaseGuideTitle"),
+        close: guideT("close"),
+        step1: guideT("step1"),
+        step2: guideT("step2"),
+        step3: guideT("step3"),
+        step4: guideT("step4"),
+        restore: guideT("restore"),
+        restoreFile: guideT("restoreFile"),
+        restoreAction: guideT("restoreAction"),
+        gotIt: guideT("gotIt"),
+      },
+      samples: showcaseSamples.map((sample, index) => ({
+        title: t(`showcaseSample${index + 1}Title`),
+        description: t(`showcaseSample${index + 1}Sub`),
+        badge: t("showcaseBadge"),
+        downloadLabel: t("showcaseDownloadLabel"),
+        previewLabel: t(`showcaseSample${index + 1}Alt`),
+      })),
     },
     mood: {
       eyebrow: t("moodEyebrow"),

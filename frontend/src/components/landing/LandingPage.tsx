@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Footer from "@/components/landing/Footer";
 import Hero, { type HeroCopy } from "@/components/landing/Hero";
 import MoodGlimpse, { type MoodCopy } from "@/components/landing/MoodGlimpse";
+import ShowcaseSurface, {
+  type ShowcaseCopy,
+} from "@/components/landing/ShowcaseSurface";
 import TrustCTA, { type TrustCopy } from "@/components/landing/TrustCTA";
 import WaterCanvas from "@/components/landing/WaterCanvas";
 import WorkflowSurface, {
@@ -13,6 +16,7 @@ import WorkflowSurface, {
 export type LandingCopy = {
   hero: HeroCopy;
   workflow: WorkflowCopy;
+  showcase: ShowcaseCopy;
   mood: MoodCopy;
   trust: TrustCopy;
   footer: {
@@ -103,6 +107,9 @@ export default function LandingPage({ copy }: LandingPageProps) {
           <div className="landing-panel landing-panel--workflow">
             <WorkflowSurface copy={copy.workflow} />
           </div>
+          <div className="landing-panel landing-panel--showcase">
+            <ShowcaseSurface copy={copy.showcase} />
+          </div>
           <div className="landing-panel landing-panel--mood">
             <MoodGlimpse copy={copy.mood} />
           </div>
@@ -150,6 +157,7 @@ export default function LandingPage({ copy }: LandingPageProps) {
           }
 
           .landing-panel--workflow :global(section[data-testid="workflow-surface"]),
+          .landing-panel--showcase :global(section[data-testid="showcase-surface"]),
           .landing-panel :global(section[data-testid="mood-glimpse"]) {
             width: 100%;
             min-height: auto;

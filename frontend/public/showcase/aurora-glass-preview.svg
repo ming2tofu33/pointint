@@ -1,0 +1,25 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="auroraBg" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1020"/>
+      <stop offset="1" stop-color="#172A46"/>
+    </linearGradient>
+    <radialGradient id="auroraGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(420 230) rotate(45) scale(340 280)">
+      <stop stop-color="#89D4FF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#89D4FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="auroraBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" rx="48" fill="url(#auroraBg)"/>
+  <circle cx="410" cy="260" r="190" fill="url(#auroraGlow)" filter="url(#auroraBlur)"/>
+  <circle cx="860" cy="580" r="140" fill="#B9E7FF" fill-opacity="0.15" filter="url(#auroraBlur)"/>
+  <rect x="120" y="120" width="960" height="560" rx="36" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.14"/>
+  <path d="M320 220L520 476L474 500L448 604L402 578L420 510L310 548L320 220Z" fill="white" fill-opacity="0.92"/>
+  <path d="M382 382L448 360L470 430L506 402L536 470L412 540L382 382Z" fill="#0F1528" fill-opacity="0.18"/>
+  <path d="M690 228C762 228 826 250 872 293C918 336 942 401 942 474C942 547 919 608 872 655C825 702 763 724 690 724C617 724 555 702 508 655C461 608 438 547 438 474C438 401 461 336 508 293C555 250 617 228 690 228Z" stroke="#89D4FF" stroke-width="14" stroke-opacity="0.75"/>
+  <path d="M690 320C739 320 781 334 813 366C845 398 860 439 860 486C860 533 845 574 813 606C781 638 739 652 690 652C641 652 599 638 567 606C535 574 520 533 520 486C520 439 535 398 567 366C599 334 641 320 690 320Z" stroke="white" stroke-width="8" stroke-opacity="0.45"/>
+  <circle cx="690" cy="486" r="24" fill="#89D4FF" fill-opacity="0.95"/>
+  <text x="166" y="700" fill="white" fill-opacity="0.76" font-family="Arial, sans-serif" font-size="26" letter-spacing="3">AURORA GLASS</text>
+</svg>

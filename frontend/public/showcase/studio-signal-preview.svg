@@ -1,0 +1,25 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="signalBg" x1="120" y1="80" x2="1080" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A0E16"/>
+      <stop offset="1" stop-color="#32131E"/>
+    </linearGradient>
+    <radialGradient id="signalGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(860 220) rotate(90) scale(280 240)">
+      <stop stop-color="#FF7A95" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FF7A95" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="signalBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="800" rx="48" fill="url(#signalBg)"/>
+  <circle cx="860" cy="240" r="170" fill="url(#signalGlow)" filter="url(#signalBlur)"/>
+  <circle cx="320" cy="610" r="140" fill="#FF7A95" fill-opacity="0.12" filter="url(#signalBlur)"/>
+  <rect x="120" y="120" width="960" height="560" rx="36" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.14"/>
+  <path d="M308 188L532 402L480 428L446 540L396 508L416 442L292 486L308 188Z" fill="#FFF5F7"/>
+  <path d="M624 226H832C882 226 920 266 920 315V523C920 572 882 612 832 612H624C575 612 534 572 534 523V315C534 266 575 226 624 226Z" stroke="#FF7A95" stroke-width="16" stroke-opacity="0.82"/>
+  <path d="M662 295H794C828 295 854 321 854 355V483C854 517 828 543 794 543H662C628 543 602 517 602 483V355C602 321 628 295 662 295Z" stroke="white" stroke-width="8" stroke-opacity="0.44"/>
+  <path d="M678 392C678 361 705 335 737 335C770 335 796 361 796 392C796 424 770 450 737 450C705 450 678 424 678 392Z" fill="#FF7A95" fill-opacity="0.95"/>
+  <path d="M860 610C894 610 922 638 922 672C922 706 894 734 860 734C826 734 798 706 798 672C798 638 826 610 860 610Z" fill="#FF7A95" fill-opacity="0.9"/>
+  <text x="166" y="700" fill="white" fill-opacity="0.76" font-family="Arial, sans-serif" font-size="26" letter-spacing="3">STUDIO SIGNAL</text>
+</svg>

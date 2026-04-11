@@ -1,53 +1,98 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import LandingPage from "@/components/landing/LandingPage";
 
 const copy = {
   hero: {
-    logo: "poin+tint",
+    logo: "Pointint",
     tagline: "Your Point, Your Tint.",
-    sub: "좋아하는 이미지를 Windows에서 바로 쓸 수 있는 커서로 바꿔보세요.",
-    cta: "이미지로 시작하기",
-    proofLabel: "From image to cursor",
-    proofSourceAlt: "Landing proof source",
+    sub: "Turn a favorite image into a Windows cursor you can use right away.",
+    cta: "Start with image",
+    proofLabel: "Image to cursor",
+    proofSourceAlt: "Landing proof source image",
     proofCursorAlt: "Landing proof cursor result",
     proofSourceCaption: "Source image",
     proofCursorCaption: "Cursor result",
   },
   workflow: {
-    title: "업로드",
-    sub: "이미지를 올리고 커서를 다듬은 뒤 바로 적용해보세요.",
+    title: "Three steps, no clutter",
+    sub: "Upload an image, refine it, preview the cursor, and apply it on Windows.",
     steps: [
       {
-        title: "업로드",
-        sub: "PNG, JPG, WebP 이미지를 바로 시작점으로 가져옵니다.",
+        title: "Upload",
+        sub: "PNG, JPG, or WebP enters the flow automatically.",
       },
       {
-        title: "다듬기",
-        sub: "배경을 정리하고 위치와 핫스팟을 정돈합니다.",
+        title: "Edit",
+        sub: "Position, resize, and set your hotspot.",
       },
       {
-        title: "확인하고 적용",
-        sub: "미리 본 뒤 .cur 파일로 내려받아 바로 적용합니다.",
+        title: "Download",
+        sub: "Get your .cur file with one-click Windows installer.",
+      },
+    ],
+  },
+  showcase: {
+    title: "Showcase",
+    sub: "First-party sample cursor bundles you can download and install immediately.",
+    installStripTitle: "Install summary",
+    installStripBody:
+      "Each bundle ships with a ready-to-install cursor pack and a short setup guide.",
+    installStripCta: "View install guide",
+    installGuide: {
+      title: "Install your sample cursor bundle",
+      close: "Close",
+      step1: "Unzip the downloaded file.",
+      step2: 'Right-click install.inf and choose "Install".',
+      step3:
+        'Open Settings > Mouse > Additional mouse settings > Pointers tab.',
+      step4: 'Select "Pointint" from the Scheme dropdown and click OK.',
+      restore: "To restore the default cursor, right-click",
+      restoreFile: "restore-default.inf",
+      restoreAction: '"Install"',
+      gotIt: "Got it",
+    },
+    samples: [
+      {
+        title: "Aurora Glass",
+        description: "A soft, glassy pointer bundle with a calm hover feel.",
+        badge: "Available",
+        downloadLabel: "Download bundle",
+        previewLabel: "Aurora Glass sample preview",
+      },
+      {
+        title: "Studio Signal",
+        description:
+          "A crisp cursor bundle with a sharp red accent and steady motion.",
+        badge: "Available",
+        downloadLabel: "Download bundle",
+        previewLabel: "Studio Signal sample preview",
+      },
+      {
+        title: "Night Orbit",
+        description:
+          "A darker sample bundle with a quiet glow and circular pointer path.",
+        badge: "Available",
+        downloadLabel: "Download bundle",
+        previewLabel: "Night Orbit sample preview",
       },
     ],
   },
   mood: {
-    eyebrow: "Pointint for 모니테리어",
-    title: "커서에서 시작되는 화면의 분위기",
-    sub: "Pointint는 작은 포인터에서부터 화면의 표정을 바꾸는 경험을 만듭니다.",
+    eyebrow: "Pointint for Moniterior",
+    title: "A small pointer can change\nthe feel of a whole desktop",
+    sub: "This first product stays focused on cursors while hinting at the broader Pointint world of desktop objects.",
   },
   trust: {
-    title: "Windows 커서 적용까지 한 번에",
+    title: "Ready to try right now",
     facts: [
-      "PNG, JPG, WebP 지원",
-      "Windows용 .cur 다운로드",
-      "무료로 시작 가능",
-      "적용 가이드 제공",
+      "Supports PNG, JPG, and WebP",
+      "Downloads a Windows-ready .cur",
+      "Free to start",
+      "Includes an apply guide",
     ],
-    cta: "이미지로 시작하기",
+    cta: "Start with image",
   },
   footer: {
     tagline: "Your Point, Your Tint.",
@@ -55,22 +100,18 @@ const copy = {
 };
 
 describe("LandingPage", () => {
-  it("renders the four-section landing shell with two CTA links", () => {
-    render(
-      <NextIntlClientProvider
-        locale="ko"
-        messages={{ nav: { studio: "스튜디오" } }}
-      >
-        <LandingPage copy={copy} />
-      </NextIntlClientProvider>
+  it("renders showcase between workflow and mood", () => {
+    const { container } = render(<LandingPage copy={copy} />);
+
+    const pageSections = Array.from(
+      container.querySelectorAll("section[data-surface-mode='page']")
     );
 
-    expect(screen.getByTestId("hero-proof")).toBeInTheDocument();
-    expect(screen.getByTestId("workflow-surface")).toBeInTheDocument();
-    expect(screen.getByTestId("mood-glimpse")).toBeInTheDocument();
-    expect(screen.getByTestId("landing-trust")).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: "이미지로 시작하기" })
-    ).toHaveLength(2);
+    expect(pageSections.map((section) => section.getAttribute("data-testid"))).toEqual([
+      "workflow-surface",
+      "showcase-surface",
+      "mood-glimpse",
+    ]);
+    expect(screen.getByTestId("showcase-surface")).toBeInTheDocument();
   });
 });
