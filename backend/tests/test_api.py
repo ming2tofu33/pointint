@@ -27,6 +27,15 @@ def _make_jpg(width: int = 64, height: int = 64) -> bytes:
     return buf.getvalue()
 
 
+def _parse_cur_header_and_entry(
+    cur_bytes: bytes,
+) -> tuple[tuple[int, int, int], tuple[int, int, int, int, int, int, int, int]]:
+    """Parse .cur file header(6 bytes) and first directory entry(16 bytes)."""
+    header = struct.unpack("<HHH", cur_bytes[:6])
+    entry = struct.unpack("<BBBBHHII", cur_bytes[6:22])
+    return header, entry
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -160,6 +169,52 @@ async def test_generate_cursor_hotspot_in_zip(client: AsyncClient):
     _, _, _, _, hx, hy = struct.unpack("<BBBBHH", entry[:8])
     assert hx == 16
     assert hy == 16
+
+
+@pytest.mark.anyio
+async def test_generate_cursor_accepts_wide_non_square_png(client: AsyncClient):
+    png = _make_png(96, 48)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("wide.png", png, "image/png")},
+        data={"hotspot_x": "10", "hotspot_y": "10", "cursor_size": "48"},
+    )
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/zip"
+
+    zf = zipfile.ZipFile(BytesIO(res.content))
+    cur = zf.read("cursor.cur")
+    (reserved, type_val, count), entry = _parse_cur_header_and_entry(cur)
+    width, height, _, _, _, _, image_size, data_offset = entry
+
+    assert reserved == 0
+    assert type_val == 2
+    assert count == 1
+    assert width == 48
+    assert height == 48
+    assert image_size > 0
+    assert data_offset == 22
+
+
+@pytest.mark.anyio
+async def test_generate_cursor_hotspot_is_clamped_to_cursor_size(client: AsyncClient):
+    png = _make_png(48, 96)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("tall.png", png, "image/png")},
+        data={"hotspot_x": "999", "hotspot_y": "999", "cursor_size": "32"},
+    )
+    assert res.status_code == 200
+
+    zf = zipfile.ZipFile(BytesIO(res.content))
+    cur = zf.read("cursor.cur")
+    _, entry = _parse_cur_header_and_entry(cur)
+    width, height, _, _, hotspot_x, hotspot_y, _, _ = entry
+
+    assert width == 32
+    assert height == 32
+    assert hotspot_x == 31
+    assert hotspot_y == 31
 
 
 @pytest.mark.anyio
