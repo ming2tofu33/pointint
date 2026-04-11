@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -13,6 +14,7 @@ import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
 import SettingsBar from "@/components/SettingsBar";
 import UploadZone from "@/components/UploadZone";
+import { WorkflowPicker } from "@/components/WorkflowPicker";
 import { useStudio, CursorSize } from "@/lib/useStudio";
 
 type Tool = "move" | "hotspot";
@@ -27,6 +29,7 @@ export default function StudioPage() {
     showOriginal,
     previewUrl,
     selectFile,
+    selectWorkflow,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -126,7 +129,11 @@ export default function StudioPage() {
           }}
         >
           {/* UX-1: idle → 업로드 존 */}
-          {state === "idle" && (
+          {state === "workflow-pick" && (
+            <WorkflowPicker onSelectWorkflow={selectWorkflow} />
+          )}
+
+          {state === "cur-upload" && (
             <UploadZone onFile={selectFile} processing={false} />
           )}
 
