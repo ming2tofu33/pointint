@@ -163,6 +163,40 @@ async def test_generate_cursor_hotspot_in_zip(client: AsyncClient):
 
 
 @pytest.mark.anyio
+async def test_generate_cursor_wide_png_emits_square_cur_entry(client: AsyncClient):
+    png = _make_png(96, 32)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("wide.png", png, "image/png")},
+        data={"hotspot_x": "8", "hotspot_y": "8", "cursor_size": "64"},
+    )
+    assert res.status_code == 200
+
+    zf = zipfile.ZipFile(BytesIO(res.content))
+    cur = zf.read("cursor.cur")
+    width, height, _, _, _, _, _, _ = struct.unpack("<BBBBHHII", cur[6:22])
+    assert width == 64
+    assert height == 64
+
+
+@pytest.mark.anyio
+async def test_generate_cursor_clamps_hotspot_bounds(client: AsyncClient):
+    png = _make_png(96, 32)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("wide.png", png, "image/png")},
+        data={"hotspot_x": "999", "hotspot_y": "999", "cursor_size": "64"},
+    )
+    assert res.status_code == 200
+
+    zf = zipfile.ZipFile(BytesIO(res.content))
+    cur = zf.read("cursor.cur")
+    _, _, _, _, hotspot_x, hotspot_y, _, _ = struct.unpack("<BBBBHHII", cur[6:22])
+    assert hotspot_x == 63
+    assert hotspot_y == 63
+
+
+@pytest.mark.anyio
 async def test_generate_cursor_inf_content(client: AsyncClient):
     png = _make_png(32, 32)
     res = await client.post(
