@@ -54,6 +54,14 @@ export function useStudio() {
   const renderTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const renderVersionRef = useRef(0);
 
+  const invalidateRenderPipeline = useCallback(() => {
+    renderVersionRef.current += 1;
+    if (renderTimerRef.current) {
+      clearTimeout(renderTimerRef.current);
+      renderTimerRef.current = undefined;
+    }
+  }, []);
+
   const replaceRendered = useCallback((next: RenderedCursorAsset | null) => {
     setRendered((prev) => {
       if (prev?.url && prev.url !== next?.url) {
@@ -95,6 +103,7 @@ export function useStudio() {
   const selectFile = useCallback(
     (file: File) => {
       setError(null);
+      invalidateRenderPipeline();
       replaceRendered(null);
       const url = URL.createObjectURL(file);
       setCursor({
@@ -115,7 +124,7 @@ export function useStudio() {
       });
       setState("uploaded");
     },
-    [replaceRendered]
+    [invalidateRenderPipeline, replaceRendered]
   );
 
   const processBgRemoval = useCallback(async () => {
@@ -124,6 +133,7 @@ export function useStudio() {
     setState("processing");
 
     try {
+      invalidateRenderPipeline();
       replaceRendered(null);
       const blob = await removeBackground(cursor.originalFile);
       const url = URL.createObjectURL(blob);
@@ -150,10 +160,11 @@ export function useStudio() {
       setError(err instanceof Error ? err.message : "Background removal failed");
       setState("uploaded");
     }
-  }, [cursor, replaceRendered]);
+  }, [cursor, invalidateRenderPipeline, replaceRendered]);
 
   const skipBgRemoval = useCallback(async () => {
     if (!cursor) return;
+    invalidateRenderPipeline();
     replaceRendered(null);
 
     const img = new Image();
@@ -178,7 +189,7 @@ export function useStudio() {
         : null
     );
     setState("editing");
-  }, [cursor, replaceRendered]);
+  }, [cursor, invalidateRenderPipeline, replaceRendered]);
 
   const toggleOriginal = useCallback(() => setShowOriginal((v) => !v), []);
 
@@ -220,6 +231,7 @@ export function useStudio() {
   }, []);
 
   const reset = useCallback(() => {
+    invalidateRenderPipeline();
     if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
       URL.revokeObjectURL(cursor.processedUrl);
     }
@@ -231,7 +243,7 @@ export function useStudio() {
     setState("idle");
     setError(null);
     setShowOriginal(false);
-  }, [cursor, replaceRendered]);
+  }, [cursor, invalidateRenderPipeline, replaceRendered]);
 
   useEffect(() => {
     if (!cursor || state !== "editing") return;

@@ -39,6 +39,8 @@
     "clickToSetHotspot": "Click to set hotspot",
     "shortcutMove": "V: Move",
     "shortcutHotspot": "H: Hotspot",
+    "showOriginalRef": "Show original reference",
+    "hideOriginalRef": "Hide original reference",
     "showProcessed": "Show processed",
     "showOriginal": "Show original",
     "retryBg": "Retry BG",
@@ -51,6 +53,9 @@
   },
   "panel": {
     "actualSize": "Actual size",
+    "originalReference": "Original reference",
+    "originalReferenceSub": "Reference only. Editing and export always use the processed image.",
+    "originalReferenceAlt": "Original image reference",
     "lightPreview": "Light preview",
     "darkPreview": "Dark preview",
     "cursor": "Cursor",

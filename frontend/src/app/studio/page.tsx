@@ -69,14 +69,6 @@ export default function StudioPage() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  // 편집 모드에서 보여줄 이미지 URL (UX-4: 원본/결과 토글)
-  const displayUrl =
-    state === "editing" && cursor
-      ? showOriginal
-        ? cursor.originalUrl
-        : cursor.processedUrl
-      : "";
-
   return (
     <MobileGuard>
       <StudioBar
@@ -159,7 +151,7 @@ export default function StudioPage() {
           {state === "editing" && cursor && (
             <>
               <CursorCanvas
-                imageUrl={displayUrl}
+                imageUrl={cursor.processedUrl}
                 imageWidth={cursor.width}
                 imageHeight={cursor.height}
                 offsetX={cursor.offsetX}
@@ -203,7 +195,7 @@ export default function StudioPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {showOriginal ? t("showProcessed") : t("showOriginal")}
+                  {showOriginal ? t("hideOriginalRef") : t("showOriginalRef")}
                 </button>
 
                 {/* UX-4: 배경 제거 재시도 */}
@@ -296,6 +288,43 @@ export default function StudioPage() {
                         }}
                       />
                     </div>
+                  </div>
+                </PanelSection>
+              )}
+
+              {showOriginal && (
+                <PanelSection title={tp("originalReference")}>
+                  <p
+                    style={{
+                      margin: "0 0 0.5rem",
+                      fontSize: "0.6875rem",
+                      color: "var(--color-text-muted)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {tp("originalReferenceSub")}
+                  </p>
+                  <div
+                    style={{
+                      width: "100%",
+                      aspectRatio: "1 / 1",
+                      border: "1px solid var(--color-border)",
+                      backgroundColor: "var(--color-bg-primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
+                      src={cursor.originalUrl}
+                      alt={tp("originalReferenceAlt")}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
                   </div>
                 </PanelSection>
               )}
