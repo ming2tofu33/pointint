@@ -8,21 +8,21 @@ export type ShowcaseSampleSpec = {
 
 export const showcaseSamples: ShowcaseSampleSpec[] = [
   {
-    id: "auroraGlass",
+    id: "showcaseSampleAuroraGlass",
     previewSrc: "/showcase/aurora-glass-preview.svg",
     bundleHref: "/showcase/aurora-glass-bundle.zip",
     bundleFileName: "aurora-glass-bundle.zip",
     accent: "rgba(111, 188, 255, 0.8)",
   },
   {
-    id: "studioSignal",
+    id: "showcaseSampleStudioSignal",
     previewSrc: "/showcase/studio-signal-preview.svg",
     bundleHref: "/showcase/studio-signal-bundle.zip",
     bundleFileName: "studio-signal-bundle.zip",
     accent: "rgba(232, 73, 106, 0.78)",
   },
   {
-    id: "nightOrbit",
+    id: "showcaseSampleNightOrbit",
     previewSrc: "/showcase/night-orbit-preview.svg",
     bundleHref: "/showcase/night-orbit-bundle.zip",
     bundleFileName: "night-orbit-bundle.zip",

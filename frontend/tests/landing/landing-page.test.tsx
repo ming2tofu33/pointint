@@ -1,7 +1,34 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import LandingPage from "@/components/landing/LandingPage";
+import LandingPage, { type LandingCopy } from "@/components/landing/LandingPage";
+import { showcaseSamples } from "@/lib/showcaseSamples";
+
+const showcaseSampleCopy = [
+  {
+    title: "Aurora Glass",
+    description: "A soft, glassy pointer bundle with a calm hover feel.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Aurora Glass sample preview",
+  },
+  {
+    title: "Studio Signal",
+    description:
+      "A crisp cursor bundle with a sharp red accent and steady motion.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Studio Signal sample preview",
+  },
+  {
+    title: "Night Orbit",
+    description:
+      "A darker sample bundle with a quiet glow and circular pointer path.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Night Orbit sample preview",
+  },
+];
 
 const copy = {
   hero: {
@@ -34,13 +61,16 @@ const copy = {
     ],
   },
   showcase: {
+    eyebrow: "Showcase",
     title: "Showcase",
     sub: "First-party sample cursor bundles you can download and install immediately.",
     installStripTitle: "Install summary",
     installStripBody:
-      "Each bundle ships with a ready-to-install cursor pack and a short setup guide.",
+      "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later.",
     installStripCta: "View install guide",
+    studioCta: "Open studio",
     installGuide: {
+      eyebrow: "Install guide",
       title: "Install your sample cursor bundle",
       close: "Close",
       step1: "Unzip the downloaded file.",
@@ -53,31 +83,10 @@ const copy = {
       restoreAction: '"Install"',
       gotIt: "Got it",
     },
-    samples: [
-      {
-        title: "Aurora Glass",
-        description: "A soft, glassy pointer bundle with a calm hover feel.",
-        badge: "Available",
-        downloadLabel: "Download bundle",
-        previewLabel: "Aurora Glass sample preview",
-      },
-      {
-        title: "Studio Signal",
-        description:
-          "A crisp cursor bundle with a sharp red accent and steady motion.",
-        badge: "Available",
-        downloadLabel: "Download bundle",
-        previewLabel: "Studio Signal sample preview",
-      },
-      {
-        title: "Night Orbit",
-        description:
-          "A darker sample bundle with a quiet glow and circular pointer path.",
-        badge: "Available",
-        downloadLabel: "Download bundle",
-        previewLabel: "Night Orbit sample preview",
-      },
-    ],
+    samples: showcaseSamples.map((sample, index) => ({
+      ...sample,
+      ...showcaseSampleCopy[index],
+    })),
   },
   mood: {
     eyebrow: "Pointint for Moniterior",
@@ -97,7 +106,7 @@ const copy = {
   footer: {
     tagline: "Your Point, Your Tint.",
   },
-};
+} satisfies LandingCopy;
 
 describe("LandingPage", () => {
   it("renders showcase between workflow and mood", () => {

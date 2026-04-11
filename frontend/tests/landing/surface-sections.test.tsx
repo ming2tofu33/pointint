@@ -2,7 +2,32 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
-import LandingPage from "@/components/landing/LandingPage";
+import LandingPage, { type LandingCopy } from "@/components/landing/LandingPage";
+import { showcaseSamples } from "@/lib/showcaseSamples";
+
+const showcaseSampleCopy = [
+  {
+    title: "Aurora Glass",
+    description: "부드럽고 유리 같은 느낌의 포인터 번들입니다.",
+    badge: "사용 가능",
+    downloadLabel: "번들 다운로드",
+    previewLabel: "Aurora Glass 샘플 미리보기",
+  },
+  {
+    title: "Studio Signal",
+    description: "선명한 빨간 포인트와 안정적인 움직임을 가진 커서 번들입니다.",
+    badge: "사용 가능",
+    downloadLabel: "번들 다운로드",
+    previewLabel: "Studio Signal 샘플 미리보기",
+  },
+  {
+    title: "Night Orbit",
+    description: "차분한 빛과 원형 궤적 느낌을 가진 어두운 샘플 번들입니다.",
+    badge: "사용 가능",
+    downloadLabel: "번들 다운로드",
+    previewLabel: "Night Orbit 샘플 미리보기",
+  },
+];
 
 const copy = {
   hero: {
@@ -34,6 +59,33 @@ const copy = {
       },
     ],
   },
+  showcase: {
+    eyebrow: "쇼케이스",
+    title: "쇼케이스",
+    sub: "Pointint 팀이 직접 준비한 샘플 커서 번들을 바로 내려받아 설치할 수 있습니다.",
+    installStripTitle: "설치 요약",
+    installStripBody:
+      "각 번들은 .cur, install.inf, restore-default.inf를 함께 담아 바로 설치하고 나중에 복원할 수 있습니다.",
+    installStripCta: "설치 안내 보기",
+    studioCta: "스튜디오 열기",
+    installGuide: {
+      eyebrow: "설치 안내",
+      title: "샘플 커서 번들 설치하기",
+      close: "닫기",
+      step1: "압축을 풉니다.",
+      step2: "install.inf를 우클릭한 뒤 설치를 선택합니다.",
+      step3: "설정 > 마우스 > 추가 마우스 설정 > 포인터 탭을 엽니다.",
+      step4: "구성표에서 Pointint를 선택하고 확인을 누릅니다.",
+      restore: "기본 커서로 복원하려면",
+      restoreFile: "restore-default.inf",
+      restoreAction: "를 설치합니다.",
+      gotIt: "확인",
+    },
+    samples: showcaseSamples.map((sample, index) => ({
+      ...sample,
+      ...showcaseSampleCopy[index],
+    })),
+  },
   mood: {
     eyebrow: "Pointint for 모니테리어",
     title: "작은 포인터에서부터\n화면의 분위기가 달라집니다",
@@ -52,7 +104,7 @@ const copy = {
   footer: {
     tagline: "Your Point, Your Tint.",
   },
-};
+} satisfies LandingCopy;
 
 describe("LandingPage surfaces", () => {
   it("places workflow and mood sections on atmospheric page surfaces", () => {

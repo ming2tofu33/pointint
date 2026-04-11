@@ -1,4 +1,7 @@
+import { useEffect, useId, useRef } from "react";
+
 type InstallGuideCopy = {
+  eyebrow: string;
   title: string;
   close: string;
   step1: string;
@@ -22,29 +25,72 @@ export default function LandingInstallGuideModal({
   open,
   onClose,
 }: LandingInstallGuideModalProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    closeButtonRef.current?.focus();
+  }, [open]);
+
   if (!open) {
     return null;
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusables = [
+      closeButtonRef.current,
+      confirmButtonRef.current,
+    ].filter(Boolean) as HTMLButtonElement[];
+
+    if (focusables.length === 0) {
+      return;
+    }
+
+    const currentIndex = focusables.findIndex(
+      (element) => element === document.activeElement
+    );
+    const nextIndex = event.shiftKey
+      ? (currentIndex <= 0 ? focusables.length - 1 : currentIndex - 1)
+      : (currentIndex === -1 || currentIndex === focusables.length - 1
+          ? 0
+          : currentIndex + 1);
+
+    event.preventDefault();
+    focusables[nextIndex]?.focus();
+  }
+
   return (
     <>
-      <button
-        type="button"
-        aria-label={copy.close}
+      <div
+        aria-hidden="true"
         onClick={onClose}
         style={{
           position: "fixed",
           inset: 0,
-          border: "none",
           background: "rgba(7, 10, 20, 0.58)",
           zIndex: 70,
-          cursor: "default",
         }}
       />
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="landing-install-guide-title"
+        aria-labelledby={titleId}
+        onKeyDown={handleKeyDown}
         style={{
           position: "fixed",
           inset: "50% auto auto 50%",
@@ -62,28 +108,60 @@ export default function LandingInstallGuideModal({
           gap: "1.25rem",
         }}
       >
-        <div style={{ display: "grid", gap: "0.35rem" }}>
+        <div
+          style={{
+            display: "grid",
+            gap: "0.35rem",
+            gridTemplateColumns: "minmax(0, 1fr) auto",
+            alignItems: "start",
+          }}
+        >
+          <div style={{ display: "grid", gap: "0.35rem" }}>
+            <span
+              style={{
+                fontSize: "0.72rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              {copy.eyebrow}
+            </span>
+            <h3
+              id={titleId}
+              style={{
+                margin: 0,
+                fontSize: "clamp(1.35rem, 3vw, 1.85rem)",
+                letterSpacing: "-0.05em",
+                lineHeight: 1.05,
+              }}
+            >
+              {copy.title}
+            </h3>
+          </div>
           <span
-            style={{
-              fontSize: "0.72rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.14em",
-              color: "var(--color-text-muted)",
-            }}
+            style={{ display: "flex", justifyContent: "flex-end" }}
           >
-            Install guide
+            <button
+              ref={closeButtonRef}
+              type="button"
+              aria-label={copy.close}
+              onClick={onClose}
+              style={{
+                width: "2.25rem",
+                height: "2.25rem",
+                borderRadius: "999px",
+                border: "1px solid var(--landing-surface-border)",
+                background: "rgba(255, 255, 255, 0.06)",
+                color: "var(--color-text-primary)",
+                cursor: "pointer",
+                fontSize: "1rem",
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
           </span>
-          <h3
-            id="landing-install-guide-title"
-            style={{
-              margin: 0,
-              fontSize: "clamp(1.35rem, 3vw, 1.85rem)",
-              letterSpacing: "-0.05em",
-              lineHeight: 1.05,
-            }}
-          >
-            {copy.title}
-          </h3>
         </div>
 
         <div style={{ display: "grid", gap: "0.8rem" }}>
@@ -118,6 +196,7 @@ export default function LandingInstallGuideModal({
 
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <button
+              ref={confirmButtonRef}
               type="button"
               onClick={onClose}
               style={{

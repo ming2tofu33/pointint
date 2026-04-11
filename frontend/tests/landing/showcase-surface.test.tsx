@@ -1,17 +1,48 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import ShowcaseSurface from "@/components/landing/ShowcaseSurface";
+import ShowcaseSurface, {
+  type ShowcaseCopy,
+} from "@/components/landing/ShowcaseSurface";
 import { showcaseSamples } from "@/lib/showcaseSamples";
 
+const showcaseSampleCopy = [
+  {
+    title: "Aurora Glass",
+    description: "A soft, glassy pointer bundle with a calm hover feel.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Aurora Glass sample preview",
+  },
+  {
+    title: "Studio Signal",
+    description:
+      "A crisp cursor bundle with a sharp red accent and steady motion.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Studio Signal sample preview",
+  },
+  {
+    title: "Night Orbit",
+    description:
+      "A darker sample bundle with a quiet glow and circular pointer path.",
+    badge: "Available",
+    downloadLabel: "Download bundle",
+    previewLabel: "Night Orbit sample preview",
+  },
+];
+
 const copy = {
+  eyebrow: "Showcase",
   title: "Showcase",
   sub: "First-party sample cursor bundles you can download and install immediately.",
   installStripTitle: "Install summary",
   installStripBody:
-    "Each bundle ships with a ready-to-install cursor pack and a short setup guide.",
+    "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later.",
   installStripCta: "View install guide",
+  studioCta: "Open studio",
   installGuide: {
+    eyebrow: "Install guide",
     title: "Install your sample cursor bundle",
     close: "Close",
     step1: "Unzip the downloaded file.",
@@ -23,33 +54,11 @@ const copy = {
     restoreAction: '"Install"',
     gotIt: "Got it",
   },
-  samples: showcaseSamples.map((sample, index) => [
-    {
-      title: "Aurora Glass",
-      description:
-        "A soft, glassy pointer bundle with a calm hover feel.",
-      badge: "Available",
-      downloadLabel: "Download bundle",
-      previewLabel: "Aurora Glass sample preview",
-    },
-    {
-      title: "Studio Signal",
-      description:
-        "A crisp cursor bundle with a sharp red accent and steady motion.",
-      badge: "Available",
-      downloadLabel: "Download bundle",
-      previewLabel: "Studio Signal sample preview",
-    },
-    {
-      title: "Night Orbit",
-      description:
-        "A darker sample bundle with a quiet glow and circular pointer path.",
-      badge: "Available",
-      downloadLabel: "Download bundle",
-      previewLabel: "Night Orbit sample preview",
-    },
-  ][index]),
-};
+  samples: showcaseSamples.map((sample, index) => ({
+    ...sample,
+    ...showcaseSampleCopy[index],
+  })),
+} satisfies ShowcaseCopy;
 
 describe("ShowcaseSurface", () => {
   it("shows three sample bundles and opens the install guide modal", () => {
@@ -62,6 +71,11 @@ describe("ShowcaseSurface", () => {
         "First-party sample cursor bundles you can download and install immediately."
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later."
+      )
+    ).toBeInTheDocument();
 
     const bundleLinks = screen.getAllByRole("link", { name: "Download bundle" });
 
@@ -69,13 +83,26 @@ describe("ShowcaseSurface", () => {
     expect(bundleLinks[0]).toHaveAttribute("href", showcaseSamples[0].bundleHref);
     expect(bundleLinks[1]).toHaveAttribute("href", showcaseSamples[1].bundleHref);
     expect(bundleLinks[2]).toHaveAttribute("href", showcaseSamples[2].bundleHref);
+    expect(screen.getByRole("link", { name: "Open studio" })).toHaveAttribute(
+      "href",
+      "/studio"
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "View install guide" }));
 
+    const dialog = screen.getByRole("dialog");
+
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText("Install guide")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
     expect(
       screen.getByRole("heading", { level: 3, name: "Install your sample cursor bundle" })
     ).toBeInTheDocument();
     expect(screen.getByText("Unzip the downloaded file.")).toBeInTheDocument();
     expect(screen.getByText("restore-default.inf")).toBeInTheDocument();
+
+    fireEvent.keyDown(dialog, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

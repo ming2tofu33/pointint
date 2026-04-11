@@ -37,12 +37,15 @@ export default async function Home() {
       ],
     },
     showcase: {
+      eyebrow: t("showcaseEyebrow"),
       title: t("showcaseTitle"),
       sub: t("showcaseSub"),
       installStripTitle: t("showcaseStripTitle"),
       installStripBody: t("showcaseStripBody"),
       installStripCta: t("showcaseStripCta"),
+      studioCta: t("showcaseStudioCta"),
       installGuide: {
+        eyebrow: t("showcaseGuideEyebrow"),
         title: t("showcaseGuideTitle"),
         close: guideT("close"),
         step1: guideT("step1"),
@@ -54,12 +57,17 @@ export default async function Home() {
         restoreAction: guideT("restoreAction"),
         gotIt: guideT("gotIt"),
       },
-      samples: showcaseSamples.map((sample, index) => ({
-        title: t(`showcaseSample${index + 1}Title`),
-        description: t(`showcaseSample${index + 1}Sub`),
+      samples: showcaseSamples.map((sample) => ({
+        id: sample.id,
+        title: t(`${sample.id}Title`),
+        description: t(`${sample.id}Sub`),
         badge: t("showcaseBadge"),
         downloadLabel: t("showcaseDownloadLabel"),
-        previewLabel: t(`showcaseSample${index + 1}Alt`),
+        previewLabel: t(`${sample.id}Alt`),
+        previewSrc: sample.previewSrc,
+        bundleHref: sample.bundleHref,
+        bundleFileName: sample.bundleFileName,
+        accent: sample.accent,
       })),
     },
     mood: {
