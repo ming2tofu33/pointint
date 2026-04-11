@@ -11,9 +11,9 @@ export default function SideMenu() {
   const pathname = usePathname();
   const navItems = [
     {
-      href: "/",
-      label: t("home"),
-      active: pathname === "/",
+      href: "/explore",
+      label: t("explore"),
+      active: pathname.startsWith("/explore"),
     },
     {
       href: "/studio",

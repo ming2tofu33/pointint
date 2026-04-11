@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 
 interface GuideModalProps {
@@ -9,12 +11,12 @@ interface GuideModalProps {
 
 export default function GuideModal({ open, onClose }: GuideModalProps) {
   const t = useTranslations("guide");
+  const titleId = useId();
 
   if (!open) return null;
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -25,17 +27,23 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
         }}
       />
 
-      {/* Modal */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         style={{
           position: "fixed",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "24rem",
-          maxWidth: "90vw",
+          width: "min(28rem, calc(100vw - 2rem))",
+          maxHeight: "calc(100vh - 2rem)",
+          overflowY: "auto",
+          boxSizing: "border-box",
           backgroundColor: "var(--color-bg-card)",
           border: "1px solid var(--color-border)",
+          borderRadius: "1rem",
+          boxShadow: "0 24px 48px var(--color-shadow)",
           zIndex: 100,
           padding: "2rem",
           display: "flex",
@@ -43,7 +51,6 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           gap: "1.5rem",
         }}
       >
-        {/* Success badge */}
         <div
           style={{
             fontSize: "0.75rem",
@@ -58,7 +65,6 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           {t("downloaded")}
         </div>
 
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -67,6 +73,7 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           }}
         >
           <h2
+            id={titleId}
             style={{
               fontSize: "1rem",
               fontWeight: 700,
@@ -91,7 +98,6 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           </button>
         </div>
 
-        {/* Steps */}
         <div
           style={{
             display: "flex",
@@ -105,7 +111,6 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           <Step number={4} text={t("step4")} />
         </div>
 
-        {/* Divider */}
         <div
           style={{
             height: "1px",
@@ -113,7 +118,6 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           }}
         />
 
-        {/* Restore */}
         <p
           style={{
             fontSize: "0.75rem",
@@ -125,32 +129,60 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
           <span style={{ color: "var(--color-text-secondary)" }}>
             {t("restoreFile")}
           </span>{" "}
-          → {t("restoreAction")}
+          {t("restoreAction")}
         </p>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
+        <div
           style={{
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            padding: "0.5rem",
-            backgroundColor: "var(--color-accent)",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
+            display: "flex",
+            gap: "0.75rem",
+            flexWrap: "wrap",
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor =
-              "var(--color-accent-hover)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "var(--color-accent)")
-          }
         >
-          {t("gotIt")}
-        </button>
+          <Link
+            href="/explore"
+            style={{
+              flex: "1 1 12rem",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "2.5rem",
+              padding: "0 0.875rem",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-primary)",
+              textDecoration: "none",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+            }}
+          >
+            {t("exploreCta")}
+          </Link>
+
+          <button
+            onClick={onClose}
+            style={{
+              flex: "1 1 12rem",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              minHeight: "2.5rem",
+              padding: "0 0.875rem",
+              backgroundColor: "var(--color-accent)",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor =
+                "var(--color-accent-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--color-accent)";
+            }}
+          >
+            {t("gotIt")}
+          </button>
+        </div>
       </div>
     </>
   );

@@ -15,6 +15,7 @@ vi.mock("next/navigation", () => ({
 const messages = {
   nav: {
     home: "Home",
+    explore: "Explore",
     studio: "Studio",
     openMenu: "Open menu",
     closeMenu: "Close menu",
@@ -35,7 +36,7 @@ describe("Header", () => {
     document.cookie = "NEXT_LOCALE=en;path=/";
   });
 
-  it("shows Home and Studio navigation with Home active on the landing page", () => {
+  it("uses the logo as the home link and shows Explore and Studio navigation", () => {
     mockUsePathname.mockReturnValue("/");
 
     render(
@@ -44,13 +45,29 @@ describe("Header", () => {
       </NextIntlClientProvider>
     );
 
-    const homeLink = screen.getByRole("link", { name: "Home" });
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
     const studioLink = screen.getByRole("link", { name: "Studio" });
+    const logoLink = screen.getByRole("link", { name: "poin+tint" });
 
-    expect(homeLink).toHaveAttribute("href", "/");
+    expect(logoLink).toHaveAttribute("href", "/");
+    expect(exploreLink).toHaveAttribute("href", "/explore");
     expect(studioLink).toHaveAttribute("href", "/studio");
-    expect(homeLink).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "Home" })).toBeNull();
+    expect(exploreLink).not.toHaveAttribute("aria-current");
     expect(studioLink).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks Explore active on the explore page", () => {
+    mockUsePathname.mockReturnValue("/explore");
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Header />
+      </NextIntlClientProvider>
+    );
+
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink).toHaveAttribute("aria-current", "page");
   });
 
   it("marks Studio active on the studio page", () => {

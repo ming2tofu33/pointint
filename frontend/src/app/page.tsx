@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import LandingPage from "@/components/landing/LandingPage";
-import { showcaseSamples } from "@/lib/showcaseSamples";
+import { buildShowcaseCopy } from "@/lib/showcaseCopy";
 
 export default async function Home() {
   const t = await getTranslations("landing");
@@ -36,40 +36,7 @@ export default async function Home() {
         },
       ],
     },
-    showcase: {
-      eyebrow: t("showcaseEyebrow"),
-      title: t("showcaseTitle"),
-      sub: t("showcaseSub"),
-      installStripTitle: t("showcaseStripTitle"),
-      installStripBody: t("showcaseStripBody"),
-      installStripCta: t("showcaseStripCta"),
-      studioCta: t("showcaseStudioCta"),
-      installGuide: {
-        eyebrow: t("showcaseGuideEyebrow"),
-        title: t("showcaseGuideTitle"),
-        close: guideT("close"),
-        step1: guideT("step1"),
-        step2: guideT("step2"),
-        step3: guideT("step3"),
-        step4: guideT("step4"),
-        restore: guideT("restore"),
-        restoreFile: guideT("restoreFile"),
-        restoreAction: guideT("restoreAction"),
-        gotIt: guideT("gotIt"),
-      },
-      samples: showcaseSamples.map((sample) => ({
-        id: sample.id,
-        title: t(`${sample.id}Title`),
-        description: t(`${sample.id}Sub`),
-        badge: t("showcaseBadge"),
-        downloadLabel: t("showcaseDownloadLabel"),
-        previewLabel: t(`${sample.id}Alt`),
-        previewSrc: sample.previewSrc,
-        bundleHref: sample.bundleHref,
-        bundleFileName: sample.bundleFileName,
-        accent: sample.accent,
-      })),
-    },
+    showcase: buildShowcaseCopy(t, guideT),
     mood: {
       eyebrow: t("moodEyebrow"),
       title: t("moodTitle"),

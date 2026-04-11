@@ -65,6 +65,7 @@ describe("ShowcaseSurface", () => {
     render(<ShowcaseSurface copy={copy} />);
 
     expect(screen.getByTestId("showcase-surface")).toBeInTheDocument();
+    expect(screen.getByTestId("showcase-surface")).toHaveAttribute("id", "showcase");
     expect(screen.getByRole("heading", { level: 2, name: "Showcase" })).toBeInTheDocument();
     expect(
       screen.getByText(

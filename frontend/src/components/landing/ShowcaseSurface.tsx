@@ -52,6 +52,7 @@ export default function ShowcaseSurface({ copy }: ShowcaseSurfaceProps) {
 
   return (
     <section
+      id="showcase"
       data-testid="showcase-surface"
       data-surface-mode="page"
       style={{

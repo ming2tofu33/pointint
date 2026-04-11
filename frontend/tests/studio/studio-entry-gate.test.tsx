@@ -143,10 +143,11 @@ afterEach(() => {
 });
 
 describe("Studio entry gate", () => {
-  it("renders the workflow picker first and passes through workflow selection", () => {
+  it("renders the workflow picker without embedded showcase content", () => {
     renderStudio("workflow-pick");
 
     expect(screen.getByTestId("workflow-picker")).not.toBeNull();
+    expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
     expect(WorkflowPickerMock).toHaveBeenCalledTimes(1);
     expect(WorkflowPickerMock.mock.calls[0][0].onSelectWorkflow).toBe(

@@ -10,6 +10,7 @@
   },
   "nav": {
     "home": "Home",
+    "explore": "Explore",
     "studio": "Studio",
     "gallery": "Gallery",
     "guide": "Guide",
@@ -105,7 +106,8 @@
     "restoreFile": "restore-default.inf",
     "restoreAction": "then choose \"Install\"",
     "gotIt": "Got it",
-    "downloaded": "Download complete"
+    "downloaded": "Download complete",
+    "exploreCta": "Open Explore"
   },
   "simulation": {
     "normal": "Normal",
@@ -190,5 +192,9 @@
     "faq6Q": "Can I make animated cursors?",
     "faq6A": "Animated cursor (.ani) support is coming soon.",
     "footerTagline": "Your Point, Your Tint."
+  },
+  "explore": {
+    "title": "Explore",
+    "sub": "Browse curated Pointint sample bundles now, and later this surface can grow into the home for more Pointint products."
   }
 }
