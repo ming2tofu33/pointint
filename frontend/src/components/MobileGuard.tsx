@@ -8,9 +8,9 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
 
   return (
     <>
-      {/* 1024px 미만: 모바일 안내 */}
+      {/* Mobile guard below 1024px */}
       <div
-        className="flex lg:hidden fixed inset-0 z-[200] flex-col items-center justify-center gap-6 p-8 text-center"
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 p-8 text-center lg:hidden"
         style={{ backgroundColor: "var(--color-bg-primary)" }}
       >
         <span
@@ -46,8 +46,11 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
         </Link>
       </div>
 
-      {/* 1024px 이상: 스튜디오 */}
-      <div className="hidden lg:flex flex-col h-screen">
+      {/* Studio shell from 1024px and up */}
+      <div
+        className="hidden lg:flex lg:flex-col"
+        style={{ minHeight: "calc(100vh - var(--app-header-height, 4.25rem))" }}
+      >
         {children}
       </div>
     </>

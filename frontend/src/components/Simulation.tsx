@@ -11,7 +11,11 @@ interface SimulationProps {
 
 type BgMode = "light" | "dark";
 
-export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: SimulationProps) {
+export default function Simulation({
+  imageUrl,
+  hotspotX = 0,
+  hotspotY = 0,
+}: SimulationProps) {
   const [bgMode, setBgMode] = useState<BgMode>("dark");
   const t = useTranslations("simulation");
 
@@ -140,8 +144,21 @@ export default function Simulation({ imageUrl, hotspotX = 0, hotspotY = 0 }: Sim
               marginTop: "0.25rem",
             }}
           >
-            <SimButton label={t("button")} imageUrl={imageUrl} bgMode={bgMode} hotspotX={hotspotX} hotspotY={hotspotY} />
-            <SimButton label={t("cancel")} imageUrl={imageUrl} bgMode={bgMode} secondary hotspotX={hotspotX} hotspotY={hotspotY} />
+            <SimButton
+              label={t("button")}
+              imageUrl={imageUrl}
+              bgMode={bgMode}
+              hotspotX={hotspotX}
+              hotspotY={hotspotY}
+            />
+            <SimButton
+              label={t("cancel")}
+              imageUrl={imageUrl}
+              bgMode={bgMode}
+              secondary
+              hotspotX={hotspotX}
+              hotspotY={hotspotY}
+            />
           </div>
         </div>
       </div>
@@ -182,7 +199,6 @@ function PreviewBox({
           style={{
             width: "32px",
             height: "32px",
-            objectFit: "contain",
             imageRendering: "pixelated",
           }}
         />

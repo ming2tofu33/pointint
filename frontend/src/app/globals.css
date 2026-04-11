@@ -31,6 +31,32 @@
   --color-shadow: rgba(8, 12, 24, 0.6);
   --noise-opacity: 0.025;
 
+  --landing-bg-start: #080c18;
+  --landing-bg-end: #09101d;
+  --landing-glow-a: rgba(232, 73, 106, 0.13);
+  --landing-glow-a-soft: rgba(232, 73, 106, 0.22);
+  --landing-glow-b: rgba(122, 147, 255, 0.11);
+  --landing-glow-b-soft: rgba(122, 147, 255, 0.16);
+  --landing-line: rgba(255, 255, 255, 0.18);
+  --landing-divider: rgba(255, 255, 255, 0.08);
+  --landing-surface-fill: rgba(255, 255, 255, 0.05);
+  --landing-surface-fill-strong: rgba(255, 255, 255, 0.08);
+  --landing-surface-border: rgba(255, 255, 255, 0.08);
+  --landing-surface-shadow: rgba(0, 0, 0, 0.2);
+  --landing-control-bg: rgba(255, 255, 255, 0.03);
+  --landing-control-bg-hover: rgba(255, 255, 255, 0.06);
+  --landing-header-backdrop: rgba(8, 12, 24, 0.56);
+  --landing-header-highlight: rgba(255, 255, 255, 0.05);
+  --landing-header-shadow: rgba(0, 0, 0, 0.18);
+  --landing-proof-frame-top: rgba(255, 255, 255, 0.05);
+  --landing-proof-frame-bottom: rgba(8, 12, 24, 0.2);
+  --landing-proof-ring: rgba(255, 255, 255, 0.06);
+  --landing-mood-ring: rgba(255, 255, 255, 0.08);
+  --landing-mood-ring-shadow: rgba(255, 255, 255, 0.015);
+  --landing-water-mid: #102040;
+  --landing-water-highlight: #79a3ff;
+  --landing-water-opacity-scale: 1;
+
   color-scheme: dark;
 }
 
@@ -60,36 +86,88 @@
   --color-shadow: rgba(24, 27, 42, 0.08);
   --noise-opacity: 0.02;
 
+  --landing-bg-start: #ffffff;
+  --landing-bg-end: #edf1f3;
+  --landing-glow-a: rgba(201, 53, 88, 0.08);
+  --landing-glow-a-soft: rgba(201, 53, 88, 0.15);
+  --landing-glow-b: rgba(158, 180, 192, 0.22);
+  --landing-glow-b-soft: rgba(158, 180, 192, 0.28);
+  --landing-line: rgba(24, 27, 42, 0.18);
+  --landing-divider: rgba(24, 27, 42, 0.1);
+  --landing-surface-fill: rgba(244, 247, 248, 0.9);
+  --landing-surface-fill-strong: rgba(249, 250, 251, 0.96);
+  --landing-surface-border: rgba(128, 146, 156, 0.14);
+  --landing-surface-shadow: rgba(120, 136, 146, 0.12);
+  --landing-control-bg: rgba(244, 247, 248, 0.78);
+  --landing-control-bg-hover: rgba(249, 250, 251, 0.96);
+  --landing-header-backdrop: rgba(244, 247, 248, 0.7);
+  --landing-header-highlight: rgba(252, 252, 251, 0.82);
+  --landing-header-shadow: rgba(158, 180, 192, 0.14);
+  --landing-proof-frame-top: rgba(255, 255, 255, 0.92);
+  --landing-proof-frame-bottom: rgba(235, 239, 241, 0.94);
+  --landing-proof-ring: rgba(128, 146, 156, 0.16);
+  --landing-mood-ring: rgba(128, 146, 156, 0.16);
+  --landing-mood-ring-shadow: rgba(158, 180, 192, 0.1);
+  --landing-water-mid: #c9d8df;
+  --landing-water-highlight: #9eb4c0;
+  --landing-water-opacity-scale: 1.24;
+
   color-scheme: light;
 }
 
 /* --- Custom (사용자 커스텀 테마 슬롯) --- */
 [data-theme="custom"] {
-  --color-bg-primary: #080C18;
-  --color-bg-secondary: #0F1322;
-  --color-bg-tertiary: #181E2E;
-  --color-bg-card: #0F1322;
-  --color-input-surface: #0F1322;
+  --color-bg-primary: #fbf1f5;
+  --color-bg-secondary: #f6e9ef;
+  --color-bg-tertiary: #eddce4;
+  --color-bg-card: #fff7fa;
+  --color-input-surface: #fffafb;
 
-  --color-text-primary: #CDD2DE;
-  --color-text-secondary: #8B91A6;
-  --color-text-muted: #5A6078;
+  --color-text-primary: #291a22;
+  --color-text-secondary: #6e5b66;
+  --color-text-muted: #9a8790;
 
-  --color-accent: #E8496A;
-  --color-accent-hover: #D43860;
-  --color-accent-glow: rgba(232, 73, 106, 0.15);
-  --color-accent-subtle: rgba(232, 73, 106, 0.08);
+  --color-accent: #d9577d;
+  --color-accent-hover: #c84d73;
+  --color-accent-glow: rgba(217, 87, 125, 0.16);
+  --color-accent-subtle: rgba(217, 87, 125, 0.08);
 
-  --color-border: #252B3C;
+  --color-border: #e6d3db;
 
-  --color-success: #4E9A6B;
-  --color-warning: #C9A044;
-  --color-error: #B85450;
+  --color-success: #5b8a73;
+  --color-warning: #b48863;
+  --color-error: #9d5966;
 
-  --color-shadow: rgba(8, 12, 24, 0.6);
-  --noise-opacity: 0.025;
+  --color-shadow: rgba(88, 56, 71, 0.12);
+  --noise-opacity: 0.02;
 
-  color-scheme: dark;
+  --landing-bg-start: #fff8fa;
+  --landing-bg-end: #f5e6ec;
+  --landing-glow-a: rgba(217, 87, 125, 0.16);
+  --landing-glow-a-soft: rgba(217, 87, 125, 0.22);
+  --landing-glow-b: rgba(226, 160, 183, 0.18);
+  --landing-glow-b-soft: rgba(226, 160, 183, 0.28);
+  --landing-line: rgba(41, 26, 34, 0.16);
+  --landing-divider: rgba(41, 26, 34, 0.08);
+  --landing-surface-fill: rgba(255, 247, 250, 0.88);
+  --landing-surface-fill-strong: rgba(255, 250, 252, 0.95);
+  --landing-surface-border: rgba(140, 94, 113, 0.12);
+  --landing-surface-shadow: rgba(140, 94, 113, 0.12);
+  --landing-control-bg: rgba(255, 247, 250, 0.72);
+  --landing-control-bg-hover: rgba(255, 250, 252, 0.94);
+  --landing-header-backdrop: rgba(250, 242, 246, 0.72);
+  --landing-header-highlight: rgba(255, 252, 253, 0.84);
+  --landing-header-shadow: rgba(217, 135, 166, 0.14);
+  --landing-proof-frame-top: rgba(255, 252, 253, 0.94);
+  --landing-proof-frame-bottom: rgba(243, 228, 236, 0.94);
+  --landing-proof-ring: rgba(140, 94, 113, 0.14);
+  --landing-mood-ring: rgba(140, 94, 113, 0.14);
+  --landing-mood-ring-shadow: rgba(217, 135, 166, 0.1);
+  --landing-water-mid: #e5c0cc;
+  --landing-water-highlight: #d57c9a;
+  --landing-water-opacity-scale: 1.18;
+
+  color-scheme: light;
 }
 
 /* ============================================

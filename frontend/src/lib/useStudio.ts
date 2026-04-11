@@ -1,34 +1,59 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+  FitMode,
+  mapViewportHotspotToOutput,
+  rasterizeSquarePng,
+} from "@/lib/cursorFrame";
+import {
+  isSelectableWorkflow,
+  type StudioState,
+  type WorkflowOptionId,
+} from "@/lib/studioWorkflow";
+
 import { generateCursor, removeBackground } from "./api";
 
-export type StudioState =
-  | "idle"
-  | "uploaded"
-  | "processing"
-  | "editing";
-
 export type CursorSize = 32 | 48 | 64;
+
+const EDITOR_VIEWPORT_SIZE = 256;
 
 export interface CursorData {
   originalFile: File;
   originalUrl: string;
   processedUrl: string;
   processedBlob: Blob;
-  width: number;
-  height: number;
+  sourceWidth: number;
+  sourceHeight: number;
   hotspotX: number;
   hotspotY: number;
+  renderedHotspotX: number;
+  renderedHotspotY: number;
+  renderedBlob: Blob | null;
   offsetX: number;
   offsetY: number;
   scale: number;
+  fitMode: FitMode;
   cursorSize: CursorSize;
   cursorName: string;
 }
 
+function getRenderedHotspot(
+  hotspotX: number,
+  hotspotY: number,
+  outputSize: CursorSize
+) {
+  return mapViewportHotspotToOutput({
+    hotspotX,
+    hotspotY,
+    viewportSize: EDITOR_VIEWPORT_SIZE,
+    outputSize,
+  });
+}
+
 export function useStudio() {
-  const [state, setState] = useState<StudioState>("idle");
+  const [state, setState] = useState<StudioState>("workflow-pick");
   const [cursor, setCursor] = useState<CursorData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -36,27 +61,57 @@ export function useStudio() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // UX-1: 파일 선택 → "uploaded" 상태 (배경 제거 여부 선택 전)
-  const selectFile = useCallback((file: File) => {
+  const selectWorkflow = useCallback((workflowId: WorkflowOptionId) => {
+    if (!isSelectableWorkflow(workflowId)) return;
     setError(null);
-    const url = URL.createObjectURL(file);
-    setCursor({
-      originalFile: file,
-      originalUrl: url,
-      processedUrl: url,
-      processedBlob: file,
-      width: 0,
-      height: 0,
-      hotspotX: 0,
-      hotspotY: 0,
-      offsetX: 0,
-      offsetY: 0,
-      scale: 1,
-      cursorSize: 32,
-      cursorName: "cursor",
-    });
-    setState("uploaded");
+    setState("cur-upload");
   }, []);
+
+  // UX-1: 파일 선택 후 "uploaded" 상태 (배경 제거 여부 선택 전)
+  const selectFile = useCallback(
+    (file: File) => {
+      setError(null);
+
+      if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
+        URL.revokeObjectURL(cursor.processedUrl);
+      }
+      if (cursor?.originalUrl) {
+        URL.revokeObjectURL(cursor.originalUrl);
+      }
+
+      const url = URL.createObjectURL(file);
+      const renderedHotspot = getRenderedHotspot(0, 0, 32);
+
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+
+      setCursor({
+        originalFile: file,
+        originalUrl: url,
+        processedUrl: url,
+        processedBlob: file,
+        sourceWidth: 0,
+        sourceHeight: 0,
+        hotspotX: 0,
+        hotspotY: 0,
+        renderedHotspotX: renderedHotspot.x,
+        renderedHotspotY: renderedHotspot.y,
+        renderedBlob: null,
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
+        fitMode: "contain",
+        cursorSize: 32,
+        cursorName: "cursor",
+      });
+      setState("uploaded");
+    },
+    [cursor]
+  );
 
   // UX-1: 배경 제거 실행
   const processBgRemoval = useCallback(async () => {
@@ -68,11 +123,16 @@ export function useStudio() {
       const blob = await removeBackground(cursor.originalFile);
       const url = URL.createObjectURL(blob);
       const img = new Image();
+
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = () => reject(new Error("Failed to load image"));
         img.src = url;
       });
+
+      if (cursor.processedUrl !== cursor.originalUrl) {
+        URL.revokeObjectURL(cursor.processedUrl);
+      }
 
       setCursor((prev) =>
         prev
@@ -80,8 +140,9 @@ export function useStudio() {
               ...prev,
               processedUrl: url,
               processedBlob: blob,
-              width: img.naturalWidth,
-              height: img.naturalHeight,
+              sourceWidth: img.naturalWidth,
+              sourceHeight: img.naturalHeight,
+              renderedBlob: null,
             }
           : null
       );
@@ -103,9 +164,12 @@ export function useStudio() {
       img.src = cursor.originalUrl;
     });
 
-    // 원본을 Blob으로 변환
     const res = await fetch(cursor.originalUrl);
     const blob = await res.blob();
+
+    if (cursor.processedUrl !== cursor.originalUrl) {
+      URL.revokeObjectURL(cursor.processedUrl);
+    }
 
     setCursor((prev) =>
       prev
@@ -113,8 +177,9 @@ export function useStudio() {
             ...prev,
             processedUrl: prev.originalUrl,
             processedBlob: blob,
-            width: img.naturalWidth,
-            height: img.naturalHeight,
+            sourceWidth: img.naturalWidth,
+            sourceHeight: img.naturalHeight,
+            renderedBlob: null,
           }
         : null
     );
@@ -125,14 +190,24 @@ export function useStudio() {
   const [showOriginal, setShowOriginal] = useState(false);
   const toggleOriginal = useCallback(() => setShowOriginal((v) => !v), []);
 
-  // UX-4: 배경 제거 재시도
+  // UX-4: 배경 제거 다시하기
   const retryBgRemoval = useCallback(async () => {
     setShowOriginal(false);
     await processBgRemoval();
   }, [processBgRemoval]);
 
   const setHotspot = useCallback((x: number, y: number) => {
-    setCursor((prev) => (prev ? { ...prev, hotspotX: x, hotspotY: y } : null));
+    setCursor((prev) => {
+      if (!prev) return null;
+      const renderedHotspot = getRenderedHotspot(x, y, prev.cursorSize);
+      return {
+        ...prev,
+        hotspotX: x,
+        hotspotY: y,
+        renderedHotspotX: renderedHotspot.x,
+        renderedHotspotY: renderedHotspot.y,
+      };
+    });
   }, []);
 
   const setOffset = useCallback((x: number, y: number) => {
@@ -143,9 +218,27 @@ export function useStudio() {
     setCursor((prev) => (prev ? { ...prev, scale } : null));
   }, []);
 
+  const setFitMode = useCallback((fitMode: FitMode) => {
+    setCursor((prev) => (prev ? { ...prev, fitMode } : null));
+  }, []);
+
   // UX-5: 커서 크기 변경
   const setCursorSize = useCallback((size: CursorSize) => {
-    setCursor((prev) => (prev ? { ...prev, cursorSize: size } : null));
+    setCursor((prev) => {
+      if (!prev) return null;
+      const renderedHotspot = getRenderedHotspot(
+        prev.hotspotX,
+        prev.hotspotY,
+        size
+      );
+
+      return {
+        ...prev,
+        cursorSize: size,
+        renderedHotspotX: renderedHotspot.x,
+        renderedHotspotY: renderedHotspot.y,
+      };
+    });
   }, []);
 
   // UX-6: 커서 이름 변경
@@ -165,49 +258,86 @@ export function useStudio() {
     }
     setCursor(null);
     setPreviewUrl(null);
-    setState("idle");
+    setState("workflow-pick");
     setError(null);
     setShowOriginal(false);
   }, [cursor, previewUrl]);
 
-  // UX-2 + UX-3: 32px 미리보기 URL 생성 (debounced)
+  // UX-2 + UX-3: editor framing과 최종 export가 같은 square PNG 생성
   useEffect(() => {
-    if (!cursor || state !== "editing") return;
+    if (
+      !cursor ||
+      state !== "editing" ||
+      !cursor.sourceWidth ||
+      !cursor.sourceHeight
+    ) {
+      return;
+    }
+
+    let active = true;
 
     if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
 
     previewTimerRef.current = setTimeout(() => {
-      const size = cursor.cursorSize;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      rasterizeSquarePng({
+        imageUrl: cursor.processedUrl,
+        sourceWidth: cursor.sourceWidth,
+        sourceHeight: cursor.sourceHeight,
+        fitMode: cursor.fitMode,
+        scale: cursor.scale,
+        offsetX: cursor.offsetX,
+        offsetY: cursor.offsetY,
+        outputSize: cursor.cursorSize,
+        hotspotX: cursor.hotspotX,
+        hotspotY: cursor.hotspotY,
+        editorViewportSize: EDITOR_VIEWPORT_SIZE,
+      })
+        .then((renderResult) => {
+          if (!active) return;
 
-      const img = new Image();
-      img.onload = () => {
-        // 비율 유지하며 캔버스에 맞춤
-        const scale = Math.min(size / img.width, size / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        const x = (size - w) / 2;
-        const y = (size - h) / 2;
-        ctx.clearRect(0, 0, size, size);
-        ctx.drawImage(img, x, y, w, h);
+          const nextPreviewUrl = URL.createObjectURL(renderResult.blob);
 
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          if (previewUrl) URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(URL.createObjectURL(blob));
-        }, "image/png");
-      };
-      img.src = cursor.processedUrl;
+          setCursor((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  renderedBlob: renderResult.blob,
+                  renderedHotspotX: renderResult.hotspotX,
+                  renderedHotspotY: renderResult.hotspotY,
+                }
+              : null
+          );
+
+          setPreviewUrl((prev) => {
+            if (prev) {
+              URL.revokeObjectURL(prev);
+            }
+            return nextPreviewUrl;
+          });
+        })
+        .catch((err) => {
+          if (!active) return;
+          setError(err instanceof Error ? err.message : "Preview render failed");
+        });
     }, 200);
 
     return () => {
-      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      active = false;
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
     };
-  }, [cursor?.processedUrl, cursor?.cursorSize, state]);
+  }, [
+    cursor?.processedUrl,
+    cursor?.sourceWidth,
+    cursor?.sourceHeight,
+    cursor?.fitMode,
+    cursor?.scale,
+    cursor?.offsetX,
+    cursor?.offsetY,
+    cursor?.cursorSize,
+    state,
+  ]);
 
   const download = useCallback(async () => {
     if (!cursor) return;
@@ -215,10 +345,23 @@ export function useStudio() {
     setError(null);
 
     try {
+      const pngBlob = cursor.renderedBlob ?? cursor.processedBlob;
+      const renderedHotspot =
+        cursor.renderedBlob !== null
+          ? {
+              x: cursor.renderedHotspotX,
+              y: cursor.renderedHotspotY,
+            }
+          : getRenderedHotspot(
+              cursor.hotspotX,
+              cursor.hotspotY,
+              cursor.cursorSize
+            );
+
       const curBlob = await generateCursor(
-        cursor.processedBlob,
-        cursor.hotspotX,
-        cursor.hotspotY,
+        pngBlob,
+        renderedHotspot.x,
+        renderedHotspot.y,
         cursor.cursorSize,
         cursor.cursorName
       );
@@ -250,6 +393,7 @@ export function useStudio() {
     showOriginal,
     previewUrl,
     selectFile,
+    selectWorkflow,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -257,6 +401,7 @@ export function useStudio() {
     setHotspot,
     setOffset,
     setScale,
+    setFitMode,
     setCursorSize,
     setCursorName,
     reset,

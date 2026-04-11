@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { CSSProperties, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { getLandingFile, clearLandingFile } from "@/lib/landingStore";
+
 import CursorCanvas from "@/components/CursorCanvas";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
-import Simulation from "@/components/Simulation";
-import StudioBar from "@/components/StudioBar";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
-import SettingsBar from "@/components/SettingsBar";
+import Simulation from "@/components/Simulation";
+import StudioBar from "@/components/StudioBar";
 import UploadZone from "@/components/UploadZone";
-import { useStudio, CursorSize } from "@/lib/useStudio";
+import WorkflowPicker from "@/components/WorkflowPicker";
+import { FitMode } from "@/lib/cursorFrame";
+import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
+import { CursorSize, useStudio } from "@/lib/useStudio";
 
 type Tool = "move" | "hotspot";
 
@@ -27,6 +29,7 @@ export default function StudioPage() {
     showOriginal,
     previewUrl,
     selectFile,
+    selectWorkflow,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -34,6 +37,7 @@ export default function StudioPage() {
     setHotspot,
     setOffset,
     setScale,
+    setFitMode,
     setCursorSize,
     setCursorName,
     reset,
@@ -46,14 +50,15 @@ export default function StudioPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // fromLanding: 랜딩에서 드롭한 파일 자동 로드
   useEffect(() => {
     if (searchParams.get("fromLanding") !== "true") return;
+
     const file = getLandingFile();
     if (file) {
       selectFile(file);
       clearLandingFile();
     }
+
     router.replace("/studio");
   }, [searchParams, selectFile, router]);
 
@@ -63,11 +68,11 @@ export default function StudioPage() {
       if (e.key === "v" || e.key === "V") setActiveTool("move");
       if (e.key === "h" || e.key === "H") setActiveTool("hotspot");
     }
+
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  // 편집 모드에서 보여줄 이미지 URL (UX-4: 원본/결과 토글)
   const displayUrl =
     state === "editing" && cursor
       ? showOriginal
@@ -84,7 +89,6 @@ export default function StudioPage() {
       />
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Left Toolbar */}
         <aside
           style={{
             width: "3.5rem",
@@ -118,7 +122,6 @@ export default function StudioPage() {
           )}
         </aside>
 
-        {/* Canvas Area */}
         <main
           style={{
             flex: 1,
@@ -131,12 +134,14 @@ export default function StudioPage() {
             gap: "1rem",
           }}
         >
-          {/* UX-1: idle → 업로드 존 */}
-          {state === "idle" && (
+          {state === "workflow-pick" && (
+            <WorkflowPicker onSelectWorkflow={selectWorkflow} />
+          )}
+
+          {state === "cur-upload" && (
             <UploadZone onFile={selectFile} processing={false} />
           )}
 
-          {/* UX-1: uploaded → 배경 제거 선택 */}
           {state === "uploaded" && cursor && (
             <UploadZone
               onFile={selectFile}
@@ -148,16 +153,17 @@ export default function StudioPage() {
             />
           )}
 
-          {/* 배경 제거 처리 중 */}
           {state === "processing" && (
             <UploadZone onFile={selectFile} processing={true} />
           )}
 
-          {/* 편집 모드 */}
           {state === "editing" && cursor && (
             <>
               <CursorCanvas
                 imageUrl={displayUrl}
+                sourceWidth={cursor.sourceWidth}
+                sourceHeight={cursor.sourceHeight}
+                fitMode={cursor.fitMode}
                 offsetX={cursor.offsetX}
                 offsetY={cursor.offsetY}
                 scale={cursor.scale}
@@ -167,6 +173,7 @@ export default function StudioPage() {
                 onHotspotChange={setHotspot}
                 activeTool={activeTool}
               />
+
               <div
                 style={{
                   fontSize: "0.6875rem",
@@ -184,7 +191,6 @@ export default function StudioPage() {
                 <span>{t("shortcutMove")}</span>
                 <span>{t("shortcutHotspot")}</span>
 
-                {/* UX-4: 원본/결과 토글 */}
                 <button
                   onClick={toggleOriginal}
                   style={{
@@ -201,7 +207,6 @@ export default function StudioPage() {
                   {showOriginal ? t("showProcessed") : t("showOriginal")}
                 </button>
 
-                {/* UX-4: 배경 제거 재시도 */}
                 <button
                   onClick={retryBgRemoval}
                   style={{
@@ -229,7 +234,6 @@ export default function StudioPage() {
           )}
         </main>
 
-        {/* Right Panel */}
         <aside
           style={{
             width: "16rem",
@@ -245,52 +249,23 @@ export default function StudioPage() {
         >
           {state === "editing" && cursor ? (
             <>
-              {/* UX-3: 실제 크기 미리보기 */}
               {previewUrl && (
                 <PanelSection title={tp("actualSize")}>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <div
-                      style={{
-                        width: "4rem",
-                        height: "4rem",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid var(--color-border)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <img
-                        src={previewUrl}
-                        alt={tp("lightPreview")}
-                        style={{
-                          width: `${cursor.cursorSize}px`,
-                          height: `${cursor.cursorSize}px`,
-                          imageRendering: "pixelated",
-                        }}
-                      />
-                    </div>
-                    <div
-                      style={{
-                        width: "4rem",
-                        height: "4rem",
-                        backgroundColor: "#1a1a1a",
-                        border: "1px solid var(--color-border)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <img
-                        src={previewUrl}
-                        alt={tp("darkPreview")}
-                        style={{
-                          width: `${cursor.cursorSize}px`,
-                          height: `${cursor.cursorSize}px`,
-                          imageRendering: "pixelated",
-                        }}
-                      />
-                    </div>
+                    <ActualSizePreview
+                      background="#ffffff"
+                      border="1px solid var(--color-border)"
+                      alt={tp("lightPreview")}
+                      previewUrl={previewUrl}
+                      cursorSize={cursor.cursorSize}
+                    />
+                    <ActualSizePreview
+                      background="#1a1a1a"
+                      border="1px solid var(--color-border)"
+                      alt={tp("darkPreview")}
+                      previewUrl={previewUrl}
+                      cursorSize={cursor.cursorSize}
+                    />
                   </div>
                 </PanelSection>
               )}
@@ -298,9 +273,8 @@ export default function StudioPage() {
               <PanelSection title={tp("cursor")}>
                 <PanelRow
                   label={tp("original")}
-                  value={`${cursor.width} × ${cursor.height}`}
+                  value={`${cursor.sourceWidth} × ${cursor.sourceHeight}`}
                 />
-                {/* UX-5: 커서 크기 선택 */}
                 <div
                   style={{
                     display: "flex",
@@ -314,33 +288,49 @@ export default function StudioPage() {
                     {tp("output")}
                   </span>
                   <div style={{ display: "flex", gap: "0.25rem" }}>
-                    {([32, 48, 64] as CursorSize[]).map((s) => (
+                    {([32, 48, 64] as CursorSize[]).map((size) => (
                       <button
-                        key={s}
-                        onClick={() => setCursorSize(s)}
+                        key={size}
+                        onClick={() => setCursorSize(size)}
                         style={{
                           fontSize: "0.6875rem",
                           padding: "0.125rem 0.375rem",
-                          border: `1px solid ${cursor.cursorSize === s ? "var(--color-accent)" : "var(--color-border)"}`,
+                          border: `1px solid ${cursor.cursorSize === size ? "var(--color-accent)" : "var(--color-border)"}`,
                           backgroundColor:
-                            cursor.cursorSize === s
+                            cursor.cursorSize === size
                               ? "var(--color-accent-subtle)"
                               : "transparent",
                           color:
-                            cursor.cursorSize === s
+                            cursor.cursorSize === size
                               ? "var(--color-accent)"
                               : "var(--color-text-muted)",
                           cursor: "pointer",
                         }}
                       >
-                        {s}
+                        {size}
                       </button>
                     ))}
                   </div>
                 </div>
               </PanelSection>
 
-              {/* UX-6: 파일명 */}
+              <PanelSection title={tp("framing")}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+                >
+                  <FitModeButton
+                    mode="contain"
+                    active={cursor.fitMode === "contain"}
+                    onClick={() => setFitMode("contain")}
+                  />
+                  <FitModeButton
+                    mode="cover"
+                    active={cursor.fitMode === "cover"}
+                    onClick={() => setFitMode("cover")}
+                  />
+                </div>
+              </PanelSection>
+
               <PanelSection title={tp("name")}>
                 <NameInput
                   value={cursor.cursorName}
@@ -356,16 +346,7 @@ export default function StudioPage() {
                 />
                 <button
                   onClick={() => setHotspot(0, 0)}
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "var(--color-text-muted)",
-                    background: "none",
-                    border: "1px solid var(--color-border)",
-                    padding: "0.25rem 0.5rem",
-                    cursor: "pointer",
-                    marginTop: "0.25rem",
-                    transition: "border-color 0.15s",
-                  }}
+                  style={panelActionButtonStyle}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.borderColor = "var(--color-accent)")
                   }
@@ -407,16 +388,7 @@ export default function StudioPage() {
                 <PanelRow label={tp("offsetY")} value={`${cursor.offsetY}`} />
                 <button
                   onClick={() => setOffset(0, 0)}
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "var(--color-text-muted)",
-                    background: "none",
-                    border: "1px solid var(--color-border)",
-                    padding: "0.25rem 0.5rem",
-                    cursor: "pointer",
-                    marginTop: "0.25rem",
-                    transition: "border-color 0.15s",
-                  }}
+                  style={panelActionButtonStyle}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.borderColor = "var(--color-accent)")
                   }
@@ -429,9 +401,9 @@ export default function StudioPage() {
               </PanelSection>
 
               <HealthCheck
-                imageBlob={cursor.processedBlob}
-                hotspotX={cursor.hotspotX}
-                hotspotY={cursor.hotspotY}
+                imageBlob={cursor.renderedBlob}
+                hotspotX={cursor.renderedHotspotX}
+                hotspotY={cursor.renderedHotspotY}
               />
             </>
           ) : (
@@ -451,7 +423,6 @@ export default function StudioPage() {
         </aside>
       </div>
 
-      {/* Bottom Bar — Simulation */}
       <footer
         style={{
           height: "10rem",
@@ -461,11 +432,11 @@ export default function StudioPage() {
           overflow: "hidden",
         }}
       >
-        {state === "editing" && cursor ? (
+        {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
           <Simulation
-            imageUrl={previewUrl || cursor.processedUrl}
-            hotspotX={cursor.hotspotX}
-            hotspotY={cursor.hotspotY}
+            imageUrl={previewUrl}
+            hotspotX={cursor.renderedHotspotX}
+            hotspotY={cursor.renderedHotspotY}
           />
         ) : (
           <div
@@ -483,9 +454,86 @@ export default function StudioPage() {
         )}
       </footer>
 
-      <SettingsBar />
       <GuideModal open={showGuide} onClose={closeGuide} />
     </MobileGuard>
+  );
+}
+
+function ActualSizePreview({
+  background,
+  border,
+  alt,
+  previewUrl,
+  cursorSize,
+}: {
+  background: string;
+  border: string;
+  alt: string;
+  previewUrl: string;
+  cursorSize: CursorSize;
+}) {
+  return (
+    <div
+      style={{
+        width: "4rem",
+        height: "4rem",
+        backgroundColor: background,
+        border,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <img
+        src={previewUrl}
+        alt={alt}
+        style={{
+          width: `${cursorSize}px`,
+          height: `${cursorSize}px`,
+          imageRendering: "pixelated",
+        }}
+      />
+    </div>
+  );
+}
+
+function FitModeButton({
+  mode,
+  active,
+  onClick,
+}: {
+  mode: FitMode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const t = useTranslations("panel");
+  const label = mode === "contain" ? t("fitContain") : t("fitCover");
+  const sub = mode === "contain" ? t("fitContainSub") : t("fitCoverSub");
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: "0.125rem",
+        width: "100%",
+        padding: "0.625rem 0.75rem",
+        backgroundColor: active
+          ? "var(--color-accent-subtle)"
+          : "transparent",
+        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
+        color: active ? "var(--color-accent)" : "var(--color-text-primary)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{label}</span>
+      <span style={{ fontSize: "0.6875rem", color: "var(--color-text-muted)" }}>
+        {sub}
+      </span>
+    </button>
   );
 }
 
@@ -573,3 +621,14 @@ function PanelRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+const panelActionButtonStyle: CSSProperties = {
+  fontSize: "0.6875rem",
+  color: "var(--color-text-muted)",
+  background: "none",
+  border: "1px solid var(--color-border)",
+  padding: "0.25rem 0.5rem",
+  cursor: "pointer",
+  marginTop: "0.25rem",
+  transition: "border-color 0.15s",
+};

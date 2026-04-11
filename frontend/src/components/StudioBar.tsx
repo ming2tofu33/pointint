@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import SideMenu from "./SideMenu";
 
 interface StudioBarProps {
   onDownload?: () => void;
@@ -30,14 +29,6 @@ export default function StudioBar({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <SideMenu />
-        <span
-          style={{
-            width: "1px",
-            height: "1rem",
-            backgroundColor: "var(--color-border)",
-          }}
-        />
         <span
           style={{
             fontSize: "0.8125rem",

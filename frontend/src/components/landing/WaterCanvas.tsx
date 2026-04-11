@@ -11,7 +11,6 @@ const VERTEX_SHADER = `
   }
 `;
 
-// Ripple uniforms: each ripple has (x, y, birth_time, _pad)
 const FRAGMENT_SHADER = `
   precision mediump float;
 
@@ -20,6 +19,14 @@ const FRAGMENT_SHADER = `
   uniform vec3 u_baseColor;
   uniform vec3 u_midColor;
   uniform vec3 u_highlightColor;
+  uniform float u_waveStrength;
+  uniform float u_ringSpeed;
+  uniform float u_ringSharpness;
+  uniform float u_rippleFrequency;
+  uniform float u_rippleAmplitude;
+  uniform float u_specularStrength;
+  uniform float u_depthFloor;
+  uniform float u_vignetteStrength;
   uniform vec4 u_ripples[${MAX_RIPPLES}];
   uniform int u_rippleCount;
 
@@ -27,18 +34,16 @@ const FRAGMENT_SHADER = `
     vec2 uv = gl_FragCoord.xy / u_resolution;
     vec2 p = (gl_FragCoord.xy - u_resolution * 0.5) / u_resolution.y;
 
-    // Perspective depth
     float perspective = 0.5 + uv.y * 0.5;
     p.x /= perspective;
 
-    // Base water waves (ambient, always moving)
-    float wave = 0.0;
-    wave += sin(p.x * 5.0 + u_time * 0.3) * 0.12;
-    wave += sin(p.x * 9.0 - u_time * 0.5 + p.y * 2.5) * 0.06;
-    wave += sin(p.y * 7.0 + u_time * 0.25) * 0.08;
-    wave += sin((p.x + p.y) * 11.0 + u_time * 0.4) * 0.04;
+    float ambientWave = 0.0;
+    ambientWave += sin(p.x * 5.0 + u_time * 0.3) * 0.12;
+    ambientWave += sin(p.x * 9.0 - u_time * 0.5 + p.y * 2.5) * 0.06;
+    ambientWave += sin(p.y * 7.0 + u_time * 0.25) * 0.08;
+    ambientWave += sin((p.x + p.y) * 11.0 + u_time * 0.4) * 0.04;
+    float wave = ambientWave * u_waveStrength;
 
-    // Ripples — each one expands outward and fades
     for (int i = 0; i < ${MAX_RIPPLES}; i++) {
       if (i >= u_rippleCount) break;
 
@@ -50,43 +55,33 @@ const FRAGMENT_SHADER = `
       if (age < 0.0 || age > 3.0) continue;
 
       float dist = length(p - ripplePos);
-
-      // Natural expanding ring physics
-      float ringRadius = age * 0.35; // Speed of the wavefront
-      
-      // Spatial envelope: intensity peaks exactly at the ringRadius
-      float envelope = exp(-abs(dist - ringRadius) * 18.0);
-      
-      // Temporal damping: fades naturally over 3 seconds
+      float ringRadius = age * u_ringSpeed;
+      float envelope = exp(-abs(dist - ringRadius) * u_ringSharpness);
       float temporalDamping = exp(-age * 1.5);
-      
-      // High-frequency ripple traveling alongside the wavefront
-      float rippleWave = sin((dist - ringRadius) * 80.0) * envelope;
-      
+      float rippleWave = sin((dist - ringRadius) * u_rippleFrequency) * envelope;
+
       float intensity = u_ripples[i].w;
-      wave += rippleWave * temporalDamping * 0.35 * intensity;
+      wave += rippleWave * temporalDamping * u_rippleAmplitude * intensity;
     }
 
-    // Color from theme
     float brightness = wave * 0.5 + 0.5;
     vec3 waterColor = mix(u_baseColor, u_midColor, brightness);
 
-    // Specular on crests (tighter and slightly sharper for water)
-    float specular = pow(max(wave * 1.2, 0.0), 5.0) * 0.7;
+    float specular = pow(max(wave * 1.2, 0.0), 5.0) * u_specularStrength;
     waterColor += u_highlightColor * specular;
 
-    // Depth fade
-    float depthFade = mix(0.4, 1.0, uv.y);
+    float depthFade = mix(u_depthFloor, 1.0, uv.y);
     waterColor *= depthFade;
 
-    // Vignette
     float vignette = 1.0 - length((uv - 0.5) * 1.3);
     vignette = smoothstep(0.0, 0.7, vignette);
-    waterColor *= vignette;
+    waterColor = mix(waterColor, waterColor * vignette, u_vignetteStrength);
 
     gl_FragColor = vec4(waterColor, 1.0);
   }
 `;
+
+type ThemeName = "dark" | "light" | "custom";
 
 interface Ripple {
   x: number;
@@ -98,9 +93,49 @@ interface Ripple {
 interface WaterCanvasProps {
   mouseX: number;
   mouseY: number;
+  variant?: "hero" | "page";
+  motionScale?: number;
 }
 
-export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
+const DEFAULT_ACCENT: [number, number, number] = [232 / 255, 73 / 255, 106 / 255];
+const FALLBACK_DARK_BG: [number, number, number] = [8 / 255, 12 / 255, 24 / 255];
+const FALLBACK_DARK_MID: [number, number, number] = [16 / 255, 32 / 255, 64 / 255];
+const FALLBACK_DARK_HIGHLIGHT: [number, number, number] = [121 / 255, 163 / 255, 1];
+const FALLBACK_LIGHT_MID: [number, number, number] = [216 / 255, 235 / 255, 1];
+const FALLBACK_LIGHT_HIGHLIGHT: [number, number, number] = [118 / 255, 174 / 255, 1];
+
+const VARIANT_SETTINGS = {
+  hero: {
+    defaultMotionScale: 0.4,
+    minDist: 11,
+    opacity: 0.52,
+    waveStrength: 0.92,
+    ringSpeed: 0.32,
+    ringSharpness: 18,
+    rippleFrequency: 80,
+    rippleAmplitude: 0.3,
+    specularStrength: 0.58,
+  },
+  page: {
+    defaultMotionScale: 0.42,
+    minDist: 15,
+    opacity: 0.82,
+    waveStrength: 0.88,
+    ringSpeed: 0.4,
+    ringSharpness: 10,
+    rippleFrequency: 42,
+    rippleAmplitude: 0.34,
+    specularStrength: 0.42,
+  },
+} as const;
+
+export default function WaterCanvas({
+  mouseX,
+  mouseY,
+  variant = "hero",
+  motionScale,
+}: WaterCanvasProps) {
+  const settings = VARIANT_SETTINGS[variant];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ripplesRef = useRef<Ripple[]>([]);
   const lastRipplePosRef = useRef({ x: 0, y: 0, time: 0 });
@@ -108,23 +143,19 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
   const rafRef = useRef<number>(0);
   const glRef = useRef<{
     gl: WebGLRenderingContext;
-    uTime: WebGLUniformLocation;
-    uRipples: WebGLUniformLocation;
-    uRippleCount: WebGLUniformLocation;
     canvas: HTMLCanvasElement;
   } | null>(null);
 
-  // Add ripples as mouse moves (interpolated trails + velocity intensity)
   useEffect(() => {
     if (!glRef.current) return;
+
     const { canvas } = glRef.current;
     const dpr = Math.min(window.devicePixelRatio, 2);
     const mx = mouseX * dpr;
     const my = mouseY * dpr;
-
+    const rippleScale = motionScale ?? settings.defaultMotionScale;
     const now = (performance.now() - startTimeRef.current) / 1000;
 
-    // Initialize first position to prevent jumping
     if (lastRipplePosRef.current.time === 0) {
       lastRipplePosRef.current = { x: mx, y: my, time: now };
       return;
@@ -133,19 +164,15 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     const dx = mx - lastRipplePosRef.current.x;
     const dy = my - lastRipplePosRef.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
+    const minDist = settings.minDist * dpr;
 
-    // Closer spacing for completely smooth trail
-    const MIN_DIST = 8 * dpr;
-
-    if (dist > MIN_DIST) {
+    if (dist > minDist) {
       const dt = Math.max(0.001, now - lastRipplePosRef.current.time);
       const speed = dist / dt;
+      const intensity =
+        Math.min(Math.max(speed * 0.0015, 0.15), 1.5) * rippleScale;
+      const steps = Math.floor(dist / minDist);
 
-      // Map speed to ripple height/intensity (e.g., slow move = 0.15, fast swipe = 1.5)
-      const intensity = Math.min(Math.max(speed * 0.0015, 0.15), 1.5);
-
-      // Interpolate the line to spawn dense ripples and avoid disjointed rings
-      const steps = Math.floor(dist / MIN_DIST);
       for (let i = 1; i <= steps; i++) {
         const t = i / steps;
         const interpX = lastRipplePosRef.current.x + dx * t;
@@ -155,18 +182,17 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
           x: interpX,
           y: canvas.height - interpY,
           birthTime: now,
-          intensity
+          intensity,
         });
       }
 
-      // Keep only recent ripples
       while (ripplesRef.current.length > MAX_RIPPLES) {
         ripplesRef.current.shift();
       }
 
       lastRipplePosRef.current = { x: mx, y: my, time: now };
     }
-  }, [mouseX, mouseY]);
+  }, [mouseX, mouseY, motionScale, settings]);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -176,37 +202,27 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const targetCanvas = canvas;
 
-    const gl = canvas.getContext("webgl", { alpha: false });
-    if (!gl) return;
-
-    // Read theme colors
-    const cs = getComputedStyle(document.documentElement);
-    const bgHex = cs.getPropertyValue("--color-bg-primary").trim() || "#080C18";
-    const base = hexToRgb(bgHex);
-    // Water mid/highlight — slightly brighter/bluer than bg
-    const mid = [
-      Math.min(base[0] + 0.04, 1),
-      Math.min(base[1] + 0.08, 1),
-      Math.min(base[2] + 0.18, 1),
-    ];
-    const highlight = [
-      Math.min(base[0] + 0.1, 1),
-      Math.min(base[1] + 0.2, 1),
-      Math.min(base[2] + 0.4, 1),
-    ];
+    const glContext = targetCanvas.getContext("webgl", { alpha: false });
+    if (!glContext) return;
+    const gl = glContext;
 
     function createShader(type: number, source: string) {
-      const shader = gl!.createShader(type)!;
-      gl!.shaderSource(shader, source);
-      gl!.compileShader(shader);
+      const shader = gl.createShader(type);
+      if (!shader) return null;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
       return shader;
     }
 
     const vertShader = createShader(gl.VERTEX_SHADER, VERTEX_SHADER);
     const fragShader = createShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
+    if (!vertShader || !fragShader) return;
 
-    const program = gl.createProgram()!;
+    const program = gl.createProgram();
+    if (!program) return;
+
     gl.attachShader(program, vertShader);
     gl.attachShader(program, fragShader);
     gl.linkProgram(program);
@@ -221,37 +237,107 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     gl.enableVertexAttribArray(posLoc);
     gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-    const uResolution = gl.getUniformLocation(program, "u_resolution")!;
-    const uTime = gl.getUniformLocation(program, "u_time")!;
-    const uBaseColor = gl.getUniformLocation(program, "u_baseColor")!;
-    const uMidColor = gl.getUniformLocation(program, "u_midColor")!;
-    const uHighlightColor = gl.getUniformLocation(program, "u_highlightColor")!;
-    const uRipples = gl.getUniformLocation(program, "u_ripples")!;
-    const uRippleCount = gl.getUniformLocation(program, "u_rippleCount")!;
+    const uResolution = gl.getUniformLocation(program, "u_resolution");
+    const uTime = gl.getUniformLocation(program, "u_time");
+    const uBaseColor = gl.getUniformLocation(program, "u_baseColor");
+    const uMidColor = gl.getUniformLocation(program, "u_midColor");
+    const uHighlightColor = gl.getUniformLocation(program, "u_highlightColor");
+    const uWaveStrength = gl.getUniformLocation(program, "u_waveStrength");
+    const uRingSpeed = gl.getUniformLocation(program, "u_ringSpeed");
+    const uRingSharpness = gl.getUniformLocation(program, "u_ringSharpness");
+    const uRippleFrequency = gl.getUniformLocation(program, "u_rippleFrequency");
+    const uRippleAmplitude = gl.getUniformLocation(program, "u_rippleAmplitude");
+    const uSpecularStrength = gl.getUniformLocation(program, "u_specularStrength");
+    const uDepthFloor = gl.getUniformLocation(program, "u_depthFloor");
+    const uVignetteStrength = gl.getUniformLocation(program, "u_vignetteStrength");
+    const uRipples = gl.getUniformLocation(program, "u_ripples");
+    const uRippleCount = gl.getUniformLocation(program, "u_rippleCount");
 
-    gl.uniform3f(uBaseColor, base[0], base[1], base[2]);
-    gl.uniform3f(uMidColor, mid[0], mid[1], mid[2]);
-    gl.uniform3f(uHighlightColor, highlight[0], highlight[1], highlight[2]);
+    if (
+      !uResolution ||
+      !uTime ||
+      !uBaseColor ||
+      !uMidColor ||
+      !uHighlightColor ||
+      !uWaveStrength ||
+      !uRingSpeed ||
+      !uRingSharpness ||
+      !uRippleFrequency ||
+      !uRippleAmplitude ||
+      !uSpecularStrength ||
+      !uDepthFloor ||
+      !uVignetteStrength ||
+      !uRipples ||
+      !uRippleCount
+    ) {
+      return;
+    }
+
+    gl.uniform1f(uWaveStrength, settings.waveStrength);
+    gl.uniform1f(uRingSpeed, settings.ringSpeed);
+    gl.uniform1f(uRingSharpness, settings.ringSharpness);
+    gl.uniform1f(uRippleFrequency, settings.rippleFrequency);
+    gl.uniform1f(uRippleAmplitude, settings.rippleAmplitude);
+    gl.uniform1f(uSpecularStrength, settings.specularStrength);
+
+    function applyThemeUniforms() {
+      const styles = getComputedStyle(document.documentElement);
+      const theme =
+        (document.documentElement.getAttribute("data-theme") as ThemeName | null) ??
+        "dark";
+      const base =
+        parseCssColor(styles.getPropertyValue("--landing-bg-start").trim()) ??
+        parseCssColor(styles.getPropertyValue("--color-bg-primary").trim()) ??
+        FALLBACK_DARK_BG;
+      const accent =
+        parseCssColor(styles.getPropertyValue("--color-accent").trim()) ??
+        DEFAULT_ACCENT;
+      const palette = resolveWaterPalette({
+        base,
+        accent,
+        theme,
+        variant,
+        styles,
+      });
+      const shading = resolveWaterShading(base);
+
+      gl.uniform3f(uBaseColor, base[0], base[1], base[2]);
+      gl.uniform3f(uMidColor, palette.mid[0], palette.mid[1], palette.mid[2]);
+      gl.uniform3f(
+        uHighlightColor,
+        palette.highlight[0],
+        palette.highlight[1],
+        palette.highlight[2]
+      );
+      gl.uniform1f(uDepthFloor, shading.depthFloor);
+      gl.uniform1f(uVignetteStrength, shading.vignetteStrength);
+    }
 
     function resize() {
-      if (!canvas) return;
       const dpr = Math.min(window.devicePixelRatio, 2);
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      gl!.viewport(0, 0, canvas.width, canvas.height);
-      gl!.uniform2f(uResolution, canvas.width, canvas.height);
+      targetCanvas.width = targetCanvas.offsetWidth * dpr;
+      targetCanvas.height = targetCanvas.offsetHeight * dpr;
+      gl.viewport(0, 0, targetCanvas.width, targetCanvas.height);
+      gl.uniform2f(uResolution, targetCanvas.width, targetCanvas.height);
     }
 
     startTimeRef.current = performance.now();
+    glRef.current = { gl, canvas: targetCanvas };
 
-    glRef.current = { gl, uTime, uRipples, uRippleCount, canvas };
+    applyThemeUniforms();
+
+    const themeObserver = new MutationObserver(() => {
+      applyThemeUniforms();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme", "style"],
+    });
 
     function animate() {
-      if (!gl || !canvas) return;
       const elapsed = (performance.now() - startTimeRef.current) / 1000;
       gl.uniform1f(uTime, elapsed);
 
-      // Upload ripple data
       const ripples = ripplesRef.current;
       const count = Math.min(ripples.length, MAX_RIPPLES);
       gl.uniform1i(uRippleCount, count);
@@ -265,8 +351,7 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
       }
       gl.uniform4fv(uRipples, rippleData);
 
-      // Clean old ripples (older than 3 seconds)
-      ripplesRef.current = ripples.filter((r) => elapsed - r.birthTime < 3.0);
+      ripplesRef.current = ripples.filter((ripple) => elapsed - ripple.birthTime < 3);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       rafRef.current = requestAnimationFrame(animate);
@@ -277,29 +362,140 @@ export default function WaterCanvas({ mouseX, mouseY }: WaterCanvasProps) {
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
+      themeObserver.disconnect();
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(rafRef.current);
       glRef.current = null;
     };
-  }, []);
+  }, [settings, variant]);
 
   return (
     <canvas
       ref={canvasRef}
       style={{
-        position: "absolute",
+        position: variant === "page" ? "fixed" : "absolute",
         inset: 0,
         width: "100%",
         height: "100%",
         pointerEvents: "none",
+        opacity: `calc(${settings.opacity} * var(--landing-water-opacity-scale, 1))`,
       }}
     />
   );
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
+function resolveWaterPalette({
+  base,
+  accent,
+  theme,
+  variant,
+  styles,
+}: {
+  base: [number, number, number];
+  accent: [number, number, number];
+  theme: ThemeName;
+  variant: "hero" | "page";
+  styles: CSSStyleDeclaration;
+}) {
+  const tokenMid = parseCssColor(styles.getPropertyValue("--landing-water-mid").trim());
+  const tokenHighlight = parseCssColor(
+    styles.getPropertyValue("--landing-water-highlight").trim()
+  );
+
+  if (tokenMid && tokenHighlight) {
+    return {
+      mid: tokenMid,
+      highlight: tokenHighlight,
+    };
+  }
+
+  const isLightSurface = getLuminance(base) > 0.72;
+
+  if (isLightSurface) {
+    return {
+      mid: mixColors(base, FALLBACK_LIGHT_MID, variant === "page" ? 0.82 : 0.7),
+      highlight: mixColors(
+        base,
+        FALLBACK_LIGHT_HIGHLIGHT,
+        variant === "page" ? 0.54 : 0.4
+      ),
+    };
+  }
+
+  return {
+    mid: mixColors(base, FALLBACK_DARK_MID, variant === "page" ? 0.66 : 0.52),
+    highlight: mixColors(accent, FALLBACK_DARK_HIGHLIGHT, 0.62),
+  };
+}
+
+function resolveWaterShading(base: [number, number, number]) {
+  const isLightSurface = getLuminance(base) > 0.72;
+
+  if (isLightSurface) {
+    return {
+      depthFloor: 0.9,
+      vignetteStrength: 0.14,
+    };
+  }
+
+  return {
+    depthFloor: 0.4,
+    vignetteStrength: 1,
+  };
+}
+
+function parseCssColor(value: string): [number, number, number] | null {
+  if (!value) return null;
+
+  if (value.startsWith("#")) {
+    return hexToRgb(value);
+  }
+
+  const rgbMatch = value.match(/rgba?\(([^)]+)\)/i);
+  if (!rgbMatch) return null;
+
+  const parts = rgbMatch[1]
+    .split(",")
+    .map((part) => Number.parseFloat(part.trim()))
+    .slice(0, 3);
+
+  if (parts.length < 3 || parts.some((part) => Number.isNaN(part))) {
+    return null;
+  }
+
+  return [parts[0] / 255, parts[1] / 255, parts[2] / 255];
+}
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const normalized = hex.replace("#", "").trim();
+
+  if (normalized.length === 3) {
+    const r = Number.parseInt(normalized[0] + normalized[0], 16) / 255;
+    const g = Number.parseInt(normalized[1] + normalized[1], 16) / 255;
+    const b = Number.parseInt(normalized[2] + normalized[2], 16) / 255;
+    return [r, g, b];
+  }
+
+  if (normalized.length !== 6) return null;
+
+  const r = Number.parseInt(normalized.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(normalized.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(normalized.slice(4, 6), 16) / 255;
   return [r, g, b];
+}
+
+function mixColors(
+  from: [number, number, number],
+  to: [number, number, number],
+  amount: number
+): [number, number, number] {
+  return [
+    from[0] + (to[0] - from[0]) * amount,
+    from[1] + (to[1] - from[1]) * amount,
+    from[2] + (to[2] - from[2]) * amount,
+  ];
+}
+
+function getLuminance([r, g, b]: [number, number, number]) {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import LocaleToggle from "./LocaleToggle";
-import ThemeToggle from "./ThemeToggle";
 
 export default function SettingsBar() {
   return (
@@ -17,7 +16,6 @@ export default function SettingsBar() {
       }}
     >
       <LocaleToggle />
-      <ThemeToggle />
     </div>
   );
 }

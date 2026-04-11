@@ -1,16 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 export default function SideMenu() {
   const [open, setOpen] = useState(false);
   const t = useTranslations("nav");
+  const pathname = usePathname();
+  const navItems = [
+    {
+      href: "/",
+      label: t("home"),
+      active: pathname === "/",
+    },
+    {
+      href: "/studio",
+      label: t("studio"),
+      active: pathname.startsWith("/studio"),
+    },
+  ];
 
   return (
     <>
-      {/* Hamburger Button */}
       <button
         onClick={() => setOpen(true)}
         aria-label={t("openMenu")}
@@ -51,7 +64,6 @@ export default function SideMenu() {
         />
       </button>
 
-      {/* Backdrop */}
       {open && (
         <div
           onClick={() => setOpen(false)}
@@ -65,7 +77,6 @@ export default function SideMenu() {
         />
       )}
 
-      {/* Side Panel */}
       <div
         style={{
           position: "fixed",
@@ -82,7 +93,6 @@ export default function SideMenu() {
           flexDirection: "column",
         }}
       >
-        {/* Menu Header */}
         <div
           style={{
             display: "flex",
@@ -114,15 +124,15 @@ export default function SideMenu() {
               border: "none",
               color: "var(--color-text-muted)",
               cursor: "pointer",
-              fontSize: "1.125rem",
+              fontSize: "1rem",
+              fontWeight: 700,
               lineHeight: 1,
             }}
           >
-            ×
+            x
           </button>
         </div>
 
-        {/* Menu Items */}
         <nav
           style={{
             display: "flex",
@@ -131,38 +141,16 @@ export default function SideMenu() {
             flex: 1,
           }}
         >
-          <MenuItem href="/" label={t("home")} onClick={() => setOpen(false)} />
-          <MenuItem
-            href="/studio"
-            label={t("studio")}
-            active
-            onClick={() => setOpen(false)}
-          />
-
-          <div
-            style={{
-              margin: "0.75rem 1.25rem",
-              height: "1px",
-              backgroundColor: "var(--color-border)",
-            }}
-          />
-
-          <MenuLabel>{t("comingSoon")}</MenuLabel>
-          <MenuItem href="#" label={t("gallery")} disabled />
-          <MenuItem href="#" label={t("guide")} disabled />
+          {navItems.map((item) => (
+            <MenuItem
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              active={item.active}
+              onClick={() => setOpen(false)}
+            />
+          ))}
         </nav>
-
-        {/* Menu Footer */}
-        <div
-          style={{
-            padding: "1rem 1.25rem",
-            borderTop: "1px solid var(--color-border)",
-            fontSize: "0.6875rem",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          Your Point, Your Tint.
-        </div>
       </div>
     </>
   );
@@ -172,36 +160,18 @@ function MenuItem({
   href,
   label,
   active,
-  disabled,
   onClick,
 }: {
   href: string;
   label: string;
   active?: boolean;
-  disabled?: boolean;
   onClick?: () => void;
 }) {
-  if (disabled) {
-    return (
-      <span
-        style={{
-          display: "block",
-          padding: "0.5rem 1.25rem",
-          fontSize: "0.8125rem",
-          color: "var(--color-text-muted)",
-          opacity: 0.5,
-          cursor: "default",
-        }}
-      >
-        {label}
-      </span>
-    );
-  }
-
   return (
     <Link
       href={href}
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
       style={{
         display: "block",
         padding: "0.5rem 1.25rem",
@@ -216,23 +186,5 @@ function MenuItem({
     >
       {label}
     </Link>
-  );
-}
-
-function MenuLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        display: "block",
-        padding: "0.25rem 1.25rem",
-        fontSize: "0.625rem",
-        fontWeight: 600,
-        color: "var(--color-text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-      }}
-    >
-      {children}
-    </span>
   );
 }

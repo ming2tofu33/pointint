@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const THEMES = ["dark", "light", "custom"] as const;
+const THEMES = ["light", "dark", "custom"] as const;
 type Theme = (typeof THEMES)[number];
 
 function MoonIcon() {

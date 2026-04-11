@@ -3,10 +3,15 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { FitMode, getFrameRect } from "@/lib/cursorFrame";
+
 type Tool = "move" | "hotspot";
 
 interface CursorCanvasProps {
   imageUrl: string;
+  sourceWidth: number;
+  sourceHeight: number;
+  fitMode: FitMode;
   offsetX: number;
   offsetY: number;
   scale: number;
@@ -21,6 +26,9 @@ const CANVAS_SIZE = 256;
 
 export default function CursorCanvas({
   imageUrl,
+  sourceWidth,
+  sourceHeight,
+  fitMode,
   offsetX,
   offsetY,
   scale,
@@ -34,6 +42,15 @@ export default function CursorCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, startOffsetX: 0, startOffsetY: 0 });
+  const frameRect = getFrameRect({
+    sourceWidth,
+    sourceHeight,
+    viewportSize: CANVAS_SIZE,
+    fitMode,
+    scale,
+    offsetX,
+    offsetY,
+  });
 
   const getRelativePos = useCallback(
     (e: React.MouseEvent) => {
@@ -115,11 +132,10 @@ export default function CursorCanvas({
         draggable={false}
         style={{
           position: "absolute",
-          left: `${offsetX}px`,
-          top: `${offsetY}px`,
-          width: `${CANVAS_SIZE * scale}px`,
-          height: `${CANVAS_SIZE * scale}px`,
-          objectFit: "contain",
+          left: `${frameRect.drawX}px`,
+          top: `${frameRect.drawY}px`,
+          width: `${frameRect.drawWidth}px`,
+          height: `${frameRect.drawHeight}px`,
           imageRendering: scale > 1.5 ? "pixelated" : "auto",
           pointerEvents: "none",
         }}
