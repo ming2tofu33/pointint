@@ -54,6 +54,10 @@ export default async function Home() {
     },
     footer: {
       tagline: t("footerTagline"),
+      policyLabel: t("footerPolicyLabel"),
+      privacyLabel: t("footerPrivacyLabel"),
+      cookieLabel: t("footerCookieLabel"),
+      termsLabel: t("footerTermsLabel"),
     },
   };
 

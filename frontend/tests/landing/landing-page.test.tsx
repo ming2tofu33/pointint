@@ -105,6 +105,10 @@ const copy = {
   },
   footer: {
     tagline: "Your Point, Your Tint.",
+    policyLabel: "Policy",
+    privacyLabel: "Privacy Policy",
+    cookieLabel: "Cookie Policy",
+    termsLabel: "Terms of Service",
   },
 } satisfies LandingCopy;
 

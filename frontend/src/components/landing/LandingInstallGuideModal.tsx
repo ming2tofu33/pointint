@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 type InstallGuideCopy = {
   eyebrow: string;
@@ -35,6 +36,9 @@ export default function LandingInstallGuideModal({
     }
 
     closeButtonRef.current?.focus();
+    trackEvent("install_guide_opened", {
+      source: "showcase_surface",
+    });
   }, [open]);
 
   if (!open) {

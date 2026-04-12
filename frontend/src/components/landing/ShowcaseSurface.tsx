@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import LandingInstallGuideModal from "@/components/landing/LandingInstallGuideModal";
+import { trackEvent } from "@/lib/analytics";
 
 type ShowcaseCardCopy = {
   id: string;
@@ -49,6 +50,11 @@ interface ShowcaseSurfaceProps {
 
 export default function ShowcaseSurface({ copy }: ShowcaseSurfaceProps) {
   const [guideOpen, setGuideOpen] = useState(false);
+
+  function getSurfaceSource() {
+    if (typeof window === "undefined") return "landing";
+    return window.location.pathname.startsWith("/explore") ? "explore" : "landing";
+  }
 
   return (
     <section
@@ -226,6 +232,12 @@ export default function ShowcaseSurface({ copy }: ShowcaseSurfaceProps) {
                   <a
                     href={sample.bundleHref}
                     download
+                    onClick={() =>
+                      trackEvent("sample_bundle_downloaded", {
+                        sample_id: sample.id,
+                        source: getSurfaceSource(),
+                      })
+                    }
                     style={{
                       display: "inline-flex",
                       alignItems: "center",

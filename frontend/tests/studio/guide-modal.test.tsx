@@ -1,9 +1,17 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import GuideModal from "@/components/GuideModal";
+
+const { trackEventMock } = vi.hoisted(() => ({
+  trackEventMock: vi.fn(),
+}));
+
+vi.mock("@/lib/analytics", () => ({
+  trackEvent: trackEventMock,
+}));
 
 const messages = {
   guide: {
@@ -23,6 +31,10 @@ const messages = {
 };
 
 describe("GuideModal", () => {
+  beforeEach(() => {
+    trackEventMock.mockReset();
+  });
+
   it("renders as a viewport-safe dialog with an explore link", () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -42,5 +54,8 @@ describe("GuideModal", () => {
       "href",
       "/explore"
     );
+    expect(trackEventMock).toHaveBeenCalledWith("install_guide_opened", {
+      source: "studio_download",
+    });
   });
 });

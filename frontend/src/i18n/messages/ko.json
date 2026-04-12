@@ -93,7 +93,12 @@
     "scale": "크기",
     "offsetX": "X 오프셋",
     "offsetY": "Y 오프셋",
-    "center": "중앙"
+    "center": "중앙",
+    "status": "상태",
+    "recommended": "추천됨",
+    "manual": "수동",
+    "recommendHotspot": "핫스팟 추천",
+    "recommendHotspotAgain": "다시 추천"
   },
   "guide": {
     "title": "커서 적용 방법",
@@ -191,10 +196,29 @@
     "faq5A": "클릭이 실제로 인식되는 정확한 픽셀입니다. Pointint는 드래그 도구로 시각적으로 설정할 수 있습니다.",
     "faq6Q": "애니메이션 커서도 만들 수 있나요?",
     "faq6A": "애니메이션 커서(.ani) 지원은 곧 제공됩니다.",
-    "footerTagline": "Your Point, Your Tint."
+    "footerTagline": "Your Point, Your Tint.",
+    "footerPolicyLabel": "정책",
+    "footerPrivacyLabel": "개인정보 처리방침",
+    "footerCookieLabel": "쿠키 정책",
+    "footerTermsLabel": "이용약관"
   },
   "explore": {
     "title": "둘러보기",
     "sub": "지금은 Pointint의 큐레이션 샘플 번들을 둘러보는 공간이고, 나중에는 다른 Pointint 제품까지 담는 탐색 표면으로 확장할 수 있습니다."
+  },
+  "consent": {
+    "title": "쿠키 설정",
+    "body": "사용자 경험 개선을 위해 쿠키를 사용합니다.",
+    "details": "자세히 보기",
+    "essentialOnly": "필수만 사용",
+    "acceptAll": "모두 허용"
+  },
+  "policy": {
+    "privacyTitle": "개인정보 처리방침",
+    "privacyBody": "Pointint는 서비스 운영, 오류 진단, 전체적인 사용 흐름 파악에 필요한 최소한의 정보만 다룹니다. 문의를 직접 남긴 경우에는 답변과 지원 목적에서만 해당 정보를 사용합니다.\n\n커서를 만드는 데 계정은 필요하지 않습니다. 분석 도구는 쿠키 배너에서 허용했을 때만 로드됩니다.",
+    "cookieTitle": "쿠키 정책",
+    "cookieBody": "Pointint는 사이트 동작에 필요한 인터페이스 상태를 기억하기 위해 필수 쿠키를 사용합니다. 분석 쿠키를 허용하면 Google Analytics와 Microsoft Clarity가 로드되어 제품 사용 흐름을 이해하고 경험을 개선하는 데 활용될 수 있습니다.\n\n쿠키 배너에서 필수만 사용할지, 분석까지 허용할지 선택할 수 있습니다.",
+    "termsTitle": "이용약관",
+    "termsBody": "Pointint는 커스텀 커서 제작을 위한 도구로 제공됩니다. 업로드하는 이미지와 그 사용 권한에 대한 책임은 사용자에게 있습니다.\n\n불법 콘텐츠, 악성 파일, 타인의 권리를 침해하는 자료는 업로드할 수 없습니다. 서비스는 제품 발전에 따라 변경되거나 일부 기능이 조정될 수 있습니다."
   }
 }

@@ -95,10 +95,40 @@ vi.mock("@/components/SettingsBar", () => ({
 
 import StudioPage from "@/app/studio/page";
 
-function renderStudio(state: StudioState) {
+function createEditingCursor(overrides: Record<string, unknown> = {}) {
+  return {
+    originalFile: new File(["cursor"], "cursor.png", { type: "image/png" }),
+    originalUrl: "blob:original",
+    processedUrl: "blob:processed",
+    processedBlob: new Blob(["processed"], { type: "image/png" }),
+    sourceWidth: 96,
+    sourceHeight: 96,
+    hotspotX: 24,
+    hotspotY: 18,
+    hotspotMode: "auto",
+    renderedHotspotX: 3,
+    renderedHotspotY: 2,
+    renderedBlob: new Blob(["preview"], { type: "image/png" }),
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    fitMode: "contain",
+    cursorSize: 32,
+    cursorName: "cursor",
+    ...overrides,
+  };
+}
+
+function renderStudio(
+  state: StudioState,
+  options: { cursor?: Record<string, unknown> | null } = {}
+) {
+  const cursor =
+    state === "editing" ? createEditingCursor(options.cursor ?? {}) : null;
+
   useStudioMock.mockReturnValue({
     state,
-    cursor: null,
+    cursor,
     error: null,
     downloading: false,
     showGuide: false,
@@ -116,6 +146,7 @@ function renderStudio(state: StudioState) {
     setFitMode: vi.fn(),
     setCursorSize: vi.fn(),
     setCursorName: vi.fn(),
+    recommendHotspot: vi.fn(),
     reset: vi.fn(),
     download: vi.fn(),
     closeGuide: vi.fn(),
@@ -185,5 +216,17 @@ describe("Studio entry gate", () => {
     expect(clearLandingFileMock).toHaveBeenCalledTimes(1);
     expect(replaceMock).toHaveBeenCalledTimes(1);
     expect(replaceMock).toHaveBeenCalledWith("/studio");
+  });
+
+  it("shows hotspot recommendation status and action in editing mode", () => {
+    renderStudio("editing", {
+      cursor: {
+        hotspotMode: "auto",
+      },
+    });
+
+    expect(screen.getAllByText("position").length).toBeGreaterThan(0);
+    expect(screen.getByText("recommended")).not.toBeNull();
+    expect(screen.getByText("recommendHotspotAgain")).not.toBeNull();
   });
 });

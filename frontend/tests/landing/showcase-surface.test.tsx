@@ -1,10 +1,18 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import ShowcaseSurface, {
   type ShowcaseCopy,
 } from "@/components/landing/ShowcaseSurface";
 import { showcaseSamples } from "@/lib/showcaseSamples";
+
+const { trackEventMock } = vi.hoisted(() => ({
+  trackEventMock: vi.fn(),
+}));
+
+vi.mock("@/lib/analytics", () => ({
+  trackEvent: trackEventMock,
+}));
 
 const showcaseSampleCopy = [
   {
@@ -61,6 +69,10 @@ const copy = {
 } satisfies ShowcaseCopy;
 
 describe("ShowcaseSurface", () => {
+  beforeEach(() => {
+    trackEventMock.mockReset();
+  });
+
   it("shows three sample bundles and opens the install guide modal", () => {
     render(<ShowcaseSurface copy={copy} />);
 
@@ -89,6 +101,13 @@ describe("ShowcaseSurface", () => {
       "/studio"
     );
 
+    fireEvent.click(bundleLinks[0]);
+
+    expect(trackEventMock).toHaveBeenCalledWith("sample_bundle_downloaded", {
+      sample_id: showcaseSamples[0].id,
+      source: "landing",
+    });
+
     fireEvent.click(screen.getByRole("button", { name: "View install guide" }));
 
     const dialog = screen.getByRole("dialog");
@@ -101,6 +120,9 @@ describe("ShowcaseSurface", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Unzip the downloaded file.")).toBeInTheDocument();
     expect(screen.getByText("restore-default.inf")).toBeInTheDocument();
+    expect(trackEventMock).toHaveBeenCalledWith("install_guide_opened", {
+      source: "showcase_surface",
+    });
 
     fireEvent.keyDown(dialog, { key: "Escape" });
 

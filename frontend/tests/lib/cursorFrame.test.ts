@@ -4,6 +4,7 @@ import {
   getFrameRect,
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
+  suggestHotspotFromAlphaMask,
 } from "@/lib/cursorFrame";
 
 describe("getFrameRect", () => {
@@ -163,5 +164,63 @@ describe("rasterizeSquarePng", () => {
     expect(result.hotspotX).toBe(32);
     expect(result.hotspotY).toBe(32);
     expect(result.blob.type).toBe("image/png");
+  });
+});
+
+describe("suggestHotspotFromAlphaMask", () => {
+  it("finds a supported top-left-leading tip", () => {
+    const width = 8;
+    const height = 8;
+    const alpha = new Uint8ClampedArray(width * height);
+
+    const paint = (x: number, y: number) => {
+      alpha[y * width + x] = 255;
+    };
+
+    paint(1, 1);
+    paint(2, 1);
+    paint(2, 2);
+    paint(3, 2);
+    paint(3, 3);
+    paint(4, 2);
+    paint(4, 3);
+    paint(4, 4);
+
+    expect(suggestHotspotFromAlphaMask(alpha, width, height)).toEqual({
+      x: 1,
+      y: 1,
+    });
+  });
+
+  it("ignores isolated top-left noise and prefers the supported tip", () => {
+    const width = 10;
+    const height = 10;
+    const alpha = new Uint8ClampedArray(width * height);
+
+    const paint = (x: number, y: number) => {
+      alpha[y * width + x] = 255;
+    };
+
+    paint(0, 0);
+
+    paint(2, 2);
+    paint(3, 2);
+    paint(3, 3);
+    paint(4, 2);
+    paint(4, 3);
+    paint(4, 4);
+    paint(5, 3);
+    paint(5, 4);
+
+    expect(suggestHotspotFromAlphaMask(alpha, width, height)).toEqual({
+      x: 2,
+      y: 2,
+    });
+  });
+
+  it("returns null when there is no visible pixel", () => {
+    const alpha = new Uint8ClampedArray(16);
+
+    expect(suggestHotspotFromAlphaMask(alpha, 4, 4)).toBeNull();
   });
 });

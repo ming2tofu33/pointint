@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { useTranslations } from "next-intl";
+import { trackEvent } from "@/lib/analytics";
 
 interface GuideModalProps {
   open: boolean;
@@ -12,6 +13,14 @@ interface GuideModalProps {
 export default function GuideModal({ open, onClose }: GuideModalProps) {
   const t = useTranslations("guide");
   const titleId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+
+    trackEvent("install_guide_opened", {
+      source: "studio_download",
+    });
+  }, [open]);
 
   if (!open) return null;
 

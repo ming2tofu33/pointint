@@ -21,6 +21,10 @@ export type LandingCopy = {
   trust: TrustCopy;
   footer: {
     tagline: string;
+    policyLabel: string;
+    privacyLabel: string;
+    cookieLabel: string;
+    termsLabel: string;
   };
 };
 
@@ -119,7 +123,13 @@ export default function LandingPage({ copy }: LandingPageProps) {
         </div>
       </main>
       <div style={{ position: "relative", zIndex: 1 }}>
-        <Footer tagline={copy.footer.tagline} />
+        <Footer
+          tagline={copy.footer.tagline}
+          policyLabel={copy.footer.policyLabel}
+          privacyLabel={copy.footer.privacyLabel}
+          cookieLabel={copy.footer.cookieLabel}
+          termsLabel={copy.footer.termsLabel}
+        />
       </div>
       <style>{`
         .landing-stack {

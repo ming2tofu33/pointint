@@ -6,12 +6,14 @@ import {
   FitMode,
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
+  suggestViewportHotspot,
 } from "@/lib/cursorFrame";
 import {
   isSelectableWorkflow,
   type StudioState,
   type WorkflowOptionId,
 } from "@/lib/studioWorkflow";
+import { trackEvent } from "@/lib/analytics";
 
 import { generateCursor, removeBackground } from "./api";
 
@@ -28,6 +30,7 @@ export interface CursorData {
   sourceHeight: number;
   hotspotX: number;
   hotspotY: number;
+  hotspotMode: "auto" | "manual";
   renderedHotspotX: number;
   renderedHotspotY: number;
   renderedBlob: Blob | null;
@@ -64,6 +67,9 @@ export function useStudio() {
   const selectWorkflow = useCallback((workflowId: WorkflowOptionId) => {
     if (!isSelectableWorkflow(workflowId)) return;
     setError(null);
+    trackEvent("workflow_selected", {
+      workflow_id: workflowId,
+    });
     setState("cur-upload");
   }, []);
 
@@ -98,6 +104,7 @@ export function useStudio() {
         sourceHeight: 0,
         hotspotX: 0,
         hotspotY: 0,
+        hotspotMode: "auto",
         renderedHotspotX: renderedHotspot.x,
         renderedHotspotY: renderedHotspot.y,
         renderedBlob: null,
@@ -204,6 +211,7 @@ export function useStudio() {
         ...prev,
         hotspotX: x,
         hotspotY: y,
+        hotspotMode: "manual",
         renderedHotspotX: renderedHotspot.x,
         renderedHotspotY: renderedHotspot.y,
       };
@@ -245,6 +253,48 @@ export function useStudio() {
   const setCursorName = useCallback((name: string) => {
     setCursor((prev) => (prev ? { ...prev, cursorName: name } : null));
   }, []);
+
+  const recommendHotspot = useCallback(async () => {
+    if (
+      !cursor ||
+      !cursor.sourceWidth ||
+      !cursor.sourceHeight ||
+      state !== "editing"
+    ) {
+      return;
+    }
+
+    const suggestion = await suggestViewportHotspot({
+      imageUrl: cursor.processedUrl,
+      sourceWidth: cursor.sourceWidth,
+      sourceHeight: cursor.sourceHeight,
+      fitMode: cursor.fitMode,
+      scale: cursor.scale,
+      offsetX: cursor.offsetX,
+      offsetY: cursor.offsetY,
+      viewportSize: EDITOR_VIEWPORT_SIZE,
+    });
+
+    if (!suggestion) return;
+
+    setCursor((prev) => {
+      if (!prev) return null;
+      const renderedHotspot = getRenderedHotspot(
+        suggestion.x,
+        suggestion.y,
+        prev.cursorSize
+      );
+
+      return {
+        ...prev,
+        hotspotX: suggestion.x,
+        hotspotY: suggestion.y,
+        hotspotMode: "auto",
+        renderedHotspotX: renderedHotspot.x,
+        renderedHotspotY: renderedHotspot.y,
+      };
+    });
+  }, [cursor, state]);
 
   const reset = useCallback(() => {
     if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
@@ -339,6 +389,72 @@ export function useStudio() {
     state,
   ]);
 
+  useEffect(() => {
+    if (
+      !cursor ||
+      state !== "editing" ||
+      !cursor.sourceWidth ||
+      !cursor.sourceHeight ||
+      cursor.hotspotMode !== "auto"
+    ) {
+      return;
+    }
+
+    let active = true;
+
+    const timer = setTimeout(() => {
+      suggestViewportHotspot({
+        imageUrl: cursor.processedUrl,
+        sourceWidth: cursor.sourceWidth,
+        sourceHeight: cursor.sourceHeight,
+        fitMode: cursor.fitMode,
+        scale: cursor.scale,
+        offsetX: cursor.offsetX,
+        offsetY: cursor.offsetY,
+        viewportSize: EDITOR_VIEWPORT_SIZE,
+      })
+        .then((suggestion) => {
+          if (!active || !suggestion) return;
+
+          setCursor((prev) => {
+            if (!prev || prev.hotspotMode !== "auto") return prev;
+            const renderedHotspot = getRenderedHotspot(
+              suggestion.x,
+              suggestion.y,
+              prev.cursorSize
+            );
+
+            return {
+              ...prev,
+              hotspotX: suggestion.x,
+              hotspotY: suggestion.y,
+              hotspotMode: "auto",
+              renderedHotspotX: renderedHotspot.x,
+              renderedHotspotY: renderedHotspot.y,
+            };
+          });
+        })
+        .catch(() => {
+          // ignore recommendation failures and keep the current hotspot
+        });
+    }, 200);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [
+    cursor?.processedUrl,
+    cursor?.sourceWidth,
+    cursor?.sourceHeight,
+    cursor?.fitMode,
+    cursor?.scale,
+    cursor?.offsetX,
+    cursor?.offsetY,
+    cursor?.hotspotMode,
+    state,
+  ]);
+
   const download = useCallback(async () => {
     if (!cursor) return;
     setDownloading(true);
@@ -374,6 +490,11 @@ export function useStudio() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      trackEvent("download_completed", {
+        cursor_size: cursor.cursorSize,
+        fit_mode: cursor.fitMode,
+        source: "studio",
+      });
       setShowGuide(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed");
@@ -404,6 +525,7 @@ export function useStudio() {
     setFitMode,
     setCursorSize,
     setCursorName,
+    recommendHotspot,
     reset,
     download,
     closeGuide,

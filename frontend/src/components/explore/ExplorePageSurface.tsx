@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
+
 import ShowcaseSurface, {
   type ShowcaseCopy,
 } from "@/components/landing/ShowcaseSurface";
+import { trackEvent } from "@/lib/analytics";
 
 interface ExplorePageSurfaceProps {
   title: string;
@@ -15,6 +18,12 @@ export default function ExplorePageSurface({
   sub,
   showcase,
 }: ExplorePageSurfaceProps) {
+  useEffect(() => {
+    trackEvent("explore_opened", {
+      source: "explore_page",
+    });
+  }, []);
+
   return (
     <main
       style={{

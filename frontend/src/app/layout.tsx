@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import AnalyticsPageView from "@/components/AnalyticsPageView";
+import ConsentBanner from "@/components/ConsentBanner";
 import Header from "@/components/Header";
+import { ANALYTICS_CONSENT_COOKIE } from "@/lib/analytics-consent";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,6 +41,12 @@ export default async function RootLayout({
 }) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const cookieStore = await cookies();
+  const consentCookie = cookieStore.get(ANALYTICS_CONSENT_COOKIE)?.value;
+  const initialConsent =
+    consentCookie === "accepted" || consentCookie === "declined"
+      ? consentCookie
+      : "unknown";
 
   return (
     <html lang={locale} data-theme="dark">
@@ -46,6 +56,8 @@ export default async function RootLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <Header />
+          <AnalyticsPageView />
+          <ConsentBanner initialConsent={initialConsent} />
           {children}
         </NextIntlClientProvider>
       </body>

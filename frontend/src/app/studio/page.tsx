@@ -13,6 +13,7 @@ import Simulation from "@/components/Simulation";
 import StudioBar from "@/components/StudioBar";
 import UploadZone from "@/components/UploadZone";
 import WorkflowPicker from "@/components/WorkflowPicker";
+import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
 import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
 import { CursorSize, useStudio } from "@/lib/useStudio";
@@ -40,6 +41,7 @@ export default function StudioPage() {
     setFitMode,
     setCursorSize,
     setCursorName,
+    recommendHotspot,
     reset,
     download,
     closeGuide,
@@ -49,6 +51,12 @@ export default function StudioPage() {
   const tp = useTranslations("panel");
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  useEffect(() => {
+    trackEvent("studio_entry", {
+      source: "studio_page",
+    });
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("fromLanding") !== "true") return;
@@ -344,6 +352,28 @@ export default function StudioPage() {
                   label={tp("position")}
                   value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
                 />
+                <PanelRow
+                  label={tp("status")}
+                  value={
+                    cursor.hotspotMode === "auto"
+                      ? tp("recommended")
+                      : tp("manual")
+                  }
+                />
+                <button
+                  onClick={recommendHotspot}
+                  style={panelActionButtonStyle}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-accent)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--color-border)")
+                  }
+                >
+                  {cursor.hotspotMode === "auto"
+                    ? tp("recommendHotspotAgain")
+                    : tp("recommendHotspot")}
+                </button>
                 <button
                   onClick={() => setHotspot(0, 0)}
                   style={panelActionButtonStyle}

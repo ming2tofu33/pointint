@@ -89,6 +89,11 @@
     "nameInvalidChars": "cannot be used in file names",
     "hotspot": "Hotspot",
     "position": "Position",
+    "status": "Status",
+    "recommended": "Recommended",
+    "manual": "Manual",
+    "recommendHotspot": "Recommend hotspot",
+    "recommendHotspotAgain": "Recommend again",
     "resetHotspot": "Reset to 0, 0",
     "scale": "Scale",
     "offsetX": "Offset X",
@@ -108,6 +113,13 @@
     "gotIt": "Got it",
     "downloaded": "Download complete",
     "exploreCta": "Open Explore"
+  },
+  "consent": {
+    "title": "Cookie preferences",
+    "body": "We use cookies to improve the user experience.",
+    "details": "Learn more",
+    "essentialOnly": "Only essential",
+    "acceptAll": "Accept all"
   },
   "simulation": {
     "normal": "Normal",
@@ -191,10 +203,22 @@
     "faq5A": "The exact pixel where your click registers. Pointint lets you set it visually with a drag tool.",
     "faq6Q": "Can I make animated cursors?",
     "faq6A": "Animated cursor (.ani) support is coming soon.",
-    "footerTagline": "Your Point, Your Tint."
+    "footerTagline": "Your Point, Your Tint.",
+    "footerPolicyLabel": "Policy",
+    "footerPrivacyLabel": "Privacy Policy",
+    "footerCookieLabel": "Cookie Policy",
+    "footerTermsLabel": "Terms of Service"
   },
   "explore": {
     "title": "Explore",
     "sub": "Browse curated Pointint sample bundles now, and later this surface can grow into the home for more Pointint products."
+  },
+  "policy": {
+    "privacyTitle": "Privacy Policy",
+    "privacyBody": "Pointint stores only the information required to operate the product, diagnose issues, and understand aggregate usage patterns. If you contact us directly, the information you share is used only to respond and support your request.\n\nWe do not require an account to create a cursor. Analytics tools are loaded only after you allow them through the cookie banner.",
+    "cookieTitle": "Cookie Policy",
+    "cookieBody": "Pointint uses essential cookies to remember interface state that is necessary for the site to work. If you allow analytics cookies, Google Analytics and Microsoft Clarity may also be loaded to help us understand product usage and improve the experience.\n\nYou can choose between essential-only use and full analytics consent from the cookie banner.",
+    "termsTitle": "Terms of Service",
+    "termsBody": "Pointint is provided as-is for creating custom cursor assets. You are responsible for the images you upload and for making sure you have the right to use them.\n\nDo not use the service to upload illegal content, malicious files, or material that infringes on the rights of others. We may update or remove parts of the service as the product evolves."
   }
 }
