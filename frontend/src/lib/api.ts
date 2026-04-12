@@ -1,3 +1,5 @@
+import { type FitMode } from "@/lib/cursorFrame";
+
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -60,6 +62,60 @@ export async function generateCursor(
   formData.append("cursor_name", cursorName);
 
   const res = await fetch(`${BACKEND_URL}/api/generate-cursor`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Unknown error" }));
+    throw new Error(error.detail || `Server error: ${res.status}`);
+  }
+
+  return res.blob();
+}
+
+export interface GenerateAniInput {
+  aniName?: string;
+  hotspotX?: number;
+  hotspotY?: number;
+  cursorSize?: number;
+  fitMode?: FitMode;
+  offsetX?: number;
+  offsetY?: number;
+  scale?: number;
+}
+
+export async function generateAni(
+  gifBlob: Blob,
+  input: GenerateAniInput = {}
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("file", gifBlob, "ani.gif");
+  formData.append("cursor_name", input.aniName ?? "cursor");
+
+  if (typeof input.hotspotX === "number") {
+    formData.append("hotspot_x", String(input.hotspotX));
+  }
+  if (typeof input.hotspotY === "number") {
+    formData.append("hotspot_y", String(input.hotspotY));
+  }
+  if (typeof input.cursorSize === "number") {
+    formData.append("cursor_size", String(input.cursorSize));
+  }
+  if (input.fitMode) {
+    formData.append("fit_mode", input.fitMode);
+  }
+  if (typeof input.offsetX === "number") {
+    formData.append("offset_x", String(input.offsetX));
+  }
+  if (typeof input.offsetY === "number") {
+    formData.append("offset_y", String(input.offsetY));
+  }
+  if (typeof input.scale === "number") {
+    formData.append("scale", String(input.scale));
+  }
+
+  const res = await fetch(`${BACKEND_URL}/api/generate-ani`, {
     method: "POST",
     body: formData,
   });

@@ -6,12 +6,14 @@ interface StudioBarProps {
   onDownload?: () => void;
   downloading?: boolean;
   canDownload?: boolean;
+  actionLabel?: string;
 }
 
 export default function StudioBar({
   onDownload,
   downloading,
   canDownload,
+  actionLabel,
 }: StudioBarProps) {
   const t = useTranslations("studio");
 
@@ -66,7 +68,9 @@ export default function StudioBar({
             e.currentTarget.style.backgroundColor = "var(--color-accent)";
         }}
       >
-        {downloading ? t("generating") : t("download")}
+        {downloading
+          ? t("generating")
+          : actionLabel ?? t("download")}
       </button>
     </header>
   );

@@ -55,3 +55,5 @@ aliases:
 - `P1-HOTSPOT-01` stays rule-based and client-side for Phase 1. The recommendation uses the current framed square render, auto-applies once on editor entry, and stops overwriting after a manual hotspot edit.
 - `P1-ANALYTICS-01` should follow the `0to1log` pattern at the frontend only: global consent banner, first-party consent cookie, consent-gated GA4 and Clarity loading, and no auth dependency.
 - Pointint analytics v1 tracks only the current browse/make/download funnel. It does not include backend GA4 reporting, user identity stitching, or a privacy settings center.
+- `P1-MOCKUP-01` is deferred. It is not required to open Phase 1.5.
+- ANI v1 opens with a GIF-first slice only: `ANI > Animated GIF` becomes selectable, shared framing/hotspot controls are reused, and frame-level editing stays out of scope for v1.

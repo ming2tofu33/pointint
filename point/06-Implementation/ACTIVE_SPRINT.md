@@ -12,8 +12,8 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-04-12
-> **Status:** Phase 1 gate closed, Phase 1 follow-up sprint still in progress
-> **Goal:** Close the remaining trust/polish follow-up and decide when to open Phase 1.5
+> **Status:** Phase 1 gate closed, Phase 1.5 ANI v1 is now in progress
+> **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
@@ -27,9 +27,9 @@ aliases:
 - `P1-SHOWCASE-01` is now closed with curated first-party sample bundles on landing.
 - `P1-IA-01` browse/make split is now landed: `Explore` is the browse surface, while `Studio` returns to make-only workflow entry.
 - `P1-HOTSPOT-01` is now closed with rule-based hotspot recommendation, one-time auto-apply on editor entry, manual override lock, and explicit re-recommend action.
-- ANI is not started yet. Workflow cards are visible as `Soon`, but no `.ani` pipeline, GIF/video ingestion, or ANI export exists.
+- `P1-MOCKUP-01` is deferred. It is not a gate for opening `Phase 1.5`.
 - `P1-ANALYTICS-01` is now closed with a global analytics consent banner plus GA4 and Clarity instrumentation for the current browse/make/download funnel.
-- The next execution choice is whether to finish `P1-MOCKUP-01` before opening `Phase 1.5`.
+- `Phase 1.5` is open with ANI v1 scoped to `Animated GIF -> shared framing/hotspot -> .ani export`.
 
 ## Current Doing
 
@@ -37,20 +37,20 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
-| Now | `P1-MOCKUP-01` | queued | Desktop mockup system aligned with landing/showcase visual language |
-| Next | `Phase 1.5 planning` | queued | Decide ANI + Media Prep Foundation start slice after remaining Phase 1 polish |
-| Watch | `Phase 1.5` | candidate | ANI + Media Prep Foundation after current follow-up scope is resolved |
+| Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice: backend writer, GIF input, studio ANI shell, basic export |
+| Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
+| Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
 
 ## Next Session
 
-- Decide whether `P1-MOCKUP-01` should reuse the showcase sample system
-- Decide whether the mockup should live only on landing/explore or also appear in studio download success states
-- Re-evaluate `Phase 1.5` timing now that analytics instrumentation is closed
+- Verify GIF upload -> ANI export manually in the studio against a few real samples
+- Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
+- Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 
 ## Blockers
 
 - No technical blocker is open right now
-- ANI is blocked on `Phase 1.5` foundation work. The current product can advertise ANI paths, but it cannot ingest or export animated cursors yet.
+- ANI v1 is no longer blocked on phase entry. The remaining work is closing the first GIF-first slice and validating export quality.
 
 ## Recently Done
 
@@ -62,6 +62,7 @@ aliases:
 - `P1-IA-01` complete: `Studio = make`, `Explore = browse`, `/studio` showcase removed, `/explore` added as a top-level browse surface, guide modal routed to `Explore`, logo retained as home entry.
 - `P1-HOTSPOT-01` complete: rule-based hotspot recommendation, auto-apply on editor entry, manual override lock, explicit re-recommend control, and targeted algorithm/hook/UI coverage.
 - `P1-ANALYTICS-01` complete: global analytics consent banner, consent-gated GA4 + Clarity loading, route page views, and minimal funnel events for studio, explore, showcase downloads, guide opens, and download completion.
+- `Phase 1.5 / ANI-V1-01` in progress: `ANI > Animated GIF` is selectable, GIF upload enters a dedicated ANI editor shell, shared framing/hotspot controls are reused, and the backend now exposes a `.ani` export route for GIF-first ANI creation.
 
 ## Decision Follow-up
 
@@ -71,6 +72,8 @@ aliases:
 - 2026-04-12: The hybrid studio-showcase entry was superseded. `Studio` is the make surface, `Explore` is the browse surface, and showcase discovery now routes through `/explore`.
 - 2026-04-12: `P1-HOTSPOT-01` ships as a rule-based client-side recommendation. It auto-applies once, respects manual edits, and uses the same square-framed render model as preview/export.
 - 2026-04-12: `P1-ANALYTICS-01` ships as a frontend-only instrumentation slice. Consent is stored in a first-party cookie, GA4 and Clarity load only after acceptance, and analytics remains independent from auth.
+- 2026-04-12: `P1-MOCKUP-01` is deferred and does not block Phase 1.5.
+- 2026-04-12: ANI v1 starts as a GIF-first slice only. `ANI > Animated GIF` is the only selectable ANI entry, and v1 keeps shared framing/hotspot controls instead of frame-level editing.
 
 ## Document Follow-up
 

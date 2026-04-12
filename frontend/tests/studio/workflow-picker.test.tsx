@@ -87,9 +87,9 @@ describe("WorkflowPicker", () => {
     expect(screen.getByRole("button", { name: /CUR AI.*Soon!/i }).disabled).toBe(
       true
     );
-    expect(screen.getByRole("button", { name: /ANI GIF.*Soon!/i }).disabled).toBe(
-      true
-    );
+    expect(
+      screen.getByRole("button", { name: /ANI GIF.*Available!/i }).disabled
+    ).toBe(false);
     expect(
       screen.getByRole("button", { name: /ANI PNGS.*Soon!/i }).disabled
     ).toBe(true);
@@ -118,5 +118,24 @@ describe("WorkflowPicker", () => {
     expect(onSelectWorkflow).toHaveBeenCalledTimes(1);
     expect(onSelectWorkflow).toHaveBeenCalledWith("cur-static-image");
     expect(screen.getByRole("button", { name: /CUR AI/i }).disabled).toBe(true);
+  });
+
+  it("calls the workflow callback for the enabled ANI GIF card", () => {
+    const onSelectWorkflow = vi.fn();
+    const messages = JSON.parse(JSON.stringify(en));
+    messages.upload.aniAnimatedGif = "ANI GIF";
+    messages.upload.aniAnimatedGifSub = "GIF description";
+    messages.upload.available = "Available!";
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <WorkflowPicker onSelectWorkflow={onSelectWorkflow} />
+      </NextIntlClientProvider>
+    );
+
+    screen.getByRole("button", { name: /ANI GIF/i }).click();
+
+    expect(onSelectWorkflow).toHaveBeenCalledTimes(1);
+    expect(onSelectWorkflow).toHaveBeenCalledWith("ani-animated-gif");
   });
 });

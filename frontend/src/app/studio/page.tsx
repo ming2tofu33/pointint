@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
+import AniEditorShell from "@/components/AniEditorShell";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
@@ -24,12 +25,14 @@ export default function StudioPage() {
   const {
     state,
     cursor,
+    ani,
     error,
     downloading,
     showGuide,
     showOriginal,
     previewUrl,
     selectFile,
+    selectAniFile,
     selectWorkflow,
     processBgRemoval,
     skipBgRemoval,
@@ -93,9 +96,28 @@ export default function StudioPage() {
       <StudioBar
         onDownload={download}
         downloading={downloading}
-        canDownload={state === "editing"}
+        canDownload={state === "editing" || state === "ani-editing"}
+        actionLabel={state === "ani-editing" ? t("exportAni") : undefined}
       />
 
+      {state === "ani-editing" && ani ? (
+        <AniEditorShell
+          ani={ani}
+          imageUrl={ani.originalUrl}
+          error={error}
+          activeTool={activeTool}
+          onSetActiveTool={setActiveTool}
+          onOffsetChange={setOffset}
+          onHotspotChange={setHotspot}
+          onScaleChange={setScale}
+          onFitModeChange={setFitMode}
+          onAniNameChange={setCursorName}
+          onRecommendHotspot={recommendHotspot}
+          onResetHotspot={() => setHotspot(0, 0)}
+          onReset={reset}
+        />
+      ) : (
+        <>
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <aside
           style={{
@@ -135,8 +157,20 @@ export default function StudioPage() {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems:
+              state === "workflow-pick" ||
+              state === "cur-upload" ||
+              state === "ani-upload" ||
+              state === "processing"
+                ? "center"
+                : "stretch",
+            justifyContent:
+              state === "workflow-pick" ||
+              state === "cur-upload" ||
+              state === "ani-upload" ||
+              state === "processing"
+                ? "center"
+                : "flex-start",
             backgroundColor: "var(--color-bg-primary)",
             position: "relative",
             gap: "1rem",
@@ -148,6 +182,10 @@ export default function StudioPage() {
 
           {state === "cur-upload" && (
             <UploadZone onFile={selectFile} processing={false} />
+          )}
+
+          {state === "ani-upload" && (
+            <UploadZone onFile={selectAniFile} processing={false} mode="ani" />
           )}
 
           {state === "uploaded" && cursor && (
@@ -453,38 +491,45 @@ export default function StudioPage() {
         </aside>
       </div>
 
-      <footer
-        style={{
-          height: "10rem",
-          borderTop: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-bg-secondary)",
-          flexShrink: 0,
-          overflow: "hidden",
-        }}
-      >
-        {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
-          <Simulation
-            imageUrl={previewUrl}
-            hotspotX={cursor.renderedHotspotX}
-            hotspotY={cursor.renderedHotspotY}
-          />
-        ) : (
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--color-text-muted)",
-              fontSize: "0.8125rem",
-            }}
-          >
-            {t("simulationPreview")}
-          </div>
-        )}
-      </footer>
+      {state !== "ani-editing" && (
+        <footer
+          style={{
+            height: "10rem",
+            borderTop: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-bg-secondary)",
+            flexShrink: 0,
+            overflow: "hidden",
+          }}
+        >
+          {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
+            <Simulation
+              imageUrl={previewUrl}
+              hotspotX={cursor.renderedHotspotX}
+              hotspotY={cursor.renderedHotspotY}
+            />
+          ) : (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--color-text-muted)",
+                fontSize: "0.8125rem",
+              }}
+            >
+              {t("simulationPreview")}
+            </div>
+          )}
+        </footer>
+      )}
+        </>
+      )}
 
-      <GuideModal open={showGuide} onClose={closeGuide} />
+      <GuideModal
+        open={showGuide}
+        onClose={closeGuide}
+      />
     </MobileGuard>
   );
 }

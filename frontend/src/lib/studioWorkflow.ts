@@ -12,9 +12,11 @@ export type WorkflowAvailability = "available" | "soon";
 export type StudioState =
   | "workflow-pick"
   | "cur-upload"
+  | "ani-upload"
   | "uploaded"
   | "processing"
-  | "editing";
+  | "editing"
+  | "ani-editing";
 
 export interface WorkflowOption {
   id: WorkflowOptionId;
@@ -44,7 +46,7 @@ export const WORKFLOW_OPTIONS: WorkflowOption[] = [
     family: "ani",
     titleKey: "aniAnimatedGif",
     descriptionKey: "aniAnimatedGifSub",
-    availability: "soon",
+    availability: "available",
   },
   {
     id: "ani-multiple-pngs",
@@ -63,7 +65,11 @@ export const WORKFLOW_OPTIONS: WorkflowOption[] = [
 ];
 
 export const CUR_STATIC_IMAGE_WORKFLOW_ID: WorkflowOptionId = "cur-static-image";
+export const ANI_ANIMATED_GIF_WORKFLOW_ID: WorkflowOptionId = "ani-animated-gif";
 
 export function isSelectableWorkflow(workflowId: WorkflowOptionId): boolean {
-  return workflowId === CUR_STATIC_IMAGE_WORKFLOW_ID;
+  return (
+    workflowId === CUR_STATIC_IMAGE_WORKFLOW_ID ||
+    workflowId === ANI_ANIMATED_GIF_WORKFLOW_ID
+  );
 }

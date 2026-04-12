@@ -43,6 +43,9 @@
     "aniAiGenerateSub": "AI로 애니메이션 커서 프레임을 만듭니다",
     "available": "사용 가능",
     "soon": "준비 중",
+    "aniPreparing": "애니메이션 준비 중...",
+    "aniDropOrClick": "GIF를 드롭하거나 클릭해서 업로드",
+    "aniFormats": "GIF",
     "removingBg": "배경 제거 중...",
     "preview": "미리보기",
     "removeBg": "배경 제거",
@@ -53,6 +56,7 @@
   "studio": {
     "title": "스튜디오",
     "download": "다운로드",
+    "exportAni": "ANI 내보내기",
     "generating": "생성 중...",
     "move": "이동",
     "hotspot": "핫스팟",
@@ -102,17 +106,29 @@
   },
   "guide": {
     "title": "커서 적용 방법",
+    "aniTitle": "애니메이션 커서 적용 방법",
     "close": "닫기",
     "step1": "다운로드한 파일의 압축을 풉니다",
     "step2": "install.inf를 마우스 오른쪽 버튼으로 클릭한 뒤 Install을 선택합니다",
     "step3": "설정 > 마우스 > 추가 마우스 설정 > 포인터 탭을 엽니다",
     "step4": "Scheme 드롭다운에서 \"Pointint\"을 선택하고 확인을 누릅니다",
+    "aniStep1": "설정 > 마우스 > 추가 마우스 설정 > 포인터 탭을 엽니다",
+    "aniStep2": "바꾸고 싶은 포인터 항목을 선택한 뒤 찾아보기를 누릅니다",
+    "aniStep3": "다운로드한 .ani 파일을 선택합니다",
+    "aniStep4": "나중에 다시 쓰려면 Scheme으로 저장합니다",
     "restore": "기본 커서를 복원하려면",
     "restoreFile": "restore-default.inf",
     "restoreAction": "를 마우스 오른쪽 버튼으로 클릭한 뒤 \"Install\"을 선택하세요",
     "gotIt": "확인",
     "downloaded": "다운로드 완료",
     "exploreCta": "둘러보기로 이동"
+  },
+  "consent": {
+    "title": "쿠키 설정",
+    "body": "사용자 경험 개선을 위해 쿠키를 사용합니다.",
+    "details": "자세히 보기",
+    "essentialOnly": "필수만 사용",
+    "acceptAll": "모두 허용"
   },
   "simulation": {
     "normal": "일반",
@@ -205,13 +221,6 @@
   "explore": {
     "title": "둘러보기",
     "sub": "지금은 Pointint의 큐레이션 샘플 번들을 둘러보는 공간이고, 나중에는 다른 Pointint 제품까지 담는 탐색 표면으로 확장할 수 있습니다."
-  },
-  "consent": {
-    "title": "쿠키 설정",
-    "body": "사용자 경험 개선을 위해 쿠키를 사용합니다.",
-    "details": "자세히 보기",
-    "essentialOnly": "필수만 사용",
-    "acceptAll": "모두 허용"
   },
   "policy": {
     "privacyTitle": "개인정보 처리방침",

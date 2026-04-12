@@ -15,11 +15,12 @@ import {
 } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
 
-import { generateCursor, removeBackground } from "./api";
+import { generateAni, generateCursor, removeBackground } from "./api";
 
 export type CursorSize = 32 | 48 | 64;
 
 const EDITOR_VIEWPORT_SIZE = 256;
+const ANI_CURSOR_SIZE: CursorSize = 32;
 
 export interface CursorData {
   originalFile: File;
@@ -42,6 +43,21 @@ export interface CursorData {
   cursorName: string;
 }
 
+export interface AniData {
+  originalFile: File;
+  originalUrl: string;
+  sourceWidth: number;
+  sourceHeight: number;
+  hotspotX: number;
+  hotspotY: number;
+  hotspotMode: "auto" | "manual";
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  fitMode: FitMode;
+  cursorName: string;
+}
+
 function getRenderedHotspot(
   hotspotX: number,
   hotspotY: number,
@@ -55,9 +71,28 @@ function getRenderedHotspot(
   });
 }
 
+function loadImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () =>
+      resolve({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      });
+    image.onerror = () => reject(new Error("Failed to load image"));
+    image.src = src;
+  });
+}
+
+function createAniName(fileName: string) {
+  const baseName = fileName.replace(/\.[^.]+$/, "");
+  return baseName || "cursor";
+}
+
 export function useStudio() {
   const [state, setState] = useState<StudioState>("workflow-pick");
   const [cursor, setCursor] = useState<CursorData | null>(null);
+  const [ani, setAni] = useState<AniData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -70,6 +105,11 @@ export function useStudio() {
     trackEvent("workflow_selected", {
       workflow_id: workflowId,
     });
+    if (workflowId === "ani-animated-gif") {
+      setState("ani-upload");
+      return;
+    }
+
     setState("cur-upload");
   }, []);
 
@@ -118,6 +158,45 @@ export function useStudio() {
       setState("uploaded");
     },
     [cursor]
+  );
+
+  const selectAniFile = useCallback(
+    async (file: File) => {
+      setError(null);
+
+      if (ani?.originalUrl) {
+        URL.revokeObjectURL(ani.originalUrl);
+      }
+
+      const url = URL.createObjectURL(file);
+      setAni(null);
+      setState("ani-upload");
+
+      try {
+        const dimensions = await loadImageDimensions(url);
+
+        setAni({
+          originalFile: file,
+          originalUrl: url,
+          sourceWidth: dimensions.width,
+          sourceHeight: dimensions.height,
+          hotspotX: 0,
+          hotspotY: 0,
+          hotspotMode: "auto",
+          offsetX: 0,
+          offsetY: 0,
+          scale: 1,
+          fitMode: "contain",
+          cursorName: createAniName(file.name),
+        });
+        setState("ani-editing");
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        setError(err instanceof Error ? err.message : "Failed to load GIF");
+        setState("ani-upload");
+      }
+    },
+    [ani]
   );
 
   // UX-1: 배경 제거 실행
@@ -204,31 +283,68 @@ export function useStudio() {
   }, [processBgRemoval]);
 
   const setHotspot = useCallback((x: number, y: number) => {
-    setCursor((prev) => {
-      if (!prev) return null;
-      const renderedHotspot = getRenderedHotspot(x, y, prev.cursorSize);
-      return {
-        ...prev,
-        hotspotX: x,
-        hotspotY: y,
-        hotspotMode: "manual",
-        renderedHotspotX: renderedHotspot.x,
-        renderedHotspotY: renderedHotspot.y,
-      };
-    });
-  }, []);
+    if (state === "editing") {
+      setCursor((prev) => {
+        if (!prev) return null;
+        const renderedHotspot = getRenderedHotspot(x, y, prev.cursorSize);
+        return {
+          ...prev,
+          hotspotX: x,
+          hotspotY: y,
+          hotspotMode: "manual",
+          renderedHotspotX: renderedHotspot.x,
+          renderedHotspotY: renderedHotspot.y,
+        };
+      });
+      return;
+    }
+
+    if (state === "ani-editing") {
+      setAni((prev) =>
+        prev
+          ? {
+              ...prev,
+              hotspotX: x,
+              hotspotY: y,
+              hotspotMode: "manual",
+            }
+          : null
+      );
+    }
+  }, [state]);
 
   const setOffset = useCallback((x: number, y: number) => {
-    setCursor((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
-  }, []);
+    if (state === "editing") {
+      setCursor((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
+      return;
+    }
+
+    if (state === "ani-editing") {
+      setAni((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
+    }
+  }, [state]);
 
   const setScale = useCallback((scale: number) => {
-    setCursor((prev) => (prev ? { ...prev, scale } : null));
-  }, []);
+    if (state === "editing") {
+      setCursor((prev) => (prev ? { ...prev, scale } : null));
+      return;
+    }
+
+    if (state === "ani-editing") {
+      setAni((prev) => (prev ? { ...prev, scale } : null));
+    }
+  }, [state]);
 
   const setFitMode = useCallback((fitMode: FitMode) => {
-    setCursor((prev) => (prev ? { ...prev, fitMode } : null));
-  }, []);
+    if (state === "editing") {
+      setCursor((prev) => (prev ? { ...prev, fitMode } : null));
+      return;
+    }
+
+    if (state === "ani-editing") {
+      setAni((prev) => (prev ? { ...prev, fitMode } : null));
+    }
+  }, [state]);
 
   // UX-5: 커서 크기 변경
   const setCursorSize = useCallback((size: CursorSize) => {
@@ -251,50 +367,85 @@ export function useStudio() {
 
   // UX-6: 커서 이름 변경
   const setCursorName = useCallback((name: string) => {
-    setCursor((prev) => (prev ? { ...prev, cursorName: name } : null));
-  }, []);
-
-  const recommendHotspot = useCallback(async () => {
-    if (
-      !cursor ||
-      !cursor.sourceWidth ||
-      !cursor.sourceHeight ||
-      state !== "editing"
-    ) {
+    if (state === "editing") {
+      setCursor((prev) => (prev ? { ...prev, cursorName: name } : null));
       return;
     }
 
-    const suggestion = await suggestViewportHotspot({
-      imageUrl: cursor.processedUrl,
-      sourceWidth: cursor.sourceWidth,
-      sourceHeight: cursor.sourceHeight,
-      fitMode: cursor.fitMode,
-      scale: cursor.scale,
-      offsetX: cursor.offsetX,
-      offsetY: cursor.offsetY,
-      viewportSize: EDITOR_VIEWPORT_SIZE,
-    });
+    if (state === "ani-editing") {
+      setAni((prev) => (prev ? { ...prev, cursorName: name } : null));
+    }
+  }, [state]);
 
-    if (!suggestion) return;
+  const recommendHotspot = useCallback(async () => {
+    if (state === "editing") {
+      if (!cursor || !cursor.sourceWidth || !cursor.sourceHeight) {
+        return;
+      }
 
-    setCursor((prev) => {
-      if (!prev) return null;
-      const renderedHotspot = getRenderedHotspot(
-        suggestion.x,
-        suggestion.y,
-        prev.cursorSize
+      const suggestion = await suggestViewportHotspot({
+        imageUrl: cursor.processedUrl,
+        sourceWidth: cursor.sourceWidth,
+        sourceHeight: cursor.sourceHeight,
+        fitMode: cursor.fitMode,
+        scale: cursor.scale,
+        offsetX: cursor.offsetX,
+        offsetY: cursor.offsetY,
+        viewportSize: EDITOR_VIEWPORT_SIZE,
+      });
+
+      if (!suggestion) return;
+
+      setCursor((prev) => {
+        if (!prev) return null;
+        const renderedHotspot = getRenderedHotspot(
+          suggestion.x,
+          suggestion.y,
+          prev.cursorSize
+        );
+
+        return {
+          ...prev,
+          hotspotX: suggestion.x,
+          hotspotY: suggestion.y,
+          hotspotMode: "auto",
+          renderedHotspotX: renderedHotspot.x,
+          renderedHotspotY: renderedHotspot.y,
+        };
+      });
+      return;
+    }
+
+    if (state === "ani-editing") {
+      if (!ani || !ani.sourceWidth || !ani.sourceHeight) {
+        return;
+      }
+
+      const suggestion = await suggestViewportHotspot({
+        imageUrl: ani.originalUrl,
+        sourceWidth: ani.sourceWidth,
+        sourceHeight: ani.sourceHeight,
+        fitMode: ani.fitMode,
+        scale: ani.scale,
+        offsetX: ani.offsetX,
+        offsetY: ani.offsetY,
+        viewportSize: EDITOR_VIEWPORT_SIZE,
+      });
+
+      if (!suggestion) return;
+
+      setAni((prev) =>
+        prev
+          ? {
+              ...prev,
+              hotspotX: suggestion.x,
+              hotspotY: suggestion.y,
+              hotspotMode: "auto",
+            }
+          : null
       );
-
-      return {
-        ...prev,
-        hotspotX: suggestion.x,
-        hotspotY: suggestion.y,
-        hotspotMode: "auto",
-        renderedHotspotX: renderedHotspot.x,
-        renderedHotspotY: renderedHotspot.y,
-      };
-    });
-  }, [cursor, state]);
+    }
+  }, [ani, cursor, state]);
 
   const reset = useCallback(() => {
     if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
@@ -303,15 +454,19 @@ export function useStudio() {
     if (cursor?.originalUrl) {
       URL.revokeObjectURL(cursor.originalUrl);
     }
+    if (ani?.originalUrl) {
+      URL.revokeObjectURL(ani.originalUrl);
+    }
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     setCursor(null);
+    setAni(null);
     setPreviewUrl(null);
     setState("workflow-pick");
     setError(null);
     setShowOriginal(false);
-  }, [cursor, previewUrl]);
+  }, [ani, cursor, previewUrl]);
 
   // UX-2 + UX-3: editor framing과 최종 export가 같은 square PNG 생성
   useEffect(() => {
@@ -455,7 +610,111 @@ export function useStudio() {
     state,
   ]);
 
+  useEffect(() => {
+    if (
+      !ani ||
+      state !== "ani-editing" ||
+      !ani.sourceWidth ||
+      !ani.sourceHeight ||
+      ani.hotspotMode !== "auto"
+    ) {
+      return;
+    }
+
+    let active = true;
+
+    const timer = setTimeout(() => {
+      suggestViewportHotspot({
+        imageUrl: ani.originalUrl,
+        sourceWidth: ani.sourceWidth,
+        sourceHeight: ani.sourceHeight,
+        fitMode: ani.fitMode,
+        scale: ani.scale,
+        offsetX: ani.offsetX,
+        offsetY: ani.offsetY,
+        viewportSize: EDITOR_VIEWPORT_SIZE,
+      })
+        .then((suggestion) => {
+          if (!active || !suggestion) return;
+
+          setAni((prev) => {
+            if (!prev || prev.hotspotMode !== "auto") return prev;
+
+            return {
+              ...prev,
+              hotspotX: suggestion.x,
+              hotspotY: suggestion.y,
+              hotspotMode: "auto",
+            };
+          });
+        })
+        .catch(() => {
+          // keep the current hotspot when auto-suggestion fails
+        });
+    }, 200);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [
+    ani?.originalUrl,
+    ani?.sourceWidth,
+    ani?.sourceHeight,
+    ani?.fitMode,
+    ani?.scale,
+    ani?.offsetX,
+    ani?.offsetY,
+    ani?.hotspotMode,
+    state,
+  ]);
+
   const download = useCallback(async () => {
+    if (state === "ani-editing") {
+      if (!ani) return;
+      setDownloading(true);
+      setError(null);
+
+      try {
+        const renderedHotspot = mapViewportHotspotToOutput({
+          hotspotX: ani.hotspotX,
+          hotspotY: ani.hotspotY,
+          viewportSize: EDITOR_VIEWPORT_SIZE,
+          outputSize: ANI_CURSOR_SIZE,
+        });
+        const aniBlob = await generateAni(ani.originalFile, {
+          aniName: ani.cursorName,
+          hotspotX: renderedHotspot.x,
+          hotspotY: renderedHotspot.y,
+          cursorSize: ANI_CURSOR_SIZE,
+          fitMode: ani.fitMode,
+          offsetX: ani.offsetX,
+          offsetY: ani.offsetY,
+          scale: ani.scale,
+        });
+
+        const url = URL.createObjectURL(aniBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `pointint-${ani.cursorName}.ani`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        trackEvent("download_completed", {
+          fit_mode: ani.fitMode,
+          source: "studio",
+          workflow: "ani",
+        });
+        setShowGuide(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "ANI export failed");
+      } finally {
+        setDownloading(false);
+      }
+      return;
+    }
+
     if (!cursor) return;
     setDownloading(true);
     setError(null);
@@ -501,19 +760,21 @@ export function useStudio() {
     } finally {
       setDownloading(false);
     }
-  }, [cursor]);
+  }, [ani, cursor, state]);
 
   const closeGuide = useCallback(() => setShowGuide(false), []);
 
   return {
     state,
     cursor,
+    ani,
     error,
     downloading,
     showGuide,
     showOriginal,
     previewUrl,
     selectFile,
+    selectAniFile,
     selectWorkflow,
     processBgRemoval,
     skipBgRemoval,

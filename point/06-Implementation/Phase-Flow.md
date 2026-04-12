@@ -21,12 +21,12 @@ Detailed task, wave, and gate status stays in [[plans/2026-03-27-implementation-
 
 ## Current Snapshot
 
-> **Current State:** Phase 1 MVP Core is gate-closed and still running a final follow-up slice around trust/polish before the Phase 1.5 decision.
+> **Current State:** Phase 1 MVP Core is gate-closed. Phase 1.5 has now opened with a GIF-first ANI v1 slice in progress.
 
 | Phase | Status | Summary |
 |---|---|---|
-| Phase 1: MVP Core | gate closed / follow-up | `.cur` creation, preview, health check, install flow, browse/make IA split, and consent-gated analytics are shipped |
-| Phase 1.5: ANI + Media Prep Foundation | next candidate | ANI export plus GIF/video/PNG-sequence ingestion foundation |
+| Phase 1: MVP Core | gate closed | `.cur` creation, preview, health check, install flow, browse/make IA split, and consent-gated analytics are shipped |
+| Phase 1.5: ANI + Media Prep Foundation | in progress | GIF-first ANI v1 plus the media-prep foundation for later video/PNG-sequence ingestion |
 | Phase 2: Auth + 17-role generation | queued | account system, projects, and 17-role conversion |
 | Phase 3: AI-Assisted + Tint | queued | AI editing assist plus paid utility loop |
 | Phase 4: AI Generation | queued | AI-first cursor generation |
@@ -78,8 +78,9 @@ graph TD
 
 - `P1-SHOWCASE-01` is closed.
 - `P1-HOTSPOT-01` and `P1-ANALYTICS-01` are closed.
-- The current follow-up order is `P1-MOCKUP-01` -> `Phase 1.5 planning`.
-- ANI is still a `Phase 1.5` candidate only. Current workflow cards expose ANI as `Soon`, but no animated ingestion or `.ani` export is implemented yet.
+- `P1-MOCKUP-01` is deferred and no longer blocks phase transition.
+- `ANI > Animated GIF` is now the first real ANI entry. The remaining ANI cards stay `Soon`.
+- The current Phase 1.5 slice is `GIF -> shared framing/hotspot -> .ani export`.
 - `Phase 1.5` is now defined more precisely as `ANI + Media Prep Foundation`.
 - The long-term roadmap stays in [[plans/2026-04-12-cursor-suite-roadmap-design]] and should only be promoted into official phase scope case by case.
 

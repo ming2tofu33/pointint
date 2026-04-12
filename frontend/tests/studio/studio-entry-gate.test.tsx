@@ -13,6 +13,7 @@ const {
   getLandingFileMock,
   clearLandingFileMock,
   selectFileMock,
+  selectAniFileMock,
   selectWorkflowMock,
   searchParamsState,
 } = vi.hoisted(() => ({
@@ -27,6 +28,7 @@ const {
   getLandingFileMock: vi.fn(),
   clearLandingFileMock: vi.fn(),
   selectFileMock: vi.fn(),
+  selectAniFileMock: vi.fn(),
   selectWorkflowMock: vi.fn(),
   searchParamsState: {
     current: new URLSearchParams(""),
@@ -119,22 +121,44 @@ function createEditingCursor(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function createAniAsset(overrides: Record<string, unknown> = {}) {
+  return {
+    originalFile: new File(["gif"], "orbit.gif", { type: "image/gif" }),
+    originalUrl: "blob:ani-original",
+    sourceWidth: 96,
+    sourceHeight: 96,
+    hotspotX: 24,
+    hotspotY: 18,
+    hotspotMode: "auto",
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    fitMode: "contain",
+    cursorName: "orbit",
+    ...overrides,
+  };
+}
+
 function renderStudio(
   state: StudioState,
-  options: { cursor?: Record<string, unknown> | null } = {}
+  options: { cursor?: Record<string, unknown> | null; ani?: Record<string, unknown> | null } = {}
 ) {
   const cursor =
     state === "editing" ? createEditingCursor(options.cursor ?? {}) : null;
+  const ani =
+    state === "ani-editing" ? createAniAsset(options.ani ?? {}) : null;
 
   useStudioMock.mockReturnValue({
     state,
     cursor,
+    ani,
     error: null,
     downloading: false,
     showGuide: false,
     showOriginal: false,
     previewUrl: null,
     selectFile: selectFileMock,
+    selectAniFile: selectAniFileMock,
     selectWorkflow: selectWorkflowMock,
     processBgRemoval: vi.fn(),
     skipBgRemoval: vi.fn(),
@@ -162,6 +186,7 @@ beforeEach(() => {
   StudioBarMock.mockClear();
   useStudioMock.mockReset();
   selectFileMock.mockReset();
+  selectAniFileMock.mockReset();
   selectWorkflowMock.mockReset();
   replaceMock.mockReset();
   getLandingFileMock.mockReset();
@@ -200,6 +225,32 @@ describe("Studio entry gate", () => {
     expect(uploadProps).not.toHaveProperty("previewUrl");
     expect(uploadProps).not.toHaveProperty("onRemoveBg");
     expect(uploadProps).not.toHaveProperty("onSkipBg");
+  });
+
+  it("renders the ANI upload zone after the ANI GIF workflow is selected", () => {
+    renderStudio("ani-upload");
+
+    expect(screen.getByTestId("upload-zone")).not.toBeNull();
+    expect(screen.queryByTestId("workflow-picker")).toBeNull();
+    expect(UploadZoneMock).toHaveBeenCalledTimes(1);
+
+    const uploadProps = UploadZoneMock.mock.calls[0][0];
+    expect(uploadProps.onFile).toBe(selectAniFileMock);
+    expect(uploadProps.processing).toBe(false);
+    expect(uploadProps.mode).toBe("ani");
+  });
+
+  it("renders an ANI editing shell with shared framing controls", () => {
+    renderStudio("ani-editing");
+
+    expect(screen.getByTestId("ani-editor-shell")).not.toBeNull();
+    expect(screen.queryByTestId("workflow-picker")).toBeNull();
+    expect(screen.queryByTestId("upload-zone")).toBeNull();
+    expect(StudioBarMock).toHaveBeenCalledTimes(1);
+
+    const barProps = StudioBarMock.mock.calls[0][0];
+    expect(barProps.actionLabel).toBe("exportAni");
+    expect(barProps.onDownload).toBeDefined();
   });
 
   it("preserves the landing handoff path when a file is staged", () => {

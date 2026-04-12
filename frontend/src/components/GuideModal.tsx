@@ -3,24 +3,32 @@
 import Link from "next/link";
 import { useEffect, useId } from "react";
 import { useTranslations } from "next-intl";
+
 import { trackEvent } from "@/lib/analytics";
 
 interface GuideModalProps {
   open: boolean;
   onClose: () => void;
+  variant?: "cur" | "ani";
 }
 
-export default function GuideModal({ open, onClose }: GuideModalProps) {
+export default function GuideModal({
+  open,
+  onClose,
+  variant = "cur",
+}: GuideModalProps) {
   const t = useTranslations("guide");
   const titleId = useId();
+  const isAni = variant === "ani";
 
   useEffect(() => {
     if (!open) return;
 
     trackEvent("install_guide_opened", {
       source: "studio_download",
+      variant,
     });
-  }, [open]);
+  }, [open, variant]);
 
   if (!open) return null;
 
@@ -89,7 +97,7 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
               color: "var(--color-text-primary)",
             }}
           >
-            {t("title")}
+            {isAni ? t("aniTitle") : t("title")}
           </h2>
           <button
             onClick={onClose}
@@ -114,32 +122,36 @@ export default function GuideModal({ open, onClose }: GuideModalProps) {
             gap: "1rem",
           }}
         >
-          <Step number={1} text={t("step1")} />
-          <Step number={2} text={t("step2")} />
-          <Step number={3} text={t("step3")} />
-          <Step number={4} text={t("step4")} />
+          <Step number={1} text={isAni ? t("aniStep1") : t("step1")} />
+          <Step number={2} text={isAni ? t("aniStep2") : t("step2")} />
+          <Step number={3} text={isAni ? t("aniStep3") : t("step3")} />
+          <Step number={4} text={isAni ? t("aniStep4") : t("step4")} />
         </div>
 
-        <div
-          style={{
-            height: "1px",
-            backgroundColor: "var(--color-border)",
-          }}
-        />
+        {!isAni && (
+          <>
+            <div
+              style={{
+                height: "1px",
+                backgroundColor: "var(--color-border)",
+              }}
+            />
 
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "var(--color-text-muted)",
-            lineHeight: 1.6,
-          }}
-        >
-          {t("restore")}{" "}
-          <span style={{ color: "var(--color-text-secondary)" }}>
-            {t("restoreFile")}
-          </span>{" "}
-          {t("restoreAction")}
-        </p>
+            <p
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--color-text-muted)",
+                lineHeight: 1.6,
+              }}
+            >
+              {t("restore")}{" "}
+              <span style={{ color: "var(--color-text-secondary)" }}>
+                {t("restoreFile")}
+              </span>{" "}
+              {t("restoreAction")}
+            </p>
+          </>
+        )}
 
         <div
           style={{

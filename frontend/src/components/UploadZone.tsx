@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
+export type UploadZoneMode = "cur" | "ani";
 
 interface UploadZoneProps {
   onFile: (file: File) => void;
   processing: boolean;
+  mode?: UploadZoneMode;
   showChoice?: boolean;
   onRemoveBg?: () => void;
   onSkipBg?: () => void;
@@ -17,6 +18,7 @@ interface UploadZoneProps {
 export default function UploadZone({
   onFile,
   processing,
+  mode = "cur",
   showChoice,
   onRemoveBg,
   onSkipBg,
@@ -25,13 +27,20 @@ export default function UploadZone({
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const t = useTranslations("upload");
+  const acceptedTypes = useMemo(
+    () =>
+      mode === "ani"
+        ? ["image/gif"]
+        : ["image/png", "image/jpeg", "image/webp"],
+    [mode]
+  );
 
   const handleFile = useCallback(
     (file: File) => {
-      if (!ACCEPTED.includes(file.type)) return;
+      if (!acceptedTypes.includes(file.type)) return;
       onFile(file);
     },
-    [onFile]
+    [acceptedTypes, onFile]
   );
 
   function handleDrop(e: React.DragEvent) {
@@ -71,7 +80,7 @@ export default function UploadZone({
             animation: "spin 0.8s linear infinite",
           }}
         />
-        <span>{t("removingBg")}</span>
+        <span>{mode === "ani" ? t("aniPreparing") : t("removingBg")}</span>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
@@ -159,7 +168,7 @@ export default function UploadZone({
         +
       </div>
       <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-        {t("dropOrClick")}
+        {mode === "ani" ? t("aniDropOrClick") : t("dropOrClick")}
       </span>
       <span
         style={{
@@ -168,12 +177,12 @@ export default function UploadZone({
           opacity: 0.6,
         }}
       >
-        {t("formats")}
+        {mode === "ani" ? t("aniFormats") : t("formats")}
       </span>
       <input
         ref={inputRef}
         type="file"
-        accept=".png,.jpg,.jpeg,.webp"
+        accept={mode === "ani" ? ".gif" : ".png,.jpg,.jpeg,.webp"}
         onChange={handleChange}
         style={{ display: "none" }}
       />
