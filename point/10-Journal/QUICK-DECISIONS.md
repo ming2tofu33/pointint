@@ -52,3 +52,6 @@ aliases:
 - Studio showcase access should use a hybrid entry: compact sample downloads above the workflow picker in `/studio`, with the landing showcase kept as the larger explanation surface.
 - The hybrid studio-showcase entry is superseded. `Studio = make`, `Explore = browse`, and showcase discovery should move to a top-level `/explore` surface instead of living inside `/studio`.
 - Download completion should route users toward `Explore`, not back to a landing-section anchor, because browse surfaces now live outside the editor.
+- `P1-HOTSPOT-01` stays rule-based and client-side for Phase 1. The recommendation uses the current framed square render, auto-applies once on editor entry, and stops overwriting after a manual hotspot edit.
+- `P1-ANALYTICS-01` should follow the `0to1log` pattern at the frontend only: global consent banner, first-party consent cookie, consent-gated GA4 and Clarity loading, and no auth dependency.
+- Pointint analytics v1 tracks only the current browse/make/download funnel. It does not include backend GA4 reporting, user identity stitching, or a privacy settings center.
