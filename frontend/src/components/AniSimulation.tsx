@@ -60,8 +60,8 @@ export default function AniSimulation({
         editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
       },
       {
-        frameCount: 6,
-        frameDurationMs: 120,
+        fallbackFrameCount: 6,
+        fallbackFrameDurationMs: 120,
       }
     )
       .then(({ source, frameUrls: nextFrameUrls = [] }) => {
