@@ -69,7 +69,7 @@ interface ImageDecoderDecodeResult {
 }
 
 interface ImageDecoderConstructorLike {
-  new (init: { data: Blob; type: string }): {
+  new (init: { data: ArrayBufferLike | ArrayBufferView; type: string }): {
     tracks: ImageDecoderTrack;
     decode(init: {
       frameIndex: number;
@@ -250,7 +250,15 @@ export async function decodeAniPreviewFrames(
 ): Promise<AniPreviewFrameSequence> {
   const imageDecoderCtor = dependencies.imageDecoder ?? getGlobalImageDecoder();
   if (imageDecoderCtor) {
-    return decodeGifFramesWithImageDecoder(blob, imageDecoderCtor, dependencies);
+    try {
+      return await decodeGifFramesWithImageDecoder(
+        blob,
+        imageDecoderCtor,
+        dependencies
+      );
+    } catch {
+      return decodeGifFramesWithReader(blob, dependencies);
+    }
   }
 
   return decodeGifFramesWithReader(blob, dependencies);
@@ -284,8 +292,9 @@ async function decodeGifFramesWithImageDecoder(
   ImageDecoderCtor: ImageDecoderConstructorLike,
   dependencies: AniPreviewDependencies
 ): Promise<AniPreviewFrameSequence> {
+  const bytes = await readBlobArrayBuffer(blob);
   const decoder = new ImageDecoderCtor({
-    data: blob,
+    data: bytes,
     type: blob.type || "image/gif",
   });
 

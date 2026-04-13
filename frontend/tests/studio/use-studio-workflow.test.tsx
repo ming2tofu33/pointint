@@ -71,30 +71,10 @@ describe("useStudio workflow entry", () => {
     vi.restoreAllMocks();
   });
 
-  it("enters cur-upload from the workflow picker", () => {
+  it("starts in the slot editor entry and resets back to it", () => {
     const { result } = renderHook(() => useStudio());
 
-    act(() => {
-      result.current.selectWorkflow("cur-static-image");
-    });
-
-    expect(result.current.state).toBe("cur-upload");
-  });
-
-  it("enters ani-upload from the workflow picker", () => {
-    const { result } = renderHook(() => useStudio());
-
-    act(() => {
-      result.current.selectWorkflow("ani-animated-gif");
-    });
-
-    expect(result.current.state).toBe("ani-upload");
-  });
-
-  it("starts in workflow-pick, still uploads files, and resets back", () => {
-    const { result } = renderHook(() => useStudio());
-
-    expect(result.current.state).toBe("workflow-pick");
+    expect(result.current.state).toBe("editing");
 
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
@@ -108,7 +88,7 @@ describe("useStudio workflow entry", () => {
       result.current.reset();
     });
 
-    expect(result.current.state).toBe("workflow-pick");
+    expect(result.current.state).toBe("editing");
   });
 
   it("loads GIF uploads into the ANI editor shell", async () => {
@@ -125,6 +105,19 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.sourceWidth).toBe(128);
     expect(result.current.ani?.sourceHeight).toBe(96);
     expect(result.current.ani?.cursorSize).toBe(32);
+  });
+
+  it("returns to the generic slot entry when an empty slot is selected", () => {
+    const { result } = renderHook(() => useStudio());
+
+    act(() => {
+      result.current.selectSlot("text");
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.selectedSlotId).toBe("text");
+    expect(result.current.cursor).toBeNull();
+    expect(result.current.ani).toBeNull();
   });
 
   it("updates ANI output size independently from CUR size", async () => {

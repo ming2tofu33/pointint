@@ -9,16 +9,18 @@ import {
   suggestViewportHotspot,
 } from "@/lib/cursorFrame";
 import {
-  isSelectableWorkflow,
-  type StudioState,
-  type WorkflowOptionId,
-} from "@/lib/studioWorkflow";
+  createCursorThemeProject,
+  type CursorSize as ThemeCursorSize,
+  type CursorThemeProject,
+  type SlotId,
+} from "@/lib/cursorThemeProject";
+import { type StudioState } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
 import { ensureAniZipPackage } from "@/lib/aniDownload";
 
 import { generateAni, generateCursor, removeBackground } from "./api";
 
-export type CursorSize = 32 | 48 | 64;
+export type CursorSize = ThemeCursorSize;
 
 const EDITOR_VIEWPORT_SIZE = 256;
 
@@ -59,6 +61,32 @@ export interface AniData {
   cursorName: string;
 }
 
+interface SlotRuntime {
+  cursor: CursorData | null;
+  ani: AniData | null;
+}
+
+function revokeCursorObjectUrls(cursor: CursorData | null) {
+  if (!cursor) return;
+  if (cursor.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
+    URL.revokeObjectURL(cursor.processedUrl);
+  }
+  if (cursor.originalUrl) {
+    URL.revokeObjectURL(cursor.originalUrl);
+  }
+}
+
+function revokeAniObjectUrls(ani: AniData | null) {
+  if (!ani?.originalUrl) return;
+  URL.revokeObjectURL(ani.originalUrl);
+}
+
+function revokeSlotRuntimeAssets(runtime: SlotRuntime | undefined) {
+  if (!runtime) return;
+  revokeCursorObjectUrls(runtime.cursor);
+  revokeAniObjectUrls(runtime.ani);
+}
+
 function getRenderedHotspot(
   hotspotX: number,
   hotspotY: number,
@@ -95,8 +123,73 @@ function sanitizeCursorName(name: string) {
   return safe || "cursor";
 }
 
+function createEmptySlotRuntime(): Record<SlotId, SlotRuntime> {
+  return {
+    normal: { cursor: null, ani: null },
+    text: { cursor: null, ani: null },
+    link: { cursor: null, ani: null },
+    button: { cursor: null, ani: null },
+  };
+}
+
+function createCursorFromFile(file: File): CursorData {
+  const url = URL.createObjectURL(file);
+  const renderedHotspot = getRenderedHotspot(0, 0, 32);
+
+  return {
+    originalFile: file,
+    originalUrl: url,
+    processedUrl: url,
+    processedBlob: file,
+    sourceWidth: 0,
+    sourceHeight: 0,
+    hotspotX: 0,
+    hotspotY: 0,
+    hotspotMode: "auto",
+    renderedHotspotX: renderedHotspot.x,
+    renderedHotspotY: renderedHotspot.y,
+    renderedBlob: null,
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    fitMode: "contain",
+    cursorSize: 32,
+    cursorName: "cursor",
+  };
+}
+
+function createAniFromFile(file: File, sourceWidth = 0, sourceHeight = 0): AniData {
+  return {
+    originalFile: file,
+    originalUrl: URL.createObjectURL(file),
+    sourceWidth,
+    sourceHeight,
+    hotspotX: 0,
+    hotspotY: 0,
+    hotspotMode: "auto",
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    fitMode: "contain",
+    cursorSize: 32,
+    cursorName: createAniName(file.name),
+  };
+}
+
+function toSlotAssetUrl(cursor: CursorData) {
+  return cursor.renderedBlob ? cursor.processedUrl : cursor.processedUrl;
+}
+
 export function useStudio() {
-  const [state, setState] = useState<StudioState>("workflow-pick");
+  const [state, setState] = useState<StudioState>("editing");
+  const [project, setProject] = useState<CursorThemeProject>(() =>
+    createCursorThemeProject()
+  );
+  const [slotRuntime, setSlotRuntime] = useState<Record<SlotId, SlotRuntime>>(
+    () => createEmptySlotRuntime()
+  );
+  const [selectedSlotId, setSelectedSlotId] = useState<SlotId>("normal");
+  const [editingSlotId, setEditingSlotId] = useState<SlotId>("normal");
   const [cursor, setCursor] = useState<CursorData | null>(null);
   const [ani, setAni] = useState<AniData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,35 +197,244 @@ export function useStudio() {
   const [showGuide, setShowGuide] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const selectedSlot = project.slots[selectedSlotId];
+  const selectedSlotRuntime = slotRuntime[selectedSlotId];
+  const selectedSlotBound = Boolean(
+    selectedSlot.asset.originalUrl ||
+      selectedSlot.asset.previewUrl ||
+      selectedSlotRuntime.cursor ||
+      selectedSlotRuntime.ani
+  );
 
-  const selectWorkflow = useCallback((workflowId: WorkflowOptionId) => {
-    if (!isSelectableWorkflow(workflowId)) return;
-    setError(null);
-    trackEvent("workflow_selected", {
-      workflow_id: workflowId,
-    });
-    if (workflowId === "ani-animated-gif") {
-      setState("ani-upload");
+  const cleanupSlotReplacement = useCallback(
+    (slotId: SlotId) => {
+      revokeSlotRuntimeAssets(slotRuntime[slotId]);
+
+      if (slotId !== selectedSlotId || !selectedSlotBound) {
+        return;
+      }
+
+      revokeCursorObjectUrls(cursor);
+      revokeAniObjectUrls(ani);
+    },
+    [ani, cursor, selectedSlotBound, selectedSlotId, slotRuntime]
+  );
+
+  const persistStaticSlot = useCallback(
+    (slotId: SlotId, nextCursor: CursorData) => {
+      setSlotRuntime((prev) => ({
+        ...prev,
+        [slotId]: { cursor: nextCursor, ani: null },
+      }));
+
+      setProject((prev) => ({
+        ...prev,
+        slots: {
+          ...prev.slots,
+          [slotId]: {
+            ...prev.slots[slotId],
+            kind: "static",
+            asset: {
+              fileName: nextCursor.originalFile.name,
+              originalUrl: nextCursor.originalUrl,
+              previewUrl: toSlotAssetUrl(nextCursor),
+            },
+            editing: {
+              cursorName: nextCursor.cursorName,
+              cursorSize: nextCursor.cursorSize,
+              fitMode: nextCursor.fitMode,
+              hotspotMode: nextCursor.hotspotMode,
+              hotspotX: nextCursor.hotspotX,
+              hotspotY: nextCursor.hotspotY,
+              offsetX: nextCursor.offsetX,
+              offsetY: nextCursor.offsetY,
+              scale: nextCursor.scale,
+            },
+          },
+        },
+      }));
+    },
+    []
+  );
+
+  const persistAnimatedSlot = useCallback(
+    (slotId: SlotId, nextAni: AniData) => {
+      setSlotRuntime((prev) => ({
+        ...prev,
+        [slotId]: { cursor: null, ani: nextAni },
+      }));
+
+      setProject((prev) => ({
+        ...prev,
+        slots: {
+          ...prev.slots,
+          [slotId]: {
+            ...prev.slots[slotId],
+            kind: "animated",
+            asset: {
+              fileName: nextAni.originalFile.name,
+              originalUrl: nextAni.originalUrl,
+              previewUrl: nextAni.originalUrl,
+            },
+            editing: {
+              cursorName: nextAni.cursorName,
+              cursorSize: nextAni.cursorSize,
+              fitMode: nextAni.fitMode,
+              hotspotMode: nextAni.hotspotMode,
+              hotspotX: nextAni.hotspotX,
+              hotspotY: nextAni.hotspotY,
+              offsetX: nextAni.offsetX,
+              offsetY: nextAni.offsetY,
+              scale: nextAni.scale,
+            },
+          },
+        },
+      }));
+    },
+    []
+  );
+
+  const syncStaticSlotRuntime = useCallback(
+    (slotId: SlotId, nextCursor: CursorData) => {
+      setSlotRuntime((prev) => ({
+        ...prev,
+        [slotId]: { cursor: nextCursor, ani: null },
+      }));
+
+      setProject((prev) => ({
+        ...prev,
+        slots: {
+          ...prev.slots,
+          [slotId]: {
+            ...prev.slots[slotId],
+            kind: "static",
+            asset: {
+              fileName: nextCursor.originalFile.name,
+              originalUrl: nextCursor.originalUrl,
+              previewUrl: toSlotAssetUrl(nextCursor),
+            },
+            editing: {
+              cursorName: nextCursor.cursorName,
+              cursorSize: nextCursor.cursorSize,
+              fitMode: nextCursor.fitMode,
+              hotspotMode: nextCursor.hotspotMode,
+              hotspotX: nextCursor.hotspotX,
+              hotspotY: nextCursor.hotspotY,
+              offsetX: nextCursor.offsetX,
+              offsetY: nextCursor.offsetY,
+              scale: nextCursor.scale,
+            },
+          },
+        },
+      }));
+    },
+    []
+  );
+
+  const syncAnimatedSlotRuntime = useCallback(
+    (slotId: SlotId, nextAni: AniData) => {
+      setSlotRuntime((prev) => ({
+        ...prev,
+        [slotId]: { cursor: null, ani: nextAni },
+      }));
+
+      setProject((prev) => ({
+        ...prev,
+        slots: {
+          ...prev.slots,
+          [slotId]: {
+            ...prev.slots[slotId],
+            kind: "animated",
+            asset: {
+              fileName: nextAni.originalFile.name,
+              originalUrl: nextAni.originalUrl,
+              previewUrl: nextAni.originalUrl,
+            },
+            editing: {
+              cursorName: nextAni.cursorName,
+              cursorSize: nextAni.cursorSize,
+              fitMode: nextAni.fitMode,
+              hotspotMode: nextAni.hotspotMode,
+              hotspotX: nextAni.hotspotX,
+              hotspotY: nextAni.hotspotY,
+              offsetX: nextAni.offsetX,
+              offsetY: nextAni.offsetY,
+              scale: nextAni.scale,
+            },
+          },
+        },
+      }));
+    },
+    []
+  );
+
+  const selectSlot = useCallback((slotId: SlotId) => {
+    if (selectedSlotBound && cursor && state === "editing") {
+      syncStaticSlotRuntime(selectedSlotId, cursor);
+    }
+
+    if (selectedSlotBound && ani && state === "ani-editing") {
+      syncAnimatedSlotRuntime(selectedSlotId, ani);
+    }
+
+    setSelectedSlotId(slotId);
+    setEditingSlotId(slotId);
+
+    const slot = project.slots[slotId];
+    const runtime = slotRuntime[slotId];
+
+    if (slot.kind === "static" && runtime.cursor) {
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+      setCursor(runtime.cursor);
+      setAni(null);
+      setState("editing");
       return;
     }
 
-    setState("cur-upload");
-  }, []);
+    if (slot.kind === "animated" && runtime.ani) {
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+      setAni(runtime.ani);
+      setCursor(null);
+      setState("ani-editing");
+      return;
+    }
+
+    setPreviewUrl((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return null;
+    });
+    setCursor(null);
+    setAni(null);
+    setState("editing");
+  }, [
+    ani,
+    cursor,
+    project.slots,
+    selectedSlotBound,
+    selectedSlotId,
+    slotRuntime,
+    state,
+    syncAnimatedSlotRuntime,
+    syncStaticSlotRuntime,
+  ]);
 
   // UX-1: 파일 선택 후 "uploaded" 상태 (배경 제거 여부 선택 전)
   const selectFile = useCallback(
     (file: File) => {
       setError(null);
-
-      if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
-        URL.revokeObjectURL(cursor.processedUrl);
-      }
-      if (cursor?.originalUrl) {
-        URL.revokeObjectURL(cursor.originalUrl);
-      }
-
-      const url = URL.createObjectURL(file);
-      const renderedHotspot = getRenderedHotspot(0, 0, 32);
+      cleanupSlotReplacement("normal");
 
       setPreviewUrl((prev) => {
         if (prev) {
@@ -141,69 +443,108 @@ export function useStudio() {
         return null;
       });
 
-      setCursor({
-        originalFile: file,
-        originalUrl: url,
-        processedUrl: url,
-        processedBlob: file,
-        sourceWidth: 0,
-        sourceHeight: 0,
-        hotspotX: 0,
-        hotspotY: 0,
-        hotspotMode: "auto",
-        renderedHotspotX: renderedHotspot.x,
-        renderedHotspotY: renderedHotspot.y,
-        renderedBlob: null,
-        offsetX: 0,
-        offsetY: 0,
-        scale: 1,
-        fitMode: "contain",
-        cursorSize: 32,
-        cursorName: "cursor",
-      });
+      const nextCursor = createCursorFromFile(file);
+      setCursor(nextCursor);
+      setAni(null);
+      persistStaticSlot("normal", nextCursor);
       setState("uploaded");
     },
-    [cursor]
+    [cleanupSlotReplacement, persistStaticSlot]
   );
 
   const selectAniFile = useCallback(
     async (file: File) => {
       setError(null);
+      cleanupSlotReplacement("normal");
 
-      if (ani?.originalUrl) {
-        URL.revokeObjectURL(ani.originalUrl);
-      }
-
-      const url = URL.createObjectURL(file);
       setAni(null);
-      setState("ani-upload");
+
+      const nextAni = createAniFromFile(file);
 
       try {
-        const dimensions = await loadImageDimensions(url);
+        const dimensions = await loadImageDimensions(nextAni.originalUrl);
 
-        setAni({
-          originalFile: file,
-          originalUrl: url,
+        const hydratedAni = {
+          ...nextAni,
           sourceWidth: dimensions.width,
           sourceHeight: dimensions.height,
-          hotspotX: 0,
-          hotspotY: 0,
-          hotspotMode: "auto",
-          offsetX: 0,
-          offsetY: 0,
-          scale: 1,
-          fitMode: "contain",
-          cursorSize: 32,
-          cursorName: createAniName(file.name),
-        });
+        };
+
+        persistAnimatedSlot("normal", hydratedAni);
+        setAni(hydratedAni);
         setState("ani-editing");
       } catch (err) {
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(nextAni.originalUrl);
         setError(err instanceof Error ? err.message : "Failed to load GIF");
-        setState("ani-upload");
+        setState("editing");
       }
     },
-    [ani]
+    [cleanupSlotReplacement, persistAnimatedSlot]
+  );
+
+  const selectSelectedSlotStaticFile = useCallback(
+    async (file: File) => {
+      if (selectedSlotId === "normal") {
+        selectFile(file);
+        return;
+      }
+
+      setError(null);
+      cleanupSlotReplacement(selectedSlotId);
+
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+
+      const nextCursor = createCursorFromFile(file);
+      setCursor(nextCursor);
+      setAni(null);
+      persistStaticSlot(selectedSlotId, nextCursor);
+      setState("editing");
+    },
+    [cleanupSlotReplacement, persistStaticSlot, selectFile, selectedSlotId]
+  );
+
+  const selectSelectedSlotAnimatedFile = useCallback(
+    async (file: File) => {
+      if (selectedSlotId === "normal") {
+        await selectAniFile(file);
+        return;
+      }
+
+      setError(null);
+      cleanupSlotReplacement(selectedSlotId);
+
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return null;
+      });
+
+      const nextAni = createAniFromFile(file);
+
+      try {
+        const dimensions = await loadImageDimensions(nextAni.originalUrl);
+        const hydratedAni = {
+          ...nextAni,
+          sourceWidth: dimensions.width,
+          sourceHeight: dimensions.height,
+        };
+
+        setCursor(null);
+        setAni(hydratedAni);
+        persistAnimatedSlot(selectedSlotId, hydratedAni);
+        setState("ani-editing");
+      } catch (err) {
+        URL.revokeObjectURL(nextAni.originalUrl);
+        setError(err instanceof Error ? err.message : "Failed to load GIF");
+      }
+    },
+    [cleanupSlotReplacement, persistAnimatedSlot, selectAniFile, selectedSlotId]
   );
 
   // UX-1: 배경 제거 실행
@@ -459,25 +800,22 @@ export function useStudio() {
   }, [ani, cursor, state]);
 
   const reset = useCallback(() => {
-    if (cursor?.processedUrl && cursor.processedUrl !== cursor.originalUrl) {
-      URL.revokeObjectURL(cursor.processedUrl);
-    }
-    if (cursor?.originalUrl) {
-      URL.revokeObjectURL(cursor.originalUrl);
-    }
-    if (ani?.originalUrl) {
-      URL.revokeObjectURL(ani.originalUrl);
-    }
+    revokeCursorObjectUrls(cursor);
+    revokeAniObjectUrls(ani);
+    Object.values(slotRuntime).forEach((runtime) => revokeSlotRuntimeAssets(runtime));
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
     setCursor(null);
     setAni(null);
+    setProject(createCursorThemeProject());
+    setSelectedSlotId("normal");
+    setEditingSlotId("normal");
     setPreviewUrl(null);
-    setState("workflow-pick");
+    setState("editing");
     setError(null);
     setShowOriginal(false);
-  }, [ani, cursor, previewUrl]);
+  }, [ani, cursor, previewUrl, slotRuntime]);
 
   // UX-2 + UX-3: editor framing과 최종 export가 같은 square PNG 생성
   useEffect(() => {
@@ -783,6 +1121,9 @@ export function useStudio() {
 
   return {
     state,
+    project,
+    selectedSlotId,
+    editingSlotId,
     cursor,
     ani,
     error,
@@ -792,7 +1133,6 @@ export function useStudio() {
     previewUrl,
     selectFile,
     selectAniFile,
-    selectWorkflow,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -804,6 +1144,9 @@ export function useStudio() {
     setCursorSize,
     setAniCursorSize,
     setCursorName,
+    selectSlot,
+    selectSelectedSlotStaticFile,
+    selectSelectedSlotAnimatedFile,
     recommendHotspot,
     reset,
     download,

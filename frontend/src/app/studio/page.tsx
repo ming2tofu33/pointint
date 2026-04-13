@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -11,13 +11,15 @@ import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
+import SlotRail from "@/components/SlotRail";
 import Simulation from "@/components/Simulation";
+import SimulationFooter from "@/components/SimulationFooter";
 import StudioBar from "@/components/StudioBar";
 import UploadZone from "@/components/UploadZone";
-import WorkflowPicker from "@/components/WorkflowPicker";
 import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
 import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
+import { buildProjectSlotSimulationSources } from "@/lib/slotSimulationSources";
 import { CursorSize, useStudio } from "@/lib/useStudio";
 
 type Tool = "move" | "hotspot";
@@ -25,6 +27,8 @@ type Tool = "move" | "hotspot";
 export default function StudioPage() {
   const {
     state,
+    project,
+    selectedSlotId,
     cursor,
     ani,
     error,
@@ -34,7 +38,9 @@ export default function StudioPage() {
     previewUrl,
     selectFile,
     selectAniFile,
-    selectWorkflow,
+    selectSlot,
+    selectSelectedSlotStaticFile,
+    selectSelectedSlotAnimatedFile,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -52,6 +58,7 @@ export default function StudioPage() {
     closeGuide,
   } = useStudio();
   const [activeTool, setActiveTool] = useState<Tool>("move");
+  const [simulationCollapsed, setSimulationCollapsed] = useState(false);
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
   const searchParams = useSearchParams();
@@ -92,35 +99,66 @@ export default function StudioPage() {
         ? cursor.originalUrl
         : cursor.processedUrl
       : "";
+  const selectedSlot = project.slots[selectedSlotId];
+  const selectedSlotBound = Boolean(
+    selectedSlot.asset.originalUrl ||
+      selectedSlot.asset.previewUrl ||
+      cursor ||
+      ani
+  );
+  const normalSlot = project.slots.normal;
+  const normalSlotBound = Boolean(
+    normalSlot.asset.originalUrl ||
+      normalSlot.asset.previewUrl ||
+      (selectedSlotId === "normal" && (cursor || ani))
+  );
+  const slotSimulationSources = useMemo(
+    () => buildProjectSlotSimulationSources(project),
+    [project]
+  );
+  const showSlotSourceEntry =
+    state !== "uploaded" && state !== "processing" && !selectedSlotBound;
+  const showToolRail =
+    selectedSlotBound && (state === "editing" || state === "ani-editing");
 
   return (
     <MobileGuard>
-      <StudioBar
-        onDownload={download}
-        downloading={downloading}
-        canDownload={state === "editing" || state === "ani-editing"}
-        actionLabel={state === "ani-editing" ? t("exportAni") : undefined}
-      />
-
-      {state === "ani-editing" && ani ? (
-        <AniEditorShell
-          ani={ani}
-          imageUrl={ani.originalUrl}
-          error={error}
-          activeTool={activeTool}
-          onSetActiveTool={setActiveTool}
-          onOffsetChange={setOffset}
-          onHotspotChange={setHotspot}
-          onScaleChange={setScale}
-          onFitModeChange={setFitMode}
-          onAniCursorSizeChange={setAniCursorSize}
-          onAniNameChange={setCursorName}
-          onRecommendHotspot={recommendHotspot}
-          onResetHotspot={() => setHotspot(0, 0)}
-          onReset={reset}
+      <div data-testid="studio-theme-scope" style={studioThemeScopeStyle}>
+        <StudioBar
+          onDownload={download}
+          downloading={downloading}
+          canDownload={
+            (state === "editing" || state === "ani-editing") &&
+            selectedSlotBound &&
+            normalSlotBound
+          }
+          actionLabel={state === "ani-editing" ? t("exportAni") : undefined}
         />
-      ) : (
-        <>
+
+        {state === "ani-editing" ? (
+          <AniEditorShell
+            ani={ani}
+            imageUrl={ani?.originalUrl ?? ""}
+            project={project}
+            selectedSlotId={selectedSlotId}
+            error={error}
+            activeTool={activeTool}
+            onSetActiveTool={setActiveTool}
+            onSelectSlot={selectSlot}
+            onSelectSlotStaticFile={selectSelectedSlotStaticFile}
+            onSelectSlotAnimatedFile={selectSelectedSlotAnimatedFile}
+            onOffsetChange={setOffset}
+            onHotspotChange={setHotspot}
+            onScaleChange={setScale}
+            onFitModeChange={setFitMode}
+            onAniCursorSizeChange={setAniCursorSize}
+            onAniNameChange={setCursorName}
+            onRecommendHotspot={recommendHotspot}
+            onResetHotspot={() => setHotspot(0, 0)}
+            onReset={reset}
+          />
+        ) : (
+          <>
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <aside
           style={{
@@ -135,7 +173,7 @@ export default function StudioPage() {
             flexShrink: 0,
           }}
         >
-          {state === "editing" && (
+          {showToolRail && (
             <>
               <ToolButton
                 label={t("move")}
@@ -161,36 +199,20 @@ export default function StudioPage() {
             display: "flex",
             flexDirection: "column",
             alignItems:
-              state === "workflow-pick" ||
-              state === "cur-upload" ||
-              state === "ani-upload" ||
+              state === "uploaded" ||
               state === "processing"
                 ? "center"
                 : "stretch",
             justifyContent:
-              state === "workflow-pick" ||
-              state === "cur-upload" ||
-              state === "ani-upload" ||
+              state === "uploaded" ||
               state === "processing"
                 ? "center"
                 : "flex-start",
             backgroundColor: "var(--color-bg-primary)",
             position: "relative",
-            gap: "1rem",
+            minWidth: 0,
           }}
         >
-          {state === "workflow-pick" && (
-            <WorkflowPicker onSelectWorkflow={selectWorkflow} />
-          )}
-
-          {state === "cur-upload" && (
-            <UploadZone onFile={selectFile} processing={false} />
-          )}
-
-          {state === "ani-upload" && (
-            <UploadZone onFile={selectAniFile} processing={false} mode="ani" />
-          )}
-
           {state === "uploaded" && cursor && (
             <UploadZone
               onFile={selectFile}
@@ -206,71 +228,137 @@ export default function StudioPage() {
             <UploadZone onFile={selectFile} processing={true} />
           )}
 
-          {state === "editing" && cursor && (
-            <>
-              <CursorCanvas
-                imageUrl={displayUrl}
-                sourceWidth={cursor.sourceWidth}
-                sourceHeight={cursor.sourceHeight}
-                fitMode={cursor.fitMode}
-                offsetX={cursor.offsetX}
-                offsetY={cursor.offsetY}
-                scale={cursor.scale}
-                hotspotX={cursor.hotspotX}
-                hotspotY={cursor.hotspotY}
-                onOffsetChange={setOffset}
-                onHotspotChange={setHotspot}
-                activeTool={activeTool}
+      {state === "editing" && (
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                overflow: "hidden",
+              }}
+            >
+              <SlotRail
+                project={project}
+                selectedSlotId={selectedSlotId}
+                onSelectSlot={selectSlot}
               />
 
               <div
                 style={{
-                  fontSize: "0.6875rem",
-                  color: "var(--color-text-muted)",
+                  flex: 1,
+                  minWidth: 0,
                   display: "flex",
-                  gap: "1.5rem",
+                  flexDirection: "column",
+                  overflow: "hidden",
                   alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <span>
-                  {activeTool === "move"
-                    ? t("dragToMove")
-                    : t("clickToSetHotspot")}
-                </span>
-                <span>{t("shortcutMove")}</span>
-                <span>{t("shortcutHotspot")}</span>
+                {showSlotSourceEntry ? (
+                  <SlotEmptyState
+                    slotId={selectedSlotId}
+                    onStaticFile={selectSelectedSlotStaticFile}
+                    onAnimatedFile={selectSelectedSlotAnimatedFile}
+                  />
+                ) : selectedSlotBound && cursor ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "1rem",
+                      flex: "1 1 58%",
+                      minHeight: 0,
+                    }}
+                  >
+                    <CursorCanvas
+                      imageUrl={displayUrl}
+                      sourceWidth={cursor.sourceWidth}
+                      sourceHeight={cursor.sourceHeight}
+                      fitMode={cursor.fitMode}
+                      offsetX={cursor.offsetX}
+                      offsetY={cursor.offsetY}
+                      scale={cursor.scale}
+                      hotspotX={cursor.hotspotX}
+                      hotspotY={cursor.hotspotY}
+                      onOffsetChange={setOffset}
+                      onHotspotChange={setHotspot}
+                      activeTool={activeTool}
+                    />
 
-                <button
-                  onClick={toggleOriginal}
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: showOriginal
-                      ? "var(--color-accent)"
-                      : "var(--color-text-muted)",
-                    background: "none",
-                    border: "1px solid var(--color-border)",
-                    padding: "0.125rem 0.5rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  {showOriginal ? t("showProcessed") : t("showOriginal")}
-                </button>
+                    <div
+                      style={{
+                        fontSize: "0.6875rem",
+                        color: "var(--color-text-muted)",
+                        display: "flex",
+                        gap: "1.5rem",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        justifyContent: "center",
+                        padding: "0 1rem 1rem",
+                      }}
+                    >
+                      <span>
+                        {activeTool === "move"
+                          ? t("dragToMove")
+                          : t("clickToSetHotspot")}
+                      </span>
+                      <span>{t("shortcutMove")}</span>
+                      <span>{t("shortcutHotspot")}</span>
 
-                <button
-                  onClick={retryBgRemoval}
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "var(--color-text-muted)",
-                    background: "none",
-                    border: "1px solid var(--color-border)",
-                    padding: "0.125rem 0.5rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  {t("retryBg")}
-                </button>
+                      <button
+                        onClick={toggleOriginal}
+                        style={{
+                          fontSize: "0.6875rem",
+                          color: showOriginal
+                            ? "var(--color-accent)"
+                            : "var(--color-text-muted)",
+                          background: "none",
+                          border: "1px solid var(--color-border)",
+                          padding: "0.125rem 0.5rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {showOriginal ? t("showProcessed") : t("showOriginal")}
+                      </button>
+
+                      <button
+                        onClick={retryBgRemoval}
+                        style={{
+                          fontSize: "0.6875rem",
+                          color: "var(--color-text-muted)",
+                          background: "none",
+                          border: "1px solid var(--color-border)",
+                          padding: "0.125rem 0.5rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {t("retryBg")}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {selectedSlotBound && cursor && previewUrl && cursor.renderedBlob ? (
+                  <SimulationFooter
+                    collapsed={simulationCollapsed}
+                    onToggle={() => setSimulationCollapsed((current) => !current)}
+                  >
+                    <Simulation
+                      imageUrl={previewUrl}
+                      cursorSize={cursor.cursorSize}
+                      hotspotX={cursor.renderedHotspotX}
+                      hotspotY={cursor.renderedHotspotY}
+                      slotSources={slotSimulationSources}
+                      selectedSlotId={selectedSlotId}
+                    />
+                  </SimulationFooter>
+                ) : null}
               </div>
-            </>
+            </div>
           )}
 
           {error && (
@@ -296,7 +384,7 @@ export default function StudioPage() {
             overflowY: "auto",
           }}
         >
-          {state === "editing" && cursor ? (
+          {state === "editing" && cursor && selectedSlotBound ? (
             <>
               {previewUrl && (
                 <PanelSection title={tp("actualSize")}>
@@ -493,51 +581,6 @@ export default function StudioPage() {
           )}
         </aside>
       </div>
-
-      <footer
-        style={{
-          height: "10rem",
-          borderTop: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-bg-secondary)",
-          flexShrink: 0,
-          overflow: "hidden",
-        }}
-      >
-        {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
-          <Simulation
-            imageUrl={previewUrl}
-            cursorSize={cursor.cursorSize}
-            hotspotX={cursor.renderedHotspotX}
-            hotspotY={cursor.renderedHotspotY}
-          />
-        ) : state === "ani-editing" && ani ? (
-          <AniSimulation
-            imageUrl={ani.originalUrl}
-            sourceWidth={ani.sourceWidth}
-            sourceHeight={ani.sourceHeight}
-            fitMode={ani.fitMode}
-            offsetX={ani.offsetX}
-            offsetY={ani.offsetY}
-            scale={ani.scale}
-            cursorSize={ani.cursorSize}
-            hotspotX={ani.hotspotX}
-            hotspotY={ani.hotspotY}
-          />
-        ) : (
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--color-text-muted)",
-              fontSize: "0.8125rem",
-            }}
-          >
-            {t("simulationPreview")}
-          </div>
-        )}
-      </footer>
         </>
       )}
 
@@ -545,6 +588,7 @@ export default function StudioPage() {
         open={showGuide}
         onClose={closeGuide}
       />
+      </div>
     </MobileGuard>
   );
 }
@@ -712,6 +756,297 @@ function PanelRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function SlotEmptyState({
+  slotId,
+  onStaticFile,
+  onAnimatedFile,
+}: {
+  slotId: "normal" | "text" | "link" | "button";
+  onStaticFile: (file: File) => void;
+  onAnimatedFile: (file: File) => void;
+}) {
+  const t = useTranslations("studio");
+  const slotLabel = t(`slot${capitalizeSlotId(slotId)}`);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+
+  return (
+    <div
+      data-testid="studio-empty-slot-state"
+      style={{
+        width: "min(52rem, 100%)",
+        minHeight: "20rem",
+        border: "1px solid var(--color-border)",
+        borderRadius: "1rem",
+        backgroundColor: "rgba(255,255,255,0.025)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        padding: "1.5rem",
+        color: "var(--color-text-muted)",
+        textAlign: "left",
+        lineHeight: 1.6,
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+        <div
+          style={{
+            fontSize: "0.6875rem",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          {slotLabel} {t("slotLabelSuffix")}
+        </div>
+        <div
+          style={{ fontSize: "0.8125rem" }}
+        >
+          {t("emptySlotDescription")}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        <SlotUploadChoice
+          title={t("emptySlotStaticStart")}
+          description={t("slotStaticUploadSub")}
+          mode="cur"
+          onFile={onStaticFile}
+        />
+        <SlotUploadChoice
+          title={t("emptySlotAnimatedStart")}
+          description={t("slotAniUploadSub")}
+          mode="ani"
+          onFile={onAnimatedFile}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <button
+          type="button"
+          onClick={() => setShowMoreOptions((current) => !current)}
+          style={{
+            alignSelf: "flex-start",
+            background: "none",
+            border: "none",
+            color: "var(--color-text-secondary)",
+            fontSize: "0.75rem",
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          {t("moreSourceOptions")}
+        </button>
+
+        {showMoreOptions ? (
+          <div
+            style={{
+              display: "grid",
+              gap: "0.625rem",
+              borderTop: "1px solid var(--color-border)",
+              paddingTop: "0.875rem",
+            }}
+          >
+            <SoonSourceRow
+              title={t("emptySlotMultiplePngs")}
+              badge={t("soon")}
+            />
+            <SoonSourceRow
+              title={t("emptySlotAiGenerate")}
+              badge={t("soon")}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SlotUploadChoice({
+  title,
+  description,
+  mode,
+  onFile,
+}: {
+  title: string;
+  description: string;
+  mode: "cur" | "ani";
+  onFile: (file: File) => void;
+}) {
+  const tu = useTranslations("upload");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const accept = mode === "ani" ? ".gif" : ".png,.jpg,.jpeg,.webp";
+  const isInteractiveActive = isDragActive || isHovered;
+  const handleDrop = (event: React.DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      onFile(file);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      aria-label={title}
+      onClick={() => inputRef.current?.click()}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onDragOver={(event) => {
+        event.preventDefault();
+        if (!isDragActive) {
+          setIsDragActive(true);
+        }
+      }}
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setIsDragActive(true);
+      }}
+      onDragLeave={(event) => {
+        event.preventDefault();
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsDragActive(false);
+        }
+      }}
+      onDrop={handleDrop}
+      style={{
+        border: isInteractiveActive
+          ? "1px solid color-mix(in srgb, var(--color-accent-primary) 56%, white 8%)"
+          : "1px solid var(--color-border)",
+        borderRadius: "0.875rem",
+        minHeight: "15rem",
+        padding: "1.125rem",
+        backgroundColor: isInteractiveActive ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        alignItems: "flex-start",
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "border-color 160ms ease, background-color 160ms ease",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+        <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary)" }}>
+          {title}
+        </div>
+        <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+          {description}
+        </div>
+      </div>
+
+      <div
+        style={{
+          width: "100%",
+          minHeight: "9.75rem",
+          border: isInteractiveActive
+            ? "1px dashed color-mix(in srgb, var(--color-accent-primary) 68%, white 12%)"
+            : "1px dashed var(--color-border)",
+          backgroundColor: isInteractiveActive ? "rgba(255,255,255,0.045)" : "rgba(255,255,255,0.02)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.625rem",
+          padding: "1.125rem",
+          transition: "border-color 160ms ease, background-color 160ms ease",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "1.75rem",
+            lineHeight: 1,
+            color: isInteractiveActive ? "var(--color-accent-primary)" : "var(--color-text-muted)",
+          }}
+        >
+          +
+        </div>
+        <div
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--color-text-secondary)",
+            lineHeight: 1.5,
+          }}
+        >
+          {mode === "ani" ? tu("aniDropOrClick") : tu("dropOrClick")}
+        </div>
+        <div
+          style={{
+            fontSize: "0.6875rem",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          {mode === "ani" ? tu("aniFormats") : tu("formats")}
+        </div>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) {
+            onFile(file);
+          }
+          event.currentTarget.value = "";
+        }}
+        style={{ display: "none" }}
+      />
+    </button>
+  );
+}
+
+function SoonSourceRow({
+  title,
+  badge,
+}: {
+  title: string;
+  badge: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "0.75rem",
+        border: "1px solid var(--color-border)",
+        borderRadius: "0.75rem",
+        padding: "0.75rem 0.875rem",
+        backgroundColor: "rgba(255,255,255,0.02)",
+      }}
+    >
+      <span style={{ fontSize: "0.8125rem", color: "var(--color-text-primary)" }}>
+        {title}
+      </span>
+      <span
+        style={{
+          fontSize: "0.625rem",
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          color: "var(--color-text-muted)",
+        }}
+      >
+        {badge}
+      </span>
+    </div>
+  );
+}
+
+function capitalizeSlotId(slotId: "normal" | "text" | "link" | "button" | undefined) {
+  if (!slotId) return "Slot";
+  return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
+}
+
 const panelActionButtonStyle: CSSProperties = {
   fontSize: "0.6875rem",
   color: "var(--color-text-muted)",
@@ -721,4 +1056,21 @@ const panelActionButtonStyle: CSSProperties = {
   cursor: "pointer",
   marginTop: "0.25rem",
   transition: "border-color 0.15s",
+};
+
+const studioThemeScopeStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  minHeight: "calc(100dvh - var(--app-header-height, 4.25rem))",
+  backgroundColor: "var(--studio-bg-primary)",
+  ["--color-bg-primary" as string]: "var(--studio-bg-primary)",
+  ["--color-bg-secondary" as string]: "var(--studio-bg-secondary)",
+  ["--color-bg-tertiary" as string]: "var(--studio-bg-tertiary)",
+  ["--color-bg-card" as string]: "var(--studio-bg-secondary)",
+  ["--color-input-surface" as string]: "var(--studio-bg-tertiary)",
+  ["--color-border" as string]: "var(--studio-border)",
+  ["--color-text-primary" as string]: "var(--studio-text-primary)",
+  ["--color-text-secondary" as string]: "var(--studio-text-secondary)",
+  ["--color-text-muted" as string]: "var(--studio-text-muted)",
+  ["--color-shadow" as string]: "rgba(0, 0, 0, 0.42)",
 };

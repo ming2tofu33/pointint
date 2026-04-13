@@ -34,8 +34,10 @@ vi.mock("@/components/CursorSimulationSurface", () => ({
 }));
 
 import AniSimulation from "@/components/AniSimulation";
+import { createStaticCursorSource } from "@/lib/cursorSources";
 
 type AniSimulationProps = import("react").ComponentProps<typeof AniSimulation>;
+type SlotSimulationSources = NonNullable<AniSimulationProps["slotSources"]>;
 
 describe("AniSimulation", () => {
   beforeEach(() => {
@@ -367,9 +369,91 @@ describe("AniSimulation", () => {
 
     expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif-2");
   });
+
+  it("passes slot-specific sources to the shared simulation surface", async () => {
+    const normalSource = createStaticCursorSource(
+      { src: "blob:normal" },
+      { x: 1, y: 2 },
+      48
+    );
+    const linkSource = createStaticCursorSource(
+      { src: "blob:link" },
+      { x: 3, y: 4 },
+      48
+    );
+
+    renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      cursorSize: 48,
+      hotspotX: 128,
+      hotspotY: 64,
+      slotSources: { normal: normalSource, link: linkSource },
+    });
+
+    await waitFor(() => {
+      expect(cursorSimulationSurfaceMock).toHaveBeenCalled();
+    });
+
+    const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
+    expect(props?.slotSources?.normal?.getFrameAtTime(0).frame.src).toBe(
+      "blob:normal"
+    );
+    expect(props?.slotSources?.link?.getFrameAtTime(0).frame.src).toBe(
+      "blob:link"
+    );
+  });
+
+  it("does not render a duplicate slot preview strip inside the simulation", async () => {
+    renderSimulation();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+    });
+
+    expect(screen.queryByText("normal")).toBeNull();
+    expect(screen.queryByText("text")).toBeNull();
+    expect(screen.queryByText("link")).toBeNull();
+    expect(screen.queryByText("button")).toBeNull();
+  });
+
+  it("shows the ANI placeholder when the normal slot is missing", async () => {
+    mockRevokeObjectURL();
+
+    renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      cursorSize: 48,
+      hotspotX: 128,
+      hotspotY: 64,
+      slotSources: {
+        link: createStaticCursorSource(
+          { src: "blob:link" },
+          { x: 0, y: 0 },
+          48
+        ),
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();
+    });
+
+    expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
+  });
 });
 
-function renderSimulation(overrides: Partial<AniSimulationProps> = {}) {
+function renderSimulation(
+  overrides: Partial<AniSimulationProps> & {
+    slotSources?: SlotSimulationSources;
+  } = {}
+) {
   return render(
     <AniSimulation
       imageUrl={overrides.imageUrl ?? "blob:gif"}
@@ -382,6 +466,7 @@ function renderSimulation(overrides: Partial<AniSimulationProps> = {}) {
       cursorSize={overrides.cursorSize ?? 48}
       hotspotX={overrides.hotspotX ?? 128}
       hotspotY={overrides.hotspotY ?? 64}
+      slotSources={overrides.slotSources}
     />
   );
 }

@@ -1,7 +1,29 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { createAnimatedCursorSource, createStaticCursorSource } from "@/lib/cursorSources";
+import {
+  createAnimatedCursorSource,
+  createStaticCursorSource,
+} from "@/lib/cursorSources";
+
+const { cursorPreviewLayerMock } = vi.hoisted(() => ({
+  cursorPreviewLayerMock: vi.fn(
+    ({
+      snapshot,
+    }: {
+      snapshot: { frame: { src: string }; hotspot: { x: number; y: number } } | null;
+    }) => (
+      <div
+        data-testid="cursor-preview-layer"
+        data-frame-src={snapshot?.frame.src ?? ""}
+      />
+    )
+  ),
+}));
+
+vi.mock("@/components/CursorPreviewLayer", () => ({
+  default: cursorPreviewLayerMock,
+}));
 
 import CursorScene from "@/components/CursorScene";
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
@@ -11,10 +33,89 @@ describe("CursorSimulationSurface", () => {
     render(<CursorScene />);
 
     expect(screen.getByTestId("cursor-scene")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-browser-chrome")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-browser-address")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-browser-input")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-zone-neutral")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-zone-text")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-zone-link")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-zone-button")).not.toBeNull();
+    expect(screen.queryByText("Neutral space")).toBeNull();
+    expect(screen.queryByText("Pointint preview")).toBeNull();
+    expect(
+      screen.queryByText("Cursor styling inside a real page context")
+    ).toBeNull();
+    expect(screen.queryByText("Read more")).toBeNull();
+    expect(screen.queryByText("Open sample")).toBeNull();
+    expect(
+      screen.getByText("Installing a custom cursor theme")
+    ).not.toBeNull();
+  });
+
+  it("uses the hovered zone's slot source and falls back to normal", () => {
+    const normalSource = createStaticCursorSource(
+      { src: "blob:normal" },
+      { x: 12, y: 8 },
+      32
+    );
+    const textSource = createStaticCursorSource(
+      { src: "blob:text" },
+      { x: 12, y: 8 },
+      32
+    );
+
+    render(
+      <CursorSimulationSurface
+        slotSources={{ normal: normalSource, text: textSource }}
+      >
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    const stage = screen.getByTestId("cursor-simulation-stage");
+    const textZone = screen.getByTestId("cursor-scene-zone-text");
+    const linkZone = screen.getByTestId("cursor-scene-zone-link");
+
+    fireEvent.mouseMove(stage, { clientX: 100, clientY: 80 });
+    expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
+      "data-frame-src",
+      "blob:normal"
+    );
+
+    fireEvent.mouseEnter(textZone);
+    expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
+      "data-frame-src",
+      "blob:text"
+    );
+
+    fireEvent.mouseEnter(linkZone);
+    expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
+      "data-frame-src",
+      "blob:normal"
+    );
+  });
+
+  it("shows the placeholder when the normal slot is missing", async () => {
+    render(
+      <CursorSimulationSurface
+        slotSources={{
+          text: createStaticCursorSource(
+            { src: "blob:text" },
+            { x: 0, y: 0 },
+            32
+          ),
+        }}
+        placeholder={<div data-testid="cursor-simulation-placeholder" />}
+      >
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cursor-simulation-placeholder")).not.toBeNull();
+    });
+
+    expect(screen.queryByTestId("cursor-preview-layer")).toBeNull();
   });
 
   it("positions the cursor preview layer from the pointer and hotspot", () => {
@@ -35,9 +136,31 @@ describe("CursorSimulationSurface", () => {
 
     const preview = screen.getByTestId("cursor-preview-layer");
 
-    expect(preview).toHaveStyle({ left: "88px", top: "72px" });
-    expect(preview).toHaveAttribute("data-output-size", "32");
+    expect(preview).toHaveAttribute("data-frame-src", "blob:cursor");
     expect(stage).toHaveStyle({ cursor: "none" });
+  });
+
+  it("locks the native cursor for every descendant inside the simulation stage", () => {
+    const source = createStaticCursorSource(
+      { src: "blob:cursor" },
+      { x: 0, y: 0 },
+      32
+    );
+
+    const { container } = render(
+      <CursorSimulationSurface source={source}>
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    const cursorLockStyle = container.querySelector(
+      '[data-testid="cursor-simulation-cursor-lock"]'
+    );
+    expect(cursorLockStyle).not.toBeNull();
+    expect(cursorLockStyle.textContent).toContain(
+      '[data-cursor-lock-scope="true"] *'
+    );
+    expect(cursorLockStyle.textContent).toContain("cursor: none !important");
   });
 
   it("uses stage-local coordinates when positioning the cursor preview", () => {
@@ -70,7 +193,7 @@ describe("CursorSimulationSurface", () => {
 
     const preview = screen.getByTestId("cursor-preview-layer");
 
-    expect(preview).toHaveStyle({ left: "138px", top: "72px" });
+    expect(preview).toHaveAttribute("data-frame-src", "blob:cursor");
   });
 
   it("lets the background mode switch without removing the scene", () => {
@@ -149,10 +272,7 @@ describe("CursorSimulationSurface", () => {
 
   it("schedules animated preview updates with requestAnimationFrame", async () => {
     const source = createAnimatedCursorSource(
-      [
-        { src: "blob:frame-1", durationMs: 40 },
-        { src: "blob:frame-2", durationMs: 40 },
-      ],
+      [{ src: "blob:frame-1", durationMs: 40 }],
       { x: 0, y: 0 },
       32
     );

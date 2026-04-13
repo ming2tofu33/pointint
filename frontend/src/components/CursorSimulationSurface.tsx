@@ -19,16 +19,24 @@ import {
   type CursorSource,
   type CursorSourceSnapshot,
 } from "@/lib/cursorSources";
+import {
+  resolveZoneSimulationSource,
+  type SlotSimulationSources,
+} from "@/lib/slotSimulationSources";
 
 type BackgroundMode = "dark" | "light";
 
 interface CursorSimulationSurfaceProps {
-  source: CursorSource;
+  source?: CursorSource | null;
+  slotSources?: SlotSimulationSources;
+  placeholder?: ReactNode;
   children?: ReactNode;
 }
 
 export default function CursorSimulationSurface({
   source,
+  slotSources,
+  placeholder,
   children,
 }: CursorSimulationSurfaceProps) {
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>("dark");
@@ -36,10 +44,18 @@ export default function CursorSimulationSurface({
   const [now, setNow] = useState(() => Date.now());
   const [activeZone, setActiveZone] = useState<CursorSceneZone>("neutral");
 
+  const activeSource = useMemo<CursorSource | null>(() => {
+    if (slotSources) {
+      return resolveZoneSimulationSource(activeZone, slotSources);
+    }
+
+    return source ?? null;
+  }, [activeZone, slotSources, source]);
+
   useEffect(() => {
     setNow(Date.now());
 
-    if (source.kind !== "animated") {
+    if (activeSource?.kind !== "animated") {
       return;
     }
 
@@ -49,15 +65,19 @@ export default function CursorSimulationSurface({
     });
 
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [source]);
+  }, [activeSource]);
 
   const snapshot = useMemo<CursorSourceSnapshot | null>(() => {
+    if (!activeSource) {
+      return null;
+    }
+
     try {
-      return source.getFrameAtTime(now);
+      return activeSource.getFrameAtTime(now);
     } catch {
       return null;
     }
-  }, [source, now]);
+  }, [activeSource, now]);
 
   return (
     <div
@@ -94,8 +114,18 @@ export default function CursorSimulationSurface({
         />
       </div>
 
+      <style data-testid="cursor-simulation-cursor-lock">
+        {`
+          [data-cursor-lock-scope="true"],
+          [data-cursor-lock-scope="true"] * {
+            cursor: none !important;
+          }
+        `}
+      </style>
+
       <div
         data-testid="cursor-simulation-stage"
+        data-cursor-lock-scope="true"
         data-active-zone={activeZone}
         onPointerMove={(event) => setPointer(getStageLocalPointer(event))}
         onMouseMove={(event) => setPointer(getStageLocalPointer(event))}
@@ -109,7 +139,11 @@ export default function CursorSimulationSurface({
         <div style={{ position: "relative", zIndex: 1 }}>
           {renderScene(children, setActiveZone)}
         </div>
-        <CursorPreviewLayer snapshot={snapshot} pointer={pointer} />
+        {snapshot ? (
+          <CursorPreviewLayer snapshot={snapshot} pointer={pointer} />
+        ) : (
+          placeholder ?? null
+        )}
       </div>
     </div>
   );

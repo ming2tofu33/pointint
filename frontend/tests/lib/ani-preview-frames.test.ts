@@ -78,6 +78,14 @@ describe("decodeAniPreviewFrames", () => {
   it("converts ImageDecoder frame durations from microseconds to milliseconds", async () => {
     const durations = [12500, 40000];
     const canvases = [makeMockCanvas(), makeMockCanvas()];
+    const blobArrayBuffer = vi
+      .fn()
+      .mockResolvedValue(new Uint8Array([1, 2, 3]).buffer);
+    const decoderCtor = vi.fn((init: { data: ArrayBufferLike; type: string }) => {
+      expect(init.data).toBeInstanceOf(ArrayBuffer);
+      expect(init.type).toBe("image/gif");
+      return decoder;
+    });
 
     const decoder = {
       tracks: {
@@ -93,22 +101,63 @@ describe("decodeAniPreviewFrames", () => {
       close: vi.fn(),
     };
 
-    vi.stubGlobal("ImageDecoder", vi.fn(() => decoder));
+    vi.stubGlobal("ImageDecoder", decoderCtor);
     vi.stubGlobal("document", {
       createElement: vi.fn(() => canvases.shift() ?? makeMockCanvas()),
     });
 
     const result = await decodeAniPreviewFrames(
-      new Blob(["gif"], { type: "image/gif" })
+      { type: "image/gif", arrayBuffer: blobArrayBuffer } as Blob
     );
 
     expect(result.frames).toHaveLength(2);
     expect(result.frames.map((frame) => frame.durationMs)).toEqual([13, 40]);
+    expect(blobArrayBuffer).toHaveBeenCalledTimes(1);
+    expect(decoderCtor).toHaveBeenCalledTimes(1);
     expect(decoder.decode).toHaveBeenCalledTimes(2);
     expect(decoder.decode).toHaveBeenNthCalledWith(1, {
       frameIndex: 0,
       completeFrames: true,
     });
+  });
+
+  it("falls back to the GIF reader path when ImageDecoder construction fails", async () => {
+    const blobArrayBuffer = vi
+      .fn()
+      .mockResolvedValue(new Uint8Array([1, 2, 3]).buffer);
+
+    vi.stubGlobal(
+      "ImageDecoder",
+      vi.fn(() => {
+        throw new TypeError("ImageDecoder init failed");
+      })
+    );
+
+    const decodeAndBlitFrameRGBA = vi.fn((frameIndex: number, pixels: Uint8ClampedArray) => {
+      pixels[frameIndex * 4] = 255;
+      pixels[frameIndex * 4 + 3] = 255;
+    });
+
+    const reader = {
+      width: 1,
+      height: 1,
+      numFrames: () => 2,
+      frameInfo: (index: number) => ({ delay: [4, 6][index] }),
+      decodeAndBlitFrameRGBA,
+    };
+
+    const result = await decodeAniPreviewFrames(
+      { type: "image/gif", arrayBuffer: blobArrayBuffer } as Blob,
+      {
+        gifReaderFactory: () => reader,
+        createCanvas: () => makeMockCanvas(),
+        createImageData: (pixels, width, height) =>
+          ({ data: pixels, width, height } as ImageData),
+      }
+    );
+
+    expect(result.frames.map((frame) => frame.durationMs)).toEqual([40, 60]);
+    expect(decodeAndBlitFrameRGBA).toHaveBeenCalledTimes(2);
   });
 
   it("uses actual GIF frame count and durations in the non-WebCodecs fallback", async () => {
