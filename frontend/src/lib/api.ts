@@ -85,10 +85,16 @@ export interface GenerateAniInput {
   scale?: number;
 }
 
+export interface BinaryDownloadResponse {
+  blob: Blob;
+  filename: string | null;
+  contentType: string | null;
+}
+
 export async function generateAni(
   gifBlob: Blob,
   input: GenerateAniInput = {}
-): Promise<Blob> {
+): Promise<BinaryDownloadResponse> {
   const formData = new FormData();
   formData.append("file", gifBlob, "ani.gif");
   formData.append("cursor_name", input.aniName ?? "cursor");
@@ -125,5 +131,36 @@ export async function generateAni(
     throw new Error(error.detail || `Server error: ${res.status}`);
   }
 
-  return res.blob();
+  return {
+    blob: await res.blob(),
+    filename: parseContentDispositionFilename(
+      res.headers.get("content-disposition")
+    ),
+    contentType: res.headers.get("content-type"),
+  };
+}
+
+function parseContentDispositionFilename(header: string | null) {
+  if (!header) return null;
+
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    const fallback = parsePlainFilename(header);
+    try {
+      return decodeURIComponent(utf8Match[1].replace(/["']/g, ""));
+    } catch {
+      return fallback;
+    }
+  }
+
+  return parsePlainFilename(header);
+}
+
+function parsePlainFilename(header: string) {
+  const plainMatch = header.match(/filename="?([^";]+)"?/i);
+  if (plainMatch?.[1]) {
+    return plainMatch[1];
+  }
+
+  return null;
 }

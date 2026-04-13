@@ -14,13 +14,13 @@ import {
   type WorkflowOptionId,
 } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
+import { ensureAniZipPackage } from "@/lib/aniDownload";
 
 import { generateAni, generateCursor, removeBackground } from "./api";
 
 export type CursorSize = 32 | 48 | 64;
 
 const EDITOR_VIEWPORT_SIZE = 256;
-const ANI_CURSOR_SIZE: CursorSize = 32;
 
 export interface CursorData {
   originalFile: File;
@@ -55,6 +55,7 @@ export interface AniData {
   offsetY: number;
   scale: number;
   fitMode: FitMode;
+  cursorSize: CursorSize;
   cursorName: string;
 }
 
@@ -87,6 +88,11 @@ function loadImageDimensions(src: string): Promise<{ width: number; height: numb
 function createAniName(fileName: string) {
   const baseName = fileName.replace(/\.[^.]+$/, "");
   return baseName || "cursor";
+}
+
+function sanitizeCursorName(name: string) {
+  const safe = name.replace(/[^\w\- ]+/g, "").trim();
+  return safe || "cursor";
 }
 
 export function useStudio() {
@@ -187,6 +193,7 @@ export function useStudio() {
           offsetY: 0,
           scale: 1,
           fitMode: "contain",
+          cursorSize: 32,
           cursorName: createAniName(file.name),
         });
         setState("ani-editing");
@@ -363,6 +370,10 @@ export function useStudio() {
         renderedHotspotY: renderedHotspot.y,
       };
     });
+  }, []);
+
+  const setAniCursorSize = useCallback((size: CursorSize) => {
+    setAni((prev) => (prev ? { ...prev, cursorSize: size } : null));
   }, []);
 
   // UX-6: 커서 이름 변경
@@ -676,32 +687,38 @@ export function useStudio() {
       setError(null);
 
       try {
+        const safeAniName = sanitizeCursorName(ani.cursorName);
         const renderedHotspot = mapViewportHotspotToOutput({
           hotspotX: ani.hotspotX,
           hotspotY: ani.hotspotY,
           viewportSize: EDITOR_VIEWPORT_SIZE,
-          outputSize: ANI_CURSOR_SIZE,
+          outputSize: ani.cursorSize,
         });
-        const aniBlob = await generateAni(ani.originalFile, {
+        const aniDownload = await generateAni(ani.originalFile, {
           aniName: ani.cursorName,
           hotspotX: renderedHotspot.x,
           hotspotY: renderedHotspot.y,
-          cursorSize: ANI_CURSOR_SIZE,
+          cursorSize: ani.cursorSize,
           fitMode: ani.fitMode,
           offsetX: ani.offsetX,
           offsetY: ani.offsetY,
           scale: ani.scale,
         });
+        const aniZipBlob = await ensureAniZipPackage(
+          aniDownload,
+          safeAniName
+        );
 
-        const url = URL.createObjectURL(aniBlob);
+        const url = URL.createObjectURL(aniZipBlob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `pointint-${ani.cursorName}.ani`;
+        a.download = `pointint-${safeAniName}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         trackEvent("download_completed", {
+          cursor_size: ani.cursorSize,
           fit_mode: ani.fitMode,
           source: "studio",
           workflow: "ani",
@@ -785,6 +802,7 @@ export function useStudio() {
     setScale,
     setFitMode,
     setCursorSize,
+    setAniCursorSize,
     setCursorName,
     recommendHotspot,
     reset,

@@ -134,6 +134,7 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
     offsetY: 0,
     scale: 1,
     fitMode: "contain",
+    cursorSize: 32,
     cursorName: "orbit",
     ...overrides,
   };
@@ -169,6 +170,7 @@ function renderStudio(
     setScale: vi.fn(),
     setFitMode: vi.fn(),
     setCursorSize: vi.fn(),
+    setAniCursorSize: vi.fn(),
     setCursorName: vi.fn(),
     recommendHotspot: vi.fn(),
     reset: vi.fn(),
@@ -251,6 +253,11 @@ describe("Studio entry gate", () => {
     const barProps = StudioBarMock.mock.calls[0][0];
     expect(barProps.actionLabel).toBe("exportAni");
     expect(barProps.onDownload).toBeDefined();
+    expect(screen.getByText("actualSize")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "32" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "48" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "64" })).not.toBeNull();
+    expect(screen.getByTestId("ani-simulation")).not.toBeNull();
   });
 
   it("preserves the landing handoff path when a file is staged", () => {

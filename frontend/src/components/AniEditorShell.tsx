@@ -4,9 +4,11 @@ import { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
+import AniSimulation from "@/components/AniSimulation";
+import FramedCursorPreview from "@/components/FramedCursorPreview";
 import NameInput from "@/components/NameInput";
 import { type FitMode } from "@/lib/cursorFrame";
-import { type AniData } from "@/lib/useStudio";
+import { type AniData, type CursorSize } from "@/lib/useStudio";
 
 type Tool = "move" | "hotspot";
 
@@ -20,6 +22,7 @@ interface AniEditorShellProps {
   onHotspotChange: (x: number, y: number) => void;
   onScaleChange: (scale: number) => void;
   onFitModeChange: (fitMode: FitMode) => void;
+  onAniCursorSizeChange: (size: CursorSize) => void;
   onAniNameChange: (name: string) => void;
   onRecommendHotspot: () => void;
   onResetHotspot: () => void;
@@ -36,6 +39,7 @@ export default function AniEditorShell({
   onHotspotChange,
   onScaleChange,
   onFitModeChange,
+  onAniCursorSizeChange,
   onAniNameChange,
   onRecommendHotspot,
   onResetHotspot,
@@ -46,7 +50,12 @@ export default function AniEditorShell({
 
   return (
     <div
-      style={{ display: "flex", flex: 1, overflow: "hidden" }}
+      style={{
+        display: "flex",
+        flex: 1,
+        overflow: "hidden",
+        flexDirection: "column",
+      }}
       data-testid="ani-editor-shell"
     >
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -153,9 +162,85 @@ export default function AniEditorShell({
             </p>
           )}
 
+          <PanelSection title={tp("actualSize")}>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <ActualSizePreview
+                background="#ffffff"
+                border="1px solid var(--color-border)"
+              >
+                <FramedCursorPreview
+                  imageUrl={imageUrl}
+                  sourceWidth={ani.sourceWidth}
+                  sourceHeight={ani.sourceHeight}
+                  fitMode={ani.fitMode}
+                  offsetX={ani.offsetX}
+                  offsetY={ani.offsetY}
+                  scale={ani.scale}
+                  viewportSize={ani.cursorSize}
+                  alt={tp("lightPreview")}
+                />
+              </ActualSizePreview>
+              <ActualSizePreview
+                background="#1a1a1a"
+                border="1px solid var(--color-border)"
+              >
+                <FramedCursorPreview
+                  imageUrl={imageUrl}
+                  sourceWidth={ani.sourceWidth}
+                  sourceHeight={ani.sourceHeight}
+                  fitMode={ani.fitMode}
+                  offsetX={ani.offsetX}
+                  offsetY={ani.offsetY}
+                  scale={ani.scale}
+                  viewportSize={ani.cursorSize}
+                  alt={tp("darkPreview")}
+                />
+              </ActualSizePreview>
+            </div>
+          </PanelSection>
+
           <PanelSection title={tp("cursor")}>
-            <PanelRow label={tp("original")} value={`${ani.sourceWidth} x ${ani.sourceHeight}`} />
-            <PanelRow label={tp("output")} value="32" />
+            <PanelRow
+              label={tp("original")}
+              value={`${ani.sourceWidth} x ${ani.sourceHeight}`}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "0.8125rem",
+                marginBottom: "0.375rem",
+              }}
+            >
+              <span style={{ color: "var(--color-text-secondary)" }}>
+                {tp("output")}
+              </span>
+              <div style={{ display: "flex", gap: "0.25rem" }}>
+                {([32, 48, 64] as CursorSize[]).map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => onAniCursorSizeChange(size)}
+                    style={{
+                      fontSize: "0.6875rem",
+                      padding: "0.125rem 0.375rem",
+                      border: `1px solid ${ani.cursorSize === size ? "var(--color-accent)" : "var(--color-border)"}`,
+                      backgroundColor:
+                        ani.cursorSize === size
+                          ? "var(--color-accent-subtle)"
+                          : "transparent",
+                      color:
+                        ani.cursorSize === size
+                          ? "var(--color-accent)"
+                          : "var(--color-text-muted)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
           </PanelSection>
 
           <PanelSection title={tp("name")}>
@@ -167,7 +252,9 @@ export default function AniEditorShell({
           </PanelSection>
 
           <PanelSection title={tp("framing")}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+            >
               <FitModeButton
                 mode="contain"
                 active={ani.fitMode === "contain"}
@@ -182,7 +269,10 @@ export default function AniEditorShell({
           </PanelSection>
 
           <PanelSection title={tp("hotspot")}>
-            <PanelRow label={tp("position")} value={`${ani.hotspotX}, ${ani.hotspotY}`} />
+            <PanelRow
+              label={tp("position")}
+              value={`${ani.hotspotX}, ${ani.hotspotY}`}
+            />
             <PanelRow
               label={tp("status")}
               value={ani.hotspotMode === "auto" ? tp("recommended") : tp("manual")}
@@ -232,6 +322,55 @@ export default function AniEditorShell({
           </PanelSection>
         </aside>
       </div>
+
+      <footer
+        style={{
+          height: "10rem",
+          borderTop: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-bg-secondary)",
+          flexShrink: 0,
+          overflow: "hidden",
+        }}
+      >
+        <AniSimulation
+          imageUrl={imageUrl}
+          sourceWidth={ani.sourceWidth}
+          sourceHeight={ani.sourceHeight}
+          fitMode={ani.fitMode}
+          offsetX={ani.offsetX}
+          offsetY={ani.offsetY}
+          scale={ani.scale}
+          cursorSize={ani.cursorSize}
+          hotspotX={ani.hotspotX}
+          hotspotY={ani.hotspotY}
+        />
+      </footer>
+    </div>
+  );
+}
+
+function ActualSizePreview({
+  background,
+  border,
+  children,
+}: {
+  background: string;
+  border: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        width: "4rem",
+        height: "4rem",
+        backgroundColor: background,
+        border,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {children}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
 import AniEditorShell from "@/components/AniEditorShell";
+import AniSimulation from "@/components/AniSimulation";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
@@ -43,6 +44,7 @@ export default function StudioPage() {
     setScale,
     setFitMode,
     setCursorSize,
+    setAniCursorSize,
     setCursorName,
     recommendHotspot,
     reset,
@@ -111,6 +113,7 @@ export default function StudioPage() {
           onHotspotChange={setHotspot}
           onScaleChange={setScale}
           onFitModeChange={setFitMode}
+          onAniCursorSizeChange={setAniCursorSize}
           onAniNameChange={setCursorName}
           onRecommendHotspot={recommendHotspot}
           onResetHotspot={() => setHotspot(0, 0)}
@@ -491,38 +494,49 @@ export default function StudioPage() {
         </aside>
       </div>
 
-      {state !== "ani-editing" && (
-        <footer
-          style={{
-            height: "10rem",
-            borderTop: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-bg-secondary)",
-            flexShrink: 0,
-            overflow: "hidden",
-          }}
-        >
-          {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
-            <Simulation
-              imageUrl={previewUrl}
-              hotspotX={cursor.renderedHotspotX}
-              hotspotY={cursor.renderedHotspotY}
-            />
-          ) : (
-            <div
-              style={{
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-                fontSize: "0.8125rem",
-              }}
-            >
-              {t("simulationPreview")}
-            </div>
-          )}
-        </footer>
-      )}
+      <footer
+        style={{
+          height: "10rem",
+          borderTop: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-bg-secondary)",
+          flexShrink: 0,
+          overflow: "hidden",
+        }}
+      >
+        {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
+          <Simulation
+            imageUrl={previewUrl}
+            hotspotX={cursor.renderedHotspotX}
+            hotspotY={cursor.renderedHotspotY}
+          />
+        ) : state === "ani-editing" && ani ? (
+          <AniSimulation
+            imageUrl={ani.originalUrl}
+            sourceWidth={ani.sourceWidth}
+            sourceHeight={ani.sourceHeight}
+            fitMode={ani.fitMode}
+            offsetX={ani.offsetX}
+            offsetY={ani.offsetY}
+            scale={ani.scale}
+            cursorSize={ani.cursorSize}
+            hotspotX={ani.hotspotX}
+            hotspotY={ani.hotspotY}
+          />
+        ) : (
+          <div
+            style={{
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--color-text-muted)",
+              fontSize: "0.8125rem",
+            }}
+          >
+            {t("simulationPreview")}
+          </div>
+        )}
+      </footer>
         </>
       )}
 
