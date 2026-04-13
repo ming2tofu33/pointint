@@ -114,11 +114,11 @@ export default function HeaderUtilityMenu() {
             minWidth: "14rem",
             padding: "0.875rem",
             borderRadius: "1rem",
-            border: "1px solid var(--app-header-border)",
+            border: "1px solid var(--landing-divider)",
             background:
-              "linear-gradient(180deg, var(--app-header-highlight), var(--app-header-backdrop))",
+              "linear-gradient(180deg, var(--landing-header-highlight), var(--landing-header-backdrop))",
             boxShadow:
-              "inset 0 1px 0 var(--app-header-highlight), 0 18px 40px var(--app-header-shadow)",
+              "inset 0 1px 0 var(--landing-header-highlight), 0 18px 40px var(--landing-header-shadow)",
             backdropFilter: "blur(18px) saturate(1.15)",
             display: "grid",
             gap: "0.875rem",
@@ -181,7 +181,7 @@ export default function HeaderUtilityMenu() {
 
           <div
             style={{
-              borderTop: "1px solid var(--app-header-border)",
+              borderTop: "1px solid var(--landing-divider)",
               paddingTop: "0.875rem",
               display: "grid",
               gap: "0.5rem",
