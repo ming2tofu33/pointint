@@ -28,6 +28,7 @@ interface AniSimulationProps {
 }
 
 const ANI_PREVIEW_VIEWPORT_SIZE = 256;
+const ANI_PREVIEW_REBUILD_DEBOUNCE_MS = 140;
 type PreviewStatus = "loading" | "ready" | "unavailable";
 
 export default function AniSimulation({
@@ -47,7 +48,10 @@ export default function AniSimulation({
   const [previewStatus, setPreviewStatus] =
     useState<PreviewStatus>("loading");
   const animationStartedAtRef = useRef(Date.now());
-  const activeBuildIdRef = useRef(0);
+  const latestRequestIdRef = useRef(0);
+  const activeBuildCountRef = useRef(0);
+  const rebuildTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastStartedImageUrlRef = useRef<string | null>(null);
   const committedFrameUrlsRef = useRef<string[]>([]);
   const t = useTranslations("simulation");
 
@@ -57,42 +61,69 @@ export default function AniSimulation({
 
   useEffect(() => {
     let cancelled = false;
-    const buildId = ++activeBuildIdRef.current;
+    const requestId = ++latestRequestIdRef.current;
+    const imageChanged = lastStartedImageUrlRef.current !== imageUrl;
+    const shouldDebounce =
+      !imageChanged &&
+      (previewFrameStack !== null ||
+        activeBuildCountRef.current > 0 ||
+        rebuildTimerRef.current !== null);
+
+    clearPendingAniPreviewRebuild(rebuildTimerRef);
 
     if (!previewFrameStack) {
       setPreviewStatus("loading");
     }
 
-    buildAniPreviewFrameStack({
-      imageUrl,
-      sourceWidth,
-      sourceHeight,
-      fitMode,
-      scale,
-      offsetX,
-      offsetY,
-      outputSize: cursorSize,
-      editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
-    })
-      .then((nextStack) => {
-        if (cancelled || buildId !== activeBuildIdRef.current) {
-          nextStack.frames.forEach((frame) => URL.revokeObjectURL(frame.src));
-          return;
-        }
+    const startBuild = () => {
+      lastStartedImageUrlRef.current = imageUrl;
+      activeBuildCountRef.current += 1;
 
-        setPreviewFrameStack(nextStack);
-        setPreviewStatus("ready");
+      buildAniPreviewFrameStack({
+        imageUrl,
+        sourceWidth,
+        sourceHeight,
+        fitMode,
+        scale,
+        offsetX,
+        offsetY,
+        outputSize: cursorSize,
+        editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
       })
-      .catch(() => {
-        if (cancelled || buildId !== activeBuildIdRef.current) return;
-        if (!previewFrameStack) {
+        .then((nextStack) => {
+          if (cancelled || requestId !== latestRequestIdRef.current) {
+            nextStack.frames.forEach((frame) => URL.revokeObjectURL(frame.src));
+            return;
+          }
+
+          setPreviewFrameStack(nextStack);
+          setPreviewStatus("ready");
+        })
+        .catch(() => {
+          if (cancelled || requestId !== latestRequestIdRef.current) return;
           setPreviewFrameStack(null);
           setPreviewStatus("unavailable");
-        }
-      });
+        })
+        .finally(() => {
+          activeBuildCountRef.current = Math.max(
+            0,
+            activeBuildCountRef.current - 1
+          );
+        });
+    };
+
+    if (shouldDebounce) {
+      rebuildTimerRef.current = setTimeout(() => {
+        rebuildTimerRef.current = null;
+        startBuild();
+      }, ANI_PREVIEW_REBUILD_DEBOUNCE_MS);
+    } else {
+      startBuild();
+    }
 
     return () => {
       cancelled = true;
+      clearPendingAniPreviewRebuild(rebuildTimerRef);
     };
   }, [
     cursorSize,
@@ -269,6 +300,15 @@ export default function AniSimulation({
       </div>
     </div>
   );
+}
+
+function clearPendingAniPreviewRebuild(
+  rebuildTimerRef: { current: ReturnType<typeof setTimeout> | null }
+) {
+  if (rebuildTimerRef.current !== null) {
+    clearTimeout(rebuildTimerRef.current);
+    rebuildTimerRef.current = null;
+  }
 }
 
 function safeRevokeObjectURL(url: string) {

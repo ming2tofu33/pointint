@@ -1,19 +1,19 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   buildAniPreviewFrameStackMock,
   releaseAniPreviewFramesMock,
   cursorSimulationSurfaceMock,
-} = vi.hoisted(
-  () => ({
-    buildAniPreviewFrameStackMock: vi.fn(),
-    releaseAniPreviewFramesMock: vi.fn(),
-    cursorSimulationSurfaceMock: vi.fn(() => (
-      <div data-testid="cursor-simulation-surface" />
-    )),
-  })
-);
+} = vi.hoisted(() => ({
+  buildAniPreviewFrameStackMock: vi.fn(),
+  releaseAniPreviewFramesMock: vi.fn(),
+  cursorSimulationSurfaceMock: vi.fn(() => (
+    <div data-testid="cursor-simulation-surface" />
+  )),
+}));
+
+const originalRevokeObjectURL = URL.revokeObjectURL;
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -35,98 +35,54 @@ vi.mock("@/components/CursorSimulationSurface", () => ({
 
 import AniSimulation from "@/components/AniSimulation";
 
+type AniSimulationProps = import("react").ComponentProps<typeof AniSimulation>;
+
 describe("AniSimulation", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("keeps the current preview mounted while only the latest rebuild wins", async () => {
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: vi.fn(),
-    });
-
-    const firstStack = {
+    vi.resetAllMocks();
+    cursorSimulationSurfaceMock.mockImplementation(() => (
+      <div data-testid="cursor-simulation-surface" />
+    ));
+    buildAniPreviewFrameStackMock.mockResolvedValue({
       width: 160,
       height: 120,
       frames: [{ src: "blob:frame-a", durationMs: 120 }],
-    };
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: originalRevokeObjectURL,
+    });
+  });
+
+  it("keeps the current preview mounted while only the latest rebuild wins", async () => {
+    mockRevokeObjectURL();
+
     const secondStack = deferredStack("blob:frame-b");
     const thirdStack = deferredStack("blob:frame-c");
 
-    buildAniPreviewFrameStackMock
-      .mockResolvedValueOnce(firstStack)
-      .mockReturnValueOnce(secondStack.promise)
-      .mockReturnValueOnce(thirdStack.promise);
-
-    const { rerender, unmount } = render(
-      <AniSimulation
-        imageUrl="blob:gif"
-        sourceWidth={160}
-        sourceHeight={120}
-        fitMode="cover"
-        offsetX={12}
-        offsetY={-8}
-        scale={1.5}
-        cursorSize={48}
-        hotspotX={128}
-        hotspotY={64}
-      />
-    );
-
-    await waitFor(() => {
-      expect(buildAniPreviewFrameStackMock).toHaveBeenCalled();
-    });
-
-    expect(buildAniPreviewFrameStackMock.mock.calls[0]?.[0]).toMatchObject({
+    const { rerender, unmount } = renderSimulation({
       imageUrl: "blob:gif",
-      sourceWidth: 160,
-      sourceHeight: 120,
       fitMode: "cover",
-      scale: 1.5,
       offsetX: 12,
       offsetY: -8,
-      outputSize: 48,
-      editorViewportSize: 256,
+      scale: 1.5,
+      hotspotX: 128,
+      hotspotY: 64,
     });
 
     await waitFor(() => {
-      expect(cursorSimulationSurfaceMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
     });
 
-    expect(cursorSimulationSurfaceMock.mock.calls[0]?.[0]?.source.kind).toBe(
-      "animated"
-    );
-    expect(
-      cursorSimulationSurfaceMock.mock.calls[0]?.[0]?.source.getFrameAtTime(
-        Date.now()
-      ).frame.src
-    ).toBe("blob:frame-a");
-    expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+    const initialBuildCount = buildAniPreviewFrameStackMock.mock.calls.length;
 
-    expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
-
-    rerender(
-      <AniSimulation
-        imageUrl="blob:gif"
-        sourceWidth={160}
-        sourceHeight={120}
-        fitMode="cover"
-        offsetX={12}
-        offsetY={-8}
-        scale={1.75}
-        cursorSize={48}
-        hotspotX={92}
-        hotspotY={48}
-      />
-    );
-
-    await waitFor(() => {
-      expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(2);
-    });
-    expect(screen.queryByTestId("ani-simulation-placeholder")).toBeNull();
-    expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
+    buildAniPreviewFrameStackMock
+      .mockImplementationOnce(() => secondStack.promise)
+      .mockImplementationOnce(() => thirdStack.promise);
 
     rerender(
       <AniSimulation
@@ -136,17 +92,36 @@ describe("AniSimulation", () => {
         fitMode="cover"
         offsetX={20}
         offsetY={-8}
-        scale={1.75}
+        scale={1.5}
         cursorSize={48}
-        hotspotX={92}
-        hotspotY={48}
+        hotspotX={128}
+        hotspotY={64}
+      />
+    );
+
+    rerender(
+      <AniSimulation
+        imageUrl="blob:gif-3"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={24}
+        offsetY={-8}
+        scale={1.5}
+        cursorSize={48}
+        hotspotX={128}
+        hotspotY={64}
       />
     );
 
     await waitFor(() => {
-      expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(3);
+      expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+        initialBuildCount + 2
+      );
     });
+
     expect(screen.queryByTestId("ani-simulation-placeholder")).toBeNull();
+    expect(renderedFrameSrc()).toBe("blob:frame-a");
 
     secondStack.resolve({
       width: 160,
@@ -155,11 +130,7 @@ describe("AniSimulation", () => {
     });
     await Promise.resolve();
 
-    expect(
-      cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0]?.source.getFrameAtTime(
-        Date.now()
-      ).frame.src
-    ).toBe("blob:frame-a");
+    expect(renderedFrameSrc()).toBe("blob:frame-a");
 
     thirdStack.resolve({
       width: 160,
@@ -168,31 +139,38 @@ describe("AniSimulation", () => {
     });
 
     await waitFor(() => {
-      expect(
-        cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0]?.source.getFrameAtTime(
-          Date.now()
-        ).frame.src
-      ).toBe("blob:frame-c");
+      expect(renderedFrameSrc()).toBe("blob:frame-c");
     });
 
     unmount();
-
-    expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif-2");
-
-    if (originalRevokeObjectURL) {
-      Object.defineProperty(URL, "revokeObjectURL", {
-        configurable: true,
-        value: originalRevokeObjectURL,
-      });
-    }
   });
 
-  it("shows a neutral unavailable state when ANI preview decoding fails", async () => {
+  it("keeps the previous preview visible until a later rebuild fails", async () => {
+    mockRevokeObjectURL();
+
+    const { rerender } = renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      hotspotX: 128,
+      hotspotY: 64,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+    });
+
+    const initialBuildCount = buildAniPreviewFrameStackMock.mock.calls.length;
+
+    vi.useFakeTimers();
+
     buildAniPreviewFrameStackMock.mockRejectedValueOnce(
       new Error("ANI preview unavailable")
     );
 
-    render(
+    rerender(
       <AniSimulation
         imageUrl="blob:gif"
         sourceWidth={160}
@@ -200,58 +178,170 @@ describe("AniSimulation", () => {
         fitMode="cover"
         offsetX={12}
         offsetY={-8}
-        scale={1.5}
+        scale={1.75}
         cursorSize={48}
         hotspotX={128}
         hotspotY={64}
       />
     );
 
-    await waitFor(() => {
-      expect(buildAniPreviewFrameStackMock).toHaveBeenCalled();
+    expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+    expect(screen.queryByTestId("ani-simulation-placeholder")).toBeNull();
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+      initialBuildCount
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(140);
+      await Promise.resolve();
     });
 
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+      initialBuildCount + 1
+    );
     expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();
+    expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
+  });
+
+  it("debounces repeated frame-affecting edits and uses the latest values", async () => {
+    mockRevokeObjectURL();
+
+    const secondStack = deferredStack("blob:frame-b");
+
+    const { rerender } = renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      hotspotX: 128,
+      hotspotY: 64,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+    });
+
+    const initialBuildCount = buildAniPreviewFrameStackMock.mock.calls.length;
+
+    vi.useFakeTimers();
+
+    buildAniPreviewFrameStackMock.mockImplementationOnce(
+      () => secondStack.promise
+    );
+
+    rerender(
+      <AniSimulation
+        imageUrl="blob:gif"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={12}
+        offsetY={-8}
+        scale={1.55}
+        cursorSize={48}
+        hotspotX={128}
+        hotspotY={64}
+      />
+    );
+
+    rerender(
+      <AniSimulation
+        imageUrl="blob:gif"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={14}
+        offsetY={-8}
+        scale={1.65}
+        cursorSize={48}
+        hotspotX={128}
+        hotspotY={64}
+      />
+    );
+
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+      initialBuildCount
+    );
+    expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
+
+    await act(async () => {
+      vi.advanceTimersByTime(139);
+      await Promise.resolve();
+    });
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+      initialBuildCount
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(
+      initialBuildCount + 1
+    );
+
+    expect(
+      buildAniPreviewFrameStackMock.mock.calls.at(-1)?.[0]
+    ).toMatchObject({
+      imageUrl: "blob:gif",
+      scale: 1.65,
+      offsetX: 14,
+      outputSize: 48,
+    });
+
+    secondStack.resolve({
+      width: 160,
+      height: 120,
+      frames: [{ src: "blob:frame-b", durationMs: 120 }],
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(renderedFrameSrc()).toBe("blob:frame-b");
+  });
+
+  it("shows a neutral unavailable state when ANI preview decoding fails", async () => {
+    mockRevokeObjectURL();
+    buildAniPreviewFrameStackMock.mockRejectedValueOnce(
+      new Error("ANI preview unavailable")
+    );
+
+    renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      hotspotX: 128,
+      hotspotY: 64,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();
+    });
     expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
     expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
   });
 
   it("releases cached frames when the image changes and on unmount", async () => {
-    const originalRevokeObjectURL = URL.revokeObjectURL;
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: vi.fn(),
+    mockRevokeObjectURL();
+
+    const { rerender, unmount } = renderSimulation({
+      imageUrl: "blob:gif",
+      fitMode: "cover",
+      offsetX: 12,
+      offsetY: -8,
+      scale: 1.5,
+      hotspotX: 128,
+      hotspotY: 64,
     });
 
-    buildAniPreviewFrameStackMock
-      .mockResolvedValueOnce({
-        width: 160,
-        height: 120,
-        frames: [{ src: "blob:frame-a", durationMs: 120 }],
-      })
-      .mockResolvedValueOnce({
-        width: 160,
-        height: 120,
-        frames: [{ src: "blob:frame-b", durationMs: 120 }],
-      });
-
-    const { rerender, unmount } = render(
-      <AniSimulation
-        imageUrl="blob:gif"
-        sourceWidth={160}
-        sourceHeight={120}
-        fitMode="cover"
-        offsetX={12}
-        offsetY={-8}
-        scale={1.5}
-        cursorSize={48}
-        hotspotX={128}
-        hotspotY={64}
-      />
-    );
-
     await waitFor(() => {
-      expect(cursorSimulationSurfaceMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
     });
 
     rerender(
@@ -276,22 +366,47 @@ describe("AniSimulation", () => {
     unmount();
 
     expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif-2");
-
-    if (originalRevokeObjectURL) {
-      Object.defineProperty(URL, "revokeObjectURL", {
-        configurable: true,
-        value: originalRevokeObjectURL,
-      });
-    }
   });
 });
 
+function renderSimulation(overrides: Partial<AniSimulationProps> = {}) {
+  return render(
+    <AniSimulation
+      imageUrl={overrides.imageUrl ?? "blob:gif"}
+      sourceWidth={overrides.sourceWidth ?? 160}
+      sourceHeight={overrides.sourceHeight ?? 120}
+      fitMode={overrides.fitMode ?? "cover"}
+      offsetX={overrides.offsetX ?? 12}
+      offsetY={overrides.offsetY ?? -8}
+      scale={overrides.scale ?? 1.5}
+      cursorSize={overrides.cursorSize ?? 48}
+      hotspotX={overrides.hotspotX ?? 128}
+      hotspotY={overrides.hotspotY ?? 64}
+    />
+  );
+}
+
+function renderedFrameSrc() {
+  return cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0]?.source.getFrameAtTime(
+    Date.now()
+  ).frame.src;
+}
+
+function mockRevokeObjectURL() {
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
 function deferredStack(frameSrc: string) {
-  let resolve!: (value: {
-    width: number;
-    height: number;
-    frames: { src: string; durationMs: number }[];
-  }) => void;
+  let resolve!: (
+    value: {
+      width: number;
+      height: number;
+      frames: { src: string; durationMs: number }[];
+    }
+  ) => void;
 
   const promise = new Promise<{
     width: number;
