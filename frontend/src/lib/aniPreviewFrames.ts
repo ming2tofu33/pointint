@@ -184,6 +184,15 @@ export async function prepareAniPreviewFrames(
   return sequencePromise;
 }
 
+export function releaseAniPreviewFrames(
+  imageUrl: string,
+  dependencies: AniPreviewDependencies = {}
+) {
+  const loader = dependencies.frameSequenceLoader ?? defaultFrameSequenceLoader;
+  const cacheForLoader = sequenceCacheByLoader.get(loader);
+  cacheForLoader?.delete(imageUrl);
+}
+
 export async function decodeAniPreviewFrames(
   blob: Blob,
   dependencies: AniPreviewDependencies = {}
@@ -297,7 +306,6 @@ async function decodeGifFramesWithReader(
   const pixels = new Uint8ClampedArray(width * height * 4);
 
   for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
-    pixels.fill(0);
     reader.decodeAndBlitFrameRGBA(frameIndex, pixels);
 
     const canvas = createCanvasElement(width, height, dependencies);

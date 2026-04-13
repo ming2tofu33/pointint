@@ -4,6 +4,7 @@ import {
   decodeAniPreviewFrames,
   parseGifFrameMetadata,
   prepareAniPreviewFrames,
+  releaseAniPreviewFrames,
 } from "@/lib/aniPreviewFrames";
 
 function buildGifBytes(frameDelaysCs: number[]) {
@@ -113,9 +114,22 @@ describe("decodeAniPreviewFrames", () => {
   it("uses actual GIF frame count and durations in the non-WebCodecs fallback", async () => {
     vi.stubGlobal("ImageDecoder", undefined);
 
+    const capturedPixels: number[][] = [];
     const decodeAndBlitFrameRGBA = vi.fn((frameIndex: number, pixels: Uint8ClampedArray) => {
-      pixels[frameIndex * 4] = 255;
-      pixels[frameIndex * 4 + 3] = 255;
+      if (frameIndex === 0) {
+        pixels[0] = 255;
+        pixels[3] = 255;
+        pixels[4] = 255;
+        pixels[5] = 0;
+        pixels[6] = 0;
+        pixels[7] = 255;
+        return;
+      }
+
+      pixels[4] = 0;
+      pixels[5] = 255;
+      pixels[6] = 0;
+      pixels[7] = 255;
     });
 
     const reader = {
@@ -133,8 +147,10 @@ describe("decodeAniPreviewFrames", () => {
       {
         gifReaderFactory: () => reader,
         createCanvas: () => canvases.shift() ?? makeMockCanvas(),
-        createImageData: (pixels, width, height) =>
-          ({ data: pixels, width, height } as ImageData),
+        createImageData: (pixels, width, height) => {
+          capturedPixels.push(Array.from(pixels));
+          return { data: pixels, width, height } as ImageData;
+        },
       }
     );
 
@@ -144,6 +160,16 @@ describe("decodeAniPreviewFrames", () => {
       30,
       50,
       70,
+    ]);
+    expect(capturedPixels[1]?.slice(0, 8)).toEqual([
+      255,
+      0,
+      0,
+      255,
+      0,
+      255,
+      0,
+      255,
     ]);
   });
 });
@@ -191,5 +217,21 @@ describe("prepareAniPreviewFrames", () => {
     await prepareAniPreviewFrames("blob:gif-cache-2", { frameSequenceLoader });
 
     expect(frameSequenceLoader).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops a cached sequence when released so a later edit reloads it", async () => {
+    const sequence = {
+      width: 2,
+      height: 2,
+      frames: [{ source: document.createElement("canvas"), durationMs: 40 }],
+    };
+
+    const frameSequenceLoader = vi.fn(async () => sequence);
+
+    await prepareAniPreviewFrames("blob:gif-cache-3", { frameSequenceLoader });
+    releaseAniPreviewFrames("blob:gif-cache-3", { frameSequenceLoader });
+    await prepareAniPreviewFrames("blob:gif-cache-3", { frameSequenceLoader });
+
+    expect(frameSequenceLoader).toHaveBeenCalledTimes(2);
   });
 });

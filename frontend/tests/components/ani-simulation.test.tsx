@@ -1,9 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { buildAniPreviewSourceMock, cursorSimulationSurfaceMock } = vi.hoisted(
+const {
+  buildAniPreviewSourceMock,
+  releaseAniPreviewFramesMock,
+  cursorSimulationSurfaceMock,
+} = vi.hoisted(
   () => ({
     buildAniPreviewSourceMock: vi.fn(),
+    releaseAniPreviewFramesMock: vi.fn(),
     cursorSimulationSurfaceMock: vi.fn(() => (
       <div data-testid="cursor-simulation-surface" />
     )),
@@ -16,6 +21,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@/lib/aniPreviewFrames", () => ({
   buildAniPreviewSource: buildAniPreviewSourceMock,
+  releaseAniPreviewFrames: releaseAniPreviewFramesMock,
 }));
 
 vi.mock("@/components/CursorSimulationSurface", () => ({
@@ -25,6 +31,10 @@ vi.mock("@/components/CursorSimulationSurface", () => ({
 import AniSimulation from "@/components/AniSimulation";
 
 describe("AniSimulation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("builds rendered ANI preview frames before mounting the shared surface", async () => {
     const originalRevokeObjectURL = URL.revokeObjectURL;
     Object.defineProperty(URL, "revokeObjectURL", {
@@ -49,7 +59,7 @@ describe("AniSimulation", () => {
       hotspot: { x: 12, y: 8 },
     });
 
-    render(
+    const { unmount } = render(
       <AniSimulation
         imageUrl="blob:gif"
         sourceWidth={160}
@@ -88,6 +98,12 @@ describe("AniSimulation", () => {
     expect(cursorSimulationSurfaceMock.mock.calls[0]?.[0]?.source).toBe(source);
     expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
 
+    expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif");
+
     if (originalRevokeObjectURL) {
       Object.defineProperty(URL, "revokeObjectURL", {
         configurable: true,
@@ -120,5 +136,6 @@ describe("AniSimulation", () => {
 
     expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();
     expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
+    expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
   });
 });

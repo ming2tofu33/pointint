@@ -5,7 +5,10 @@ import { useTranslations } from "next-intl";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
-import { buildAniPreviewSource } from "@/lib/aniPreviewFrames";
+import {
+  buildAniPreviewSource,
+  releaseAniPreviewFrames,
+} from "@/lib/aniPreviewFrames";
 import { type FitMode } from "@/lib/cursorFrame";
 import { type CursorSource } from "@/lib/cursorSources";
 
@@ -81,6 +84,7 @@ export default function AniSimulation({
     return () => {
       active = false;
       frameUrls.forEach((url) => safeRevokeObjectURL(url));
+      releaseAniPreviewFrames(imageUrl);
     };
   }, [
     cursorSize,
