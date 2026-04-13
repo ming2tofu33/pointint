@@ -6,13 +6,6 @@ import {
   prepareAniPreviewFrames,
 } from "@/lib/aniPreviewFrames";
 
-function makeCanvas(width = 1, height = 1) {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  return canvas;
-}
-
 function buildGifBytes(frameDelaysCs: number[]) {
   const bytes: number[] = [
     ...asciiBytes("GIF89a"),
@@ -47,6 +40,21 @@ function u16le(value: number) {
   return [value & 0xff, (value >> 8) & 0xff];
 }
 
+function makeMockCanvas() {
+  const context = {
+    clearRect: vi.fn(),
+    drawImage: vi.fn(),
+    putImageData: vi.fn(),
+  };
+
+  return {
+    width: 0,
+    height: 0,
+    getContext: vi.fn(() => context),
+    context,
+  } as unknown as HTMLCanvasElement & { context: typeof context };
+}
+
 describe("parseGifFrameMetadata", () => {
   it("reads actual frame count, size, and frame delays from GIF bytes", () => {
     const metadata = parseGifFrameMetadata(buildGifBytes([3, 7]));
@@ -67,20 +75,17 @@ describe("decodeAniPreviewFrames", () => {
   });
 
   it("converts ImageDecoder frame durations from microseconds to milliseconds", async () => {
-    const frames = [12500, 40000];
-    const getContext = vi.fn(() => ({
-      clearRect: vi.fn(),
-      drawImage: vi.fn(),
-    }));
+    const durations = [12500, 40000];
+    const canvases = [makeMockCanvas(), makeMockCanvas()];
 
     const decoder = {
       tracks: {
         ready: Promise.resolve(),
-        selectedTrack: { frameCount: frames.length },
+        selectedTrack: { frameCount: durations.length },
       },
       decode: vi.fn(async ({ frameIndex }: { frameIndex: number }) => ({
-        image: Object.assign(makeCanvas(1, 1), {
-          duration: frames[frameIndex],
+        image: Object.assign(makeMockCanvas(), {
+          duration: durations[frameIndex],
           close: vi.fn(),
         }),
       })),
@@ -88,9 +93,9 @@ describe("decodeAniPreviewFrames", () => {
     };
 
     vi.stubGlobal("ImageDecoder", vi.fn(() => decoder));
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
-      getContext as typeof HTMLCanvasElement.prototype.getContext
-    );
+    vi.stubGlobal("document", {
+      createElement: vi.fn(() => canvases.shift() ?? makeMockCanvas()),
+    });
 
     const result = await decodeAniPreviewFrames(
       new Blob(["gif"], { type: "image/gif" })
@@ -105,49 +110,35 @@ describe("decodeAniPreviewFrames", () => {
     });
   });
 
-  it("uses the actual GIF frame metadata when ImageDecoder is unavailable", async () => {
+  it("uses actual GIF frame count and durations in the non-WebCodecs fallback", async () => {
     vi.stubGlobal("ImageDecoder", undefined);
 
-    const parseGifMetadata = vi.fn(() => ({
-      width: 1,
-      height: 1,
-      frameCount: 3,
-      frameDurationsMs: [30, 50, 70],
-    }));
+    const decodeAndBlitFrameRGBA = vi.fn((frameIndex: number, pixels: Uint8ClampedArray) => {
+      pixels[frameIndex * 4] = 255;
+      pixels[frameIndex * 4 + 3] = 255;
+    });
 
-    const sampleGifFrames = vi.fn(
-      async (
-        _blob: Blob,
-        metadata: {
-          width: number;
-          height: number;
-          frameCount: number;
-          frameDurationsMs: number[];
-        }
-      ) => ({
-      width: metadata.width,
-      height: metadata.height,
-      frames: metadata.frameDurationsMs.map((durationMs) => ({
-        source: makeCanvas(metadata.width, metadata.height),
-        durationMs,
-      })),
-      })
-    );
+    const reader = {
+      width: 2,
+      height: 2,
+      numFrames: () => 3,
+      frameInfo: (index: number) => ({ delay: [3, 5, 7][index] }),
+      decodeAndBlitFrameRGBA,
+    };
+
+    const canvases = [makeMockCanvas(), makeMockCanvas(), makeMockCanvas()];
 
     const result = await decodeAniPreviewFrames(
       new Blob(["gif"], { type: "image/gif" }),
       {
-        parseGifMetadata,
-        sampleGifFrames,
+        gifReaderFactory: () => reader,
+        createCanvas: () => canvases.shift() ?? makeMockCanvas(),
+        createImageData: (pixels, width, height) =>
+          ({ data: pixels, width, height } as ImageData),
       }
     );
 
-    expect(parseGifMetadata).toHaveBeenCalledTimes(1);
-    expect(sampleGifFrames).toHaveBeenCalledTimes(1);
-    expect(sampleGifFrames.mock.calls[0]?.[1]).toMatchObject({
-      frameCount: 3,
-      frameDurationsMs: [30, 50, 70],
-    });
+    expect(decodeAndBlitFrameRGBA).toHaveBeenCalledTimes(3);
     expect(result.frames).toHaveLength(3);
     expect(result.frames.map((frame) => frame.durationMs)).toEqual([
       30,
@@ -167,8 +158,8 @@ describe("prepareAniPreviewFrames", () => {
       width: 1,
       height: 1,
       frames: [
-        { source: makeCanvas(1, 1), durationMs: 30 },
-        { source: makeCanvas(1, 1), durationMs: 70 },
+        { source: document.createElement("canvas"), durationMs: 30 },
+        { source: document.createElement("canvas"), durationMs: 70 },
       ],
     };
 
@@ -190,7 +181,7 @@ describe("prepareAniPreviewFrames", () => {
     const sequence = {
       width: 2,
       height: 2,
-      frames: [{ source: makeCanvas(2, 2), durationMs: 40 }],
+      frames: [{ source: document.createElement("canvas"), durationMs: 40 }],
     };
 
     const frameSequenceLoader = vi.fn(async () => sequence);

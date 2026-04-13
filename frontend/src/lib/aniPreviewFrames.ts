@@ -1,5 +1,7 @@
 "use client";
 
+import { GifReader } from "omggif";
+
 import {
   getFrameRect,
   mapViewportHotspotToOutput,
@@ -63,21 +65,33 @@ interface ImageDecoderDecodeResult {
 interface ImageDecoderConstructorLike {
   new (init: { data: Blob; type: string }): {
     tracks: ImageDecoderTrack;
-    decode(init: { frameIndex: number; completeFrames: boolean }): Promise<ImageDecoderDecodeResult>;
+    decode(init: {
+      frameIndex: number;
+      completeFrames: boolean;
+    }): Promise<ImageDecoderDecodeResult>;
     close?: () => void;
   };
+}
+
+interface GifReaderLike {
+  width: number;
+  height: number;
+  numFrames(): number;
+  frameInfo(index: number): { delay?: number };
+  decodeAndBlitFrameRGBA(index: number, pixels: Uint8ClampedArray): void;
 }
 
 export interface AniPreviewDependencies {
   fetchBlob?: (imageUrl: string) => Promise<Blob>;
   imageDecoder?: ImageDecoderConstructorLike | null;
+  gifReaderFactory?: (bytes: Uint8Array) => GifReaderLike;
   frameSequenceLoader?: (imageUrl: string) => Promise<AniPreviewFrameSequence>;
-  parseGifMetadata?: (buffer: ArrayBuffer) => GifFrameMetadata;
-  sampleGifFrames?: (
-    blob: Blob,
-    metadata: GifFrameMetadata
-  ) => Promise<AniPreviewFrameSequence>;
   createCanvas?: () => HTMLCanvasElement;
+  createImageData?: (
+    pixels: Uint8ClampedArray,
+    width: number,
+    height: number
+  ) => ImageData;
   createObjectURL?: typeof URL.createObjectURL;
   revokeObjectURL?: typeof URL.revokeObjectURL;
 }
@@ -87,7 +101,13 @@ export interface AniPreviewBuildResult {
   frameUrls: string[];
 }
 
-const preparedSequenceCache = new Map<string, Promise<AniPreviewFrameSequence>>();
+const sequenceCacheByLoader = new WeakMap<
+  (imageUrl: string) => Promise<AniPreviewFrameSequence>,
+  Map<string, Promise<AniPreviewFrameSequence>>
+>();
+
+const defaultFrameSequenceLoader = (imageUrl: string) =>
+  loadAniPreviewFramesFromUrl(imageUrl, {});
 
 export async function buildAniPreviewSource(
   input: AniPreviewInput,
@@ -118,27 +138,22 @@ export async function buildAniPreviewSource(
       });
 
       const blob = await canvasToBlob(rendered);
-      const objectUrl = createObjectUrl(blob, dependencies);
-      frameUrls.push(objectUrl);
+      frameUrls.push(createObjectUrl(blob, dependencies));
     }
   } catch (error) {
     frameUrls.forEach((url) => safeRevokeObjectURL(url, dependencies));
     throw error;
   }
 
-  const source = createAnimatedCursorSource(
-    frameUrls.map(
-      (src, index): CursorFrame => ({
+  return {
+    source: createAnimatedCursorSource(
+      frameUrls.map((src, index): CursorFrame => ({
         src,
         durationMs: sequence.frames[index]?.durationMs,
-      })
+      })),
+      mappedHotspot,
+      outputSize
     ),
-    mappedHotspot,
-    outputSize
-  );
-
-  return {
-    source,
     frameUrls,
   };
 }
@@ -147,21 +162,25 @@ export async function prepareAniPreviewFrames(
   imageUrl: string,
   dependencies: AniPreviewDependencies = {}
 ): Promise<AniPreviewFrameSequence> {
-  const cached = preparedSequenceCache.get(imageUrl);
+  const loader =
+    dependencies.frameSequenceLoader ?? defaultFrameSequenceLoader;
+  let cacheForLoader = sequenceCacheByLoader.get(loader);
+  if (!cacheForLoader) {
+    cacheForLoader = new Map<string, Promise<AniPreviewFrameSequence>>();
+    sequenceCacheByLoader.set(loader, cacheForLoader);
+  }
+
+  const cached = cacheForLoader.get(imageUrl);
   if (cached) {
     return cached;
   }
 
-  const loader =
-    dependencies.frameSequenceLoader ??
-    ((nextImageUrl: string) => loadAniPreviewFramesFromUrl(nextImageUrl, dependencies));
-
   const sequencePromise = loader(imageUrl).catch((error) => {
-    preparedSequenceCache.delete(imageUrl);
+    cacheForLoader?.delete(imageUrl);
     throw error;
   });
 
-  preparedSequenceCache.set(imageUrl, sequencePromise);
+  cacheForLoader.set(imageUrl, sequencePromise);
   return sequencePromise;
 }
 
@@ -174,94 +193,20 @@ export async function decodeAniPreviewFrames(
     return decodeGifFramesWithImageDecoder(blob, imageDecoderCtor, dependencies);
   }
 
-  const metadata = await readGifMetadataFromBlob(
-    blob,
-    dependencies.parseGifMetadata ?? parseGifFrameMetadata
-  );
-
-  if (dependencies.sampleGifFrames) {
-    return dependencies.sampleGifFrames(blob, metadata);
-  }
-
-  return sampleGifFramesFromBrowser(blob, metadata, dependencies);
+  return decodeGifFramesWithReader(blob, dependencies);
 }
 
 export function parseGifFrameMetadata(buffer: ArrayBuffer): GifFrameMetadata {
-  const bytes = new Uint8Array(buffer);
-  if (bytes.length < 13) {
-    throw new Error("GIF is too short.");
-  }
-
-  const header = bytesToAscii(bytes.slice(0, 6));
-  if (header !== "GIF87a" && header !== "GIF89a") {
-    throw new Error("Unsupported file type. GIF only.");
-  }
-
-  const view = new DataView(buffer);
-  const width = Math.max(1, view.getUint16(6, true));
-  const height = Math.max(1, view.getUint16(8, true));
-  const packed = bytes[10] ?? 0;
-
-  let offset = 13;
-  if (packed & 0x80) {
-    offset += 3 * (1 << ((packed & 0x07) + 1));
-  }
-
-  const frameDurationsMs: number[] = [];
-  let pendingDelayMs = DEFAULT_FRAME_DURATION_MS;
-
-  while (offset < bytes.length) {
-    const blockId = bytes[offset++];
-
-    if (blockId === 0x3b) {
-      break;
-    }
-
-    if (blockId === 0x21) {
-      const extensionLabel = bytes[offset++];
-
-      if (extensionLabel === 0xf9) {
-        offset += 1; // block size
-        offset += 1; // packed fields
-        const delayCs = view.getUint16(offset, true);
-        offset += 2;
-        offset += 1; // transparent color index
-        offset += 1; // terminator
-        pendingDelayMs = normalizeGifDuration(delayCs * 10);
-        continue;
-      }
-
-      offset = skipGifSubBlocks(bytes, offset);
-      continue;
-    }
-
-    if (blockId === 0x2c) {
-      frameDurationsMs.push(pendingDelayMs);
-      offset += 8; // frame position + size
-      const imagePacked = bytes[offset++];
-
-      if (imagePacked & 0x80) {
-        offset += 3 * (1 << ((imagePacked & 0x07) + 1));
-      }
-
-      offset += 1; // LZW minimum code size
-      offset = skipGifSubBlocks(bytes, offset);
-      pendingDelayMs = DEFAULT_FRAME_DURATION_MS;
-      continue;
-    }
-
-    throw new Error("Unsupported GIF structure.");
-  }
-
-  if (!frameDurationsMs.length) {
-    throw new Error("GIF must contain at least one frame.");
-  }
+  const reader = createGifReader(new Uint8Array(buffer), {});
+  const frameCount = reader.numFrames();
 
   return {
-    width,
-    height,
-    frameCount: frameDurationsMs.length,
-    frameDurationsMs,
+    width: reader.width,
+    height: reader.height,
+    frameCount,
+    frameDurationsMs: Array.from({ length: frameCount }, (_, index) =>
+      normalizeGifDuration((reader.frameInfo(index).delay ?? 0) * 10)
+    ),
   };
 }
 
@@ -272,15 +217,6 @@ async function loadAniPreviewFramesFromUrl(
   const fetchBlob = dependencies.fetchBlob ?? fetchBlobFromUrl;
   const blob = await fetchBlob(imageUrl);
   return decodeAniPreviewFrames(blob, dependencies);
-}
-
-async function fetchBlobFromUrl(imageUrl: string) {
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to load image: ${response.status}`);
-  }
-
-  return response.blob();
 }
 
 async function decodeGifFramesWithImageDecoder(
@@ -294,7 +230,6 @@ async function decodeGifFramesWithImageDecoder(
   });
 
   await decoder.tracks.ready;
-
   const frameCount = decoder.tracks.selectedTrack?.frameCount ?? 0;
   if (!frameCount) {
     throw new Error("GIF must contain at least one frame.");
@@ -311,6 +246,7 @@ async function decodeGifFramesWithImageDecoder(
         completeFrames: true,
       });
       const image = decoded.image;
+
       width = width || getDrawableWidth(image);
       height = height || getDrawableHeight(image);
 
@@ -324,9 +260,7 @@ async function decodeGifFramesWithImageDecoder(
       context.drawImage(image as CanvasImageSource, 0, 0, width, height);
       frames.push({
         source: canvas,
-        durationMs: normalizeGifDuration(
-          decodeImageFrameDurationMs(image.duration)
-        ),
+        durationMs: normalizeGifDuration(decodeImageFrameDurationMs(image.duration)),
       });
 
       if (typeof image.close === "function") {
@@ -346,52 +280,47 @@ async function decodeGifFramesWithImageDecoder(
   };
 }
 
-async function sampleGifFramesFromBrowser(
+async function decodeGifFramesWithReader(
   blob: Blob,
-  metadata: GifFrameMetadata,
   dependencies: AniPreviewDependencies
 ): Promise<AniPreviewFrameSequence> {
-  const imageUrl = createObjectUrl(blob, dependencies);
-  try {
-    const image = await loadAnimatedImage(imageUrl);
-    const frames: AniPreviewFrame[] = [];
+  const bytes = new Uint8Array(await readBlobArrayBuffer(blob));
+  const reader = createGifReader(bytes, dependencies);
+  const frameCount = reader.numFrames();
+  if (!frameCount) {
+    throw new Error("GIF must contain at least one frame.");
+  }
 
-    for (let frameIndex = 0; frameIndex < metadata.frameDurationsMs.length; frameIndex += 1) {
-      if (frameIndex > 0) {
-        await waitForFrameDuration(
-          metadata.frameDurationsMs[frameIndex - 1] ?? DEFAULT_FRAME_DURATION_MS
-        );
-      }
+  const width = reader.width;
+  const height = reader.height;
+  const frames: AniPreviewFrame[] = [];
+  const pixels = new Uint8ClampedArray(width * height * 4);
 
-      const canvas = createCanvasElement(metadata.width, metadata.height, dependencies);
-      const context = canvas.getContext("2d");
-      if (!context) {
-        throw new Error("Failed to create canvas context");
-      }
+  for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
+    pixels.fill(0);
+    reader.decodeAndBlitFrameRGBA(frameIndex, pixels);
 
-      context.clearRect(0, 0, metadata.width, metadata.height);
-      context.drawImage(image, 0, 0, metadata.width, metadata.height);
-      frames.push({
-        source: canvas,
-        durationMs: normalizeGifDuration(metadata.frameDurationsMs[frameIndex]),
-      });
+    const canvas = createCanvasElement(width, height, dependencies);
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Failed to create canvas context");
     }
 
-    return {
-      width: metadata.width,
-      height: metadata.height,
-      frames,
-    };
-  } finally {
-    safeRevokeObjectURL(imageUrl, dependencies);
-  }
-}
+    const imageData = createImageData(pixels, width, height, dependencies);
+    context.clearRect(0, 0, width, height);
+    context.putImageData(imageData, 0, 0);
 
-async function readGifMetadataFromBlob(
-  blob: Blob,
-  parseGifMetadata: (buffer: ArrayBuffer) => GifFrameMetadata
-): Promise<GifFrameMetadata> {
-  return parseGifMetadata(await readBlobArrayBuffer(blob));
+    frames.push({
+      source: canvas,
+      durationMs: normalizeGifDuration((reader.frameInfo(frameIndex).delay ?? 0) * 10),
+    });
+  }
+
+  return {
+    width,
+    height,
+    frames,
+  };
 }
 
 async function renderAniPreviewFrame(input: {
@@ -458,6 +387,29 @@ function createCanvasElement(
   return canvas;
 }
 
+function createImageData(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+  dependencies: AniPreviewDependencies
+) {
+  return (
+    dependencies.createImageData ??
+    ((data, w, h) => new ImageData(data as any, w, h))
+  )(pixels, width, height);
+}
+
+function createGifReader(
+  bytes: Uint8Array,
+  dependencies: AniPreviewDependencies
+): GifReaderLike {
+  if (dependencies.gifReaderFactory) {
+    return dependencies.gifReaderFactory(bytes);
+  }
+
+  return new GifReader(bytes) as unknown as GifReaderLike;
+}
+
 function createObjectUrl(blob: Blob, dependencies: AniPreviewDependencies) {
   const createObjectURL = dependencies.createObjectURL ?? URL.createObjectURL;
   return createObjectURL(blob);
@@ -485,12 +437,7 @@ function getDrawableWidth(source: ImageDecoderDecodeResult["image"]) {
     displayWidth?: number;
   };
 
-  return (
-    frame.displayWidth ??
-    frame.width ??
-    frame.codedWidth ??
-    1
-  );
+  return frame.displayWidth ?? frame.width ?? frame.codedWidth ?? 1;
 }
 
 function getDrawableHeight(source: ImageDecoderDecodeResult["image"]) {
@@ -500,12 +447,7 @@ function getDrawableHeight(source: ImageDecoderDecodeResult["image"]) {
     displayHeight?: number;
   };
 
-  return (
-    frame.displayHeight ??
-    frame.height ??
-    frame.codedHeight ??
-    1
-  );
+  return frame.displayHeight ?? frame.height ?? frame.codedHeight ?? 1;
 }
 
 function decodeImageFrameDurationMs(duration?: number) {
@@ -533,46 +475,6 @@ function normalizeOutputSize(outputSize: number) {
   return safeSize > 0 ? safeSize : 32;
 }
 
-function skipGifSubBlocks(bytes: Uint8Array, startOffset: number) {
-  let offset = startOffset;
-
-  while (offset < bytes.length) {
-    const blockSize = bytes[offset++];
-    if (blockSize === 0) {
-      return offset;
-    }
-
-    offset += blockSize;
-  }
-
-  throw new Error("Unexpected end of GIF data.");
-}
-
-async function loadAnimatedImage(imageUrl: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Failed to load image"));
-    image.src = imageUrl;
-  });
-}
-
-async function waitForFrameDuration(durationMs: number) {
-  const safeDuration = Math.max(1, Math.round(durationMs));
-
-  await new Promise<void>((resolve) => {
-    window.setTimeout(() => {
-      if (typeof window.requestAnimationFrame === "function") {
-        window.requestAnimationFrame(() => resolve());
-        return;
-      }
-
-      resolve();
-    }, safeDuration);
-  });
-}
-
 async function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -586,8 +488,13 @@ async function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-function bytesToAscii(bytes: Uint8Array) {
-  return Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+async function fetchBlobFromUrl(imageUrl: string) {
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to load image: ${response.status}`);
+  }
+
+  return response.blob();
 }
 
 async function readBlobArrayBuffer(blob: Blob) {
