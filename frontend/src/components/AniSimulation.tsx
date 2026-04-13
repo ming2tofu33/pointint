@@ -47,6 +47,8 @@ export default function AniSimulation({
   const [previewStatus, setPreviewStatus] =
     useState<PreviewStatus>("loading");
   const animationStartedAtRef = useRef(Date.now());
+  const activeBuildIdRef = useRef(0);
+  const committedFrameUrlsRef = useRef<string[]>([]);
   const t = useTranslations("simulation");
 
   useEffect(() => {
@@ -54,11 +56,12 @@ export default function AniSimulation({
   }, [imageUrl]);
 
   useEffect(() => {
-    let active = true;
-    let frameUrls: string[] = [];
+    let cancelled = false;
+    const buildId = ++activeBuildIdRef.current;
 
-    setPreviewFrameStack(null);
-    setPreviewStatus("loading");
+    if (!previewFrameStack) {
+      setPreviewStatus("loading");
+    }
 
     buildAniPreviewFrameStack({
       imageUrl,
@@ -72,24 +75,24 @@ export default function AniSimulation({
       editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
     })
       .then((nextStack) => {
-        if (!active) {
+        if (cancelled || buildId !== activeBuildIdRef.current) {
           nextStack.frames.forEach((frame) => URL.revokeObjectURL(frame.src));
           return;
         }
 
-        frameUrls = nextStack.frames.map((frame) => frame.src);
         setPreviewFrameStack(nextStack);
         setPreviewStatus("ready");
       })
       .catch(() => {
-        if (!active) return;
-        setPreviewFrameStack(null);
-        setPreviewStatus("unavailable");
+        if (cancelled || buildId !== activeBuildIdRef.current) return;
+        if (!previewFrameStack) {
+          setPreviewFrameStack(null);
+          setPreviewStatus("unavailable");
+        }
       });
 
     return () => {
-      active = false;
-      frameUrls.forEach((url) => safeRevokeObjectURL(url));
+      cancelled = true;
     };
   }, [
     cursorSize,
@@ -101,6 +104,19 @@ export default function AniSimulation({
     sourceHeight,
     sourceWidth,
   ]);
+
+  useEffect(() => {
+    const previousFrameUrls = committedFrameUrlsRef.current;
+    const nextFrameUrls = previewFrameStack?.frames.map((frame) => frame.src) ?? [];
+    committedFrameUrlsRef.current = nextFrameUrls;
+    previousFrameUrls.forEach((url) => safeRevokeObjectURL(url));
+  }, [previewFrameStack]);
+
+  useEffect(() => {
+    return () => {
+      committedFrameUrlsRef.current.forEach((url) => safeRevokeObjectURL(url));
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
