@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { type FitMode } from "@/lib/cursorFrame";
-
+import CursorSimulationSurface from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
+import { buildAniPreviewSource } from "@/lib/aniPreviewFrames";
+import { type FitMode } from "@/lib/cursorFrame";
+import { type CursorSource } from "@/lib/cursorSources";
 
 interface AniSimulationProps {
   imageUrl: string;
@@ -20,7 +22,7 @@ interface AniSimulationProps {
   hotspotY: number;
 }
 
-type BgMode = "light" | "dark";
+const ANI_PREVIEW_VIEWPORT_SIZE = 256;
 
 export default function AniSimulation({
   imageUrl,
@@ -34,25 +36,64 @@ export default function AniSimulation({
   hotspotX,
   hotspotY,
 }: AniSimulationProps) {
-  const [bgMode, setBgMode] = useState<BgMode>("dark");
-  const [pointer, setPointer] = useState({ x: 160, y: 72 });
-  const areaRef = useRef<HTMLDivElement>(null);
+  const [previewSource, setPreviewSource] = useState<CursorSource | null>(null);
   const t = useTranslations("simulation");
 
-  const bgColor = bgMode === "dark" ? "#1a1a1a" : "#f0f0f0";
-  const textColor = bgMode === "dark" ? "#ccc" : "#333";
-  const linkColor = bgMode === "dark" ? "#6eaaf5" : "#1a6ed8";
-  const mutedColor = bgMode === "dark" ? "#666" : "#999";
+  useEffect(() => {
+    let active = true;
+    let frameUrls: string[] = [];
 
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    const rect = areaRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    setPreviewSource(null);
 
-    setPointer({
-      x: Math.round(event.clientX - rect.left),
-      y: Math.round(event.clientY - rect.top),
-    });
-  }
+    buildAniPreviewSource(
+      {
+        imageUrl,
+        sourceWidth,
+        sourceHeight,
+        fitMode,
+        scale,
+        offsetX,
+        offsetY,
+        outputSize: cursorSize,
+        hotspotX,
+        hotspotY,
+        editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
+      },
+      {
+        frameCount: 6,
+        frameDurationMs: 120,
+      }
+    )
+      .then(({ source, frameUrls: nextFrameUrls = [] }) => {
+        if (!active) {
+          nextFrameUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+
+        frameUrls = nextFrameUrls;
+        setPreviewSource(source);
+      })
+      .catch(() => {
+        if (!active) return;
+        setPreviewSource(null);
+      });
+
+    return () => {
+      active = false;
+      frameUrls.forEach((url) => safeRevokeObjectURL(url));
+    };
+  }, [
+    cursorSize,
+    fitMode,
+    hotspotX,
+    hotspotY,
+    imageUrl,
+    offsetX,
+    offsetY,
+    scale,
+    sourceHeight,
+    sourceWidth,
+  ]);
 
   return (
     <div
@@ -121,119 +162,81 @@ export default function AniSimulation({
           display: "flex",
           flexDirection: "column",
           position: "relative",
+          minWidth: 0,
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.75rem",
-            display: "flex",
-            gap: "0.25rem",
-            zIndex: 5,
-          }}
-        >
-          <BgToggle
-            mode="light"
-            active={bgMode === "light"}
-            onClick={() => setBgMode("light")}
-            label={t("bgLight")}
-          />
-          <BgToggle
-            mode="dark"
-            active={bgMode === "dark"}
-            onClick={() => setBgMode("dark")}
-            label={t("bgDark")}
-          />
-        </div>
-
-        <div
-          ref={areaRef}
-          onMouseMove={handleMouseMove}
-          style={{
-            flex: 1,
-            backgroundColor: bgColor,
-            padding: "1rem 1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: "0.625rem",
-            transition: "background-color 0.3s",
-            overflow: "hidden",
-            position: "relative",
-            cursor: "none",
-          }}
-        >
+        {previewSource ? (
+          <CursorSimulationSurface source={previewSource} />
+        ) : (
           <div
             style={{
-              position: "absolute",
-              left: `${pointer.x - hotspotX}px`,
-              top: `${pointer.y - hotspotY}px`,
-              pointerEvents: "none",
-              zIndex: 4,
+              flex: 1,
+              backgroundColor: "var(--color-bg-primary)",
+              padding: "1rem 1.5rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: "0.625rem",
+              transition: "background-color 0.3s",
+              overflow: "hidden",
+              position: "relative",
             }}
           >
-            <FramedCursorPreview
-              imageUrl={imageUrl}
-              sourceWidth={sourceWidth}
-              sourceHeight={sourceHeight}
-              fitMode={fitMode}
-              offsetX={offsetX}
-              offsetY={offsetY}
-              scale={scale}
-              viewportSize={cursorSize}
-              alt={t("instruction")}
-            />
-          </div>
-
-          <p
-            style={{
-              fontSize: "0.75rem",
-              color: mutedColor,
-              userSelect: "none",
-            }}
-          >
-            {t("instruction")}
-          </p>
-
-          <p
-            style={{
-              fontSize: "0.8125rem",
-              color: textColor,
-              lineHeight: 1.5,
-            }}
-          >
-            {t("sampleText")}
-          </p>
-
-          <p style={{ fontSize: "0.8125rem" }}>
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
+            <p
               style={{
-                color: linkColor,
-                textDecoration: "underline",
-                textUnderlineOffset: "2px",
+                fontSize: "0.75rem",
+                color: "var(--color-text-muted)",
+                userSelect: "none",
               }}
             >
-              {t("sampleLink")}
-            </a>
-          </p>
+              {t("instruction")}
+            </p>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "0.5rem",
-              marginTop: "0.25rem",
-            }}
-          >
-            <SimButton label={t("button")} bgMode={bgMode} />
-            <SimButton label={t("cancel")} bgMode={bgMode} secondary />
+            <p
+              style={{
+                fontSize: "0.8125rem",
+                color: "var(--color-text-primary)",
+                lineHeight: 1.5,
+              }}
+            >
+              {t("sampleText")}
+            </p>
+
+            <p style={{ fontSize: "0.8125rem" }}>
+              <a
+                href="#"
+                onClick={(e) => e.preventDefault()}
+                style={{
+                  color: "var(--color-accent)",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "2px",
+                }}
+              >
+                {t("sampleLink")}
+              </a>
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "0.25rem",
+              }}
+            >
+              <SimButton label={t("button")} />
+              <SimButton label={t("cancel")} secondary />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
+}
+
+function safeRevokeObjectURL(url: string) {
+  if (typeof URL.revokeObjectURL === "function") {
+    URL.revokeObjectURL(url);
+  }
 }
 
 function PreviewBox({
@@ -279,63 +282,28 @@ function PreviewBox({
   );
 }
 
-function BgToggle({
-  mode,
-  active,
-  onClick,
-  label,
-}: {
-  mode: BgMode;
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      style={{
-        width: "1.25rem",
-        height: "1.25rem",
-        borderRadius: "50%",
-        border: active
-          ? "2px solid var(--color-accent)"
-          : "1px solid var(--color-border)",
-        backgroundColor: mode === "dark" ? "#1a1a1a" : "#f0f0f0",
-        cursor: "pointer",
-        transition: "border-color 0.15s",
-      }}
-    />
-  );
-}
-
 function SimButton({
   label,
-  bgMode,
   secondary,
 }: {
   label: string;
-  bgMode: BgMode;
   secondary?: boolean;
 }) {
-  const bg = secondary
-    ? "transparent"
-    : bgMode === "dark"
-      ? "#333"
-      : "#e0e0e0";
-  const color = bgMode === "dark" ? "#ccc" : "#333";
-  const border = secondary
-    ? `1px solid ${bgMode === "dark" ? "#444" : "#ccc"}`
-    : "none";
-
   return (
     <button
+      type="button"
       style={{
-        fontSize: "0.6875rem",
         padding: "0.375rem 0.75rem",
-        backgroundColor: bg,
-        color,
-        border,
+        borderRadius: "0.5rem",
+        border: `1px solid var(--color-border)`,
+        backgroundColor: secondary
+          ? "var(--color-bg-secondary)"
+          : "var(--color-bg-primary)",
+        color: secondary
+          ? "var(--color-text-secondary)"
+          : "var(--color-text-primary)",
+        fontSize: "0.75rem",
+        cursor: "pointer",
       }}
     >
       {label}

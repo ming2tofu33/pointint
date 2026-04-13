@@ -506,6 +506,7 @@ export default function StudioPage() {
         {state === "editing" && cursor && previewUrl && cursor.renderedBlob ? (
           <Simulation
             imageUrl={previewUrl}
+            cursorSize={cursor.cursorSize}
             hotspotX={cursor.renderedHotspotX}
             hotspotY={cursor.renderedHotspotY}
           />
