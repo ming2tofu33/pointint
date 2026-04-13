@@ -57,3 +57,12 @@ aliases:
 - Pointint analytics v1 tracks only the current browse/make/download funnel. It does not include backend GA4 reporting, user identity stitching, or a privacy settings center.
 - `P1-MOCKUP-01` is deferred. It is not required to open Phase 1.5.
 - ANI v1 opens with a GIF-first slice only: `ANI > Animated GIF` becomes selectable, shared framing/hotspot controls are reused, and frame-level editing stays out of scope for v1.
+
+## 2026-04-13
+
+- Studio direction changes from single-cursor editing to slot-based cursor theme editing. Phase 1.5 uses fixed slots: `normal`, `text`, `link`, and `button`.
+- Slot editing stays single-focus, but simulation is now state-driven: neutral -> `normal`, text -> `text`, link -> `link`, button -> `button`, with fallback to `normal`.
+- Download stays disabled until `normal` exists, even if another slot is populated, because export semantics are still anchored to the active path while the slot model lands.
+- Shared header styling should no longer depend on landing-only navy glass tokens. The app header now owns its own black-glass token set.
+- Studio workspace styling should be scoped locally instead of rewriting global dark mode. `/studio` uses near-black workbench tokens so landing and explore can keep their browse-oriented surfaces.
+- Studio shell polish should use a premium product tool base with only a restrained creative accent. The intended reading order is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
