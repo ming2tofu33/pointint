@@ -159,6 +159,7 @@ export function createAniPreviewSourceFromFrames(
     hotspotY: number;
     outputSize: number;
     editorViewportSize?: number;
+    startedAt?: number;
   }
 ) {
   const mappedHotspot = mapViewportHotspotToOutput({
@@ -171,7 +172,8 @@ export function createAniPreviewSourceFromFrames(
   return createAnimatedCursorSource(
     sequence.frames,
     mappedHotspot,
-    normalizeOutputSize(input.outputSize)
+    normalizeOutputSize(input.outputSize),
+    input.startedAt
   );
 }
 

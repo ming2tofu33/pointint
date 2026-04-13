@@ -72,6 +72,36 @@ describe("cursor sources", () => {
     nowSpy.mockRestore();
   });
 
+  it("keeps the same animation phase when a source is recreated with the same start time", () => {
+    const first = createAnimatedCursorSource(
+      [
+        { src: "frame-1", durationMs: 100 },
+        { src: "frame-2", durationMs: 200 },
+      ],
+      { x: 12, y: 14 },
+      48,
+      1000
+    );
+    const recreated = createAnimatedCursorSource(
+      [
+        { src: "frame-1", durationMs: 100 },
+        { src: "frame-2", durationMs: 200 },
+      ],
+      { x: 12, y: 14 },
+      48,
+      1000
+    );
+
+    expect(first.getFrameAtTime(1150)).toMatchObject({
+      frame: { src: "frame-2" },
+      frameIndex: 1,
+    });
+    expect(recreated.getFrameAtTime(1150)).toMatchObject({
+      frame: { src: "frame-2" },
+      frameIndex: 1,
+    });
+  });
+
   it("sanitizes invalid hotspot coordinates", () => {
     const source = createStaticCursorSource(
       { src: "blob:static" },

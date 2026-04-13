@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
@@ -46,7 +46,12 @@ export default function AniSimulation({
     useState<AniPreviewRenderedFrameStack | null>(null);
   const [previewStatus, setPreviewStatus] =
     useState<PreviewStatus>("loading");
+  const animationStartedAtRef = useRef(Date.now());
   const t = useTranslations("simulation");
+
+  useEffect(() => {
+    animationStartedAtRef.current = Date.now();
+  }, [imageUrl]);
 
   useEffect(() => {
     let active = true;
@@ -85,7 +90,6 @@ export default function AniSimulation({
     return () => {
       active = false;
       frameUrls.forEach((url) => safeRevokeObjectURL(url));
-      releaseAniPreviewFrames(imageUrl);
     };
   }, [
     cursorSize,
@@ -98,6 +102,12 @@ export default function AniSimulation({
     sourceWidth,
   ]);
 
+  useEffect(() => {
+    return () => {
+      releaseAniPreviewFrames(imageUrl);
+    };
+  }, [imageUrl]);
+
   const previewSource = useMemo<CursorSource | null>(() => {
     if (!previewFrameStack) {
       return null;
@@ -108,6 +118,7 @@ export default function AniSimulation({
       hotspotY,
       outputSize: cursorSize,
       editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
+      startedAt: animationStartedAtRef.current,
     });
   }, [cursorSize, hotspotX, hotspotY, previewFrameStack]);
 

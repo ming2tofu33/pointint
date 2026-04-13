@@ -115,10 +115,28 @@ describe("AniSimulation", () => {
 
     expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("ani-simulation-placeholder")).toBeNull();
+    expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
+
+    rerender(
+      <AniSimulation
+        imageUrl="blob:gif-2"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={12}
+        offsetY={-8}
+        scale={1.5}
+        cursorSize={48}
+        hotspotX={92}
+        hotspotY={48}
+      />
+    );
+
+    expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif");
 
     unmount();
 
-    expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif");
+    expect(releaseAniPreviewFramesMock).toHaveBeenCalledWith("blob:gif-2");
 
     if (originalRevokeObjectURL) {
       Object.defineProperty(URL, "revokeObjectURL", {

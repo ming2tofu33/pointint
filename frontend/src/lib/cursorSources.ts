@@ -50,7 +50,8 @@ export function createStaticCursorSource(
 export function createAnimatedCursorSource(
   frames: CursorFrame[],
   hotspot: CursorPoint,
-  outputSize: number
+  outputSize: number,
+  startedAt = Date.now()
 ): CursorSource {
   const normalizedFrames = frames.map(normalizeFrame);
   if (!normalizedFrames.length) {
@@ -59,7 +60,6 @@ export function createAnimatedCursorSource(
 
   const safeHotspot = normalizePoint(hotspot);
   const safeOutputSize = normalizeOutputSize(outputSize);
-  const startedAt = Date.now();
   const durations = normalizedFrames.map((frame) =>
     normalizeDuration(frame.durationMs)
   );
