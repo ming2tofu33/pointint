@@ -140,7 +140,11 @@
     "button": "버튼",
     "cancel": "취소",
     "bgLight": "밝은 배경",
-    "bgDark": "어두운 배경"
+    "bgDark": "어두운 배경",
+    "previewLoading": "ANI 미리보기를 불러오는 중",
+    "previewLoadingBody": "내보낼 ANI와 맞도록 실제 GIF 프레임을 해석하고 있습니다.",
+    "previewUnavailable": "ANI 미리보기를 사용할 수 없습니다",
+    "previewUnavailableBody": "이 브라우저에서는 export와 일치하는 미리보기에 필요한 GIF 프레임을 해석할 수 없습니다."
   },
   "health": {
     "title": "상태",

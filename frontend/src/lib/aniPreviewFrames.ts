@@ -20,11 +20,6 @@ export interface AniPreviewSourceInput {
   editorViewportSize?: number;
 }
 
-export interface AniPreviewSourceOptions {
-  fallbackFrameCount?: number;
-  fallbackFrameDurationMs?: number;
-}
-
 export interface AniPreviewSourceResult {
   source: CursorSource;
   frameUrls: string[];
@@ -57,23 +52,12 @@ type AniImageDecoder = {
   close?: () => void;
 };
 
-const DEFAULT_FALLBACK_FRAME_COUNT = 6;
-const DEFAULT_FALLBACK_FRAME_DURATION_MS = 120;
 const DEFAULT_EDITOR_VIEWPORT_SIZE = 256;
 
 export async function buildAniPreviewSource(
-  input: AniPreviewSourceInput,
-  options: AniPreviewSourceOptions = {}
+  input: AniPreviewSourceInput
 ): Promise<AniPreviewSourceResult> {
   const editorViewportSize = normalizeViewportSize(input.editorViewportSize);
-  const fallbackFrameCount = normalizePositiveInteger(
-    options.fallbackFrameCount,
-    DEFAULT_FALLBACK_FRAME_COUNT
-  );
-  const fallbackFrameDurationMs = normalizePositiveInteger(
-    options.fallbackFrameDurationMs,
-    DEFAULT_FALLBACK_FRAME_DURATION_MS
-  );
   const hotspot = mapViewportHotspotToOutput({
     hotspotX: input.hotspotX,
     hotspotY: input.hotspotY,
@@ -83,15 +67,12 @@ export async function buildAniPreviewSource(
 
   const sourceBlob = await fetchPreviewBlob(input.imageUrl);
   const decodedFrames = await decodeAniPreviewFrames(sourceBlob);
-  const renderedFrames =
-    decodedFrames.length > 0
-      ? await renderDecodedAniFrames(decodedFrames, input)
-      : await renderFallbackAniPreviewFrames(
-          input,
-          fallbackFrameCount,
-          fallbackFrameDurationMs
-        );
 
+  if (!decodedFrames.length) {
+    throw new Error("ANI preview unavailable");
+  }
+
+  const renderedFrames = await renderDecodedAniFrames(decodedFrames, input);
   const frameUrls: string[] = [];
 
   try {
@@ -101,7 +82,7 @@ export async function buildAniPreviewSource(
 
     const cursorFrames: CursorFrame[] = frameUrls.map((src, index) => ({
       src,
-      durationMs: renderedFrames[index]?.durationMs ?? fallbackFrameDurationMs,
+      durationMs: renderedFrames[index]?.durationMs ?? 100,
     }));
 
     return {
@@ -170,54 +151,6 @@ async function renderDecodedAniFrames(
   return renderedFrames;
 }
 
-async function renderFallbackAniPreviewFrames(
-  input: AniPreviewSourceInput,
-  frameCount: number,
-  frameDurationMs: number
-) {
-  const image = document.createElement("img");
-  image.decoding = "async";
-  image.loading = "eager";
-  image.src = input.imageUrl;
-  image.style.position = "fixed";
-  image.style.left = "-99999px";
-  image.style.top = "0";
-  image.style.width = "1px";
-  image.style.height = "1px";
-  image.style.opacity = "0";
-  image.style.pointerEvents = "none";
-  document.body.appendChild(image);
-
-  try {
-    await waitForImageLoad(image);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = input.outputSize;
-    canvas.height = input.outputSize;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Failed to create canvas context");
-    }
-
-    const renderedFrames: Array<{ blob: Blob; durationMs: number }> = [];
-
-    for (let index = 0; index < frameCount; index += 1) {
-      if (index > 0) {
-        await wait(frameDurationMs);
-      }
-
-      renderCurrentFallbackFrame(ctx, image, input);
-      const blob = await canvasToBlob(canvas);
-      renderedFrames.push({ blob, durationMs: frameDurationMs });
-    }
-
-    return renderedFrames;
-  } finally {
-    image.remove();
-  }
-}
-
 async function renderAniFrameToBlob(
   image: AniRenderableFrame,
   input: AniPreviewSourceInput
@@ -243,31 +176,6 @@ async function renderAniFrameToBlob(
 function renderCurrentAniFrame(
   ctx: CanvasRenderingContext2D,
   image: AniRenderableFrame,
-  input: AniPreviewSourceInput
-) {
-  const frameRect = getFrameRect({
-    sourceWidth: input.sourceWidth,
-    sourceHeight: input.sourceHeight,
-    viewportSize: input.outputSize,
-    fitMode: input.fitMode,
-    scale: input.scale,
-    offsetX: scaleOffset(input.offsetX, input.outputSize, input.editorViewportSize),
-    offsetY: scaleOffset(input.offsetY, input.outputSize, input.editorViewportSize),
-  });
-
-  ctx.clearRect(0, 0, input.outputSize, input.outputSize);
-  ctx.drawImage(
-    image,
-    frameRect.drawX,
-    frameRect.drawY,
-    frameRect.drawWidth,
-    frameRect.drawHeight
-  );
-}
-
-function renderCurrentFallbackFrame(
-  ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
   input: AniPreviewSourceInput
 ) {
   const frameRect = getFrameRect({
@@ -319,24 +227,6 @@ function getImageDecoderConstructor() {
   }
 
   return Decoder;
-}
-
-function waitForImageLoad(image: HTMLImageElement) {
-  return new Promise<void>((resolve, reject) => {
-    if (image.complete && image.naturalWidth > 0) {
-      resolve();
-      return;
-    }
-
-    image.onload = () => resolve();
-    image.onerror = () => reject(new Error("Failed to load ANI preview image"));
-  });
-}
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement) {

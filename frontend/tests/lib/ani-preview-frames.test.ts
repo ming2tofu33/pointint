@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { decodeAniPreviewFrames } from "@/lib/aniPreviewFrames";
+import {
+  buildAniPreviewSource,
+  decodeAniPreviewFrames,
+} from "@/lib/aniPreviewFrames";
 
 describe("decodeAniPreviewFrames", () => {
   afterEach(() => {
@@ -42,5 +45,28 @@ describe("decodeAniPreviewFrames", () => {
       frameIndex: 0,
       completeFrames: true,
     });
+  });
+
+  it("does not fabricate a preview when ImageDecoder is unavailable", async () => {
+    vi.stubGlobal("ImageDecoder", undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(new Blob(["gif"], { type: "image/gif" })))
+    );
+
+    await expect(
+      buildAniPreviewSource({
+        imageUrl: "blob:gif",
+        sourceWidth: 160,
+        sourceHeight: 120,
+        fitMode: "cover",
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        outputSize: 48,
+        hotspotX: 16,
+        hotspotY: 16,
+      })
+    ).rejects.toThrow("ANI preview unavailable");
   });
 });

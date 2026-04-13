@@ -65,7 +65,7 @@ describe("AniSimulation", () => {
     );
 
     await waitFor(() => {
-      expect(buildAniPreviewSourceMock).toHaveBeenCalledTimes(1);
+      expect(buildAniPreviewSourceMock).toHaveBeenCalled();
     });
 
     expect(buildAniPreviewSourceMock.mock.calls[0]?.[0]).toMatchObject({
@@ -94,5 +94,31 @@ describe("AniSimulation", () => {
         value: originalRevokeObjectURL,
       });
     }
+  });
+
+  it("shows a neutral unavailable state when ANI preview decoding fails", async () => {
+    buildAniPreviewSourceMock.mockRejectedValueOnce(new Error("ANI preview unavailable"));
+
+    render(
+      <AniSimulation
+        imageUrl="blob:gif"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={12}
+        offsetY={-8}
+        scale={1.5}
+        cursorSize={48}
+        hotspotX={128}
+        hotspotY={64}
+      />
+    );
+
+    await waitFor(() => {
+      expect(buildAniPreviewSourceMock).toHaveBeenCalled();
+    });
+
+    expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();
+    expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
   });
 });

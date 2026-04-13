@@ -23,6 +23,7 @@ interface AniSimulationProps {
 }
 
 const ANI_PREVIEW_VIEWPORT_SIZE = 256;
+type PreviewStatus = "loading" | "ready" | "unavailable";
 
 export default function AniSimulation({
   imageUrl,
@@ -37,6 +38,8 @@ export default function AniSimulation({
   hotspotY,
 }: AniSimulationProps) {
   const [previewSource, setPreviewSource] = useState<CursorSource | null>(null);
+  const [previewStatus, setPreviewStatus] =
+    useState<PreviewStatus>("loading");
   const t = useTranslations("simulation");
 
   useEffect(() => {
@@ -44,26 +47,21 @@ export default function AniSimulation({
     let frameUrls: string[] = [];
 
     setPreviewSource(null);
+    setPreviewStatus("loading");
 
-    buildAniPreviewSource(
-      {
-        imageUrl,
-        sourceWidth,
-        sourceHeight,
-        fitMode,
-        scale,
-        offsetX,
-        offsetY,
-        outputSize: cursorSize,
-        hotspotX,
-        hotspotY,
-        editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
-      },
-      {
-        fallbackFrameCount: 6,
-        fallbackFrameDurationMs: 120,
-      }
-    )
+    buildAniPreviewSource({
+      imageUrl,
+      sourceWidth,
+      sourceHeight,
+      fitMode,
+      scale,
+      offsetX,
+      offsetY,
+      outputSize: cursorSize,
+      hotspotX,
+      hotspotY,
+      editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
+    })
       .then(({ source, frameUrls: nextFrameUrls = [] }) => {
         if (!active) {
           nextFrameUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -72,10 +70,12 @@ export default function AniSimulation({
 
         frameUrls = nextFrameUrls;
         setPreviewSource(source);
+        setPreviewStatus("ready");
       })
       .catch(() => {
         if (!active) return;
         setPreviewSource(null);
+        setPreviewStatus("unavailable");
       });
 
     return () => {
@@ -94,6 +94,16 @@ export default function AniSimulation({
     sourceHeight,
     sourceWidth,
   ]);
+
+  const previewTitle =
+    previewStatus === "unavailable"
+      ? t("previewUnavailable")
+      : t("previewLoading");
+
+  const previewBody =
+    previewStatus === "unavailable"
+      ? t("previewUnavailableBody")
+      : t("previewLoadingBody");
 
   return (
     <div
@@ -169,6 +179,7 @@ export default function AniSimulation({
           <CursorSimulationSurface source={previewSource} />
         ) : (
           <div
+            data-testid="ani-simulation-placeholder"
             style={{
               flex: 1,
               backgroundColor: "var(--color-bg-primary)",
@@ -189,7 +200,7 @@ export default function AniSimulation({
                 userSelect: "none",
               }}
             >
-              {t("instruction")}
+              {previewTitle}
             </p>
 
             <p
@@ -199,33 +210,17 @@ export default function AniSimulation({
                 lineHeight: 1.5,
               }}
             >
-              {t("sampleText")}
+              {previewBody}
             </p>
 
-            <p style={{ fontSize: "0.8125rem" }}>
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                style={{
-                  color: "var(--color-accent)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "2px",
-                }}
-              >
-                {t("sampleLink")}
-              </a>
-            </p>
-
-            <div
+            <p
               style={{
-                display: "flex",
-                gap: "0.5rem",
-                marginTop: "0.25rem",
+                fontSize: "0.8125rem",
+                color: "var(--color-text-muted)",
               }}
             >
-              <SimButton label={t("button")} />
-              <SimButton label={t("cancel")} secondary />
-            </div>
+              {t("instruction")}
+            </p>
           </div>
         )}
       </div>
@@ -279,34 +274,5 @@ function PreviewBox({
         {label}
       </span>
     </div>
-  );
-}
-
-function SimButton({
-  label,
-  secondary,
-}: {
-  label: string;
-  secondary?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      style={{
-        padding: "0.375rem 0.75rem",
-        borderRadius: "0.5rem",
-        border: `1px solid var(--color-border)`,
-        backgroundColor: secondary
-          ? "var(--color-bg-secondary)"
-          : "var(--color-bg-primary)",
-        color: secondary
-          ? "var(--color-text-secondary)"
-          : "var(--color-text-primary)",
-        fontSize: "0.75rem",
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
   );
 }

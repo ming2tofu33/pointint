@@ -145,7 +145,11 @@
     "button": "Button",
     "cancel": "Cancel",
     "bgLight": "light background",
-    "bgDark": "dark background"
+    "bgDark": "dark background",
+    "previewLoading": "Loading ANI preview",
+    "previewLoadingBody": "We are decoding the actual GIF frames so the preview matches the exported ANI.",
+    "previewUnavailable": "ANI preview unavailable",
+    "previewUnavailableBody": "This browser cannot decode the GIF frames needed for an export-accurate preview."
   },
   "health": {
     "title": "Health",
