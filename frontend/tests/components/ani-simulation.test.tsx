@@ -2,12 +2,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  buildAniPreviewSourceMock,
+  buildAniPreviewFrameStackMock,
   releaseAniPreviewFramesMock,
   cursorSimulationSurfaceMock,
 } = vi.hoisted(
   () => ({
-    buildAniPreviewSourceMock: vi.fn(),
+    buildAniPreviewFrameStackMock: vi.fn(),
     releaseAniPreviewFramesMock: vi.fn(),
     cursorSimulationSurfaceMock: vi.fn(() => (
       <div data-testid="cursor-simulation-surface" />
@@ -19,10 +19,15 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-vi.mock("@/lib/aniPreviewFrames", () => ({
-  buildAniPreviewSource: buildAniPreviewSourceMock,
-  releaseAniPreviewFrames: releaseAniPreviewFramesMock,
-}));
+vi.mock("@/lib/aniPreviewFrames", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/aniPreviewFrames")>();
+
+  return {
+    ...actual,
+    buildAniPreviewFrameStack: buildAniPreviewFrameStackMock,
+    releaseAniPreviewFrames: releaseAniPreviewFramesMock,
+  };
+});
 
 vi.mock("@/components/CursorSimulationSurface", () => ({
   default: cursorSimulationSurfaceMock,
@@ -41,25 +46,17 @@ describe("AniSimulation", () => {
       configurable: true,
       value: vi.fn(),
     });
-    const source = {
-      kind: "animated" as const,
-      hotspot: { x: 12, y: 8 },
-      outputSize: 48,
-      getFrameAtTime: vi.fn(() => ({
-        frame: { src: "blob:frame", durationMs: 120 },
-        hotspot: { x: 12, y: 8 },
-        outputSize: 48,
-        frameIndex: 0,
-      })),
-    };
 
-    buildAniPreviewSourceMock.mockResolvedValue({
-      source,
-      frameUrls: ["blob:frame-1", "blob:frame-2"],
-      hotspot: { x: 12, y: 8 },
+    buildAniPreviewFrameStackMock.mockResolvedValue({
+      width: 160,
+      height: 120,
+      frames: [
+        { src: "blob:frame-1", durationMs: 120 },
+        { src: "blob:frame-2", durationMs: 120 },
+      ],
     });
 
-    const { unmount } = render(
+    const { rerender, unmount } = render(
       <AniSimulation
         imageUrl="blob:gif"
         sourceWidth={160}
@@ -75,10 +72,10 @@ describe("AniSimulation", () => {
     );
 
     await waitFor(() => {
-      expect(buildAniPreviewSourceMock).toHaveBeenCalled();
+      expect(buildAniPreviewFrameStackMock).toHaveBeenCalled();
     });
 
-    expect(buildAniPreviewSourceMock.mock.calls[0]?.[0]).toMatchObject({
+    expect(buildAniPreviewFrameStackMock.mock.calls[0]?.[0]).toMatchObject({
       imageUrl: "blob:gif",
       sourceWidth: 160,
       sourceHeight: 120,
@@ -87,18 +84,37 @@ describe("AniSimulation", () => {
       offsetX: 12,
       offsetY: -8,
       outputSize: 48,
-      hotspotX: 128,
-      hotspotY: 64,
+      editorViewportSize: 256,
     });
 
     await waitFor(() => {
       expect(cursorSimulationSurfaceMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(cursorSimulationSurfaceMock.mock.calls[0]?.[0]?.source).toBe(source);
+    expect(cursorSimulationSurfaceMock.mock.calls[0]?.[0]?.source.kind).toBe(
+      "animated"
+    );
     expect(screen.getByTestId("cursor-simulation-surface")).not.toBeNull();
 
     expect(releaseAniPreviewFramesMock).not.toHaveBeenCalled();
+
+    rerender(
+      <AniSimulation
+        imageUrl="blob:gif"
+        sourceWidth={160}
+        sourceHeight={120}
+        fitMode="cover"
+        offsetX={12}
+        offsetY={-8}
+        scale={1.5}
+        cursorSize={48}
+        hotspotX={92}
+        hotspotY={48}
+      />
+    );
+
+    expect(buildAniPreviewFrameStackMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("ani-simulation-placeholder")).toBeNull();
 
     unmount();
 
@@ -113,7 +129,9 @@ describe("AniSimulation", () => {
   });
 
   it("shows a neutral unavailable state when ANI preview decoding fails", async () => {
-    buildAniPreviewSourceMock.mockRejectedValueOnce(new Error("ANI preview unavailable"));
+    buildAniPreviewFrameStackMock.mockRejectedValueOnce(
+      new Error("ANI preview unavailable")
+    );
 
     render(
       <AniSimulation
@@ -131,7 +149,7 @@ describe("AniSimulation", () => {
     );
 
     await waitFor(() => {
-      expect(buildAniPreviewSourceMock).toHaveBeenCalled();
+      expect(buildAniPreviewFrameStackMock).toHaveBeenCalled();
     });
 
     expect(screen.getByTestId("ani-simulation-placeholder")).not.toBeNull();

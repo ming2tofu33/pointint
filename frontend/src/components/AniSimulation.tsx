@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
 import {
-  buildAniPreviewSource,
+  buildAniPreviewFrameStack,
+  createAniPreviewSourceFromFrames,
   releaseAniPreviewFrames,
 } from "@/lib/aniPreviewFrames";
 import { type FitMode } from "@/lib/cursorFrame";
 import { type CursorSource } from "@/lib/cursorSources";
+import { type AniPreviewRenderedFrameStack } from "@/lib/aniPreviewFrames";
 
 interface AniSimulationProps {
   imageUrl: string;
@@ -40,7 +42,8 @@ export default function AniSimulation({
   hotspotX,
   hotspotY,
 }: AniSimulationProps) {
-  const [previewSource, setPreviewSource] = useState<CursorSource | null>(null);
+  const [previewFrameStack, setPreviewFrameStack] =
+    useState<AniPreviewRenderedFrameStack | null>(null);
   const [previewStatus, setPreviewStatus] =
     useState<PreviewStatus>("loading");
   const t = useTranslations("simulation");
@@ -49,10 +52,10 @@ export default function AniSimulation({
     let active = true;
     let frameUrls: string[] = [];
 
-    setPreviewSource(null);
+    setPreviewFrameStack(null);
     setPreviewStatus("loading");
 
-    buildAniPreviewSource({
+    buildAniPreviewFrameStack({
       imageUrl,
       sourceWidth,
       sourceHeight,
@@ -61,23 +64,21 @@ export default function AniSimulation({
       offsetX,
       offsetY,
       outputSize: cursorSize,
-      hotspotX,
-      hotspotY,
       editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
     })
-      .then(({ source, frameUrls: nextFrameUrls = [] }) => {
+      .then((nextStack) => {
         if (!active) {
-          nextFrameUrls.forEach((url) => URL.revokeObjectURL(url));
+          nextStack.frames.forEach((frame) => URL.revokeObjectURL(frame.src));
           return;
         }
 
-        frameUrls = nextFrameUrls;
-        setPreviewSource(source);
+        frameUrls = nextStack.frames.map((frame) => frame.src);
+        setPreviewFrameStack(nextStack);
         setPreviewStatus("ready");
       })
       .catch(() => {
         if (!active) return;
-        setPreviewSource(null);
+        setPreviewFrameStack(null);
         setPreviewStatus("unavailable");
       });
 
@@ -89,8 +90,6 @@ export default function AniSimulation({
   }, [
     cursorSize,
     fitMode,
-    hotspotX,
-    hotspotY,
     imageUrl,
     offsetX,
     offsetY,
@@ -98,6 +97,19 @@ export default function AniSimulation({
     sourceHeight,
     sourceWidth,
   ]);
+
+  const previewSource = useMemo<CursorSource | null>(() => {
+    if (!previewFrameStack) {
+      return null;
+    }
+
+    return createAniPreviewSourceFromFrames(previewFrameStack, {
+      hotspotX,
+      hotspotY,
+      outputSize: cursorSize,
+      editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
+    });
+  }, [cursorSize, hotspotX, hotspotY, previewFrameStack]);
 
   const previewTitle =
     previewStatus === "unavailable"

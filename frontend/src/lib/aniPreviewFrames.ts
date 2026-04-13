@@ -41,6 +41,12 @@ export interface AniPreviewFrameSequence {
   frames: AniPreviewFrame[];
 }
 
+export interface AniPreviewRenderedFrameStack {
+  width: number;
+  height: number;
+  frames: CursorFrame[];
+}
+
 export interface GifFrameMetadata {
   width: number;
   height: number;
@@ -113,15 +119,68 @@ export async function buildAniPreviewSource(
   input: AniPreviewInput,
   dependencies: AniPreviewDependencies = {}
 ): Promise<AniPreviewBuildResult> {
+  const stack = await buildAniPreviewFrameStack(input, dependencies);
+  return {
+    source: createAniPreviewSourceFromFrames(stack, {
+      hotspotX: input.hotspotX,
+      hotspotY: input.hotspotY,
+      outputSize: input.outputSize,
+      editorViewportSize: input.editorViewportSize,
+    }),
+    frameUrls: stack.frames.map((frame) => frame.src),
+  };
+}
+
+export async function buildAniPreviewFrameStack(
+  input: Omit<AniPreviewInput, "hotspotX" | "hotspotY">,
+  dependencies: AniPreviewDependencies = {}
+): Promise<AniPreviewRenderedFrameStack> {
   const sequence = await prepareAniPreviewFrames(input.imageUrl, dependencies);
-  const outputSize = normalizeOutputSize(input.outputSize);
+  const frameUrls = await rasterizeAniPreviewFrameUrls(
+    sequence,
+    input,
+    dependencies
+  );
+
+  return {
+    width: sequence.width,
+    height: sequence.height,
+    frames: frameUrls.map((src, index) => ({
+      src,
+      durationMs: sequence.frames[index]?.durationMs ?? DEFAULT_FRAME_DURATION_MS,
+    })),
+  };
+}
+
+export function createAniPreviewSourceFromFrames(
+  sequence: AniPreviewRenderedFrameStack,
+  input: {
+    hotspotX: number;
+    hotspotY: number;
+    outputSize: number;
+    editorViewportSize?: number;
+  }
+) {
   const mappedHotspot = mapViewportHotspotToOutput({
     hotspotX: input.hotspotX,
     hotspotY: input.hotspotY,
     viewportSize: input.editorViewportSize ?? DEFAULT_EDITOR_VIEWPORT_SIZE,
-    outputSize,
+    outputSize: normalizeOutputSize(input.outputSize),
   });
 
+  return createAnimatedCursorSource(
+    sequence.frames,
+    mappedHotspot,
+    normalizeOutputSize(input.outputSize)
+  );
+}
+
+async function rasterizeAniPreviewFrameUrls(
+  sequence: AniPreviewFrameSequence,
+  input: Omit<AniPreviewInput, "hotspotX" | "hotspotY">,
+  dependencies: AniPreviewDependencies
+) {
+  const outputSize = normalizeOutputSize(input.outputSize);
   const frameUrls: string[] = [];
 
   try {
@@ -145,17 +204,7 @@ export async function buildAniPreviewSource(
     throw error;
   }
 
-  return {
-    source: createAnimatedCursorSource(
-      frameUrls.map((src, index): CursorFrame => ({
-        src,
-        durationMs: sequence.frames[index]?.durationMs,
-      })),
-      mappedHotspot,
-      outputSize
-    ),
-    frameUrls,
-  };
+  return frameUrls;
 }
 
 export async function prepareAniPreviewFrames(
