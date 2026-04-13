@@ -1,0 +1,1 @@
+{"object_id":"fe34e615-29b6-4dc9-997b-c35490db8d06","status":"completed","download_url":"https://api.pixellab.ai/mcp/map-objects/fe34e615-29b6-4dc9-997b-c35490db8d06/download"}

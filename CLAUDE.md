@@ -76,6 +76,34 @@
 - 이 파일에는 실행 규칙만 적는다
 - 제품 스펙, 비전, 전략 상세는 `point/` 또는 `docs/`의 문서를 갱신한다
 
+## Generated Asset Workflow
+
+- Use `assets/pixellab/` as the working area for AI-generated asset production.
+- Use `frontend/public/showcase/explore/` only for publish-ready images that are actually referenced by the app.
+- Folder roles:
+  - `assets/pixellab/raw/` = direct generator outputs
+  - `assets/pixellab/selected/` = shortlisted candidates
+  - `assets/pixellab/final/` = cleaned masters ready for export or public promotion
+  - `assets/pixellab/prompts/` = prompt notes, seeds, and generation logs
+
+## Generated Asset Naming
+
+- Use lowercase `kebab-case` only.
+- Start every filename with the object slug.
+- Add a state suffix when needed: `default`, `pressed`, `hover`, `alt-a`, `alt-b`.
+- End image versions with `-v01`, `-v02`, `-v03`, etc.
+- Keep the same base slug while promoting files from `raw` to `selected` to `final`.
+- Prompt note files should use the object slug as the filename.
+
+Examples:
+
+- `cat-paw-default-v01.png`
+- `cat-paw-pressed-v01.png`
+- `planet-orb-default-v02.png`
+- `mini-fishbowl-default-v01.png`
+- `crescent-shard-alt-a-v03.png`
+- `assets/pixellab/prompts/cat-paw.md`
+
 ## Claude Code Skills
 
 - Claude Code 프로젝트 스킬의 기준 위치는 `.claude/skills/`이다

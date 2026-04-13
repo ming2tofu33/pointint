@@ -1,0 +1,35 @@
+`create_map_object` exposes these inputs:
+
+`description`
+Required text prompt for the object to generate.
+
+`background_image`
+Optional style-reference image input. It does accept a reference image, but not as a plain URL field.
+Supported formats are JSON strings:
+`{"type":"path","path":"assets/map.png"}`
+or
+`{"type":"base64","base64":"..."}`
+This is for style matching against an existing image.
+
+`inpainting`
+Optional JSON string for generation region control. It does accept inpainting inputs.
+Supported forms:
+`{"type":"oval","fraction":0.3}`
+`{"type":"rectangle","fraction":0.5}`
+`{"type":"mask","mask_image":"base64..."}`
+If `background_image` is provided and `inpainting` is omitted, it defaults to an oval mask covering about 60%.
+
+`width`, `height`
+Canvas size. Required in basic mode, optional when `background_image` is provided.
+
+Style controls:
+`detail`
+`outline`
+`shading`
+`view`
+
+Direct answers to your questions:
+Yes: reference image via `background_image`
+No: no dedicated image URL input
+Yes: mask input via `inpainting` with `type:"mask"`
+Yes: inpainting is supported via the `inpainting` parameter

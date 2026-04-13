@@ -1,0 +1,25 @@
+Using `using-superpowers` to satisfy the session skill rules; no implementation skill is needed here.
+
+`mcp__pixellab__animate_character` - Queue animation jobs for an existing character.
+`mcp__pixellab__create_character` - Create a directional pixel-art character.
+`mcp__pixellab__create_isometric_tile` - Generate a single isometric tile asset.
+`mcp__pixellab__create_map_object` - Generate a pixel-art map object with transparent background or style-matched inpainting.
+`mcp__pixellab__create_sidescroller_tileset` - Generate a side-view platformer tileset.
+`mcp__pixellab__create_tiles_pro` - Generate multiple advanced tile variations for top-down/isometric/hex use.
+`mcp__pixellab__create_topdown_tileset` - Generate a top-down autotiling terrain tileset.
+`mcp__pixellab__delete_character` - Permanently delete a character and its associated data.
+`mcp__pixellab__delete_isometric_tile` - Permanently delete an isometric tile.
+`mcp__pixellab__delete_sidescroller_tileset` - Permanently delete a sidescroller tileset.
+`mcp__pixellab__delete_tiles_pro` - Permanently delete a tiles-pro asset set.
+`mcp__pixellab__delete_topdown_tileset` - Permanently delete a topdown tileset.
+`mcp__pixellab__get_character` - Retrieve full character details, rotations, animations, and downloads.
+`mcp__pixellab__get_isometric_tile` - Retrieve an isometric tile and its generation status.
+`mcp__pixellab__get_map_object` - Retrieve a map object and its generation status.
+`mcp__pixellab__get_sidescroller_tileset` - Retrieve a sidescroller tileset and optional example map.
+`mcp__pixellab__get_tiles_pro` - Retrieve a tiles-pro asset set and its status.
+`mcp__pixellab__get_topdown_tileset` - Retrieve a topdown tileset and its status.
+`mcp__pixellab__list_characters` - List your created characters.
+`mcp__pixellab__list_isometric_tiles` - List your created isometric tiles.
+`mcp__pixellab__list_sidescroller_tilesets` - List your created sidescroller tilesets.
+`mcp__pixellab__list_tiles_pro` - List your created tiles-pro asset sets.
+`mcp__pixellab__list_topdown_tilesets` - List your created topdown tilesets.
