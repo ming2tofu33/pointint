@@ -43,11 +43,12 @@ export default function CursorSimulationSurface({
       return;
     }
 
-    const timer = window.setInterval(() => {
+    let animationFrameId = window.requestAnimationFrame(function tick() {
       setNow(Date.now());
-    }, 100);
+      animationFrameId = window.requestAnimationFrame(tick);
+    });
 
-    return () => window.clearInterval(timer);
+    return () => window.cancelAnimationFrame(animationFrameId);
   }, [source]);
 
   const snapshot = useMemo<CursorSourceSnapshot | null>(() => {

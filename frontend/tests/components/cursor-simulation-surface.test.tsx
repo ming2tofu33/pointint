@@ -1,7 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
-import { createStaticCursorSource } from "@/lib/cursorSources";
+import { createAnimatedCursorSource, createStaticCursorSource } from "@/lib/cursorSources";
 
 import CursorScene from "@/components/CursorScene";
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
@@ -145,5 +145,29 @@ describe("CursorSimulationSurface", () => {
     fireEvent.mouseEnter(textZone);
 
     expect(stage).toHaveAttribute("data-active-zone", "text");
+  });
+
+  it("schedules animated preview updates with requestAnimationFrame", async () => {
+    const source = createAnimatedCursorSource(
+      [
+        { src: "blob:frame-1", durationMs: 40 },
+        { src: "blob:frame-2", durationMs: 40 },
+      ],
+      { x: 0, y: 0 },
+      32
+    );
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(() => 1);
+
+    render(
+      <CursorSimulationSurface source={source}>
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    await waitFor(() => {
+      expect(requestAnimationFrameSpy).toHaveBeenCalled();
+    });
   });
 });
