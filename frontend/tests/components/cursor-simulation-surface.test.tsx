@@ -40,6 +40,39 @@ describe("CursorSimulationSurface", () => {
     expect(stage).toHaveStyle({ cursor: "none" });
   });
 
+  it("uses stage-local coordinates when positioning the cursor preview", () => {
+    const source = createStaticCursorSource(
+      { src: "blob:cursor" },
+      { x: 12, y: 8 },
+      32
+    );
+
+    render(
+      <CursorSimulationSurface source={source}>
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    const stage = screen.getByTestId("cursor-simulation-stage");
+    stage.getBoundingClientRect = vi.fn(() => ({
+      x: 50,
+      y: 20,
+      left: 50,
+      top: 20,
+      right: 450,
+      bottom: 320,
+      width: 400,
+      height: 300,
+      toJSON: () => ({}),
+    })) as typeof stage.getBoundingClientRect;
+
+    fireEvent.mouseMove(stage, { clientX: 200, clientY: 100 });
+
+    const preview = screen.getByTestId("cursor-preview-layer");
+
+    expect(preview).toHaveStyle({ left: "138px", top: "72px" });
+  });
+
   it("lets the background mode switch without removing the scene", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },

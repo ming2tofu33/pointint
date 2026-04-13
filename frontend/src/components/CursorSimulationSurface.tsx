@@ -7,8 +7,10 @@ import {
   useEffect,
   useMemo,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type ReactElement,
   type ReactNode,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 
 import CursorPreviewLayer from "@/components/CursorPreviewLayer";
@@ -94,10 +96,8 @@ export default function CursorSimulationSurface({
       <div
         data-testid="cursor-simulation-stage"
         data-active-zone={activeZone}
-        onPointerMove={(event) =>
-          setPointer({ x: event.clientX, y: event.clientY })
-        }
-        onMouseMove={(event) => setPointer({ x: event.clientX, y: event.clientY })}
+        onPointerMove={(event) => setPointer(getStageLocalPointer(event))}
+        onMouseMove={(event) => setPointer(getStageLocalPointer(event))}
         style={{
           position: "relative",
           flex: 1,
@@ -112,6 +112,16 @@ export default function CursorSimulationSurface({
       </div>
     </div>
   );
+}
+
+function getStageLocalPointer(
+  event: ReactMouseEvent<HTMLDivElement> | ReactPointerEvent<HTMLDivElement>
+) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  return {
+    x: Math.round(event.clientX - rect.left),
+    y: Math.round(event.clientY - rect.top),
+  };
 }
 
 function renderScene(
