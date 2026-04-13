@@ -27,9 +27,9 @@ export default function Header() {
   return (
     <header
       style={{
-        borderBottom: "1px solid var(--landing-divider)",
+        borderBottom: "1px solid var(--app-header-border)",
         background:
-          "linear-gradient(180deg, var(--landing-header-highlight), var(--landing-header-backdrop))",
+          "linear-gradient(180deg, var(--app-header-highlight), var(--app-header-backdrop))",
         position: "sticky",
         top: 0,
         zIndex: 40,
@@ -37,7 +37,7 @@ export default function Header() {
         width: "100%",
         ["--app-header-height" as string]: "4.25rem",
         boxShadow:
-          "inset 0 1px 0 var(--landing-header-highlight), 0 12px 28px var(--landing-header-shadow)",
+          "inset 0 1px 0 var(--app-header-highlight), 0 12px 28px var(--app-header-shadow)",
       }}
     >
       <div className="app-header-shell">

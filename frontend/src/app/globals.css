@@ -45,6 +45,10 @@
   --landing-surface-shadow: rgba(0, 0, 0, 0.2);
   --landing-control-bg: rgba(255, 255, 255, 0.03);
   --landing-control-bg-hover: rgba(255, 255, 255, 0.06);
+  --app-header-border: rgba(255, 255, 255, 0.08);
+  --app-header-backdrop: rgba(13, 15, 18, 0.72);
+  --app-header-highlight: rgba(255, 255, 255, 0.04);
+  --app-header-shadow: rgba(0, 0, 0, 0.24);
   --landing-header-backdrop: rgba(8, 12, 24, 0.56);
   --landing-header-highlight: rgba(255, 255, 255, 0.05);
   --landing-header-shadow: rgba(0, 0, 0, 0.18);
@@ -53,9 +57,16 @@
   --landing-proof-ring: rgba(255, 255, 255, 0.06);
   --landing-mood-ring: rgba(255, 255, 255, 0.08);
   --landing-mood-ring-shadow: rgba(255, 255, 255, 0.015);
-  --landing-water-mid: #102040;
-  --landing-water-highlight: #79a3ff;
+  --landing-water-mid: #0a1f4a;
+  --landing-water-highlight: #4da3ff;
   --landing-water-opacity-scale: 1;
+  --studio-bg-primary: #0d0f12;
+  --studio-bg-secondary: #111418;
+  --studio-bg-tertiary: #171b21;
+  --studio-border: #262c35;
+  --studio-text-primary: #e7e9ed;
+  --studio-text-secondary: #a0a7b1;
+  --studio-text-muted: #66707c;
 
   color-scheme: dark;
 }
@@ -100,17 +111,28 @@
   --landing-surface-shadow: rgba(120, 136, 146, 0.12);
   --landing-control-bg: rgba(244, 247, 248, 0.78);
   --landing-control-bg-hover: rgba(249, 250, 251, 0.96);
-  --landing-header-backdrop: rgba(244, 247, 248, 0.7);
-  --landing-header-highlight: rgba(252, 252, 251, 0.82);
+  --app-header-border: rgba(255, 255, 255, 0.08);
+  --app-header-backdrop: rgba(13, 15, 18, 0.72);
+  --app-header-highlight: rgba(255, 255, 255, 0.04);
+  --app-header-shadow: rgba(0, 0, 0, 0.24);
+  --landing-header-backdrop: rgba(244, 247, 248, 0.56);
+  --landing-header-highlight: rgba(255, 255, 255, 0.25);
   --landing-header-shadow: rgba(158, 180, 192, 0.14);
   --landing-proof-frame-top: rgba(255, 255, 255, 0.92);
   --landing-proof-frame-bottom: rgba(235, 239, 241, 0.94);
   --landing-proof-ring: rgba(128, 146, 156, 0.16);
   --landing-mood-ring: rgba(128, 146, 156, 0.16);
   --landing-mood-ring-shadow: rgba(158, 180, 192, 0.1);
-  --landing-water-mid: #c9d8df;
-  --landing-water-highlight: #9eb4c0;
+  --landing-water-mid: #b8e1e9;
+  --landing-water-highlight: #7ad1e0;
   --landing-water-opacity-scale: 1.24;
+  --studio-bg-primary: #0d0f12;
+  --studio-bg-secondary: #111418;
+  --studio-bg-tertiary: #171b21;
+  --studio-border: #262c35;
+  --studio-text-primary: #e7e9ed;
+  --studio-text-secondary: #a0a7b1;
+  --studio-text-muted: #66707c;
 
   color-scheme: light;
 }
@@ -155,17 +177,28 @@
   --landing-surface-shadow: rgba(140, 94, 113, 0.12);
   --landing-control-bg: rgba(255, 247, 250, 0.72);
   --landing-control-bg-hover: rgba(255, 250, 252, 0.94);
-  --landing-header-backdrop: rgba(250, 242, 246, 0.72);
-  --landing-header-highlight: rgba(255, 252, 253, 0.84);
+  --app-header-border: rgba(255, 255, 255, 0.08);
+  --app-header-backdrop: rgba(13, 15, 18, 0.72);
+  --app-header-highlight: rgba(255, 255, 255, 0.04);
+  --app-header-shadow: rgba(0, 0, 0, 0.24);
+  --landing-header-backdrop: rgba(250, 242, 246, 0.56);
+  --landing-header-highlight: rgba(255, 255, 255, 0.25);
   --landing-header-shadow: rgba(217, 135, 166, 0.14);
   --landing-proof-frame-top: rgba(255, 252, 253, 0.94);
   --landing-proof-frame-bottom: rgba(243, 228, 236, 0.94);
   --landing-proof-ring: rgba(140, 94, 113, 0.14);
   --landing-mood-ring: rgba(140, 94, 113, 0.14);
   --landing-mood-ring-shadow: rgba(217, 135, 166, 0.1);
-  --landing-water-mid: #e5c0cc;
-  --landing-water-highlight: #d57c9a;
+  --landing-water-mid: #eeb3c5;
+  --landing-water-highlight: #ff84a6;
   --landing-water-opacity-scale: 1.18;
+  --studio-bg-primary: #0d0f12;
+  --studio-bg-secondary: #111418;
+  --studio-bg-tertiary: #171b21;
+  --studio-border: #262c35;
+  --studio-text-primary: #e7e9ed;
+  --studio-text-secondary: #a0a7b1;
+  --studio-text-muted: #66707c;
 
   color-scheme: light;
 }
@@ -231,6 +264,7 @@ button:disabled {
 
 /* A5: Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

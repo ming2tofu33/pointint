@@ -70,6 +70,25 @@ describe("Header", () => {
     expect(exploreLink).toHaveAttribute("aria-current", "page");
   });
 
+  it("uses shared black-glass header tokens instead of landing-only tokens", () => {
+    mockUsePathname.mockReturnValue("/studio");
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Header />
+      </NextIntlClientProvider>
+    );
+
+    const header = screen.getByRole("banner");
+    const style = header.getAttribute("style") ?? "";
+
+    expect(style).toContain("var(--app-header-border)");
+    expect(style).toContain("var(--app-header-highlight)");
+    expect(style).toContain("var(--app-header-backdrop)");
+    expect(style).toContain("var(--app-header-shadow)");
+    expect(style).not.toContain("--landing-header-backdrop");
+  });
+
   it("marks Studio active on the studio page", () => {
     mockUsePathname.mockReturnValue("/studio");
 

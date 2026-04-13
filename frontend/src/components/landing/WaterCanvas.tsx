@@ -285,29 +285,27 @@ export default function WaterCanvas({
       const theme =
         (document.documentElement.getAttribute("data-theme") as ThemeName | null) ??
         "dark";
-      const base =
-        parseCssColor(styles.getPropertyValue("--landing-bg-start").trim()) ??
-        parseCssColor(styles.getPropertyValue("--color-bg-primary").trim()) ??
-        FALLBACK_DARK_BG;
-      const accent =
-        parseCssColor(styles.getPropertyValue("--color-accent").trim()) ??
-        DEFAULT_ACCENT;
-      const palette = resolveWaterPalette({
-        base,
-        accent,
-        theme,
-        variant,
-        styles,
-      });
+
+      // Read theme colors
+      const cs = getComputedStyle(document.documentElement);
+      const bgHex = cs.getPropertyValue("--color-bg-primary").trim() || "#080C18";
+      const midHex = cs.getPropertyValue("--landing-water-mid").trim() || "#102040";
+      const highlightHex = cs.getPropertyValue("--landing-water-highlight").trim() || "#79a3ff";
+
+      const base = hexToRgb(bgHex) ?? FALLBACK_DARK_BG;
+      // Water mid/highlight — explicitly defined in CSS variables per-theme
+      const mid = hexToRgb(midHex) ?? FALLBACK_DARK_MID;
+      const highlight = hexToRgb(highlightHex) ?? FALLBACK_DARK_HIGHLIGHT;
+
       const shading = resolveWaterShading(base);
 
       gl.uniform3f(uBaseColor, base[0], base[1], base[2]);
-      gl.uniform3f(uMidColor, palette.mid[0], palette.mid[1], palette.mid[2]);
+      gl.uniform3f(uMidColor, mid[0], mid[1], mid[2]);
       gl.uniform3f(
         uHighlightColor,
-        palette.highlight[0],
-        palette.highlight[1],
-        palette.highlight[2]
+        highlight[0],
+        highlight[1],
+        highlight[2]
       );
       gl.uniform1f(uDepthFloor, shading.depthFloor);
       gl.uniform1f(uVignetteStrength, shading.vignetteStrength);
