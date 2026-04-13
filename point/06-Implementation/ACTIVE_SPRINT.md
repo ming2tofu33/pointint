@@ -31,6 +31,7 @@ aliases:
 - `P1-ANALYTICS-01` is now closed with a global analytics consent banner plus GA4 and Clarity instrumentation for the current browse/make/download funnel.
 - `Phase 1.5` is open with ANI v1 scoped to `Animated GIF -> shared framing/hotspot -> .ani export`.
 - Slot-based studio foundation is now in flight: `normal / text / link / button` slots edit one at a time and the simulation runtime is moving to zone-based source mapping.
+- `Phase 1.5 / STUDIO-UX-01` is now closed with a premium-tool shell refresh across CUR and ANI: slot board, stage header, validation footer, and inspector now read as one system.
 
 ## Current Doing
 
@@ -39,15 +40,14 @@ aliases:
 | Lane | Task | Status | Note |
 |---|---|---|---|
 | Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice now includes slot-based studio foundation, zone-mapped simulation, and minimum download guard on `normal` |
-| Next | `Phase 1.5 / STUDIO-UX-01` | queued | premium tool shell refresh for slot board, edit stage, simulation stage, and inspector hierarchy |
 | Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
 | Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
 
 ## Next Session
 
-- Verify GIF upload -> ANI export manually in the studio against a few real samples
+- Verify GIF upload -> ANI export manually in the refreshed studio against a few real samples
 - Check slot-based simulation behavior with mixed `CUR` and `ANI` slots in real browser use
-- Execute the Studio shell refresh plan to tighten hierarchy, slot entry UX, and inspector clarity
+- Validate focus, spacing, and inspector readability in a real browser pass now that the shared shell hierarchy is landed
 - Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 
@@ -68,6 +68,7 @@ aliases:
 - `P1-ANALYTICS-01` complete: global analytics consent banner, consent-gated GA4 + Clarity loading, route page views, and minimal funnel events for studio, explore, showcase downloads, guide opens, and download completion.
 - `Phase 1.5 / ANI-V1-01` in progress: `ANI > Animated GIF` is selectable, GIF upload enters a dedicated ANI editor shell, shared framing/hotspot controls are reused, and the backend now exposes a `.ani` export route for GIF-first ANI creation.
 - `Phase 1.5 / ANI-V1-01` advanced: Studio is moving from a single-cursor editor to a slot-based cursor theme editor with `normal / text / link / button`, zone-mapped simulation fallback, and download gated on a populated `normal` slot.
+- `Phase 1.5 / STUDIO-UX-01` complete: Studio now reads as a premium product tool with shared CUR/ANI stage headers, action regions, source-entry cards, inspector cards, and restrained motion/focus polish.
 
 ## Decision Follow-up
 
@@ -82,6 +83,7 @@ aliases:
 - 2026-04-13: Slot-based cursor themes now drive the Studio direction for Phase 1.5. `normal / text / link / button` are fixed slots, simulation resolves zone -> slot with fallback to `normal`, and download stays disabled until `normal` exists.
 - 2026-04-13: Studio dark presentation now splits from landing browse mood. The shared header uses black-glass tokens, while `/studio` applies a scoped near-black workspace theme for focus-heavy editing.
 - 2026-04-13: Studio shell polish should follow a premium product tool direction with a restrained creative accent. The target hierarchy is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
+- 2026-04-13: Studio shell hierarchy is now unified across CUR and ANI. Empty slots keep one central source-entry hub, while populated slots share the same stage header, validation footer, and inspector contract.
 
 ## Document Follow-up
 

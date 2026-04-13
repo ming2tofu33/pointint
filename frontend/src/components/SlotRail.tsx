@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
+import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
 
 interface SlotRailProps {
   project: CursorThemeProject;
@@ -69,30 +70,34 @@ export default function SlotRail({
               display: "flex",
               width: "100%",
               alignItems: "flex-start",
-              gap: "0.625rem",
-              padding: "0.5rem",
-              minHeight: "4.75rem",
-              borderRadius: "0.25rem",
+              gap: "0.75rem",
+              padding: "0.625rem",
+              minHeight: "5rem",
+              borderRadius: "0.5rem",
               border: `1px solid ${selected ? "var(--color-accent)" : "var(--color-border)"}`,
               backgroundColor: selected
                 ? "var(--color-accent-subtle)"
                 : "var(--color-bg-primary)",
+              boxShadow: selected
+                ? "0 0 0 1px var(--color-accent), 0 12px 28px rgba(0, 0, 0, 0.3)"
+                : "none",
               color: "var(--color-text-primary)",
               cursor: "pointer",
               textAlign: "left",
+              transition: STUDIO_INTERACTION_TRANSITION,
             }}
           >
             <div
               data-testid={`slot-badge-stack-${slotId}`}
               style={{
-                width: "2rem",
+                width: "2.125rem",
                 flexShrink: 0,
                 display: "grid",
                 gap: "0.125rem",
                 alignContent: "start",
               }}
             >
-              {selected && (
+              {selected ? (
                 <span
                   data-testid={`slot-selected-badge-${slotId}`}
                   style={{
@@ -101,6 +106,20 @@ export default function SlotRail({
                     borderRadius: "0.25rem",
                     backgroundColor: "rgba(38, 132, 255, 0.16)",
                     color: "var(--color-accent)",
+                    lineHeight: 1.2,
+                    justifySelf: "start",
+                  }}
+                  >
+                    {t("slotSelected")}
+                  </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    fontSize: "0.5625rem",
+                    padding: "0.125rem 0.25rem",
+                    borderRadius: "0.25rem",
+                    visibility: "hidden",
                     lineHeight: 1.2,
                     justifySelf: "start",
                   }}
@@ -116,7 +135,9 @@ export default function SlotRail({
                   height: "2rem",
                   borderRadius: "0",
                   border: `1px ${filled ? "solid" : "dashed"} ${selected ? "var(--color-accent)" : "var(--color-border)"}`,
-                  backgroundColor: "rgba(255,255,255,0.04)",
+                  backgroundColor: filled
+                    ? "rgba(255,255,255,0.065)"
+                    : "rgba(255,255,255,0.025)",
                   overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
@@ -182,7 +203,9 @@ export default function SlotRail({
                 data-testid={`slot-status-${slotId}`}
                 style={{
                   fontSize: "0.625rem",
-                  color: "var(--color-text-muted)",
+                  color: filled
+                    ? "var(--color-text-secondary)"
+                    : "var(--color-text-muted)",
                   lineHeight: 1.2,
                 }}
               >

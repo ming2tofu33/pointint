@@ -66,3 +66,4 @@ aliases:
 - Shared header styling should no longer depend on landing-only navy glass tokens. The app header now owns its own black-glass token set.
 - Studio workspace styling should be scoped locally instead of rewriting global dark mode. `/studio` uses near-black workbench tokens so landing and explore can keep their browse-oriented surfaces.
 - Studio shell polish should use a premium product tool base with only a restrained creative accent. The intended reading order is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
+- Studio shell hierarchy is now shared across CUR and ANI. Empty slots keep a single central source-entry hub, and populated slots share the same stage header, validation footer, and inspector contract.

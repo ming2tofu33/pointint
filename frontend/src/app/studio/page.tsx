@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -12,10 +12,24 @@ import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
 import SlotRail from "@/components/SlotRail";
+import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import Simulation from "@/components/Simulation";
 import SimulationFooter from "@/components/SimulationFooter";
 import StudioBar from "@/components/StudioBar";
+import StudioInspector, {
+  StudioInspectorEmptyNotice,
+  StudioInspectorRow,
+  StudioInspectorSecondaryButton,
+  StudioInspectorSection,
+  StudioInspectorSegmentedControl,
+} from "@/components/StudioInspector";
+import StudioStageActionBar from "@/components/StudioStageActionBar";
+import StudioStageHeader from "@/components/StudioStageHeader";
 import UploadZone from "@/components/UploadZone";
+import {
+  STUDIO_INTERACTION_TRANSITION,
+  StudioShellInteractionStyles,
+} from "@/components/StudioSurfaceCard";
 import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
 import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
@@ -112,6 +126,39 @@ export default function StudioPage() {
       normalSlot.asset.previewUrl ||
       (selectedSlotId === "normal" && (cursor || ani))
   );
+  const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
+  const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "CUR";
+  const stageHotspotBadge =
+    state === "editing" && cursor
+      ? cursor.hotspotMode === "auto"
+        ? t("recommended")
+        : t("manual")
+      : null;
+  const stageGuidance = cursor
+    ? [
+        activeTool === "move" ? t("dragToMove") : t("clickToSetHotspot"),
+        t("shortcutMove"),
+        t("shortcutHotspot"),
+      ]
+    : [t("emptySlotDescription")];
+  const stageActions = [
+    {
+      id: "studio-toggle-original",
+      label: showOriginal ? t("showProcessed") : t("showOriginal"),
+      onClick: toggleOriginal,
+      disabled: !cursor,
+      title: showOriginal ? t("showProcessed") : t("showOriginal"),
+      ariaLabel: showOriginal ? t("showProcessed") : t("showOriginal"),
+    },
+    {
+      id: "studio-retry-bg",
+      label: t("retryBg"),
+      onClick: retryBgRemoval,
+      disabled: !cursor,
+      title: t("retryBg"),
+      ariaLabel: t("retryBg"),
+    },
+  ];
   const slotSimulationSources = useMemo(
     () => buildProjectSlotSimulationSources(project),
     [project]
@@ -123,7 +170,12 @@ export default function StudioPage() {
 
   return (
     <MobileGuard>
-      <div data-testid="studio-theme-scope" style={studioThemeScopeStyle}>
+      <div
+        data-testid="studio-theme-scope"
+        data-studio-shell
+        style={studioThemeScopeStyle}
+      >
+        <StudioShellInteractionStyles />
         <StudioBar
           onDownload={download}
           downloading={downloading}
@@ -228,7 +280,7 @@ export default function StudioPage() {
             <UploadZone onFile={selectFile} processing={true} />
           )}
 
-      {state === "editing" && (
+          {state === "editing" && (
             <div
               style={{
                 flex: 1,
@@ -252,92 +304,114 @@ export default function StudioPage() {
                   display: "flex",
                   flexDirection: "column",
                   overflow: "hidden",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  backgroundColor: "var(--color-bg-primary)",
                 }}
               >
                 {showSlotSourceEntry ? (
-                  <SlotEmptyState
-                    slotId={selectedSlotId}
-                    onStaticFile={selectSelectedSlotStaticFile}
-                    onAnimatedFile={selectSelectedSlotAnimatedFile}
-                  />
+                  <div
+                    style={{
+                      flex: 1,
+                      minHeight: 0,
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      overflow: "hidden",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "1.25rem",
+                    }}
+                  >
+                    <SlotEmptyState
+                      slotId={selectedSlotId}
+                      onStaticFile={selectSelectedSlotStaticFile}
+                      onAnimatedFile={selectSelectedSlotAnimatedFile}
+                    />
+                  </div>
                 ) : selectedSlotBound && cursor ? (
                   <div
                     style={{
+                      flex: 1,
+                      minHeight: 0,
+                      width: "100%",
                       display: "flex",
                       flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      overflow: "hidden",
+                      padding: "1.25rem 1.25rem 0.875rem",
                       gap: "1rem",
-                      flex: "1 1 58%",
-                      minHeight: 0,
                     }}
                   >
-                    <CursorCanvas
-                      imageUrl={displayUrl}
-                      sourceWidth={cursor.sourceWidth}
-                      sourceHeight={cursor.sourceHeight}
-                      fitMode={cursor.fitMode}
-                      offsetX={cursor.offsetX}
-                      offsetY={cursor.offsetY}
-                      scale={cursor.scale}
-                      hotspotX={cursor.hotspotX}
-                      hotspotY={cursor.hotspotY}
-                      onOffsetChange={setOffset}
-                      onHotspotChange={setHotspot}
-                      activeTool={activeTool}
+                    <StudioStageHeader
+                      slotLabel={stageSlotLabel}
+                      typeLabel={stageTypeLabel}
+                      cursorName={cursor.cursorName}
+                      statusBadge={stageHotspotBadge}
+                      style={{ padding: 0 }}
                     />
 
                     <div
                       style={{
-                        fontSize: "0.6875rem",
-                        color: "var(--color-text-muted)",
+                        flex: 1,
+                        minHeight: 0,
                         display: "flex",
-                        gap: "1.5rem",
                         alignItems: "center",
-                        flexWrap: "wrap",
                         justifyContent: "center",
-                        padding: "0 1rem 1rem",
+                        overflow: "hidden",
                       }}
                     >
-                      <span>
-                        {activeTool === "move"
-                          ? t("dragToMove")
-                          : t("clickToSetHotspot")}
-                      </span>
-                      <span>{t("shortcutMove")}</span>
-                      <span>{t("shortcutHotspot")}</span>
-
-                      <button
-                        onClick={toggleOriginal}
+                      <div
                         style={{
-                          fontSize: "0.6875rem",
-                          color: showOriginal
-                            ? "var(--color-accent)"
-                            : "var(--color-text-muted)",
-                          background: "none",
-                          border: "1px solid var(--color-border)",
-                          padding: "0.125rem 0.5rem",
-                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "1rem",
+                          flex: "1 1 58%",
+                          minHeight: 0,
                         }}
                       >
-                        {showOriginal ? t("showProcessed") : t("showOriginal")}
-                      </button>
+                        <CursorCanvas
+                          imageUrl={displayUrl}
+                          sourceWidth={cursor.sourceWidth}
+                          sourceHeight={cursor.sourceHeight}
+                          fitMode={cursor.fitMode}
+                          offsetX={cursor.offsetX}
+                          offsetY={cursor.offsetY}
+                          scale={cursor.scale}
+                          hotspotX={cursor.hotspotX}
+                          hotspotY={cursor.hotspotY}
+                          onOffsetChange={setOffset}
+                          onHotspotChange={setHotspot}
+                          activeTool={activeTool}
+                        />
+                      </div>
+                    </div>
 
-                      <button
-                        onClick={retryBgRemoval}
+                    <div
+                      data-testid="studio-stage-actions"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.75rem",
+                        borderTop: "1px solid var(--color-border)",
+                        paddingTop: "0.875rem",
+                      }}
+                    >
+                      <div
                         style={{
                           fontSize: "0.6875rem",
                           color: "var(--color-text-muted)",
-                          background: "none",
-                          border: "1px solid var(--color-border)",
-                          padding: "0.125rem 0.5rem",
-                          cursor: "pointer",
+                          display: "flex",
+                          gap: "1rem",
+                          alignItems: "center",
+                          flexWrap: "wrap",
                         }}
                       >
-                        {t("retryBg")}
-                      </button>
+                        {stageGuidance.map((item) => (
+                          <span key={item}>{item}</span>
+                        ))}
+                      </div>
+
+                      <StudioStageActionBar actions={stageActions} />
                     </div>
                   </div>
                 ) : null}
@@ -371,153 +445,176 @@ export default function StudioPage() {
           )}
         </main>
 
-        <aside
+        <StudioInspector
           style={{
             width: "16rem",
             borderLeft: "1px solid var(--color-border)",
             backgroundColor: "var(--color-bg-secondary)",
             padding: "1.25rem",
             flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.5rem",
             overflowY: "auto",
           }}
+          summary={
+            state === "editing" && cursor && selectedSlotBound ? (
+              <div style={{ display: "grid", gap: "0.375rem" }}>
+                <StudioInspectorRow label={t("slotRailTitle")} value={stageSlotLabel} />
+                <StudioInspectorRow label={tp("cursor")} value={cursor.cursorName} />
+                <StudioInspectorRow
+                  label={t("slotFilled")}
+                  value={
+                    selectedSlot.kind
+                      ? selectedSlot.kind.toUpperCase()
+                      : t("slotKindUnset")
+                  }
+                />
+              </div>
+            ) : (
+              <StudioInspectorEmptyNotice
+                slotLabel={stageSlotLabel}
+                title={t("slotEmptyTitle")}
+                summary={t("emptySlotDescription")}
+                expectedControlsTitle={t("inspectorExpectedControlsTitle")}
+                expectedControls={[
+                  tp("output"),
+                  tp("framing"),
+                  tp("name"),
+                  tp("hotspot"),
+                  tp("scale"),
+                  tp("position"),
+                ]}
+                formatGuidanceTitle={t("inspectorFormatGuidanceTitle")}
+                formatGuidance={[
+                  t("slotStaticUploadSub"),
+                  t("slotAniUploadSub"),
+                ]}
+              />
+            )
+          }
+          previews={
+            state === "editing" && cursor && selectedSlotBound && previewUrl ? (
+              <div style={{ display: "grid", gap: "0.75rem" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <ActualSizePreview
+                    background="#ffffff"
+                    border="1px solid var(--color-border)"
+                    alt={tp("lightPreview")}
+                    previewUrl={previewUrl}
+                    cursorSize={cursor.cursorSize}
+                  />
+                  <ActualSizePreview
+                    background="#1a1a1a"
+                    border="1px solid var(--color-border)"
+                    alt={tp("darkPreview")}
+                    previewUrl={previewUrl}
+                    cursorSize={cursor.cursorSize}
+                  />
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                  {tp("actualSize")}
+                </div>
+              </div>
+            ) : null
+          }
+          quickActions={
+            state === "editing" && cursor && selectedSlotBound ? (
+              <div style={{ display: "grid", gap: "0.5rem" }}>
+                <StudioInspectorSecondaryButton
+                  onClick={recommendHotspot}
+                  style={{ justifyContent: "space-between" }}
+                >
+                  <span>
+                    {cursor.hotspotMode === "auto"
+                      ? tp("recommendHotspotAgain")
+                      : tp("recommendHotspot")}
+                  </span>
+                  <span aria-hidden="true">↺</span>
+                </StudioInspectorSecondaryButton>
+                <StudioInspectorSecondaryButton
+                  onClick={() => setHotspot(0, 0)}
+                  style={{ justifyContent: "space-between" }}
+                >
+                  <span>{tp("resetHotspot")}</span>
+                  <span aria-hidden="true">⟲</span>
+                </StudioInspectorSecondaryButton>
+              </div>
+            ) : null
+          }
         >
           {state === "editing" && cursor && selectedSlotBound ? (
             <>
-              {previewUrl && (
-                <PanelSection title={tp("actualSize")}>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <ActualSizePreview
-                      background="#ffffff"
-                      border="1px solid var(--color-border)"
-                      alt={tp("lightPreview")}
-                      previewUrl={previewUrl}
-                      cursorSize={cursor.cursorSize}
-                    />
-                    <ActualSizePreview
-                      background="#1a1a1a"
-                      border="1px solid var(--color-border)"
-                      alt={tp("darkPreview")}
-                      previewUrl={previewUrl}
-                      cursorSize={cursor.cursorSize}
-                    />
-                  </div>
-                </PanelSection>
-              )}
-
-              <PanelSection title={tp("cursor")}>
-                <PanelRow
+              <StudioInspectorSection title={tp("output")}>
+                <StudioInspectorRow
                   label={tp("original")}
-                  value={`${cursor.sourceWidth} × ${cursor.sourceHeight}`}
+                  value={`${cursor.sourceWidth} x ${cursor.sourceHeight}`}
                 />
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "0.8125rem",
-                    marginBottom: "0.375rem",
-                  }}
-                >
-                  <span style={{ color: "var(--color-text-secondary)" }}>
-                    {tp("output")}
-                  </span>
-                  <div style={{ display: "flex", gap: "0.25rem" }}>
-                    {([32, 48, 64] as CursorSize[]).map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setCursorSize(size)}
-                        style={{
-                          fontSize: "0.6875rem",
-                          padding: "0.125rem 0.375rem",
-                          border: `1px solid ${cursor.cursorSize === size ? "var(--color-accent)" : "var(--color-border)"}`,
-                          backgroundColor:
-                            cursor.cursorSize === size
-                              ? "var(--color-accent-subtle)"
-                              : "transparent",
-                          color:
-                            cursor.cursorSize === size
-                              ? "var(--color-accent)"
-                              : "var(--color-text-muted)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </PanelSection>
+                <StudioInspectorSegmentedControl
+                  value={cursor.cursorSize}
+                  options={[32, 48, 64] as const}
+                  onChange={setCursorSize}
+                  ariaLabel={tp("output")}
+                  getLabel={(size) => `${size}`}
+                />
+              </StudioInspectorSection>
 
-              <PanelSection title={tp("framing")}>
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-                >
-                  <FitModeButton
-                    mode="contain"
-                    active={cursor.fitMode === "contain"}
+              <StudioInspectorSection title={tp("framing")}>
+                <div style={{ display: "grid", gap: "0.5rem" }}>
+                  <StudioInspectorSecondaryButton
                     onClick={() => setFitMode("contain")}
-                  />
-                  <FitModeButton
-                    mode="cover"
-                    active={cursor.fitMode === "cover"}
+                    style={
+                      cursor.fitMode === "contain"
+                        ? {
+                            borderColor: "var(--color-accent)",
+                            backgroundColor: "var(--color-accent-subtle)",
+                            color: "var(--color-accent)",
+                          }
+                        : undefined
+                    }
+                  >
+                    {tp("fitContain")}
+                  </StudioInspectorSecondaryButton>
+                  <StudioInspectorSecondaryButton
                     onClick={() => setFitMode("cover")}
-                  />
+                    style={
+                      cursor.fitMode === "cover"
+                        ? {
+                            borderColor: "var(--color-accent)",
+                            backgroundColor: "var(--color-accent-subtle)",
+                            color: "var(--color-accent)",
+                          }
+                        : undefined
+                    }
+                  >
+                    {tp("fitCover")}
+                  </StudioInspectorSecondaryButton>
                 </div>
-              </PanelSection>
+              </StudioInspectorSection>
 
-              <PanelSection title={tp("name")}>
+              <StudioInspectorSection title={tp("name")}>
                 <NameInput
                   value={cursor.cursorName}
                   onChange={setCursorName}
                   placeholder={tp("namePlaceholder")}
                 />
-              </PanelSection>
+              </StudioInspectorSection>
 
-              <PanelSection title={tp("hotspot")}>
-                <PanelRow
+              <StudioInspectorSection title={tp("hotspot")}>
+                <StudioInspectorRow
                   label={tp("position")}
                   value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
                 />
-                <PanelRow
+                <StudioInspectorRow
                   label={tp("status")}
-                  value={
-                    cursor.hotspotMode === "auto"
-                      ? tp("recommended")
-                      : tp("manual")
-                  }
+                  value={cursor.hotspotMode === "auto" ? tp("recommended") : tp("manual")}
                 />
-                <button
-                  onClick={recommendHotspot}
-                  style={panelActionButtonStyle}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-accent)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-border)")
-                  }
-                >
-                  {cursor.hotspotMode === "auto"
-                    ? tp("recommendHotspotAgain")
-                    : tp("recommendHotspot")}
-                </button>
-                <button
-                  onClick={() => setHotspot(0, 0)}
-                  style={panelActionButtonStyle}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-accent)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-border)")
-                  }
-                >
-                  {tp("resetHotspot")}
-                </button>
-              </PanelSection>
+              </StudioInspectorSection>
 
-              <PanelSection title={tp("scale")}>
+              <StudioInspectorSection title={tp("scale")}>
                 <input
                   type="range"
                   min="0.25"
@@ -540,24 +637,19 @@ export default function StudioPage() {
                 >
                   {Math.round(cursor.scale * 100)}%
                 </div>
-              </PanelSection>
+              </StudioInspectorSection>
 
-              <PanelSection title={tp("position")}>
-                <PanelRow label={tp("offsetX")} value={`${cursor.offsetX}`} />
-                <PanelRow label={tp("offsetY")} value={`${cursor.offsetY}`} />
-                <button
+              <StudioInspectorSection title={tp("position")}>
+                <StudioInspectorRow label={tp("offsetX")} value={`${cursor.offsetX}`} />
+                <StudioInspectorRow label={tp("offsetY")} value={`${cursor.offsetY}`} />
+                <StudioInspectorSecondaryButton
                   onClick={() => setOffset(0, 0)}
-                  style={panelActionButtonStyle}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-accent)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--color-border)")
-                  }
+                  style={{ justifyContent: "space-between" }}
                 >
-                  {tp("center")}
-                </button>
-              </PanelSection>
+                  <span>{tp("center")}</span>
+                  <span aria-hidden="true">⌖</span>
+                </StudioInspectorSecondaryButton>
+              </StudioInspectorSection>
 
               <HealthCheck
                 imageBlob={cursor.renderedBlob}
@@ -565,21 +657,8 @@ export default function StudioPage() {
                 hotspotY={cursor.renderedHotspotY}
               />
             </>
-          ) : (
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-                fontSize: "0.8125rem",
-              }}
-            >
-              {t("uploadToStart")}
-            </div>
-          )}
-        </aside>
+          ) : null}
+        </StudioInspector>
       </div>
         </>
       )}
@@ -631,46 +710,6 @@ function ActualSizePreview({
   );
 }
 
-function FitModeButton({
-  mode,
-  active,
-  onClick,
-}: {
-  mode: FitMode;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const t = useTranslations("panel");
-  const label = mode === "contain" ? t("fitContain") : t("fitCover");
-  const sub = mode === "contain" ? t("fitContainSub") : t("fitCoverSub");
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: "0.125rem",
-        width: "100%",
-        padding: "0.625rem 0.75rem",
-        backgroundColor: active
-          ? "var(--color-accent-subtle)"
-          : "transparent",
-        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
-        color: active ? "var(--color-accent)" : "var(--color-text-primary)",
-        cursor: "pointer",
-        textAlign: "left",
-      }}
-    >
-      <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: "0.6875rem", color: "var(--color-text-muted)" }}>
-        {sub}
-      </span>
-    </button>
-  );
-}
-
 function ToolButton({
   label,
   shortcut,
@@ -702,7 +741,7 @@ function ToolButton({
           ? "var(--color-accent-subtle)"
           : "transparent",
         color: active ? "var(--color-accent)" : "var(--color-text-muted)",
-        transition: "all 0.15s",
+        transition: STUDIO_INTERACTION_TRANSITION,
         gap: "1px",
       }}
     >
@@ -711,48 +750,6 @@ function ToolButton({
         <span style={{ fontSize: "0.5rem", opacity: 0.6 }}>{shortcut}</span>
       )}
     </button>
-  );
-}
-
-function PanelSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <h3
-        style={{
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          color: "var(--color-text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: "0.75rem",
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function PanelRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: "0.8125rem",
-        marginBottom: "0.375rem",
-      }}
-    >
-      <span style={{ color: "var(--color-text-secondary)" }}>{label}</span>
-      <span style={{ color: "var(--color-text-primary)" }}>{value}</span>
-    </div>
   );
 }
 
@@ -806,21 +803,26 @@ function SlotEmptyState({
       </div>
 
       <div
+        data-testid="studio-empty-slot-source-cards"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
           gap: "1rem",
         }}
       >
-        <SlotUploadChoice
-          title={t("emptySlotStaticStart")}
+        <SlotSourceChoiceCard
+          dataTestId="studio-empty-slot-source-static"
+          title={t("slotStaticUpload")}
           description={t("slotStaticUploadSub")}
+          ariaLabel={t("emptySlotStaticStart")}
           mode="cur"
           onFile={onStaticFile}
         />
-        <SlotUploadChoice
-          title={t("emptySlotAnimatedStart")}
+        <SlotSourceChoiceCard
+          dataTestId="studio-empty-slot-source-animated"
+          title={t("slotAniUpload")}
           description={t("slotAniUploadSub")}
+          ariaLabel={t("emptySlotAnimatedStart")}
           mode="ani"
           onFile={onAnimatedFile}
         />
@@ -838,6 +840,7 @@ function SlotEmptyState({
             fontSize: "0.75rem",
             cursor: "pointer",
             padding: 0,
+            transition: STUDIO_INTERACTION_TRANSITION,
           }}
         >
           {t("moreSourceOptions")}
@@ -864,144 +867,6 @@ function SlotEmptyState({
         ) : null}
       </div>
     </div>
-  );
-}
-
-function SlotUploadChoice({
-  title,
-  description,
-  mode,
-  onFile,
-}: {
-  title: string;
-  description: string;
-  mode: "cur" | "ani";
-  onFile: (file: File) => void;
-}) {
-  const tu = useTranslations("upload");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragActive, setIsDragActive] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const accept = mode === "ani" ? ".gif" : ".png,.jpg,.jpeg,.webp";
-  const isInteractiveActive = isDragActive || isHovered;
-  const handleDrop = (event: React.DragEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setIsDragActive(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      onFile(file);
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      aria-label={title}
-      onClick={() => inputRef.current?.click()}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onDragOver={(event) => {
-        event.preventDefault();
-        if (!isDragActive) {
-          setIsDragActive(true);
-        }
-      }}
-      onDragEnter={(event) => {
-        event.preventDefault();
-        setIsDragActive(true);
-      }}
-      onDragLeave={(event) => {
-        event.preventDefault();
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setIsDragActive(false);
-        }
-      }}
-      onDrop={handleDrop}
-      style={{
-        border: isInteractiveActive
-          ? "1px solid color-mix(in srgb, var(--color-accent-primary) 56%, white 8%)"
-          : "1px solid var(--color-border)",
-        borderRadius: "0.875rem",
-        minHeight: "15rem",
-        padding: "1.125rem",
-        backgroundColor: isInteractiveActive ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        alignItems: "flex-start",
-        textAlign: "left",
-        cursor: "pointer",
-        transition: "border-color 160ms ease, background-color 160ms ease",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-        <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary)" }}>
-          {title}
-        </div>
-        <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-          {description}
-        </div>
-      </div>
-
-      <div
-        style={{
-          width: "100%",
-          minHeight: "9.75rem",
-          border: isInteractiveActive
-            ? "1px dashed color-mix(in srgb, var(--color-accent-primary) 68%, white 12%)"
-            : "1px dashed var(--color-border)",
-          backgroundColor: isInteractiveActive ? "rgba(255,255,255,0.045)" : "rgba(255,255,255,0.02)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.625rem",
-          padding: "1.125rem",
-          transition: "border-color 160ms ease, background-color 160ms ease",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "1.75rem",
-            lineHeight: 1,
-            color: isInteractiveActive ? "var(--color-accent-primary)" : "var(--color-text-muted)",
-          }}
-        >
-          +
-        </div>
-        <div
-          style={{
-            fontSize: "0.75rem",
-            color: "var(--color-text-secondary)",
-            lineHeight: 1.5,
-          }}
-        >
-          {mode === "ani" ? tu("aniDropOrClick") : tu("dropOrClick")}
-        </div>
-        <div
-          style={{
-            fontSize: "0.6875rem",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          {mode === "ani" ? tu("aniFormats") : tu("formats")}
-        </div>
-      </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) {
-            onFile(file);
-          }
-          event.currentTarget.value = "";
-        }}
-        style={{ display: "none" }}
-      />
-    </button>
   );
 }
 
@@ -1046,17 +911,6 @@ function capitalizeSlotId(slotId: "normal" | "text" | "link" | "button" | undefi
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
 }
-
-const panelActionButtonStyle: CSSProperties = {
-  fontSize: "0.6875rem",
-  color: "var(--color-text-muted)",
-  background: "none",
-  border: "1px solid var(--color-border)",
-  padding: "0.25rem 0.5rem",
-  cursor: "pointer",
-  marginTop: "0.25rem",
-  transition: "border-color 0.15s",
-};
 
 const studioThemeScopeStyle: CSSProperties = {
   display: "flex",

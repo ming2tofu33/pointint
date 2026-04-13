@@ -9,6 +9,7 @@ const {
   StudioBarMock,
   SimulationMock,
   AniSimulationMock,
+  HealthCheckMock,
   useStudioMock,
   replaceMock,
   getLandingFileMock,
@@ -27,6 +28,7 @@ const {
   StudioBarMock: vi.fn(() => <div data-testid="studio-bar" />),
   SimulationMock: vi.fn(() => <div data-testid="simulation" />),
   AniSimulationMock: vi.fn(() => <div data-testid="ani-simulation" />),
+  HealthCheckMock: vi.fn(() => <div data-testid="health-check" />),
   useStudioMock: vi.fn(),
   replaceMock: vi.fn(),
   getLandingFileMock: vi.fn(),
@@ -82,7 +84,7 @@ vi.mock("@/components/GuideModal", () => ({
 }));
 
 vi.mock("@/components/HealthCheck", () => ({
-  default: () => null,
+  default: HealthCheckMock,
 }));
 
 vi.mock("@/components/Simulation", () => ({
@@ -303,6 +305,7 @@ beforeEach(() => {
   StudioBarMock.mockClear();
   SimulationMock.mockClear();
   AniSimulationMock.mockClear();
+  HealthCheckMock.mockClear();
   useStudioMock.mockReset();
   selectFileMock.mockReset();
   selectAniFileMock.mockReset();
@@ -333,7 +336,7 @@ describe("Studio entry gate", () => {
       "--color-border": "var(--studio-border)",
     });
     expect(screen.getByTestId("studio-empty-slot-state")).not.toBeNull();
-    expect(screen.getByText("emptySlotDescription")).not.toBeNull();
+    expect(screen.getAllByText("emptySlotDescription").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "emptySlotStaticStart" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "emptySlotAnimatedStart" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "moreSourceOptions" })).not.toBeNull();
@@ -341,6 +344,8 @@ describe("Studio entry gate", () => {
     expect(screen.getByText("aniDropOrClick")).not.toBeNull();
     expect(screen.getByText("formats")).not.toBeNull();
     expect(screen.getByText("aniFormats")).not.toBeNull();
+    expect(screen.queryByTestId("studio-stage-header")).toBeNull();
+    expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
     expect(screen.getByRole("button", { name: "emptySlotStaticStart" })).toHaveStyle({
@@ -351,6 +356,23 @@ describe("Studio entry gate", () => {
     });
   });
 
+  it("groups the empty-slot sources into a dedicated source-card region", () => {
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    expect(screen.getByTestId("studio-empty-slot-source-cards")).not.toBeNull();
+    expect(screen.getByTestId("studio-empty-slot-source-static")).not.toBeNull();
+    expect(screen.getByTestId("studio-empty-slot-source-animated")).not.toBeNull();
+  });
+
+  it("shows a dedicated stage header and action region in editing mode", () => {
+    renderStudio("editing");
+
+    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
+    expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
+  });
+
   it("renders an ANI editing shell with shared framing controls", () => {
     renderStudio("ani-editing");
 
@@ -358,6 +380,8 @@ describe("Studio entry gate", () => {
     expect(screen.getByTestId("ani-editor-shell-workspace")).toHaveStyle({
       flexDirection: "column",
     });
+    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
+    expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
     expect(screen.getByTestId("studio-simulation-footer")).not.toBeNull();
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
@@ -371,6 +395,17 @@ describe("Studio entry gate", () => {
     expect(screen.getByRole("button", { name: "48" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "64" })).not.toBeNull();
     expect(screen.getByTestId("ani-simulation")).not.toBeNull();
+  });
+
+  it("reads the ANI inspector as grouped summary, preview, and quick-action sections", () => {
+    renderStudio("ani-editing");
+
+    const inspector = screen.getByTestId("studio-inspector");
+
+    expect(inspector).not.toBeNull();
+    expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
+    expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
+    expect(screen.getByTestId("studio-inspector-quick-actions")).not.toBeNull();
   });
 
   it("preserves the landing handoff path when a file is staged", () => {
@@ -399,8 +434,20 @@ describe("Studio entry gate", () => {
     });
 
     expect(screen.getAllByText("position").length).toBeGreaterThan(0);
-    expect(screen.getByText("recommended")).not.toBeNull();
+    expect(screen.getAllByText("recommended").length).toBeGreaterThan(0);
     expect(screen.getByText("recommendHotspotAgain")).not.toBeNull();
+  });
+
+  it("restores the CUR health check in the inspector when a rendered cursor is available", () => {
+    renderStudio("editing");
+
+    expect(screen.getByTestId("health-check")).not.toBeNull();
+    expect(HealthCheckMock).toHaveBeenCalled();
+    expect(HealthCheckMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      imageBlob: expect.any(Blob),
+      hotspotX: 3,
+      hotspotY: 2,
+    });
   });
 
   it("renders a slot rail in the studio shell for slot-based editing", () => {
