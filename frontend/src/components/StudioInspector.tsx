@@ -3,6 +3,7 @@
 import type {
   ButtonHTMLAttributes,
   HTMLAttributes,
+  InputHTMLAttributes,
   ReactNode,
 } from "react";
 
@@ -193,6 +194,56 @@ export function StudioInspectorSecondaryButton({
     >
       {children}
     </button>
+  );
+}
+
+type StudioInspectorNumberFieldProps =
+  InputHTMLAttributes<HTMLInputElement> & {
+    label: ReactNode;
+  };
+
+export function StudioInspectorNumberField({
+  label,
+  id,
+  style,
+  ...props
+}: StudioInspectorNumberFieldProps) {
+  const resolvedId =
+    id ??
+    `studio-inspector-number-${String(label)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+
+  return (
+    <label
+      htmlFor={resolvedId}
+      style={{
+        display: "grid",
+        gap: "0.375rem",
+        fontSize: "0.75rem",
+        color: "var(--color-text-secondary)",
+      }}
+    >
+      <span>{label}</span>
+      <input
+        {...props}
+        id={resolvedId}
+        type={props.type ?? "number"}
+        style={{
+          width: "100%",
+          borderRadius: "0.75rem",
+          border: "1px solid var(--color-border)",
+          backgroundColor: "rgba(255,255,255,0.02)",
+          color: "var(--color-text-primary)",
+          fontSize: "0.8125rem",
+          lineHeight: 1.4,
+          padding: "0.5rem 0.75rem",
+          outline: "none",
+          ...style,
+        }}
+      />
+    </label>
   );
 }
 

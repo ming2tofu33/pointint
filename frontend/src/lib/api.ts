@@ -52,7 +52,8 @@ export async function generateCursor(
   hotspotX: number,
   hotspotY: number,
   cursorSize: number = 32,
-  cursorName: string = "cursor"
+  cursorName: string = "cursor",
+  packageFormat: "zip" | "raw" = "zip"
 ): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", pngBlob, "cursor.png");
@@ -60,6 +61,7 @@ export async function generateCursor(
   formData.append("hotspot_y", String(hotspotY));
   formData.append("cursor_size", String(cursorSize));
   formData.append("cursor_name", cursorName);
+  formData.append("package_format", packageFormat);
 
   const res = await fetch(`${BACKEND_URL}/api/generate-cursor`, {
     method: "POST",

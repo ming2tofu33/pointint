@@ -25,9 +25,13 @@ import {
 } from "@/lib/studioDownload";
 import { type StudioState } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
-import { ensureAniZipPackage } from "@/lib/aniDownload";
 
-import { generateAni, generateCursor, removeBackground } from "./api";
+import {
+  generateAni,
+  generateCursor,
+  removeBackground,
+  type BinaryDownloadResponse,
+} from "./api";
 
 export type CursorSize = ThemeCursorSize;
 
@@ -200,11 +204,6 @@ function createAniName(fileName: string) {
   return baseName || "cursor";
 }
 
-function sanitizeCursorName(name: string) {
-  const safe = name.replace(/[^\w\- ]+/g, "").trim();
-  return safe || "cursor";
-}
-
 function createEmptySlotRuntime(): Record<WindowsRoleSlotId, SlotRuntime> {
   return createWindowsRoleRecord(() => ({ cursor: null, ani: null }));
 }
@@ -268,7 +267,10 @@ function createAniFromFile(file: File, sourceWidth = 0, sourceHeight = 0): AniDa
   };
 }
 
-async function createCursorExportBlob(cursor: CursorData) {
+async function createCursorExportBlob(
+  cursor: CursorData,
+  packageFormat: "zip" | "raw" = "zip"
+) {
   const pngBlob = cursor.renderedBlob ?? cursor.processedBlob;
   const renderedHotspot =
     cursor.renderedBlob !== null
@@ -283,11 +285,12 @@ async function createCursorExportBlob(cursor: CursorData) {
     renderedHotspot.x,
     renderedHotspot.y,
     cursor.cursorSize,
-    cursor.cursorName
+    cursor.cursorName,
+    packageFormat
   );
 }
 
-async function createAniExportBlob(ani: AniData) {
+async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResponse> {
   const renderedHotspot = mapViewportHotspotToOutput({
     hotspotX: ani.hotspotX,
     hotspotY: ani.hotspotY,
@@ -305,7 +308,7 @@ async function createAniExportBlob(ani: AniData) {
     scale: ani.scale,
   });
 
-  return ensureAniZipPackage(aniDownload, sanitizeCursorName(ani.cursorName));
+  return aniDownload;
 }
 
 function toSlotAssetUrl(cursor: CursorData) {
@@ -646,13 +649,26 @@ export function useStudio() {
 
       if (kind === "static") {
         const nextCursor = createCursorFromFile(file);
-        pushHistory(previous);
-        setCursor(nextCursor);
-        setAni(null);
-        commitSlotState(slotId, createStaticSlotState(nextCursor));
-        setState(
-          slotId === DEFAULT_PRIMARY_ROLE_SLOT_ID ? "uploaded" : "editing"
-        );
+
+        try {
+          const dimensions = await loadImageDimensions(nextCursor.originalUrl);
+          const hydratedCursor = {
+            ...nextCursor,
+            sourceWidth: dimensions.width,
+            sourceHeight: dimensions.height,
+          };
+
+          pushHistory(previous);
+          setCursor(hydratedCursor);
+          setAni(null);
+          commitSlotState(slotId, createStaticSlotState(hydratedCursor));
+          setState(
+            slotId === DEFAULT_PRIMARY_ROLE_SLOT_ID ? "uploaded" : "editing"
+          );
+        } catch (err) {
+          URL.revokeObjectURL(nextCursor.originalUrl);
+          setError(err instanceof Error ? err.message : "Failed to load image");
+        }
         return;
       }
 
@@ -1341,15 +1357,16 @@ export function useStudio() {
 
           if (slot.kind === "static" && runtime.cursor) {
             return {
-              name: buildWindowsRolePackagePath(slotId),
-              blob: await createCursorExportBlob(runtime.cursor),
+              name: buildWindowsRolePackagePath(slotId, "cur"),
+              blob: await createCursorExportBlob(runtime.cursor, "raw"),
             };
           }
 
           if (slot.kind === "animated" && runtime.ani) {
+            const aniDownload = await createAniExportDownload(runtime.ani);
             return {
-              name: buildWindowsRolePackagePath(slotId),
-              blob: await createAniExportBlob(runtime.ani),
+              name: buildWindowsRolePackagePath(slotId, "ani"),
+              blob: aniDownload.blob,
             };
           }
 
@@ -1392,10 +1409,9 @@ export function useStudio() {
 
       try {
         const roleDownloadFilename =
-          buildWindowsRoleDownloadFilename(selectedSlotId);
-        const aniZipBlob = await createAniExportBlob(ani);
-
-        const url = URL.createObjectURL(aniZipBlob);
+          buildWindowsRoleDownloadFilename(selectedSlotId, "ani");
+        const aniDownload = await createAniExportDownload(ani);
+        const url = URL.createObjectURL(aniDownload.blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = roleDownloadFilename;
@@ -1424,9 +1440,8 @@ export function useStudio() {
 
     try {
       const roleDownloadFilename =
-        buildWindowsRoleDownloadFilename(selectedSlotId);
-      const curBlob = await createCursorExportBlob(cursor);
-
+        buildWindowsRoleDownloadFilename(selectedSlotId, "cur");
+      const curBlob = await createCursorExportBlob(cursor, "raw");
       const url = URL.createObjectURL(curBlob);
       const a = document.createElement("a");
       a.href = url;

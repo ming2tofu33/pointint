@@ -27,8 +27,8 @@ export default function SimulationFooter({
         flex: collapsed ? `0 0 ${COLLAPSED_HEIGHT}` : `0 0 ${EXPANDED_BASIS}`,
         flexBasis: collapsed ? COLLAPSED_HEIGHT : EXPANDED_BASIS,
         minHeight: collapsed ? COLLAPSED_HEIGHT : EXPANDED_MIN_HEIGHT,
-        borderTop: "1px solid var(--color-border)",
-        backgroundColor: "var(--color-bg-secondary)",
+        borderTop: "1px solid var(--simulation-frame-border)",
+        backgroundColor: "var(--simulation-frame-bg)",
         flexShrink: 0,
         overflow: "hidden",
         display: "flex",
@@ -43,13 +43,14 @@ export default function SimulationFooter({
           alignItems: "center",
           justifyContent: "space-between",
           gap: "1rem",
-          borderBottom: collapsed ? "none" : "1px solid var(--color-border)",
+          borderBottom:
+            collapsed ? "none" : "1px solid var(--simulation-frame-border)",
         }}
       >
         <span
           style={{
             fontSize: "0.75rem",
-            color: "var(--color-text-muted)",
+            color: "var(--simulation-panel-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.08em",
           }}
@@ -71,9 +72,9 @@ export default function SimulationFooter({
             onClick={onToggle}
             style={{
               fontSize: "0.6875rem",
-              color: "var(--color-text-muted)",
+              color: "var(--simulation-panel-muted)",
               background: "none",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--simulation-panel-border)",
               padding: "0.25rem 0.5rem",
               cursor: "pointer",
             }}

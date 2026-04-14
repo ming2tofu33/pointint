@@ -12,6 +12,7 @@ import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
 import SimulationBackgroundModeSwitch from "@/components/SimulationBackgroundModeSwitch";
+import SimulationSceneTabs from "@/components/SimulationSceneTabs";
 import SlotRail from "@/components/SlotRail";
 import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import Simulation from "@/components/Simulation";
@@ -21,6 +22,7 @@ import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
   StudioInspectorEmptyNotice,
+  StudioInspectorNumberField,
   StudioInspectorRow,
   StudioInspectorSecondaryButton,
   StudioInspectorSection,
@@ -41,6 +43,10 @@ import {
   buildProjectSlotSimulationSources,
   hasNormalSlotSimulationSource,
 } from "@/lib/slotSimulationSources";
+import {
+  DEFAULT_SIMULATION_SCENE_ID,
+  type SimulationSceneId,
+} from "@/lib/simulationScenes";
 import { CursorSize, useStudio } from "@/lib/useStudio";
 
 export default function StudioPage() {
@@ -87,6 +93,8 @@ export default function StudioPage() {
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
   const [simulationBackgroundMode, setSimulationBackgroundMode] =
     useState<BackgroundMode>("dark");
+  const [simulationSceneId, setSimulationSceneId] =
+    useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
   const searchParams = useSearchParams();
@@ -244,8 +252,8 @@ export default function StudioPage() {
           downloading={downloading}
           canDownload={canDownloadAll}
           canSecondaryDownload={canDownload}
-          primaryActionLabel="Download all roles"
-          secondaryActionLabel="Download current slot"
+          primaryActionLabel={t("downloadAllRoles")}
+          secondaryActionLabel={t("downloadCurrentSlot")}
         />
 
         {state === "ani-editing" ? (
@@ -276,7 +284,7 @@ export default function StudioPage() {
           />
         ) : (
           <>
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <main
           style={{
             flex: 1,
@@ -295,6 +303,7 @@ export default function StudioPage() {
             backgroundColor: "var(--color-bg-primary)",
             position: "relative",
             minWidth: 0,
+            minHeight: 0,
           }}
         >
           {state === "uploaded" && cursor && (
@@ -456,10 +465,24 @@ export default function StudioPage() {
                     collapsed={simulationCollapsed}
                     onToggle={() => setSimulationCollapsed((current) => !current)}
                     headerControls={
-                      <SimulationBackgroundModeSwitch
-                        value={simulationBackgroundMode}
-                        onChange={setSimulationBackgroundMode}
-                      />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          flexWrap: "wrap",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <SimulationSceneTabs
+                          value={simulationSceneId}
+                          onChange={setSimulationSceneId}
+                        />
+                        <SimulationBackgroundModeSwitch
+                          value={simulationBackgroundMode}
+                          onChange={setSimulationBackgroundMode}
+                        />
+                      </div>
                     }
                   >
                     <Simulation
@@ -474,6 +497,7 @@ export default function StudioPage() {
                       slotSources={slotSimulationSources}
                       selectedSlotId={selectedSlotId}
                       backgroundMode={simulationBackgroundMode}
+                      sceneId={simulationSceneId}
                     />
                   </SimulationFooter>
                 ) : null}
@@ -505,14 +529,16 @@ export default function StudioPage() {
               <div style={{ display: "grid", gap: "0.375rem" }}>
                 <StudioInspectorRow label={t("slotRailTitle")} value={stageSlotLabel} />
                 <StudioInspectorRow label={tp("cursor")} value={cursor.cursorName} />
-                <StudioInspectorRow
-                  label={t("slotFilled")}
-                  value={
-                    selectedSlot.kind
-                      ? selectedSlot.kind.toUpperCase()
-                      : t("slotKindUnset")
-                  }
-                />
+              <StudioInspectorRow
+                label={t("slotFilled")}
+                value={
+                  selectedSlot.kind
+                    ? selectedSlot.kind === "static"
+                      ? t("slotStatic")
+                      : t("slotAnimated")
+                    : t("slotKindUnset")
+                }
+              />
               </div>
             ) : showCompactInspectorGuidance ? (
               <StudioInspectorCompactGuidance
@@ -632,6 +658,40 @@ export default function StudioPage() {
               </StudioInspectorSection>
 
               <StudioInspectorSection title={tp("hotspot")}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <StudioInspectorNumberField
+                    label={tp("hotspotX")}
+                    aria-label={tp("hotspotX")}
+                    value={cursor.hotspotX}
+                    step={1}
+                    onChange={(event) => {
+                      const nextX = Number(event.target.value);
+                      setHotspot(
+                        Number.isFinite(nextX) ? nextX : 0,
+                        cursor.hotspotY
+                      );
+                    }}
+                  />
+                  <StudioInspectorNumberField
+                    label={tp("hotspotY")}
+                    aria-label={tp("hotspotY")}
+                    value={cursor.hotspotY}
+                    step={1}
+                    onChange={(event) => {
+                      const nextY = Number(event.target.value);
+                      setHotspot(
+                        cursor.hotspotX,
+                        Number.isFinite(nextY) ? nextY : 0
+                      );
+                    }}
+                  />
+                </div>
                 <StudioInspectorRow
                   label={tp("position")}
                   value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
@@ -668,8 +728,34 @@ export default function StudioPage() {
               </StudioInspectorSection>
 
               <StudioInspectorSection title={tp("position")}>
-                <StudioInspectorRow label={tp("offsetX")} value={`${cursor.offsetX}`} />
-                <StudioInspectorRow label={tp("offsetY")} value={`${cursor.offsetY}`} />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <StudioInspectorNumberField
+                    label={tp("offsetX")}
+                    aria-label={tp("offsetX")}
+                    value={cursor.offsetX}
+                    step={1}
+                    onChange={(event) => {
+                      const nextX = Number(event.target.value);
+                      setOffset(Number.isFinite(nextX) ? nextX : 0, cursor.offsetY);
+                    }}
+                  />
+                  <StudioInspectorNumberField
+                    label={tp("offsetY")}
+                    aria-label={tp("offsetY")}
+                    value={cursor.offsetY}
+                    step={1}
+                    onChange={(event) => {
+                      const nextY = Number(event.target.value);
+                      setOffset(cursor.offsetX, Number.isFinite(nextY) ? nextY : 0);
+                    }}
+                  />
+                </div>
                 <StudioInspectorSecondaryButton
                   onClick={() => setOffset(0, 0)}
                   style={{ justifyContent: "space-between" }}
@@ -898,7 +984,9 @@ function capitalizeSlotId(slotId: string | undefined) {
 const studioThemeScopeStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  minHeight: "calc(100dvh - var(--app-header-height, 4.25rem))",
+  height: "calc(100dvh - var(--app-header-height, 4.25rem))",
+  minHeight: 0,
+  overflow: "hidden",
   backgroundColor: "var(--studio-bg-primary)",
   ["--color-bg-primary" as string]: "var(--studio-bg-primary)",
   ["--color-bg-secondary" as string]: "var(--studio-bg-secondary)",

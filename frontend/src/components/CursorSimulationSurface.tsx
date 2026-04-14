@@ -14,15 +14,22 @@ import {
 } from "react";
 
 import CursorPreviewLayer from "@/components/CursorPreviewLayer";
-import CursorScene, { type CursorSceneZone } from "@/components/CursorScene";
+import CursorScene from "@/components/CursorScene";
 import {
   type CursorSource,
   type CursorSourceSnapshot,
 } from "@/lib/cursorSources";
 import {
-  resolveZoneSimulationSource,
+  getSimulationStationNativeCursor,
+  resolveSimulationStationSource,
   type SlotSimulationSources,
 } from "@/lib/slotSimulationSources";
+import {
+  DEFAULT_SIMULATION_SCENE_ID,
+  getDefaultSimulationStation,
+  type SimulationSceneId,
+  type SimulationStationId,
+} from "@/lib/simulationScenes";
 
 export type BackgroundMode = "dark" | "light";
 
@@ -32,6 +39,7 @@ interface CursorSimulationSurfaceProps {
   placeholder?: ReactNode;
   children?: ReactNode;
   backgroundMode?: BackgroundMode;
+  sceneId?: SimulationSceneId;
 }
 
 export default function CursorSimulationSurface({
@@ -40,18 +48,30 @@ export default function CursorSimulationSurface({
   placeholder,
   children,
   backgroundMode = "dark",
+  sceneId = DEFAULT_SIMULATION_SCENE_ID,
 }: CursorSimulationSurfaceProps) {
   const [pointer, setPointer] = useState({ x: 160, y: 120 });
   const [now, setNow] = useState(() => Date.now());
-  const [activeZone, setActiveZone] = useState<CursorSceneZone>("neutral");
+  const [activeStation, setActiveStation] = useState<SimulationStationId>(
+    getDefaultSimulationStation(sceneId)
+  );
+
+  useEffect(() => {
+    setActiveStation(getDefaultSimulationStation(sceneId));
+  }, [sceneId]);
 
   const activeSource = useMemo<CursorSource | null>(() => {
     if (slotSources) {
-      return resolveZoneSimulationSource(activeZone, slotSources);
+      return resolveSimulationStationSource(sceneId, activeStation, slotSources);
     }
 
     return source ?? null;
-  }, [activeZone, slotSources, source]);
+  }, [activeStation, sceneId, slotSources, source]);
+
+  const activeNativeCursor = useMemo(
+    () => getSimulationStationNativeCursor(sceneId, activeStation),
+    [activeStation, sceneId]
+  );
 
   useEffect(() => {
     setNow(Date.now());
@@ -90,24 +110,33 @@ export default function CursorSimulationSurface({
         flexDirection: "column",
         width: "100%",
         height: "100%",
-        backgroundColor: backgroundMode === "dark" ? "#121212" : "#f5f5f5",
-        color: backgroundMode === "dark" ? "#f0f0f0" : "#1f1f1f",
+        backgroundColor:
+          backgroundMode === "dark"
+            ? "var(--simulation-shell-dark-bg)"
+            : "var(--simulation-shell-light-bg)",
+        color:
+          backgroundMode === "dark"
+            ? "var(--simulation-shell-dark-fg)"
+            : "var(--simulation-shell-light-fg)",
         overflow: "hidden",
       }}
     >
       <style data-testid="cursor-simulation-cursor-lock">
-        {`
-          [data-cursor-lock-scope="true"],
-          [data-cursor-lock-scope="true"] * {
-            cursor: none !important;
-          }
-        `}
+        {snapshot
+          ? `
+              [data-cursor-lock-scope="true"],
+              [data-cursor-lock-scope="true"] * {
+                cursor: none !important;
+              }
+            `
+          : ""}
       </style>
 
       <div
         data-testid="cursor-simulation-stage"
         data-cursor-lock-scope="true"
-        data-active-zone={activeZone}
+        data-active-station={activeStation}
+        data-native-cursor={activeNativeCursor}
         onPointerMove={(event) => setPointer(getStageLocalPointer(event))}
         onMouseMove={(event) => setPointer(getStageLocalPointer(event))}
         style={{
@@ -115,16 +144,18 @@ export default function CursorSimulationSurface({
           flex: 1,
           minHeight: 0,
           overflow: "hidden",
-          cursor: "none",
+          cursor: snapshot ? "none" : activeNativeCursor,
         }}
       >
         <div style={{ position: "relative", zIndex: 1, height: "100%" }}>
-          {renderScene(children, setActiveZone)}
+          {renderScene(children, sceneId, setActiveStation)}
         </div>
         {snapshot ? (
           <CursorPreviewLayer snapshot={snapshot} pointer={pointer} />
         ) : (
-          placeholder ?? null
+          placeholder && (!slotSources || !slotSources.normalSelect)
+            ? placeholder
+            : null
         )}
       </div>
     </div>
@@ -143,18 +174,22 @@ function getStageLocalPointer(
 
 function renderScene(
   children: ReactNode,
-  onZoneChange: (zone: CursorSceneZone) => void
+  sceneId: SimulationSceneId,
+  onStationChange: (stationId: SimulationStationId) => void
 ) {
   if (!children) {
-    return <CursorScene onZoneChange={onZoneChange} />;
+    return <CursorScene sceneId={sceneId} onStationChange={onStationChange} />;
   }
 
-  return Children.map(children, (child) => injectZoneTracking(child, onZoneChange));
+  return Children.map(children, (child) =>
+    injectStationTracking(child, sceneId, onStationChange)
+  );
 }
 
-function injectZoneTracking(
+function injectStationTracking(
   node: ReactNode,
-  onZoneChange: (zone: CursorSceneZone) => void
+  sceneId: SimulationSceneId,
+  onStationChange: (stationId: SimulationStationId) => void
 ): ReactNode {
   if (!isValidElement(node)) {
     return node;
@@ -162,8 +197,11 @@ function injectZoneTracking(
 
   if (node.type === CursorScene) {
     return cloneElement(
-      node as ReactElement<{ onZoneChange?: typeof onZoneChange }>,
-      { onZoneChange }
+      node as ReactElement<{
+        sceneId?: SimulationSceneId;
+        onStationChange?: typeof onStationChange;
+      }>,
+      { sceneId, onStationChange }
     );
   }
 
@@ -174,7 +212,7 @@ function injectZoneTracking(
   }
 
   const nextChildren = Children.map(childNodes, (child) =>
-    injectZoneTracking(child, onZoneChange)
+    injectStationTracking(child, sceneId, onStationChange)
   );
 
   return cloneElement(

@@ -5,14 +5,21 @@ export interface WindowsRoleExportEntry {
   blob: Blob;
 }
 
-export function buildWindowsRoleDownloadFilename(slotId: WindowsRoleSlotId) {
-  const segment = toWindowsRolePackageSegment(slotId);
-  return `pointint-${segment}.zip`;
+export type WindowsRoleExportExtension = "cur" | "ani" | "zip";
+
+export function buildWindowsRoleDownloadFilename(
+  slotId: WindowsRoleSlotId,
+  extension: WindowsRoleExportExtension = "zip"
+) {
+  const roleName = WINDOWS_ROLE_FILE_NAMES[slotId];
+  return `pointint_${roleName}.${extension}`;
 }
 
-export function buildWindowsRolePackagePath(slotId: WindowsRoleSlotId) {
-  const segment = toWindowsRolePackageSegment(slotId);
-  return `${segment}/pointint-${segment}.zip`;
+export function buildWindowsRolePackagePath(
+  slotId: WindowsRoleSlotId,
+  extension: Exclude<WindowsRoleExportExtension, "zip">
+) {
+  return `cursors/${buildWindowsRoleDownloadFilename(slotId, extension)}`;
 }
 
 export async function buildWindowsRoleMasterZip(
@@ -28,9 +35,19 @@ export async function buildWindowsRoleMasterZip(
   return buildZipArchive(binaryEntries, "application/zip");
 }
 
-function toWindowsRolePackageSegment(slotId: WindowsRoleSlotId) {
-  return slotId.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-}
+const WINDOWS_ROLE_FILE_NAMES: Record<WindowsRoleSlotId, string> = {
+  normalSelect: "arrow",
+  textSelect: "ibeam",
+  linkSelect: "link",
+  busy: "busy",
+  workingInBackground: "working",
+  unavailable: "unavail",
+  move: "move",
+  horizontalResize: "ew",
+  verticalResize: "ns",
+  diagonalResize1: "nwse",
+  diagonalResize2: "nesw",
+};
 
 async function blobToUint8Array(blob: Blob): Promise<Uint8Array<ArrayBuffer>> {
   if (typeof blob.arrayBuffer === "function") {

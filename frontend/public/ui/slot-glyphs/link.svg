@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
   <path
-    d="M5.5 2.5V8.5H6.5V5.5H7.5V8.5H8.5V6.5H9.5V8.5H10.5V7.5H11.5V8.5H12.5V12.5H11.5V14.5H7.5V12.5H6.5V10.5H5.5V9.5H4.5V8.5H3.5V6.5H4.5V7.5H5.5V2.5Z"
-    fill="#F6F7FB"
-    stroke="#101319"
+    d="M5.3 2.45V8.15H6.35V5.3H7.35V8.15H8.35V6.45H9.35V8.15H10.35V7.3H11.35V8.15H12.35V12.45H11.35V14.35H7.55V12.5H6.55V10.65H5.55V9.55H4.55V8.45H3.6V6.7H4.55V7.55H5.3V2.45Z"
+    fill="#F7FAFF"
+    stroke="#AFC2DE"
+    stroke-width="1.05"
     stroke-linejoin="round"
-    stroke-width="1"
   />
 </svg>

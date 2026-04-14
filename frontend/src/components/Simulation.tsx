@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
 import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import { createStaticCursorSource } from "@/lib/cursorSources";
 import { type SlotId } from "@/lib/cursorThemeProject";
+import { type SimulationSceneId } from "@/lib/simulationScenes";
 import {
   hasNormalSlotSimulationSource,
   type SlotSimulationSources,
@@ -19,6 +21,7 @@ interface SimulationProps {
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
   backgroundMode?: BackgroundMode;
+  sceneId?: SimulationSceneId;
 }
 
 export default function Simulation({
@@ -29,7 +32,9 @@ export default function Simulation({
   slotSources,
   selectedSlotId,
   backgroundMode = "dark",
+  sceneId,
 }: SimulationProps) {
+  const t = useTranslations("simulation");
   const source = useMemo(
     () =>
       imageUrl
@@ -54,20 +59,21 @@ export default function Simulation({
   }, [selectedSlotId, slotSources, source]);
 
   if (mergedSlotSources && !hasNormalSlotSimulationSource(mergedSlotSources)) {
-    return <SimulationPlaceholder />;
+    return <SimulationPlaceholder message={t("placeholderNormalRequired")} />;
   }
 
   return (
     <CursorSimulationSurface
       source={source}
       slotSources={mergedSlotSources}
-      placeholder={<SimulationPlaceholder />}
+      placeholder={<SimulationPlaceholder message={t("placeholderNormalRequired")} />}
       backgroundMode={backgroundMode}
+      sceneId={sceneId}
     />
   );
 }
 
-function SimulationPlaceholder() {
+function SimulationPlaceholder({ message }: { message: string }) {
   return (
     <div
       data-testid="simulation-placeholder"
@@ -77,13 +83,13 @@ function SimulationPlaceholder() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--color-text-muted)",
+        color: "var(--simulation-panel-muted)",
         fontSize: "0.8125rem",
         textAlign: "center",
         padding: "1rem",
       }}
     >
-      Add a normal cursor to preview the simulation.
+      {message}
     </div>
   );
 }

@@ -23,6 +23,10 @@ const { cursorPreviewLayerMock } = vi.hoisted(() => ({
   ),
 }));
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
 vi.mock("@/components/CursorPreviewLayer", () => ({
   default: cursorPreviewLayerMock,
 }));
@@ -31,30 +35,43 @@ import CursorScene from "@/components/CursorScene";
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
 
 describe("CursorSimulationSurface", () => {
-  it("renders the shared scene zones", () => {
-    render(<CursorScene />);
+  it("renders the browser scene stations", () => {
+    render(<CursorScene sceneId="browser" />);
 
     expect(screen.getByTestId("cursor-scene")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-browser-chrome")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-browser-address")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-browser-input")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-zone-neutral")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-zone-text")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-zone-link")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-zone-button")).not.toBeNull();
-    expect(screen.queryByText("Neutral space")).toBeNull();
-    expect(screen.queryByText("Pointint preview")).toBeNull();
-    expect(
-      screen.queryByText("Cursor styling inside a real page context")
-    ).toBeNull();
-    expect(screen.queryByText("Read more")).toBeNull();
-    expect(screen.queryByText("Open sample")).toBeNull();
-    expect(
-      screen.getByText("Installing a custom cursor theme")
-    ).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-browser-neutral")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-browser-text-input")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-browser-link-docs")).not.toBeNull();
+    expect(screen.getByText("browserTitleInstallTheme")).not.toBeNull();
   });
 
-  it("uses the hovered zone's slot source and falls back to normal", () => {
+  it("renders the system and window control scenes", () => {
+    const { rerender } = render(<CursorScene sceneId="system" />);
+
+    expect(screen.getByTestId("cursor-scene-system-workspace")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-system-queue")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-system-progress-bar")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-system-busy-progress")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-system-working-card")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-system-unavailable-action")).not.toBeNull();
+
+    rerender(<CursorScene sceneId="windowControls" />);
+
+    expect(screen.getByTestId("cursor-scene-window-frame")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-toolbar")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-properties-panel")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-canvas-workspace")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-window-titlebar-move")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-window-edge-horizontal-resize")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-window-edge-vertical-resize")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-window-corner-diagonal-resize-1")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-station-window-corner-diagonal-resize-2")).not.toBeNull();
+  });
+
+  it("uses the hovered station's slot source and falls back to a native cursor when unset", () => {
     const normalSource = createStaticCursorSource(
       { src: "blob:normal" },
       { x: 12, y: 8 },
@@ -68,18 +85,23 @@ describe("CursorSimulationSurface", () => {
 
     render(
       <CursorSimulationSurface
+        sceneId="browser"
         slotSources={makeSlotSources({
           normalSelect: normalSource,
           textSelect: textSource,
         })}
       >
-        <CursorScene />
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
     const stage = screen.getByTestId("cursor-simulation-stage");
-    const textZone = screen.getByTestId("cursor-scene-zone-text");
-    const linkZone = screen.getByTestId("cursor-scene-zone-link");
+    const textStation = screen.getByTestId(
+      "cursor-scene-station-browser-text-input"
+    );
+    const linkStation = screen.getByTestId(
+      "cursor-scene-station-browser-link-docs"
+    );
 
     fireEvent.mouseMove(stage, { clientX: 100, clientY: 80 });
     expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
@@ -87,22 +109,22 @@ describe("CursorSimulationSurface", () => {
       "blob:normal"
     );
 
-    fireEvent.mouseEnter(textZone);
+    fireEvent.mouseEnter(textStation);
     expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
       "data-frame-src",
       "blob:text"
     );
 
-    fireEvent.mouseEnter(linkZone);
-    expect(screen.getByTestId("cursor-preview-layer")).toHaveAttribute(
-      "data-frame-src",
-      "blob:normal"
-    );
+    fireEvent.mouseEnter(linkStation);
+    expect(screen.queryByTestId("cursor-preview-layer")).toBeNull();
+    expect(stage).toHaveStyle({ cursor: "pointer" });
+    expect(stage).toHaveAttribute("data-native-cursor", "pointer");
   });
 
   it("shows the placeholder when the normal slot is missing", async () => {
     render(
       <CursorSimulationSurface
+        sceneId="browser"
         slotSources={makeSlotSources({
           textSelect: createStaticCursorSource(
             { src: "blob:text" },
@@ -112,7 +134,7 @@ describe("CursorSimulationSurface", () => {
         })}
         placeholder={<div data-testid="cursor-simulation-placeholder" />}
       >
-        <CursorScene />
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
@@ -123,6 +145,34 @@ describe("CursorSimulationSurface", () => {
     expect(screen.queryByTestId("cursor-preview-layer")).toBeNull();
   });
 
+  it("uses the matching native cursor when a non-browser station has no custom source", () => {
+    render(
+      <CursorSimulationSurface
+        sceneId="system"
+        slotSources={makeSlotSources({
+          normalSelect: createStaticCursorSource(
+            { src: "blob:normal" },
+            { x: 0, y: 0 },
+            32
+          ),
+        })}
+      >
+        <CursorScene sceneId="system" />
+      </CursorSimulationSurface>
+    );
+
+    const stage = screen.getByTestId("cursor-simulation-stage");
+    const busyStation = screen.getByTestId(
+      "cursor-scene-station-system-busy-progress"
+    );
+
+    fireEvent.mouseEnter(busyStation);
+
+    expect(screen.queryByTestId("cursor-preview-layer")).toBeNull();
+    expect(stage).toHaveStyle({ cursor: "wait" });
+    expect(stage).toHaveAttribute("data-native-cursor", "wait");
+  });
+
   it("positions the cursor preview layer from the pointer and hotspot", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },
@@ -131,8 +181,8 @@ describe("CursorSimulationSurface", () => {
     );
 
     render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
@@ -153,8 +203,8 @@ describe("CursorSimulationSurface", () => {
     );
 
     const { container } = render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
@@ -162,10 +212,10 @@ describe("CursorSimulationSurface", () => {
       '[data-testid="cursor-simulation-cursor-lock"]'
     );
     expect(cursorLockStyle).not.toBeNull();
-    expect(cursorLockStyle.textContent).toContain(
+    expect(cursorLockStyle?.textContent).toContain(
       '[data-cursor-lock-scope="true"] *'
     );
-    expect(cursorLockStyle.textContent).toContain("cursor: none !important");
+    expect(cursorLockStyle?.textContent).toContain("cursor: none !important");
   });
 
   it("uses stage-local coordinates when positioning the cursor preview", () => {
@@ -176,8 +226,8 @@ describe("CursorSimulationSurface", () => {
     );
 
     render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
@@ -209,22 +259,40 @@ describe("CursorSimulationSurface", () => {
     );
 
     const { rerender } = render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
     const surface = screen.getByTestId("cursor-simulation-surface");
 
     expect(surface).toHaveAttribute("data-background-mode", "dark");
+    expect(surface).toHaveStyle({
+      backgroundColor: "var(--simulation-shell-dark-bg)",
+      color: "var(--simulation-shell-dark-fg)",
+    });
+    expect(
+      screen.getByTestId("cursor-scene-browser-address").getAttribute("style")
+    ).toContain("border: 1px solid var(--simulation-panel-border)");
+    expect(
+      screen.getByTestId("cursor-scene-browser-address").getAttribute("style")
+    ).toContain("background-color: var(--simulation-panel-elevated)");
 
     rerender(
-      <CursorSimulationSurface source={source} backgroundMode="light">
-        <CursorScene />
+      <CursorSimulationSurface
+        source={source}
+        sceneId="browser"
+        backgroundMode="light"
+      >
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
     expect(surface).toHaveAttribute("data-background-mode", "light");
+    expect(surface).toHaveStyle({
+      backgroundColor: "var(--simulation-shell-light-bg)",
+      color: "var(--simulation-shell-light-fg)",
+    });
     expect(screen.getByTestId("cursor-scene")).not.toBeNull();
   });
 
@@ -236,8 +304,8 @@ describe("CursorSimulationSurface", () => {
     );
 
     render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
@@ -249,7 +317,7 @@ describe("CursorSimulationSurface", () => {
   });
 
   it("uses a responsive scene layout that can shrink inside the footer", () => {
-    render(<CursorScene />);
+    render(<CursorScene sceneId="browser" />);
 
     expect(screen.getByTestId("cursor-scene")).toHaveStyle({
       minHeight: "0",
@@ -260,7 +328,7 @@ describe("CursorSimulationSurface", () => {
     });
   });
 
-  it("tracks the hovered scene zone", () => {
+  it("tracks the hovered scene station", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },
       { x: 0, y: 0 },
@@ -268,22 +336,24 @@ describe("CursorSimulationSurface", () => {
     );
 
     render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
     const stage = screen.getByTestId("cursor-simulation-stage");
-    const linkZone = screen.getByTestId("cursor-scene-zone-link");
+    const linkStation = screen.getByTestId(
+      "cursor-scene-station-browser-link-docs"
+    );
 
-    expect(stage).toHaveAttribute("data-active-zone", "neutral");
+    expect(stage).toHaveAttribute("data-active-station", "browser-neutral");
 
-    fireEvent.mouseEnter(linkZone);
+    fireEvent.mouseEnter(linkStation);
 
-    expect(stage).toHaveAttribute("data-active-zone", "link");
+    expect(stage).toHaveAttribute("data-active-station", "browser-link-docs");
   });
 
-  it("keeps zone tracking when CursorScene is wrapped in fragments and containers", () => {
+  it("keeps station tracking when CursorScene is wrapped in fragments and containers", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },
       { x: 0, y: 0 },
@@ -291,23 +361,25 @@ describe("CursorSimulationSurface", () => {
     );
 
     render(
-      <CursorSimulationSurface source={source}>
+      <CursorSimulationSurface source={source} sceneId="browser">
         <>
           <div>
-            <CursorScene />
+            <CursorScene sceneId="browser" />
           </div>
         </>
       </CursorSimulationSurface>
     );
 
     const stage = screen.getByTestId("cursor-simulation-stage");
-    const textZone = screen.getByTestId("cursor-scene-zone-text");
+    const textStation = screen.getByTestId(
+      "cursor-scene-station-browser-text-input"
+    );
 
-    expect(stage).toHaveAttribute("data-active-zone", "neutral");
+    expect(stage).toHaveAttribute("data-active-station", "browser-neutral");
 
-    fireEvent.mouseEnter(textZone);
+    fireEvent.mouseEnter(textStation);
 
-    expect(stage).toHaveAttribute("data-active-zone", "text");
+    expect(stage).toHaveAttribute("data-active-station", "browser-text-input");
   });
 
   it("schedules animated preview updates with requestAnimationFrame", async () => {
@@ -321,8 +393,8 @@ describe("CursorSimulationSurface", () => {
       .mockImplementation(() => 1);
 
     render(
-      <CursorSimulationSurface source={source}>
-        <CursorScene />
+      <CursorSimulationSurface source={source} sceneId="browser">
+        <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 

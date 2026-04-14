@@ -4,11 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const {
   generateAniMock,
   generateCursorMock,
-  ensureAniZipPackageMock,
 } = vi.hoisted(() => ({
   generateAniMock: vi.fn(),
   generateCursorMock: vi.fn(),
-  ensureAniZipPackageMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -17,16 +15,13 @@ vi.mock("@/lib/api", () => ({
   removeBackground: vi.fn(),
 }));
 
-vi.mock("@/lib/aniDownload", () => ({
-  ensureAniZipPackage: ensureAniZipPackageMock,
-}));
-
 import { useStudio } from "@/lib/useStudio";
 import * as studioDownload from "@/lib/studioDownload";
 
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
 const originalImage = global.Image;
+const originalFetch = global.fetch;
 const windowsRoleIds = [
   "normalSelect",
   "textSelect",
@@ -45,18 +40,14 @@ describe("useStudio slot contract", () => {
   beforeEach(() => {
     generateAniMock.mockReset();
     generateCursorMock.mockReset();
-    ensureAniZipPackageMock.mockReset();
     generateCursorMock.mockResolvedValue(
-      new Blob(["cursor-zip"], { type: "application/zip" })
+      new Blob(["cursor"], { type: "application/octet-stream" })
     );
     generateAniMock.mockResolvedValue({
-      blob: new Blob(["ani-zip"], { type: "application/zip" }),
-      filename: "orbit.ani",
-      contentType: "application/zip",
+      blob: new Blob(["ani"], { type: "application/octet-stream" }),
+      filename: "pointint-orbit.ani",
+      contentType: "application/octet-stream",
     });
-    ensureAniZipPackageMock.mockResolvedValue(
-      new Blob(["ani-zip"], { type: "application/zip" })
-    );
     let objectUrlCount = 0;
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -77,6 +68,20 @@ describe("useStudio slot contract", () => {
         queueMicrotask(() => this.onload?.());
       }
     } as unknown as typeof Image;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (typeof input === "string" && input.startsWith("blob:")) {
+          return {
+            ok: true,
+            blob: async () => new Blob(["cursor"], { type: "image/png" }),
+          } as Response;
+        }
+
+        throw new Error(`Unexpected fetch: ${String(input)}`);
+      })
+    );
   });
 
   afterEach(() => {
@@ -99,6 +104,7 @@ describe("useStudio slot contract", () => {
     }
 
     global.Image = originalImage;
+    global.fetch = originalFetch;
     vi.restoreAllMocks();
   });
 
@@ -113,7 +119,7 @@ describe("useStudio slot contract", () => {
     expect(result.current.project.slots.normalSelect.kind).toBeNull();
   });
 
-  it("packages only configured Windows roles into the full-set export zip", async () => {
+  it("packages only configured Windows roles into a flattened full-set zip", async () => {
     const buildWindowsRoleMasterZipSpy = vi
       .spyOn(studioDownload, "buildWindowsRoleMasterZip")
       .mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
@@ -160,11 +166,11 @@ describe("useStudio slot contract", () => {
     expect(buildWindowsRoleMasterZipSpy).toHaveBeenCalledTimes(1);
     expect(buildWindowsRoleMasterZipSpy.mock.calls[0][0]).toEqual([
       {
-        name: studioDownload.buildWindowsRolePackagePath("normalSelect"),
+        name: studioDownload.buildWindowsRolePackagePath("normalSelect", "cur"),
         blob: expect.any(Blob),
       },
       {
-        name: studioDownload.buildWindowsRolePackagePath("linkSelect"),
+        name: studioDownload.buildWindowsRolePackagePath("linkSelect", "ani"),
         blob: expect.any(Blob),
       },
     ]);
@@ -173,5 +179,88 @@ describe("useStudio slot contract", () => {
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
     buildWindowsRoleMasterZipSpy.mockRestore();
+  });
+
+  it("downloads the current static slot as a raw CUR file", async () => {
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+        const element = originalCreateElement(tagName, options);
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
+        return element;
+      });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    await act(async () => {
+      await result.current.download();
+    });
+
+    expect(createdAnchors[0]?.download).toBe(
+      studioDownload.buildWindowsRoleDownloadFilename("normalSelect", "cur")
+    );
+
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
+  });
+
+  it("downloads the current animated slot as a raw ANI file", async () => {
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+        const element = originalCreateElement(tagName, options);
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
+        return element;
+      });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useStudio());
+    const animatedFile = new File(["animated"], "orbit.gif", {
+      type: "image/gif",
+    });
+
+    act(() => {
+      result.current.selectSlot("linkSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotAnimatedFile(animatedFile);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await result.current.download();
+    });
+
+    expect(createdAnchors[0]?.download).toBe(
+      studioDownload.buildWindowsRoleDownloadFilename("linkSelect", "ani")
+    );
+
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
   });
 });

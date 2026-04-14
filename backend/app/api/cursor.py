@@ -17,6 +17,7 @@ async def api_generate_cursor(
     hotspot_y: int = Form(0),
     cursor_size: int = Form(32),
     cursor_name: str = Form("cursor"),
+    package_format: str = Form("zip"),
 ):
     """투명 PNG → .cur + .inf → zip 패키지 생성."""
 
@@ -41,6 +42,18 @@ async def api_generate_cursor(
 
     cursor_filename = f"{safe_name}.cur"
     cur_bytes = create_cur(image_bytes, hotspot_x, hotspot_y, size=cursor_size)
+
+    if package_format == "raw":
+        return Response(
+            content=cur_bytes,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": (
+                    f"attachment; filename=pointint-{safe_name}.cur"
+                )
+            },
+        )
+
     install_inf = generate_install_inf(cursor_filename)
     restore_inf = generate_restore_inf()
 

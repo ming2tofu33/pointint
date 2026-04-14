@@ -145,6 +145,28 @@ async def test_generate_cursor_zip(client: AsyncClient):
 
 
 @pytest.mark.anyio
+async def test_generate_cursor_raw(client: AsyncClient):
+    png = _make_png(32, 32)
+    res = await client.post(
+        "/api/generate-cursor",
+        files={"file": ("cursor.png", png, "image/png")},
+        data={
+            "hotspot_x": "0",
+            "hotspot_y": "0",
+            "package_format": "raw",
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/octet-stream"
+    assert res.headers["content-disposition"].endswith("pointint-cursor.cur")
+
+    reserved, type_val, count = struct.unpack("<HHH", res.content[:6])
+    assert reserved == 0
+    assert type_val == 2
+    assert count == 1
+
+
+@pytest.mark.anyio
 async def test_generate_cursor_hotspot_in_zip(client: AsyncClient):
     png = _make_png(32, 32)
     res = await client.post(

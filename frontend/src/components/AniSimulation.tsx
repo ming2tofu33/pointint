@@ -13,6 +13,7 @@ import {
 import { type FitMode } from "@/lib/cursorFrame";
 import { type CursorSource } from "@/lib/cursorSources";
 import { type SlotId } from "@/lib/cursorThemeProject";
+import { type SimulationSceneId } from "@/lib/simulationScenes";
 import {
   hasNormalSlotSimulationSource,
   type SlotSimulationSources,
@@ -33,6 +34,7 @@ interface AniSimulationProps {
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
   backgroundMode?: BackgroundMode;
+  sceneId?: SimulationSceneId;
 }
 
 const ANI_PREVIEW_VIEWPORT_SIZE = 256;
@@ -53,6 +55,7 @@ export default function AniSimulation({
   slotSources,
   selectedSlotId,
   backgroundMode = "dark",
+  sceneId,
 }: AniSimulationProps) {
   const [previewFrameStack, setPreviewFrameStack] =
     useState<AniPreviewRenderedFrameStack | null>(null);
@@ -213,7 +216,12 @@ export default function AniSimulation({
   }, [previewSource, selectedSlotId, slotSources]);
 
   if (mergedSlotSources && !hasNormalSlotSimulationSource(mergedSlotSources)) {
-    return renderAniPlaceholder(previewTitle, previewBody, t("instruction"));
+    return renderAniPlaceholder(
+      previewTitle,
+      previewBody,
+      t("instruction"),
+      backgroundMode
+    );
   }
 
   return (
@@ -242,25 +250,40 @@ export default function AniSimulation({
             placeholder={renderAniPlaceholder(
               previewTitle,
               previewBody,
-              t("instruction")
+              t("instruction"),
+              backgroundMode
             )}
             backgroundMode={backgroundMode}
+            sceneId={sceneId}
           />
         ) : (
-          renderAniPlaceholder(previewTitle, previewBody, t("instruction"))
+          renderAniPlaceholder(
+            previewTitle,
+            previewBody,
+            t("instruction"),
+            backgroundMode
+          )
         )}
       </div>
     </div>
   );
 }
 
-function renderAniPlaceholder(title: string, body: string, instruction: string) {
+function renderAniPlaceholder(
+  title: string,
+  body: string,
+  instruction: string,
+  backgroundMode: BackgroundMode
+) {
   return (
     <div
       data-testid="ani-simulation-placeholder"
       style={{
         flex: 1,
-        backgroundColor: "var(--color-bg-primary)",
+        backgroundColor:
+          backgroundMode === "dark"
+            ? "var(--simulation-shell-dark-bg)"
+            : "var(--simulation-shell-light-bg)",
         padding: "1rem 1.5rem",
         display: "flex",
         flexDirection: "column",
@@ -274,7 +297,7 @@ function renderAniPlaceholder(title: string, body: string, instruction: string) 
       <p
         style={{
           fontSize: "0.75rem",
-          color: "var(--color-text-muted)",
+          color: "var(--simulation-panel-muted)",
           userSelect: "none",
         }}
       >
@@ -284,7 +307,7 @@ function renderAniPlaceholder(title: string, body: string, instruction: string) 
       <p
         style={{
           fontSize: "0.8125rem",
-          color: "var(--color-text-primary)",
+          color: "var(--simulation-panel-text)",
           lineHeight: 1.5,
         }}
       >
@@ -294,7 +317,7 @@ function renderAniPlaceholder(title: string, body: string, instruction: string) 
       <p
         style={{
           fontSize: "0.8125rem",
-          color: "var(--color-text-muted)",
+          color: "var(--simulation-panel-muted)",
         }}
       >
         {instruction}

@@ -9,12 +9,14 @@ import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
 import NameInput from "@/components/NameInput";
 import SimulationBackgroundModeSwitch from "@/components/SimulationBackgroundModeSwitch";
+import SimulationSceneTabs from "@/components/SimulationSceneTabs";
 import SlotRail from "@/components/SlotRail";
 import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import SimulationFooter from "@/components/SimulationFooter";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
+  StudioInspectorNumberField,
   StudioInspectorRow,
   StudioInspectorSecondaryButton,
   StudioInspectorSection,
@@ -29,6 +31,10 @@ import {
   buildProjectSlotSimulationSources,
   hasNormalSlotSimulationSource,
 } from "@/lib/slotSimulationSources";
+import {
+  DEFAULT_SIMULATION_SCENE_ID,
+  type SimulationSceneId,
+} from "@/lib/simulationScenes";
 import { type AniData, type CursorSize } from "@/lib/useStudio";
 
 interface AniEditorShellProps {
@@ -87,6 +93,8 @@ export default function AniEditorShell({
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
   const [simulationBackgroundMode, setSimulationBackgroundMode] =
     useState<BackgroundMode>("dark");
+  const [simulationSceneId, setSimulationSceneId] =
+    useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
   const selectedSlot = project.slots[selectedSlotId];
   const selectedSlotBound = Boolean(
     selectedSlot.asset.originalUrl || selectedSlot.asset.previewUrl || ani
@@ -107,6 +115,7 @@ export default function AniEditorShell({
       style={{
         display: "flex",
         flex: 1,
+        minHeight: 0,
         overflow: "hidden",
       }}
       data-testid="ani-editor-shell"
@@ -116,6 +125,7 @@ export default function AniEditorShell({
         style={{
           flex: 1,
           minWidth: 0,
+          minHeight: 0,
           display: "flex",
           flexDirection: "row",
           overflow: "hidden",
@@ -314,10 +324,24 @@ export default function AniEditorShell({
               collapsed={simulationCollapsed}
               onToggle={() => setSimulationCollapsed((current) => !current)}
               headerControls={
-                <SimulationBackgroundModeSwitch
-                  value={simulationBackgroundMode}
-                  onChange={setSimulationBackgroundMode}
-                />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <SimulationSceneTabs
+                    value={simulationSceneId}
+                    onChange={setSimulationSceneId}
+                  />
+                  <SimulationBackgroundModeSwitch
+                    value={simulationBackgroundMode}
+                    onChange={setSimulationBackgroundMode}
+                  />
+                </div>
               }
             >
               <AniSimulation
@@ -334,6 +358,7 @@ export default function AniEditorShell({
                 slotSources={slotSimulationSources}
                 selectedSlotId={selectedSlotId}
                 backgroundMode={simulationBackgroundMode}
+                sceneId={simulationSceneId}
               />
             </SimulationFooter>
           ) : null}
@@ -359,7 +384,13 @@ export default function AniEditorShell({
               />
               <StudioInspectorRow
                 label={t("slotFilled")}
-                value={selectedSlot.kind ? selectedSlot.kind.toUpperCase() : t("slotKindUnset")}
+                value={
+                  selectedSlot.kind
+                    ? selectedSlot.kind === "static"
+                      ? t("slotStatic")
+                      : t("slotAnimated")
+                    : t("slotKindUnset")
+                }
               />
             </div>
           ) : (
@@ -487,6 +518,40 @@ export default function AniEditorShell({
             </StudioInspectorSection>
 
             <StudioInspectorSection title={tp("hotspot")}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: "0.5rem",
+                }}
+              >
+                <StudioInspectorNumberField
+                  label={tp("hotspotX")}
+                  aria-label={tp("hotspotX")}
+                  value={ani.hotspotX}
+                  step={1}
+                  onChange={(event) => {
+                    const nextX = Number(event.target.value);
+                    onHotspotChange(
+                      Number.isFinite(nextX) ? nextX : 0,
+                      ani.hotspotY
+                    );
+                  }}
+                />
+                <StudioInspectorNumberField
+                  label={tp("hotspotY")}
+                  aria-label={tp("hotspotY")}
+                  value={ani.hotspotY}
+                  step={1}
+                  onChange={(event) => {
+                    const nextY = Number(event.target.value);
+                    onHotspotChange(
+                      ani.hotspotX,
+                      Number.isFinite(nextY) ? nextY : 0
+                    );
+                  }}
+                />
+              </div>
               <StudioInspectorRow
                 label={tp("position")}
                 value={`${ani.hotspotX}, ${ani.hotspotY}`}
@@ -523,8 +588,34 @@ export default function AniEditorShell({
             </StudioInspectorSection>
 
             <StudioInspectorSection title={tp("position")}>
-              <StudioInspectorRow label={tp("offsetX")} value={`${ani.offsetX}`} />
-              <StudioInspectorRow label={tp("offsetY")} value={`${ani.offsetY}`} />
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: "0.5rem",
+                }}
+              >
+                <StudioInspectorNumberField
+                  label={tp("offsetX")}
+                  aria-label={tp("offsetX")}
+                  value={ani.offsetX}
+                  step={1}
+                  onChange={(event) => {
+                    const nextX = Number(event.target.value);
+                    onOffsetChange(Number.isFinite(nextX) ? nextX : 0, ani.offsetY);
+                  }}
+                />
+                <StudioInspectorNumberField
+                  label={tp("offsetY")}
+                  aria-label={tp("offsetY")}
+                  value={ani.offsetY}
+                  step={1}
+                  onChange={(event) => {
+                    const nextY = Number(event.target.value);
+                    onOffsetChange(ani.offsetX, Number.isFinite(nextY) ? nextY : 0);
+                  }}
+                />
+              </div>
               <StudioInspectorSecondaryButton
                 onClick={() => onOffsetChange(0, 0)}
                 style={{ justifyContent: "space-between" }}

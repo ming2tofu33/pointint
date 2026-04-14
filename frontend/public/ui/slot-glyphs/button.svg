@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
-  <rect x="1.5" y="9.5" width="9" height="5" rx="1.25" fill="#B8C1D1" stroke="#101319" stroke-width="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <rect x="1.75" y="9.5" width="8.75" height="4.75" rx="1" fill="#1B2431" stroke="#7C95B8" stroke-width="1"/>
   <path
-    d="M7 2.2V7.4H8V4.8H9V7.4H10V5.7H11V7.4H12V6.6H13V7.4H14V11.2H13V13.3H9.2V11.6H8.4V10.2H7.6V9H6.7V7.9H5.8V5.9H6.7V6.8H7.6V2.2Z"
-    fill="#F6F7FB"
-    stroke="#101319"
+    d="M6.95 2.35V7.15H7.95V4.75H8.95V7.15H9.95V5.55H10.95V7.15H11.95V6.4H12.95V7.15H13.95V10.85H12.95V12.95H9.1V11.35H8.35V10.1H7.55V8.95H6.7V7.85H5.85V5.9H6.7V6.75H7.55V2.35Z"
+    fill="#F7FAFF"
+    stroke="#AFC2DE"
+    stroke-width="1.05"
     stroke-linejoin="round"
-    stroke-width="1"
   />
 </svg>

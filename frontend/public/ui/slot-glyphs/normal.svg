@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
   <path
-    d="M2 1.5L10.5 8L7.4 8.6L9.7 14.2L7.9 14.9L5.6 9.3L3.5 11.5L2 1.5Z"
-    fill="#F6F7FB"
-    stroke="#101319"
+    d="M2 1.5L10.4 7.9L7.25 8.55L9.5 14L7.75 14.7L5.5 9.3L3.35 11.45L2 1.5Z"
+    fill="#F7FAFF"
+    stroke="#AFC2DE"
+    stroke-width="1.1"
     stroke-linejoin="round"
-    stroke-width="1"
   />
 </svg>

@@ -1,4 +1,3 @@
-import { type CursorSceneZone } from "@/components/CursorScene";
 import { mapViewportHotspotToOutput } from "@/lib/cursorFrame";
 import {
   createAnimatedCursorSource,
@@ -11,6 +10,10 @@ import {
   createWindowsRoleRecord,
   type WindowsRoleSlotId,
 } from "@/lib/cursorThemeProject";
+import {
+  type SimulationSceneId,
+  type SimulationStationId,
+} from "@/lib/simulationScenes";
 
 export type SlotSimulationSources = Record<
   WindowsRoleSlotId,
@@ -31,34 +34,64 @@ export function hasNormalSlotSimulationSource(
   return Boolean(sources?.normalSelect);
 }
 
-export function resolveZoneSimulationSource(
-  zone: CursorSceneZone,
+export function resolveSimulationStationSource(
+  sceneId: SimulationSceneId,
+  stationId: SimulationStationId,
   sources: SlotSimulationSources | null | undefined
 ): CursorSource | null {
-  const normal = sources?.normalSelect ?? null;
-  const busy = sources?.busy ?? normal;
+  const slotId = mapStationToSlotId(sceneId, stationId);
 
-  switch (zone) {
-    case "neutral":
-      return normal;
-    case "text":
-      return sources?.textSelect ?? normal;
-    case "link":
-      return sources?.linkSelect ?? normal;
-    case "button":
-      return busy;
+  if (!slotId) {
+    return null;
   }
+
+  return sources?.[slotId] ?? null;
 }
 
-export function buildZoneSimulationSources(
-  sources: SlotSimulationSources | null | undefined
-): Record<CursorSceneZone, CursorSource | null> {
-  return {
-    neutral: resolveZoneSimulationSource("neutral", sources),
-    text: resolveZoneSimulationSource("text", sources),
-    link: resolveZoneSimulationSource("link", sources),
-    button: resolveZoneSimulationSource("button", sources),
-  };
+export function getSimulationStationNativeCursor(
+  sceneId: SimulationSceneId,
+  stationId: SimulationStationId
+) {
+  switch (sceneId) {
+    case "browser":
+      switch (stationId) {
+        case "browser-neutral":
+          return "default";
+        case "browser-text-body":
+        case "browser-text-input":
+          return "text";
+        case "browser-link-docs":
+          return "pointer";
+        default:
+          return "default";
+      }
+    case "system":
+      switch (stationId) {
+        case "system-busy-progress":
+          return "wait";
+        case "system-working-card":
+          return "progress";
+        case "system-unavailable-action":
+          return "not-allowed";
+        default:
+          return "default";
+      }
+    case "windowControls":
+      switch (stationId) {
+        case "window-titlebar-move":
+          return "move";
+        case "window-edge-horizontal-resize":
+          return "ew-resize";
+        case "window-edge-vertical-resize":
+          return "ns-resize";
+        case "window-corner-diagonal-resize-1":
+          return "nwse-resize";
+        case "window-corner-diagonal-resize-2":
+          return "nesw-resize";
+        default:
+          return "default";
+      }
+  }
 }
 
 export function isAnimatedCursorSource(source: CursorSource | null | undefined) {
@@ -99,6 +132,54 @@ export function buildProjectSlotSimulationSources(
     createSlotSimulationSource(fromProjectSlot(project, slotId))
   );
 }
+
+function mapStationToSlotId(
+  sceneId: SimulationSceneId,
+  stationId: SimulationStationId
+): WindowsRoleSlotId | null {
+  switch (sceneId) {
+    case "browser":
+      switch (stationId) {
+        case "browser-neutral":
+          return "normalSelect";
+        case "browser-text-body":
+        case "browser-text-input":
+          return "textSelect";
+        case "browser-link-docs":
+          return "linkSelect";
+        default:
+          return null;
+      }
+    case "system":
+      switch (stationId) {
+        case "system-busy-progress":
+          return "busy";
+        case "system-working-card":
+          return "workingInBackground";
+        case "system-unavailable-action":
+          return "unavailable";
+        default:
+          return null;
+      }
+    case "windowControls":
+      switch (stationId) {
+        case "window-titlebar-move":
+          return "move";
+        case "window-edge-horizontal-resize":
+          return "horizontalResize";
+        case "window-edge-vertical-resize":
+          return "verticalResize";
+        case "window-corner-diagonal-resize-1":
+          return "diagonalResize1";
+        case "window-corner-diagonal-resize-2":
+          return "diagonalResize2";
+        default:
+          return null;
+      }
+  }
+}
+
+export type { SimulationSceneId, SimulationStationId } from "@/lib/simulationScenes";
 
 function fromProjectSlot(
   project: CursorThemeProject,

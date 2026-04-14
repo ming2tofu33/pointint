@@ -66,7 +66,7 @@ export default function StudioBar({
             opacity: downloading ? 0.7 : 1,
           }}
         >
-          {secondaryActionLabel ?? "Download current slot"}
+          {secondaryActionLabel ?? t("downloadCurrentSlot")}
         </button>
 
         <button
@@ -95,7 +95,7 @@ export default function StudioBar({
               e.currentTarget.style.backgroundColor = "var(--color-accent)";
           }}
         >
-          {downloading ? t("generating") : primaryActionLabel ?? "Download all roles"}
+          {downloading ? t("generating") : primaryActionLabel ?? t("downloadAllRoles")}
         </button>
       </div>
     </header>

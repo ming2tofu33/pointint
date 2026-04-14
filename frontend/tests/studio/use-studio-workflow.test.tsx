@@ -1,19 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateAniMock, ensureAniZipPackageMock } = vi.hoisted(() => ({
+const { generateAniMock } = vi.hoisted(() => ({
   generateAniMock: vi.fn(),
-  ensureAniZipPackageMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   generateAni: generateAniMock,
   generateCursor: vi.fn(),
   removeBackground: vi.fn(),
-}));
-
-vi.mock("@/lib/aniDownload", () => ({
-  ensureAniZipPackage: ensureAniZipPackageMock,
 }));
 
 import { useStudio } from "@/lib/useStudio";
@@ -26,7 +21,6 @@ const originalCreateElement = document.createElement.bind(document);
 describe("useStudio workflow entry", () => {
   beforeEach(() => {
     generateAniMock.mockReset();
-    ensureAniZipPackageMock.mockReset();
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
       value: vi.fn(() => "blob:cursor"),
@@ -78,15 +72,16 @@ describe("useStudio workflow entry", () => {
     expect(result.current.editingSlotId).toBe("normalSelect");
   });
 
-  it("starts in the slot editor entry and resets back to it", () => {
+  it("starts in the slot editor entry and resets back to it", async () => {
     const { result } = renderHook(() => useStudio());
 
     expect(result.current.state).toBe("editing");
 
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
-    act(() => {
-      result.current.selectFile(file);
+    await act(async () => {
+      await result.current.selectFile(file);
+      await Promise.resolve();
     });
 
     expect(result.current.state).toBe("uploaded");
@@ -175,6 +170,27 @@ describe("useStudio workflow entry", () => {
     expect(result.current.editingSlotId).toBe("textSelect");
   });
 
+  it("hydrates non-primary static uploads with source dimensions for preview rendering", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["cursor"], "text-select.png", {
+      type: "image/png",
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(file);
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.selectedSlotId).toBe("textSelect");
+    expect(result.current.cursor?.sourceWidth).toBe(128);
+    expect(result.current.cursor?.sourceHeight).toBe(96);
+  });
+
   it("updates ANI output size independently from CUR size", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["gif"], "orbit.gif", { type: "image/gif" });
@@ -192,13 +208,11 @@ describe("useStudio workflow entry", () => {
   });
 
   it("names the current-slot export from the selected Windows role", async () => {
-    const zipBlob = new Blob(["zip"], { type: "application/zip" });
     generateAniMock.mockResolvedValue({
-      blob: zipBlob,
-      filename: "orbit:demo.zip",
-      contentType: "application/zip",
+      blob: new Blob(["ani"], { type: "application/octet-stream" }),
+      filename: "pointint-orbit-demo.ani",
+      contentType: "application/octet-stream",
     });
-    ensureAniZipPackageMock.mockResolvedValue(zipBlob);
 
     const createdAnchors: HTMLAnchorElement[] = [];
     const createElementSpy = vi
@@ -226,7 +240,7 @@ describe("useStudio workflow entry", () => {
       await result.current.download();
     });
 
-    expect(createdAnchors[0]?.download).toBe("pointint-normal-select.zip");
+    expect(createdAnchors[0]?.download).toBe("pointint_arrow.ani");
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();

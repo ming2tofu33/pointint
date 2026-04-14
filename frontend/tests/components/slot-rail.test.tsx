@@ -122,6 +122,13 @@ describe("SlotRail", () => {
       />
     );
 
+    expect(screen.getByTestId("slot-rail-scroll")).toHaveStyle({
+      overflowY: "auto",
+    });
+    expect(screen.getByTestId("slot-normalSelect")).toHaveStyle({
+      minHeight: "5.5rem",
+    });
+
     PRIMARY_ROLE_IDS.forEach((roleId) => {
       expect(screen.getByTestId(`slot-${roleId}`)).toBeVisible();
     });
@@ -145,5 +152,21 @@ describe("SlotRail", () => {
     HIDDEN_ROLE_IDS.forEach((roleId) => {
       expect(screen.getByTestId(`slot-${roleId}`)).toBeVisible();
     });
+
+    expect(screen.getByTestId("slot-glyph-normalSelect-image")).toHaveAttribute(
+      "src",
+      "/ui/slot-glyphs/normal.svg"
+    );
+    expect(screen.getByTestId("slot-glyph-busy-image")).toHaveAttribute(
+      "src",
+      "/ui/slot-glyphs/busy.svg"
+    );
+    expect(
+      screen.getByTestId("slot-glyph-workingInBackground-image")
+    ).toHaveAttribute("src", "/ui/slot-glyphs/working-in-background.svg");
+    expect(screen.getByTestId("slot-glyph-move-image")).toHaveAttribute(
+      "src",
+      "/ui/slot-glyphs/move.svg"
+    );
   });
 });

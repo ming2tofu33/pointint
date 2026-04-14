@@ -14,6 +14,8 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   slotRailMore: "Additional 7 cursors",
   slotRailConfigured: "configured",
   slotSelected: "Selected",
+  recommended: "Recommended (t)",
+  manual: "Manual (t)",
   slotFilled: "Configured",
   slotEmpty: "Empty",
   slotStatic: "Static",
@@ -47,6 +49,8 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   emptySlotMultiplePngs: "Multiple PNGs",
   emptySlotAiGenerate: "AI generate",
   soon: "Soon",
+  downloadAllRoles: "Download all roles (t)",
+  downloadCurrentSlot: "Download current slot (t)",
   compactGuidanceTitle: "Compact guidance",
 };
 
@@ -79,6 +83,8 @@ const {
   selectSlotMock,
   selectSlotStaticFileMock,
   selectSlotAnimatedFileMock,
+  setOffsetMock,
+  setHotspotMock,
   undoMock,
   redoMock,
   searchParamsState,
@@ -100,6 +106,8 @@ const {
   selectSlotMock: vi.fn(),
   selectSlotStaticFileMock: vi.fn(),
   selectSlotAnimatedFileMock: vi.fn(),
+  setOffsetMock: vi.fn(),
+  setHotspotMock: vi.fn(),
   undoMock: vi.fn(),
   redoMock: vi.fn(),
   searchParamsState: {
@@ -422,8 +430,8 @@ function renderStudio(
     skipBgRemoval: vi.fn(),
     toggleOriginal: vi.fn(),
     retryBgRemoval: vi.fn(),
-    setHotspot: vi.fn(),
-    setOffset: vi.fn(),
+    setHotspot: setHotspotMock,
+    setOffset: setOffsetMock,
     setScale: vi.fn(),
     setFitMode: vi.fn(),
     setCursorSize: vi.fn(),
@@ -460,6 +468,8 @@ beforeEach(() => {
   selectSlotMock.mockReset();
   selectSlotStaticFileMock.mockReset();
   selectSlotAnimatedFileMock.mockReset();
+  setOffsetMock.mockReset();
+  setHotspotMock.mockReset();
   undoMock.mockReset();
   redoMock.mockReset();
   replaceMock.mockReset();
@@ -479,6 +489,9 @@ describe("Studio entry gate", () => {
     });
 
     expect(screen.getByTestId("studio-theme-scope")).toBeVisible();
+    expect(screen.getByTestId("studio-theme-scope")).toHaveStyle({
+      overflow: "hidden",
+    });
     expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
     expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
     expect(screen.getByTestId("studio-empty-slot-source-animated")).toBeVisible();
@@ -538,6 +551,8 @@ describe("Studio entry gate", () => {
     const barProps = StudioBarMock.mock.calls[0][0];
     expect(barProps.onDownload).toBeDefined();
     expect(barProps.onSecondaryDownload).toBeDefined();
+    expect(barProps.primaryActionLabel).toBe("Download all roles (t)");
+    expect(barProps.secondaryActionLabel).toBe("Download current slot (t)");
     expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
   });
@@ -749,5 +764,53 @@ describe("Studio entry gate", () => {
 
     expect(undoMock).toHaveBeenCalledTimes(1);
     expect(redoMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows numeric cursor position inputs and wires them to offset updates", () => {
+    renderStudio("editing");
+
+    const offsetXInput = screen.getByLabelText(/offset x/i);
+    const offsetYInput = screen.getByLabelText(/offset y/i);
+
+    expect(offsetXInput).toHaveValue(0);
+    expect(offsetYInput).toHaveValue(0);
+
+    fireEvent.change(offsetXInput, { target: { value: "14" } });
+    fireEvent.change(offsetYInput, { target: { value: "-8" } });
+
+    expect(setOffsetMock).toHaveBeenNthCalledWith(1, 14, 0);
+    expect(setOffsetMock).toHaveBeenNthCalledWith(2, 0, -8);
+  });
+
+  it("shows numeric hotspot inputs and wires them to hotspot updates", () => {
+    renderStudio("editing");
+
+    const hotspotXInput = screen.getByLabelText(/hotspot x/i);
+    const hotspotYInput = screen.getByLabelText(/hotspot y/i);
+
+    expect(hotspotXInput).toHaveValue(24);
+    expect(hotspotYInput).toHaveValue(18);
+
+    fireEvent.change(hotspotXInput, { target: { value: "11" } });
+    fireEvent.change(hotspotYInput, { target: { value: "7" } });
+
+    expect(setHotspotMock).toHaveBeenNthCalledWith(1, 11, 18);
+    expect(setHotspotMock).toHaveBeenNthCalledWith(2, 24, 7);
+  });
+
+  it("shows numeric hotspot inputs for ani editing and wires them to hotspot updates", () => {
+    renderStudio("ani-editing");
+
+    const hotspotXInput = screen.getByLabelText(/hotspot x/i);
+    const hotspotYInput = screen.getByLabelText(/hotspot y/i);
+
+    expect(hotspotXInput).toHaveValue(24);
+    expect(hotspotYInput).toHaveValue(18);
+
+    fireEvent.change(hotspotXInput, { target: { value: "9" } });
+    fireEvent.change(hotspotYInput, { target: { value: "5" } });
+
+    expect(setHotspotMock).toHaveBeenNthCalledWith(1, 9, 18);
+    expect(setHotspotMock).toHaveBeenNthCalledWith(2, 24, 5);
   });
 });

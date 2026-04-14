@@ -20,7 +20,7 @@ export default function SimulationBackgroundModeSwitch({
       data-testid="simulation-background-mode-switch"
       role="switch"
       aria-checked={value === "dark"}
-      aria-label="simulation background mode"
+      aria-label={t("backgroundModeSwitch")}
       onClick={() => onChange(nextValue)}
       style={{
         position: "relative",
@@ -30,9 +30,9 @@ export default function SimulationBackgroundModeSwitch({
         padding: "0.125rem",
         minWidth: "6.5rem",
         height: "1.875rem",
-        border: "1px solid var(--color-border)",
+        border: "1px solid var(--simulation-panel-border)",
         borderRadius: "999px",
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--simulation-card-bg)",
         cursor: "pointer",
         transition: "border-color 160ms ease, background 160ms ease, color 160ms ease",
       }}
@@ -49,8 +49,8 @@ export default function SimulationBackgroundModeSwitch({
           borderRadius: "999px",
           background:
             value === "light"
-              ? "rgba(255,255,255,0.14)"
-              : "rgba(255,255,255,0.06)",
+              ? "var(--simulation-tab-active-bg)"
+              : "var(--simulation-chrome-top)",
           transition: "left 180ms ease, background 180ms ease",
         }}
       />
@@ -79,7 +79,9 @@ function ModeLabel({
         justifyContent: "center",
         height: "1.625rem",
         padding: "0 0.625rem",
-        color: active ? "var(--color-text-primary)" : "var(--color-text-muted)",
+        color: active
+          ? "var(--simulation-panel-text)"
+          : "var(--simulation-panel-muted)",
         fontSize: "0.6875rem",
         fontWeight: 600,
         letterSpacing: "0.015em",
