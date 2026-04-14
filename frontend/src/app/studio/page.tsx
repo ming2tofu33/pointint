@@ -11,12 +11,15 @@ import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
+import SimulationBackgroundModeSwitch from "@/components/SimulationBackgroundModeSwitch";
 import SlotRail from "@/components/SlotRail";
 import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import Simulation from "@/components/Simulation";
 import SimulationFooter from "@/components/SimulationFooter";
+import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
+  StudioInspectorCompactGuidance,
   StudioInspectorEmptyNotice,
   StudioInspectorRow,
   StudioInspectorSecondaryButton,
@@ -30,13 +33,15 @@ import {
   STUDIO_INTERACTION_TRANSITION,
   StudioShellInteractionStyles,
 } from "@/components/StudioSurfaceCard";
+import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
 import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
-import { buildProjectSlotSimulationSources } from "@/lib/slotSimulationSources";
+import {
+  buildProjectSlotSimulationSources,
+  hasNormalSlotSimulationSource,
+} from "@/lib/slotSimulationSources";
 import { CursorSize, useStudio } from "@/lib/useStudio";
-
-type Tool = "move" | "hotspot";
 
 export default function StudioPage() {
   const {
@@ -67,12 +72,21 @@ export default function StudioPage() {
     setAniCursorSize,
     setCursorName,
     recommendHotspot,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     reset,
+    canDownloadAll,
+    canDownload,
+    downloadAll,
     download,
     closeGuide,
   } = useStudio();
-  const [activeTool, setActiveTool] = useState<Tool>("move");
+  const [hotspotPickActive, setHotspotPickActive] = useState(false);
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
+  const [simulationBackgroundMode, setSimulationBackgroundMode] =
+    useState<BackgroundMode>("dark");
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
   const searchParams = useSearchParams();
@@ -98,14 +112,44 @@ export default function StudioPage() {
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.key === "v" || e.key === "V") setActiveTool("move");
-      if (e.key === "h" || e.key === "H") setActiveTool("hotspot");
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const isCommandModifier = e.ctrlKey || e.metaKey;
+
+      if (isCommandModifier && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+          return;
+        }
+        undo();
+        return;
+      }
+
+      if (isCommandModifier && (e.key === "y" || e.key === "Y")) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      if (e.key === "h" || e.key === "H") {
+        setHotspotPickActive(true);
+      }
+      if (e.key === "Escape") {
+        setHotspotPickActive(false);
+      }
     }
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+  }, [redo, undo]);
 
   const displayUrl =
     state === "editing" && cursor
@@ -120,12 +164,6 @@ export default function StudioPage() {
       cursor ||
       ani
   );
-  const normalSlot = project.slots.normal;
-  const normalSlotBound = Boolean(
-    normalSlot.asset.originalUrl ||
-      normalSlot.asset.previewUrl ||
-      (selectedSlotId === "normal" && (cursor || ani))
-  );
   const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
   const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "CUR";
   const stageHotspotBadge =
@@ -136,12 +174,35 @@ export default function StudioPage() {
       : null;
   const stageGuidance = cursor
     ? [
-        activeTool === "move" ? t("dragToMove") : t("clickToSetHotspot"),
-        t("shortcutMove"),
+        hotspotPickActive ? t("clickToSetHotspot") : t("dragToMove"),
         t("shortcutHotspot"),
       ]
     : [t("emptySlotDescription")];
   const stageActions = [
+    {
+      id: "studio-undo",
+      label: t("undo"),
+      onClick: undo,
+      disabled: !canUndo,
+      title: t("undoShortcut"),
+      ariaLabel: t("undoShortcut"),
+    },
+    {
+      id: "studio-redo",
+      label: t("redo"),
+      onClick: redo,
+      disabled: !canRedo,
+      title: t("redoShortcut"),
+      ariaLabel: t("redoShortcut"),
+    },
+    {
+      id: "studio-pick-hotspot",
+      label: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+      onClick: () => setHotspotPickActive((current) => !current),
+      disabled: !cursor,
+      title: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+      ariaLabel: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+    },
     {
       id: "studio-toggle-original",
       label: showOriginal ? t("showProcessed") : t("showOriginal"),
@@ -163,10 +224,11 @@ export default function StudioPage() {
     () => buildProjectSlotSimulationSources(project),
     [project]
   );
+  const hasSimulationNormal = hasNormalSlotSimulationSource(slotSimulationSources);
   const showSlotSourceEntry =
     state !== "uploaded" && state !== "processing" && !selectedSlotBound;
-  const showToolRail =
-    selectedSlotBound && (state === "editing" || state === "ani-editing");
+  const showCompactInspectorGuidance =
+    !selectedSlotBound || state === "uploaded" || state === "processing";
 
   return (
     <MobileGuard>
@@ -177,14 +239,13 @@ export default function StudioPage() {
       >
         <StudioShellInteractionStyles />
         <StudioBar
-          onDownload={download}
+          onDownload={downloadAll}
+          onSecondaryDownload={download}
           downloading={downloading}
-          canDownload={
-            (state === "editing" || state === "ani-editing") &&
-            selectedSlotBound &&
-            normalSlotBound
-          }
-          actionLabel={state === "ani-editing" ? t("exportAni") : undefined}
+          canDownload={canDownloadAll}
+          canSecondaryDownload={canDownload}
+          primaryActionLabel="Download all roles"
+          secondaryActionLabel="Download current slot"
         />
 
         {state === "ani-editing" ? (
@@ -194,8 +255,8 @@ export default function StudioPage() {
             project={project}
             selectedSlotId={selectedSlotId}
             error={error}
-            activeTool={activeTool}
-            onSetActiveTool={setActiveTool}
+            hotspotPickActive={hotspotPickActive}
+            onSetHotspotPickActive={setHotspotPickActive}
             onSelectSlot={selectSlot}
             onSelectSlotStaticFile={selectSelectedSlotStaticFile}
             onSelectSlotAnimatedFile={selectSelectedSlotAnimatedFile}
@@ -206,45 +267,16 @@ export default function StudioPage() {
             onAniCursorSizeChange={setAniCursorSize}
             onAniNameChange={setCursorName}
             onRecommendHotspot={recommendHotspot}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
             onResetHotspot={() => setHotspot(0, 0)}
             onReset={reset}
           />
         ) : (
           <>
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <aside
-          style={{
-            width: "3.5rem",
-            borderRight: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-bg-secondary)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            paddingTop: "1rem",
-            gap: "0.25rem",
-            flexShrink: 0,
-          }}
-        >
-          {showToolRail && (
-            <>
-              <ToolButton
-                label={t("move")}
-                shortcut="V"
-                active={activeTool === "move"}
-                onClick={() => setActiveTool("move")}
-              />
-              <ToolButton
-                label={t("hotspotShort")}
-                shortcut="H"
-                active={activeTool === "hotspot"}
-                onClick={() => setActiveTool("hotspot")}
-              />
-              <div style={{ flex: 1 }} />
-              <ToolButton label={t("new")} shortcut="" onClick={reset} />
-            </>
-          )}
-        </aside>
-
         <main
           style={{
             flex: 1,
@@ -318,7 +350,7 @@ export default function StudioPage() {
                       overflow: "hidden",
                       alignItems: "center",
                       justifyContent: "center",
-                      padding: "1.25rem",
+                      padding: "2rem 2.25rem",
                     }}
                   >
                     <SlotEmptyState
@@ -328,7 +360,9 @@ export default function StudioPage() {
                     />
                   </div>
                 ) : selectedSlotBound && cursor ? (
-                  <div
+                  <SlotReplacementSurface
+                    onStaticFile={selectSelectedSlotStaticFile}
+                    onAnimatedFile={selectSelectedSlotAnimatedFile}
                     style={{
                       flex: 1,
                       minHeight: 0,
@@ -381,7 +415,8 @@ export default function StudioPage() {
                           hotspotY={cursor.hotspotY}
                           onOffsetChange={setOffset}
                           onHotspotChange={setHotspot}
-                          activeTool={activeTool}
+                          hotspotPickActive={hotspotPickActive}
+                          onHotspotPickComplete={() => setHotspotPickActive(false)}
                         />
                       </div>
                     </div>
@@ -413,21 +448,32 @@ export default function StudioPage() {
 
                       <StudioStageActionBar actions={stageActions} />
                     </div>
-                  </div>
+                  </SlotReplacementSurface>
                 ) : null}
 
-                {selectedSlotBound && cursor && previewUrl && cursor.renderedBlob ? (
+                {hasSimulationNormal ? (
                   <SimulationFooter
                     collapsed={simulationCollapsed}
                     onToggle={() => setSimulationCollapsed((current) => !current)}
+                    headerControls={
+                      <SimulationBackgroundModeSwitch
+                        value={simulationBackgroundMode}
+                        onChange={setSimulationBackgroundMode}
+                      />
+                    }
                   >
                     <Simulation
-                      imageUrl={previewUrl}
-                      cursorSize={cursor.cursorSize}
-                      hotspotX={cursor.renderedHotspotX}
-                      hotspotY={cursor.renderedHotspotY}
+                      imageUrl={selectedSlotBound && cursor && previewUrl ? previewUrl : null}
+                      cursorSize={selectedSlotBound && cursor ? cursor.cursorSize : 32}
+                      hotspotX={
+                        selectedSlotBound && cursor ? cursor.renderedHotspotX : 0
+                      }
+                      hotspotY={
+                        selectedSlotBound && cursor ? cursor.renderedHotspotY : 0
+                      }
                       slotSources={slotSimulationSources}
                       selectedSlotId={selectedSlotId}
+                      backgroundMode={simulationBackgroundMode}
                     />
                   </SimulationFooter>
                 ) : null}
@@ -447,7 +493,7 @@ export default function StudioPage() {
 
         <StudioInspector
           style={{
-            width: "16rem",
+            width: showCompactInspectorGuidance ? "13rem" : "16rem",
             borderLeft: "1px solid var(--color-border)",
             backgroundColor: "var(--color-bg-secondary)",
             padding: "1.25rem",
@@ -468,6 +514,12 @@ export default function StudioPage() {
                   }
                 />
               </div>
+            ) : showCompactInspectorGuidance ? (
+              <StudioInspectorCompactGuidance
+                title={t("slotEmptyTitle")}
+                summary={t("emptySlotDescription")}
+                lines={[t("slotStaticUploadSub"), t("slotAniUploadSub")]}
+              />
             ) : (
               <StudioInspectorEmptyNotice
                 slotLabel={stageSlotLabel}
@@ -518,30 +570,6 @@ export default function StudioPage() {
                 <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
                   {tp("actualSize")}
                 </div>
-              </div>
-            ) : null
-          }
-          quickActions={
-            state === "editing" && cursor && selectedSlotBound ? (
-              <div style={{ display: "grid", gap: "0.5rem" }}>
-                <StudioInspectorSecondaryButton
-                  onClick={recommendHotspot}
-                  style={{ justifyContent: "space-between" }}
-                >
-                  <span>
-                    {cursor.hotspotMode === "auto"
-                      ? tp("recommendHotspotAgain")
-                      : tp("recommendHotspot")}
-                  </span>
-                  <span aria-hidden="true">↺</span>
-                </StudioInspectorSecondaryButton>
-                <StudioInspectorSecondaryButton
-                  onClick={() => setHotspot(0, 0)}
-                  style={{ justifyContent: "space-between" }}
-                >
-                  <span>{tp("resetHotspot")}</span>
-                  <span aria-hidden="true">⟲</span>
-                </StudioInspectorSecondaryButton>
               </div>
             ) : null
           }
@@ -647,7 +675,7 @@ export default function StudioPage() {
                   style={{ justifyContent: "space-between" }}
                 >
                   <span>{tp("center")}</span>
-                  <span aria-hidden="true">⌖</span>
+                  <span aria-hidden="true">-</span>
                 </StudioInspectorSecondaryButton>
               </StudioInspectorSection>
 
@@ -710,55 +738,12 @@ function ActualSizePreview({
   );
 }
 
-function ToolButton({
-  label,
-  shortcut,
-  active,
-  onClick,
-}: {
-  label: string;
-  shortcut: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      title={shortcut ? `${label} (${shortcut})` : label}
-      aria-label={shortcut ? `${label} (${shortcut})` : label}
-      onClick={onClick}
-      style={{
-        width: "2.75rem",
-        height: "2.75rem",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "0.5625rem",
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        backgroundColor: active
-          ? "var(--color-accent-subtle)"
-          : "transparent",
-        color: active ? "var(--color-accent)" : "var(--color-text-muted)",
-        transition: STUDIO_INTERACTION_TRANSITION,
-        gap: "1px",
-      }}
-    >
-      <span>{label}</span>
-      {shortcut && (
-        <span style={{ fontSize: "0.5rem", opacity: 0.6 }}>{shortcut}</span>
-      )}
-    </button>
-  );
-}
-
 function SlotEmptyState({
   slotId,
   onStaticFile,
   onAnimatedFile,
 }: {
-  slotId: "normal" | "text" | "link" | "button";
+  slotId: string;
   onStaticFile: (file: File) => void;
   onAnimatedFile: (file: File) => void;
 }) {
@@ -770,21 +755,15 @@ function SlotEmptyState({
     <div
       data-testid="studio-empty-slot-state"
       style={{
-        width: "min(52rem, 100%)",
-        minHeight: "20rem",
-        border: "1px solid var(--color-border)",
-        borderRadius: "1rem",
-        backgroundColor: "rgba(255,255,255,0.025)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        padding: "1.5rem",
+        width: "min(56rem, 100%)",
+        display: "grid",
+        gap: "1.25rem",
         color: "var(--color-text-muted)",
         textAlign: "left",
         lineHeight: 1.6,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+      <div style={{ display: "grid", gap: "0.375rem" }}>
         <div
           style={{
             fontSize: "0.6875rem",
@@ -796,7 +775,7 @@ function SlotEmptyState({
           {slotLabel} {t("slotLabelSuffix")}
         </div>
         <div
-          style={{ fontSize: "0.8125rem" }}
+          style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}
         >
           {t("emptySlotDescription")}
         </div>
@@ -808,6 +787,10 @@ function SlotEmptyState({
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
           gap: "1rem",
+          padding: "1.125rem",
+          border: "1px solid var(--color-border)",
+          borderRadius: "1rem",
+          backgroundColor: "rgba(255,255,255,0.02)",
         }}
       >
         <SlotSourceChoiceCard
@@ -828,7 +811,7 @@ function SlotEmptyState({
         />
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div style={{ display: "grid", gap: "0.75rem" }}>
         <button
           type="button"
           onClick={() => setShowMoreOptions((current) => !current)}
@@ -907,7 +890,7 @@ function SoonSourceRow({
   );
 }
 
-function capitalizeSlotId(slotId: "normal" | "text" | "link" | "button" | undefined) {
+function capitalizeSlotId(slotId: string | undefined) {
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
 }
@@ -928,3 +911,4 @@ const studioThemeScopeStyle: CSSProperties = {
   ["--color-text-muted" as string]: "var(--studio-text-muted)",
   ["--color-shadow" as string]: "rgba(0, 0, 0, 0.42)",
 };
+

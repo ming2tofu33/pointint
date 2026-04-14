@@ -10,7 +10,11 @@ import SimulationFooter from "@/components/SimulationFooter";
 describe("SimulationFooter", () => {
   it("uses a ratio-based expanded split instead of a fixed desktop height", () => {
     render(
-      <SimulationFooter collapsed={false} onToggle={vi.fn()}>
+      <SimulationFooter
+        collapsed={false}
+        onToggle={vi.fn()}
+        headerControls={<div data-testid="header-controls">controls</div>}
+      >
         <div data-testid="simulation-body">preview</div>
       </SimulationFooter>
     );
@@ -19,7 +23,12 @@ describe("SimulationFooter", () => {
       flexBasis: "42%",
       minHeight: "20rem",
     });
+    expect(screen.getByTestId("studio-simulation-body")).toHaveStyle({
+      overflowY: "auto",
+      overflowX: "hidden",
+    });
     expect(screen.getByTestId("simulation-body")).not.toBeNull();
+    expect(screen.getByTestId("header-controls")).not.toBeNull();
     expect(screen.getByTestId("studio-simulation-toggle")).toHaveTextContent(
       "collapseSimulation"
     );

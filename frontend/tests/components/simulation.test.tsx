@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { createStaticCursorSource } from "@/lib/cursorSources";
+import { createWindowsRoleRecord } from "@/lib/cursorThemeProject";
+import { type SlotSimulationSources } from "@/lib/slotSimulationSources";
 
 const { cursorSimulationSurfaceMock } = vi.hoisted(() => ({
   cursorSimulationSurfaceMock: vi.fn(() => (
@@ -59,7 +61,10 @@ describe("Simulation", () => {
         cursorSize={32}
         hotspotX={12}
         hotspotY={8}
-        slotSources={{ normal: normalSource, text: textSource }}
+        slotSources={makeSlotSources({
+          normalSelect: normalSource,
+          textSelect: textSource,
+        })}
       />
     );
 
@@ -68,10 +73,10 @@ describe("Simulation", () => {
     });
 
     const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
-    expect(props?.slotSources?.normal?.getFrameAtTime(0).frame.src).toBe(
+    expect(props?.slotSources?.normalSelect?.getFrameAtTime(0).frame.src).toBe(
       "blob:normal"
     );
-    expect(props?.slotSources?.text?.getFrameAtTime(0).frame.src).toBe(
+    expect(props?.slotSources?.textSelect?.getFrameAtTime(0).frame.src).toBe(
       "blob:text"
     );
   });
@@ -83,13 +88,13 @@ describe("Simulation", () => {
         cursorSize={32}
         hotspotX={12}
         hotspotY={8}
-        slotSources={{
-          text: createStaticCursorSource(
+        slotSources={makeSlotSources({
+          textSelect: createStaticCursorSource(
             { src: "blob:text" },
             { x: 0, y: 0 },
             32
           ),
-        }}
+        })}
       />
     );
 
@@ -99,4 +104,43 @@ describe("Simulation", () => {
 
     expect(screen.queryByTestId("cursor-simulation-surface")).toBeNull();
   });
+
+  it("keeps the selected slot preview override on Windows role ids", async () => {
+    const normalSource = createStaticCursorSource(
+      { src: "blob:normal" },
+      { x: 1, y: 2 },
+      32
+    );
+
+    render(
+      <Simulation
+        imageUrl="blob:cursor"
+        cursorSize={32}
+        hotspotX={12}
+        hotspotY={8}
+        selectedSlotId="textSelect"
+        slotSources={makeSlotSources({
+          normalSelect: normalSource,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(cursorSimulationSurfaceMock).toHaveBeenCalled();
+    });
+
+    const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
+    expect(props?.slotSources?.textSelect?.getFrameAtTime(0).frame.src).toBe(
+      "blob:cursor"
+    );
+    expect(props?.slotSources?.normalSelect?.getFrameAtTime(0).frame.src).toBe(
+      "blob:normal"
+    );
+  });
 });
+
+function makeSlotSources(
+  overrides: Partial<SlotSimulationSources>
+) {
+  return Object.assign(createWindowsRoleRecord(() => null), overrides);
+}

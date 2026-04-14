@@ -1,8 +1,23 @@
 import { type FitMode } from "@/lib/cursorFrame";
 
 export type CursorSize = 32 | 48 | 64;
-export type SlotId = "normal" | "text" | "link" | "button";
+export const WINDOWS_ROLE_SLOT_IDS = [
+  "normalSelect",
+  "textSelect",
+  "linkSelect",
+  "busy",
+  "workingInBackground",
+  "unavailable",
+  "move",
+  "horizontalResize",
+  "verticalResize",
+  "diagonalResize1",
+  "diagonalResize2",
+] as const;
+export type WindowsRoleSlotId = (typeof WINDOWS_ROLE_SLOT_IDS)[number];
+export type SlotId = WindowsRoleSlotId;
 export type SlotKind = "static" | "animated";
+export const DEFAULT_PRIMARY_ROLE_SLOT_ID = WINDOWS_ROLE_SLOT_IDS[0];
 
 export interface CursorThemeSlot {
   id: SlotId;
@@ -25,8 +40,12 @@ export interface CursorThemeSlot {
   };
 }
 
+export interface CursorThemeSlots
+  extends Record<WindowsRoleSlotId, CursorThemeSlot> {
+}
+
 export interface CursorThemeProject {
-  slots: Record<SlotId, CursorThemeSlot>;
+  slots: CursorThemeSlots;
 }
 
 function createCursorThemeSlot(id: SlotId): CursorThemeSlot {
@@ -52,13 +71,22 @@ function createCursorThemeSlot(id: SlotId): CursorThemeSlot {
   };
 }
 
+export function createWindowsRoleRecord<T>(
+  createValue: (slotId: WindowsRoleSlotId) => T
+): Record<WindowsRoleSlotId, T> {
+  const record = {} as Record<WindowsRoleSlotId, T>;
+
+  for (const slotId of WINDOWS_ROLE_SLOT_IDS) {
+    record[slotId] = createValue(slotId);
+  }
+
+  return record;
+}
+
 export function createCursorThemeProject(): CursorThemeProject {
+  const slots = createWindowsRoleRecord((slotId) => createCursorThemeSlot(slotId));
+
   return {
-    slots: {
-      normal: createCursorThemeSlot("normal"),
-      text: createCursorThemeSlot("text"),
-      link: createCursorThemeSlot("link"),
-      button: createCursorThemeSlot("button"),
-    },
+    slots,
   };
 }

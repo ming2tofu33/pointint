@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
+import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import {
   buildAniPreviewFrameStack,
   createAniPreviewSourceFromFrames,
@@ -19,9 +20,9 @@ import {
 import { type AniPreviewRenderedFrameStack } from "@/lib/aniPreviewFrames";
 
 interface AniSimulationProps {
-  imageUrl: string;
-  sourceWidth: number;
-  sourceHeight: number;
+  imageUrl?: string | null;
+  sourceWidth?: number;
+  sourceHeight?: number;
   fitMode: FitMode;
   offsetX: number;
   offsetY: number;
@@ -31,6 +32,7 @@ interface AniSimulationProps {
   hotspotY: number;
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
+  backgroundMode?: BackgroundMode;
 }
 
 const ANI_PREVIEW_VIEWPORT_SIZE = 256;
@@ -39,8 +41,8 @@ type PreviewStatus = "loading" | "ready" | "unavailable";
 
 export default function AniSimulation({
   imageUrl,
-  sourceWidth,
-  sourceHeight,
+  sourceWidth = 0,
+  sourceHeight = 0,
   fitMode,
   offsetX,
   offsetY,
@@ -50,6 +52,7 @@ export default function AniSimulation({
   hotspotY,
   slotSources,
   selectedSlotId,
+  backgroundMode = "dark",
 }: AniSimulationProps) {
   const [previewFrameStack, setPreviewFrameStack] =
     useState<AniPreviewRenderedFrameStack | null>(null);
@@ -68,6 +71,14 @@ export default function AniSimulation({
   }, [imageUrl]);
 
   useEffect(() => {
+    if (!imageUrl) {
+      setPreviewFrameStack(null);
+      setPreviewStatus("ready");
+      lastStartedImageUrlRef.current = null;
+      clearPendingAniPreviewRebuild(rebuildTimerRef);
+      return;
+    }
+
     let cancelled = false;
     const requestId = ++latestRequestIdRef.current;
     const imageChanged = lastStartedImageUrlRef.current !== imageUrl;
@@ -158,6 +169,9 @@ export default function AniSimulation({
   }, []);
 
   useEffect(() => {
+    if (!imageUrl) {
+      return;
+    }
     return () => {
       releaseAniPreviewFrames(imageUrl);
     };
@@ -230,6 +244,7 @@ export default function AniSimulation({
               previewBody,
               t("instruction")
             )}
+            backgroundMode={backgroundMode}
           />
         ) : (
           renderAniPlaceholder(previewTitle, previewBody, t("instruction"))

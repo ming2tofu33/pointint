@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <path
+    d="M2 1.5L10.5 8L7.4 8.6L9.7 14.2L7.9 14.9L5.6 9.3L3.5 11.5L2 1.5Z"
+    fill="#F6F7FB"
+    stroke="#101319"
+    stroke-linejoin="round"
+    stroke-width="1"
+  />
+</svg>

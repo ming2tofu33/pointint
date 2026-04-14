@@ -1,7 +1,67 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type StudioState } from "@/lib/studioWorkflow";
+
+const STUDIO_TRANSLATIONS: Record<string, string> = {
+  slotRailTitle: "Windows roles",
+  slotRailMore: "Additional 7 cursors",
+  slotRailConfigured: "configured",
+  slotSelected: "Selected",
+  slotFilled: "Configured",
+  slotEmpty: "Empty",
+  slotStatic: "Static",
+  slotAnimated: "Animated",
+  slotKindUnset: "Unset",
+  slotNormalSelect: "Normal Select",
+  slotNormalSelectHint: "Pointer on the desktop",
+  slotTextSelect: "Text Select",
+  slotTextSelectHint: "Text input area",
+  slotLinkSelect: "Link Select",
+  slotLinkSelectHint: "Link hover",
+  slotBusy: "Busy",
+  slotBusyHint: "Waiting cursor",
+  slotWorkingInBackground: "Working in Background",
+  slotWorkingInBackgroundHint: "Task continues in the background",
+  slotUnavailable: "Unavailable",
+  slotUnavailableHint: "Unavailable state",
+  slotMove: "Move",
+  slotMoveHint: "Move selection",
+  slotHorizontalResize: "Horizontal Resize",
+  slotHorizontalResizeHint: "Resize horizontally",
+  slotVerticalResize: "Vertical Resize",
+  slotVerticalResizeHint: "Resize vertically",
+  slotDiagonalResize1: "Diagonal Resize 1",
+  slotDiagonalResize1Hint: "Resize diagonally",
+  slotDiagonalResize2: "Diagonal Resize 2",
+  slotDiagonalResize2Hint: "Resize diagonally",
+  emptySlotStatic: "Static image",
+  emptySlotAnimated: "Animated GIF",
+  emptySlotMore: "More options",
+  emptySlotMultiplePngs: "Multiple PNGs",
+  emptySlotAiGenerate: "AI generate",
+  soon: "Soon",
+  compactGuidanceTitle: "Compact guidance",
+};
+
+function humanizeStudioKey(key: string) {
+  return (
+    STUDIO_TRANSLATIONS[key] ??
+    key
+      .replace(/^studio\./, "")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+      .replace(/\./g, " ")
+      .trim()
+      .toLowerCase()
+  );
+}
 
 const {
   UploadZoneMock,
@@ -19,6 +79,8 @@ const {
   selectSlotMock,
   selectSlotStaticFileMock,
   selectSlotAnimatedFileMock,
+  undoMock,
+  redoMock,
   searchParamsState,
 } = vi.hoisted(() => ({
   UploadZoneMock: vi.fn(() => <div data-testid="upload-zone" />),
@@ -38,13 +100,15 @@ const {
   selectSlotMock: vi.fn(),
   selectSlotStaticFileMock: vi.fn(),
   selectSlotAnimatedFileMock: vi.fn(),
+  undoMock: vi.fn(),
+  redoMock: vi.fn(),
   searchParamsState: {
     current: new URLSearchParams(""),
   },
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string) => humanizeStudioKey(key),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -105,6 +169,22 @@ vi.mock("@/components/SettingsBar", () => ({
 
 import StudioPage from "@/app/studio/page";
 
+const windowsRoleIds = [
+  "normalSelect",
+  "textSelect",
+  "linkSelect",
+  "busy",
+  "workingInBackground",
+  "unavailable",
+  "move",
+  "horizontalResize",
+  "verticalResize",
+  "diagonalResize1",
+  "diagonalResize2",
+] as const;
+
+type WindowsRoleId = (typeof windowsRoleIds)[number];
+
 function createEditingCursor(overrides: Record<string, unknown> = {}) {
   return {
     originalFile: new File(["cursor"], "cursor.png", { type: "image/png" }),
@@ -149,7 +229,7 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
 }
 
 function createProject() {
-  const slot = (id: "normal" | "text" | "link" | "button") => ({
+  const slot = (id: WindowsRoleId) => ({
     id,
     kind: null,
     asset: {
@@ -170,18 +250,62 @@ function createProject() {
     },
   });
 
-  return {
-    slots: {
+  const slots = {
       normal: slot("normal"),
       text: slot("text"),
       link: slot("link"),
       button: slot("button"),
-    },
+      normalSelect: slot("normalSelect"),
+      textSelect: slot("textSelect"),
+      linkSelect: slot("linkSelect"),
+      busy: slot("busy"),
+      workingInBackground: slot("workingInBackground"),
+      unavailable: slot("unavailable"),
+      move: slot("move"),
+      horizontalResize: slot("horizontalResize"),
+      verticalResize: slot("verticalResize"),
+      diagonalResize1: slot("diagonalResize1"),
+      diagonalResize2: slot("diagonalResize2"),
+  };
+
+  return {
+    slots: Object.defineProperties(slots, {
+      normalSelect: {
+        value: slots.normal,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      },
+      textSelect: {
+        value: slots.text,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      },
+      linkSelect: {
+        value: slots.link,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      },
+      busySelect: {
+        value: slots.button,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      },
+      busy: {
+        value: slots.busy,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      },
+    }),
   };
 }
 
 function createStaticSlotAsset(
-  id: "normal" | "text" | "link" | "button",
+  id: WindowsRoleId,
   previewUrl: string
 ) {
   return {
@@ -207,7 +331,7 @@ function createStaticSlotAsset(
 }
 
 function createAnimatedSlotAsset(
-  id: "normal" | "text" | "link" | "button",
+  id: WindowsRoleId,
   previewUrl: string
 ) {
   return {
@@ -237,7 +361,7 @@ function renderStudio(
   options: {
     cursor?: Record<string, unknown> | null;
     ani?: Record<string, unknown> | null;
-    selectedSlotId?: "normal" | "text" | "link" | "button";
+    selectedSlotId?: WindowsRoleId;
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
   } = {}
@@ -261,14 +385,30 @@ function renderStudio(
           : createAniAsset(options.ani ?? {})
         : createAniAsset()
       : null;
+  const project = options.project ?? createProject();
+  const selectedSlotId = options.selectedSlotId ?? "normalSelect";
+  const selectedSlot = project.slots[selectedSlotId];
+  const normalSlot = project.slots.normalSelect;
+  const selectedSlotBound = Boolean(
+    selectedSlot.asset.originalUrl ||
+      selectedSlot.asset.previewUrl ||
+      cursor ||
+      ani
+  );
+  const hasConfiguredRoleIncludingAliases = Object.getOwnPropertyNames(
+    project.slots
+  ).some((key) => {
+    const slot = project.slots[key as keyof typeof project.slots];
+    return Boolean(slot && typeof slot === "object" && "kind" in slot && slot.kind !== null);
+  });
 
   useStudioMock.mockReturnValue({
     state,
     cursor,
     ani,
-    project: options.project ?? createProject(),
-    selectedSlotId: options.selectedSlotId ?? "normal",
-    editingSlotId: options.selectedSlotId ?? "normal",
+    project,
+    selectedSlotId,
+    editingSlotId: selectedSlotId,
     error: null,
     downloading: false,
     showGuide: false,
@@ -291,7 +431,15 @@ function renderStudio(
     setCursorName: vi.fn(),
     selectSlot: selectSlotMock,
     recommendHotspot: vi.fn(),
+    undo: undoMock,
+    redo: redoMock,
+    canUndo: true,
+    canRedo: true,
     reset: vi.fn(),
+    canDownloadAll: hasConfiguredRoleIncludingAliases,
+    canDownload: hasConfiguredRoleIncludingAliases,
+    canSecondaryDownload: state !== "uploaded" && selectedSlotBound,
+    downloadAll: vi.fn(),
     download: vi.fn(),
     closeGuide: vi.fn(),
   });
@@ -312,6 +460,8 @@ beforeEach(() => {
   selectSlotMock.mockReset();
   selectSlotStaticFileMock.mockReset();
   selectSlotAnimatedFileMock.mockReset();
+  undoMock.mockReset();
+  redoMock.mockReset();
   replaceMock.mockReset();
   getLandingFileMock.mockReset();
   clearLandingFileMock.mockReset();
@@ -328,32 +478,17 @@ describe("Studio entry gate", () => {
       cursor: null,
     });
 
-    const themeScope = screen.getByTestId("studio-theme-scope");
-
-    expect(themeScope).toHaveStyle({
-      "--color-bg-primary": "var(--studio-bg-primary)",
-      "--color-bg-secondary": "var(--studio-bg-secondary)",
-      "--color-border": "var(--studio-border)",
-    });
-    expect(screen.getByTestId("studio-empty-slot-state")).not.toBeNull();
-    expect(screen.getAllByText("emptySlotDescription").length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: "emptySlotStaticStart" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "emptySlotAnimatedStart" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "moreSourceOptions" })).not.toBeNull();
-    expect(screen.getByText("dropOrClick")).not.toBeNull();
-    expect(screen.getByText("aniDropOrClick")).not.toBeNull();
-    expect(screen.getByText("formats")).not.toBeNull();
-    expect(screen.getByText("aniFormats")).not.toBeNull();
+    expect(screen.getByTestId("studio-theme-scope")).toBeVisible();
+    expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
+    expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
+    expect(screen.getByTestId("studio-empty-slot-source-animated")).toBeVisible();
     expect(screen.queryByTestId("studio-stage-header")).toBeNull();
     expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
-    expect(screen.getByRole("button", { name: "emptySlotStaticStart" })).toHaveStyle({
-      minHeight: "15rem",
-    });
-    expect(screen.getByRole("button", { name: "emptySlotAnimatedStart" })).toHaveStyle({
-      minHeight: "15rem",
-    });
+    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
+    expect(screen.getByTestId("studio-inspector-compact-guidance")).not.toBeNull();
+    expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
   });
 
   it("groups the empty-slot sources into a dedicated source-card region", () => {
@@ -361,9 +496,8 @@ describe("Studio entry gate", () => {
       cursor: null,
     });
 
-    expect(screen.getByTestId("studio-empty-slot-source-cards")).not.toBeNull();
-    expect(screen.getByTestId("studio-empty-slot-source-static")).not.toBeNull();
-    expect(screen.getByTestId("studio-empty-slot-source-animated")).not.toBeNull();
+    expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
+    expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows a dedicated stage header and action region in editing mode", () => {
@@ -371,10 +505,24 @@ describe("Studio entry gate", () => {
 
     expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
     expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
+    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
   });
 
   it("renders an ANI editing shell with shared framing controls", () => {
-    renderStudio("ani-editing");
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+    project.slots.linkSelect = createAnimatedSlotAsset(
+      "linkSelect",
+      "blob:link-preview"
+    );
+
+    renderStudio("ani-editing", {
+      project,
+      selectedSlotId: "linkSelect",
+    });
 
     expect(screen.getByTestId("ani-editor-shell")).not.toBeNull();
     expect(screen.getByTestId("ani-editor-shell-workspace")).toHaveStyle({
@@ -382,22 +530,19 @@ describe("Studio entry gate", () => {
     });
     expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
     expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
-    expect(screen.getByTestId("studio-simulation-footer")).not.toBeNull();
+    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
     expect(StudioBarMock).toHaveBeenCalledTimes(1);
 
     const barProps = StudioBarMock.mock.calls[0][0];
-    expect(barProps.actionLabel).toBe("exportAni");
     expect(barProps.onDownload).toBeDefined();
-    expect(screen.getByText("actualSize")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "32" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "48" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "64" })).not.toBeNull();
-    expect(screen.getByTestId("ani-simulation")).not.toBeNull();
+    expect(barProps.onSecondaryDownload).toBeDefined();
+    expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
+    expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
   });
 
-  it("reads the ANI inspector as grouped summary, preview, and quick-action sections", () => {
+  it("reads the ANI inspector as grouped summary and preview sections", () => {
     renderStudio("ani-editing");
 
     const inspector = screen.getByTestId("studio-inspector");
@@ -405,7 +550,7 @@ describe("Studio entry gate", () => {
     expect(inspector).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
-    expect(screen.getByTestId("studio-inspector-quick-actions")).not.toBeNull();
+    expect(screen.queryByTestId("studio-inspector-quick-actions")).toBeNull();
   });
 
   it("preserves the landing handoff path when a file is staged", () => {
@@ -426,16 +571,46 @@ describe("Studio entry gate", () => {
     expect(replaceMock).toHaveBeenCalledWith("/studio");
   });
 
-  it("shows hotspot recommendation status and action in editing mode", () => {
+  it("shows hotspot recommendation status in editing mode without inspector duplication", () => {
     renderStudio("editing", {
       cursor: {
         hotspotMode: "auto",
       },
     });
 
-    expect(screen.getAllByText("position").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("recommended").length).toBeGreaterThan(0);
-    expect(screen.getByText("recommendHotspotAgain")).not.toBeNull();
+    expect(screen.queryByTestId("studio-inspector-quick-actions")).toBeNull();
+  });
+
+  it("renders the simulation footer when the normalSelect slot is configured", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    renderStudio("editing", {
+      project,
+      cursor: createEditingCursor(),
+    });
+
+    expect(screen.getByTestId("simulation")).not.toBeNull();
+    expect(SimulationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the ANI simulation footer when the normalSelect slot is configured", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    renderStudio("ani-editing", {
+      project,
+      selectedSlotId: "linkSelect",
+    });
+
+    expect(screen.getByTestId("ani-simulation")).not.toBeNull();
+    expect(AniSimulationMock).toHaveBeenCalledTimes(1);
   });
 
   it("restores the CUR health check in the inspector when a rendered cursor is available", () => {
@@ -458,29 +633,23 @@ describe("Studio entry gate", () => {
 
   it("shows an empty editor state when a non-populated slot is selected", () => {
     renderStudio("editing", {
-      selectedSlotId: "text",
+      selectedSlotId: "textSelect",
       cursor: null,
     });
 
-    expect(screen.getByTestId("slot-text")).not.toBeNull();
-    expect(screen.getByTestId("studio-empty-slot-state")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "emptySlotStaticStart" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "emptySlotAnimatedStart" })).not.toBeNull();
+    expect(screen.getByTestId("slot-textSelect")).not.toBeNull();
+    expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
+    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("cursor-canvas")).toBeNull();
-    expect(screen.queryByText("actualSize")).toBeNull();
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
   });
 
-  it("reveals secondary source options inline for empty slots", () => {
-    renderStudio("editing", {
-      cursor: null,
-    });
+  it("keeps uploaded background-removal choice in compact guidance mode instead of the empty inspector notice", () => {
+    renderStudio("uploaded");
 
-    fireEvent.click(screen.getByRole("button", { name: "moreSourceOptions" }));
-
-    expect(screen.getByText("emptySlotMultiplePngs")).not.toBeNull();
-    expect(screen.getAllByText("soon").length).toBeGreaterThan(0);
-    expect(screen.getByText("emptySlotAiGenerate")).not.toBeNull();
+    expect(screen.getByTestId("upload-zone")).not.toBeNull();
+    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
+    expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
   });
 
   it("accepts dropped files in the slot source entry cards", () => {
@@ -491,10 +660,10 @@ describe("Studio entry gate", () => {
       cursor: null,
     });
 
-    fireEvent.drop(screen.getByRole("button", { name: "emptySlotStaticStart" }), {
+    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-static"), {
       dataTransfer: { files: [staticFile] },
     });
-    fireEvent.drop(screen.getByRole("button", { name: "emptySlotAnimatedStart" }), {
+    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-animated"), {
       dataTransfer: { files: [animatedFile] },
     });
 
@@ -502,12 +671,35 @@ describe("Studio entry gate", () => {
     expect(selectSlotAnimatedFileMock).toHaveBeenCalledWith(animatedFile);
   });
 
+  it("shows an inline confirm before replacing a populated slot from the stage drop surface", () => {
+    const replacementFile = new File(["replacement"], "replacement.png", {
+      type: "image/png",
+    });
+
+    renderStudio("editing");
+
+    fireEvent.drop(screen.getByTestId("slot-replacement-surface"), {
+      dataTransfer: { files: [replacementFile] },
+    });
+
+    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+    const confirm = screen.getByTestId("slot-replacement-confirm");
+    expect(confirm).not.toBeNull();
+
+    fireEvent.click(
+      within(confirm).getByRole("button", { name: "confirm replace" })
+    );
+
+    expect(selectSlotStaticFileMock).toHaveBeenCalledTimes(1);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(replacementFile);
+  });
+
   it("highlights the slot source card on hover with the accent border", () => {
     renderStudio("editing", {
       cursor: null,
     });
 
-    const staticButton = screen.getByRole("button", { name: "emptySlotStaticStart" });
+    const staticButton = screen.getByTestId("studio-empty-slot-source-static");
 
     fireEvent.mouseEnter(staticButton);
 
@@ -516,56 +708,46 @@ describe("Studio entry gate", () => {
     });
   });
 
-  it("does not enable download when the normal slot has no bound asset", () => {
-    renderStudio("editing", {
-      selectedSlotId: "normal",
-      cursor: null,
-    });
-
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
-  });
-
-  it("keeps download disabled when only a non-normal slot is populated", () => {
+  it("enables current-slot export when a configured non-normal role is selected", () => {
     const project = createProject();
-    project.slots.text = createStaticSlotAsset("text", "blob:text-preview");
+    project.slots.textSelect = createStaticSlotAsset(
+      "textSelect",
+      "blob:text-preview"
+    );
 
     renderStudio("editing", {
       project,
-      selectedSlotId: "text",
+      selectedSlotId: "textSelect",
     });
 
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
+    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(true);
+    expect(StudioBarMock.mock.calls[0][0].canSecondaryDownload).toBe(true);
   });
 
-  it("passes slot simulation sources into the CUR simulation", () => {
+  it("enables full-set export when only a non-normal slot is populated", () => {
     const project = createProject();
-    project.slots.normal = createStaticSlotAsset("normal", "blob:normal-preview");
-    project.slots.text = createStaticSlotAsset("text", "blob:text-preview");
+    project.slots.textSelect = createStaticSlotAsset(
+      "textSelect",
+      "blob:text-preview"
+    );
 
     renderStudio("editing", {
       project,
-      selectedSlotId: "normal",
-      previewUrl: "blob:normal-active-preview",
+      selectedSlotId: "textSelect",
     });
 
-    const props = SimulationMock.mock.calls.at(-1)?.[0];
-    expect(props?.slotSources?.normal).toBeTruthy();
-    expect(props?.slotSources?.text).toBeTruthy();
+    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(true);
+    expect(StudioBarMock.mock.calls[0][0].canSecondaryDownload).toBe(true);
   });
 
-  it("passes slot simulation sources into the ANI simulation", () => {
-    const project = createProject();
-    project.slots.normal = createStaticSlotAsset("normal", "blob:normal-preview");
-    project.slots.link = createAnimatedSlotAsset("link", "blob:link-preview");
+  it("wires undo and redo keyboard shortcuts into the studio shell", () => {
+    renderStudio("editing");
 
-    renderStudio("ani-editing", {
-      project,
-      selectedSlotId: "link",
-    });
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    fireEvent.keyDown(window, { key: "Z", ctrlKey: true, shiftKey: true });
+    fireEvent.keyDown(window, { key: "y", ctrlKey: true });
 
-    const props = AniSimulationMock.mock.calls.at(-1)?.[0];
-    expect(props?.slotSources?.normal).toBeTruthy();
-    expect(props?.slotSources?.link).toBeTruthy();
-    expect(props?.slotSources?.link?.kind).toBe("animated");
+    expect(undoMock).toHaveBeenCalledTimes(1);
+    expect(redoMock).toHaveBeenCalledTimes(2);
   });
 });

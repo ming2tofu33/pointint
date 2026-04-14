@@ -89,6 +89,24 @@ describe("Header", () => {
     expect(style).not.toContain("--landing-header-backdrop");
   });
 
+  it("defines a hover and focus underline for navigation links", () => {
+    mockUsePathname.mockReturnValue("/");
+
+    const { container } = render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Header />
+      </NextIntlClientProvider>
+    );
+
+    const styleTag = container.querySelector("style");
+    const cssText = styleTag?.textContent ?? "";
+
+    expect(cssText).toContain(".app-header-link:hover");
+    expect(cssText).toContain(".app-header-link:focus-visible");
+    expect(cssText).toContain(".app-header-link[aria-current=\"page\"]");
+    expect(cssText).toContain("inset 0 -2px 0 var(--color-accent)");
+  });
+
   it("marks Studio active on the studio page", () => {
     mockUsePathname.mockReturnValue("/studio");
 

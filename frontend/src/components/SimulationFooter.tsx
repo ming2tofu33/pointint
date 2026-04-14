@@ -9,10 +9,12 @@ const EXPANDED_MIN_HEIGHT = "20rem";
 export default function SimulationFooter({
   collapsed,
   onToggle,
+  headerControls,
   children,
 }: {
   collapsed: boolean;
   onToggle: () => void;
+  headerControls?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const t = useTranslations("studio");
@@ -55,21 +57,30 @@ export default function SimulationFooter({
           {t("simulationPreview")}
         </span>
 
-        <button
-          type="button"
-          data-testid="studio-simulation-toggle"
-          onClick={onToggle}
+        <div
           style={{
-            fontSize: "0.6875rem",
-            color: "var(--color-text-muted)",
-            background: "none",
-            border: "1px solid var(--color-border)",
-            padding: "0.25rem 0.5rem",
-            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
           }}
         >
-          {collapsed ? t("expandSimulation") : t("collapseSimulation")}
-        </button>
+          {headerControls}
+          <button
+            type="button"
+            data-testid="studio-simulation-toggle"
+            onClick={onToggle}
+            style={{
+              fontSize: "0.6875rem",
+              color: "var(--color-text-muted)",
+              background: "none",
+              border: "1px solid var(--color-border)",
+              padding: "0.25rem 0.5rem",
+              cursor: "pointer",
+            }}
+          >
+            {collapsed ? t("expandSimulation") : t("collapseSimulation")}
+          </button>
+        </div>
       </div>
 
       {!collapsed ? (
@@ -78,7 +89,8 @@ export default function SimulationFooter({
           style={{
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflowX: "hidden",
+            overflowY: "auto",
           }}
         >
           {children}

@@ -71,6 +71,13 @@ describe("useStudio workflow entry", () => {
     vi.restoreAllMocks();
   });
 
+  it("starts on the normalSelect role by default", () => {
+    const { result } = renderHook(() => useStudio());
+
+    expect(result.current.selectedSlotId).toBe("normalSelect");
+    expect(result.current.editingSlotId).toBe("normalSelect");
+  });
+
   it("starts in the slot editor entry and resets back to it", () => {
     const { result } = renderHook(() => useStudio());
 
@@ -111,13 +118,61 @@ describe("useStudio workflow entry", () => {
     const { result } = renderHook(() => useStudio());
 
     act(() => {
-      result.current.selectSlot("text");
+      result.current.selectSlot("textSelect");
     });
 
     expect(result.current.state).toBe("editing");
-    expect(result.current.selectedSlotId).toBe("text");
+    expect(result.current.selectedSlotId).toBe("textSelect");
     expect(result.current.cursor).toBeNull();
     expect(result.current.ani).toBeNull();
+  });
+
+  it("keeps hidden Windows roles selectable", () => {
+    const { result } = renderHook(() => useStudio());
+
+    act(() => {
+      result.current.selectSlot("workingInBackground");
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.selectedSlotId).toBe("workingInBackground");
+    expect(result.current.editingSlotId).toBe("workingInBackground");
+    expect(result.current.cursor).toBeNull();
+    expect(result.current.ani).toBeNull();
+  });
+
+  it("keeps a configured non-primary static role in the slot editor when replacing it", () => {
+    const { result } = renderHook(() => useStudio());
+    const initialFile = new File(["cursor"], "text-select.png", {
+      type: "image/png",
+    });
+    const replacementFile = new File(["cursor"], "text-select-2.png", {
+      type: "image/png",
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    act(() => {
+      result.current.selectSelectedSlotStaticFile(initialFile);
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.selectedSlotId).toBe("textSelect");
+    expect(result.current.editingSlotId).toBe("textSelect");
+
+    act(() => {
+      result.current.selectSelectedSlotStaticFile(replacementFile);
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.selectedSlotId).toBe("textSelect");
+    expect(result.current.editingSlotId).toBe("textSelect");
   });
 
   it("updates ANI output size independently from CUR size", async () => {
@@ -136,7 +191,7 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.cursorSize).toBe(48);
   });
 
-  it("sanitizes the ANI zip download filename before exporting", async () => {
+  it("names the current-slot export from the selected Windows role", async () => {
     const zipBlob = new Blob(["zip"], { type: "application/zip" });
     generateAniMock.mockResolvedValue({
       blob: zipBlob,
@@ -171,7 +226,7 @@ describe("useStudio workflow entry", () => {
       await result.current.download();
     });
 
-    expect(createdAnchors[0]?.download).toBe("pointint-orbitdemo.zip");
+    expect(createdAnchors[0]?.download).toBe("pointint-normal-select.zip");
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();

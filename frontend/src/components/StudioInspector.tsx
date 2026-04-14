@@ -59,20 +59,18 @@ export default function StudioInspector({
           ) : null}
         </div>
 
-        <div style={quickActions == null ? { minHeight: "3.5rem" } : undefined}>
-          {quickActions != null ? (
-            <StudioSurfaceCard
-              data-testid="studio-inspector-quick-actions"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.625rem",
-              }}
-            >
-              {quickActions}
-            </StudioSurfaceCard>
-          ) : null}
-        </div>
+        {quickActions != null ? (
+          <StudioSurfaceCard
+            data-testid="studio-inspector-quick-actions"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.625rem",
+            }}
+          >
+            {quickActions}
+          </StudioSurfaceCard>
+        ) : null}
       </div>
 
       {children != null ? (
@@ -278,6 +276,12 @@ type StudioInspectorEmptyNoticeProps = {
   summary: string;
 };
 
+type StudioInspectorCompactGuidanceProps = {
+  title: string;
+  summary: string;
+  lines: string[];
+};
+
 export function StudioInspectorEmptyNotice({
   slotLabel,
   expectedControls,
@@ -365,6 +369,59 @@ export function StudioInspectorEmptyNotice({
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function StudioInspectorCompactGuidance({
+  title,
+  summary,
+  lines,
+}: StudioInspectorCompactGuidanceProps) {
+  return (
+    <div
+      data-testid="studio-inspector-compact-guidance"
+      style={{
+        display: "grid",
+        gap: "0.875rem",
+        color: "var(--color-text-muted)",
+        lineHeight: 1.5,
+      }}
+    >
+      <div style={{ display: "grid", gap: "0.375rem" }}>
+        <div
+          style={{
+            fontSize: "0.6875rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            fontSize: "0.8125rem",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          {summary}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gap: "0.5rem" }}>
+        {lines.map((line) => (
+          <div
+            key={line}
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {line}
+          </div>
+        ))}
       </div>
     </div>
   );

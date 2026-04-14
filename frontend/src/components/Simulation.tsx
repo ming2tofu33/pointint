@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 
 import CursorSimulationSurface from "@/components/CursorSimulationSurface";
+import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import { createStaticCursorSource } from "@/lib/cursorSources";
 import { type SlotId } from "@/lib/cursorThemeProject";
 import {
@@ -11,29 +12,33 @@ import {
 } from "@/lib/slotSimulationSources";
 
 interface SimulationProps {
-  imageUrl: string;
-  cursorSize: number;
+  imageUrl?: string | null;
+  cursorSize?: number;
   hotspotX?: number;
   hotspotY?: number;
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
+  backgroundMode?: BackgroundMode;
 }
 
 export default function Simulation({
   imageUrl,
-  cursorSize,
+  cursorSize = 32,
   hotspotX = 0,
   hotspotY = 0,
   slotSources,
   selectedSlotId,
+  backgroundMode = "dark",
 }: SimulationProps) {
   const source = useMemo(
     () =>
-      createStaticCursorSource(
-        { src: imageUrl },
-        { x: hotspotX, y: hotspotY },
-        cursorSize
-      ),
+      imageUrl
+        ? createStaticCursorSource(
+            { src: imageUrl },
+            { x: hotspotX, y: hotspotY },
+            cursorSize
+          )
+        : null,
     [imageUrl, hotspotX, hotspotY, cursorSize]
   );
 
@@ -57,6 +62,7 @@ export default function Simulation({
       source={source}
       slotSources={mergedSlotSources}
       placeholder={<SimulationPlaceholder />}
+      backgroundMode={backgroundMode}
     />
   );
 }

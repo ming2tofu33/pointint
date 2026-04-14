@@ -5,6 +5,8 @@ import {
   createAnimatedCursorSource,
   createStaticCursorSource,
 } from "@/lib/cursorSources";
+import { createWindowsRoleRecord } from "@/lib/cursorThemeProject";
+import { type SlotSimulationSources } from "@/lib/slotSimulationSources";
 
 const { cursorPreviewLayerMock } = vi.hoisted(() => ({
   cursorPreviewLayerMock: vi.fn(
@@ -66,7 +68,10 @@ describe("CursorSimulationSurface", () => {
 
     render(
       <CursorSimulationSurface
-        slotSources={{ normal: normalSource, text: textSource }}
+        slotSources={makeSlotSources({
+          normalSelect: normalSource,
+          textSelect: textSource,
+        })}
       >
         <CursorScene />
       </CursorSimulationSurface>
@@ -98,13 +103,13 @@ describe("CursorSimulationSurface", () => {
   it("shows the placeholder when the normal slot is missing", async () => {
     render(
       <CursorSimulationSurface
-        slotSources={{
-          text: createStaticCursorSource(
+        slotSources={makeSlotSources({
+          textSelect: createStaticCursorSource(
             { src: "blob:text" },
             { x: 0, y: 0 },
             32
           ),
-        }}
+        })}
         placeholder={<div data-testid="cursor-simulation-placeholder" />}
       >
         <CursorScene />
@@ -196,7 +201,34 @@ describe("CursorSimulationSurface", () => {
     expect(preview).toHaveAttribute("data-frame-src", "blob:cursor");
   });
 
-  it("lets the background mode switch without removing the scene", () => {
+  it("updates the rendered background mode without removing the scene", () => {
+    const source = createStaticCursorSource(
+      { src: "blob:cursor" },
+      { x: 0, y: 0 },
+      32
+    );
+
+    const { rerender } = render(
+      <CursorSimulationSurface source={source}>
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    const surface = screen.getByTestId("cursor-simulation-surface");
+
+    expect(surface).toHaveAttribute("data-background-mode", "dark");
+
+    rerender(
+      <CursorSimulationSurface source={source} backgroundMode="light">
+        <CursorScene />
+      </CursorSimulationSurface>
+    );
+
+    expect(surface).toHaveAttribute("data-background-mode", "light");
+    expect(screen.getByTestId("cursor-scene")).not.toBeNull();
+  });
+
+  it("does not render its own background toggle UI", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },
       { x: 0, y: 0 },
@@ -209,15 +241,23 @@ describe("CursorSimulationSurface", () => {
       </CursorSimulationSurface>
     );
 
-    const surface = screen.getByTestId("cursor-simulation-surface");
-    const lightButton = screen.getByRole("button", { name: "Light" });
+    expect(
+      screen.queryByTestId("cursor-simulation-background-toggles")
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Light" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Dark" })).toBeNull();
+  });
 
-    expect(surface).toHaveAttribute("data-background-mode", "dark");
+  it("uses a responsive scene layout that can shrink inside the footer", () => {
+    render(<CursorScene />);
 
-    fireEvent.click(lightButton);
-
-    expect(surface).toHaveAttribute("data-background-mode", "light");
-    expect(screen.getByTestId("cursor-scene")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene")).toHaveStyle({
+      minHeight: "0",
+      height: "100%",
+    });
+    expect(screen.getByTestId("cursor-scene-browser-content")).toHaveStyle({
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 14rem), 1fr))",
+    });
   });
 
   it("tracks the hovered scene zone", () => {
@@ -291,3 +331,7 @@ describe("CursorSimulationSurface", () => {
     });
   });
 });
+
+function makeSlotSources(overrides: Partial<SlotSimulationSources>) {
+  return Object.assign(createWindowsRoleRecord(() => null), overrides);
+}

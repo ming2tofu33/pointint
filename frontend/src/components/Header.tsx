@@ -27,17 +27,17 @@ export default function Header() {
   return (
     <header
       style={{
-        borderBottom: "1px solid var(--landing-divider)",
+        borderBottom: "1px solid var(--app-header-border)",
         background:
-          "linear-gradient(180deg, var(--landing-header-highlight), var(--landing-header-backdrop))",
+          "linear-gradient(180deg, var(--app-header-highlight), var(--app-header-backdrop))",
         position: "sticky",
         top: 0,
         zIndex: 40,
-        backdropFilter: "blur(18px) saturate(1.15)",
+        backdropFilter: "blur(18px) saturate(1.04)",
         width: "100%",
         ["--app-header-height" as string]: "4.25rem",
         boxShadow:
-          "inset 0 1px 0 var(--landing-header-highlight), 0 12px 28px var(--landing-header-shadow)",
+          "inset 0 1px 0 var(--app-header-highlight), 0 8px 18px var(--app-header-shadow)",
       }}
     >
       <div className="app-header-shell">
@@ -64,14 +64,6 @@ export default function Header() {
               href={item.href}
               aria-current={item.active ? "page" : undefined}
               className="app-header-link"
-              style={{
-                color: item.active
-                  ? "var(--color-text-primary)"
-                  : "var(--color-text-secondary)",
-                boxShadow: item.active
-                  ? "inset 0 -1px 0 var(--color-accent)"
-                  : "none",
-              }}
             >
               {item.label}
             </Link>
@@ -118,7 +110,20 @@ export default function Header() {
           font-size: 0.875rem;
           font-weight: 600;
           letter-spacing: 0.01em;
+          color: var(--color-text-secondary);
+          box-shadow: inset 0 -2px 0 transparent;
           transition: color 0.2s, box-shadow 0.2s;
+        }
+
+        .app-header-link:hover,
+        .app-header-link:focus-visible {
+          color: var(--color-text-primary);
+          box-shadow: inset 0 -2px 0 var(--color-accent);
+        }
+
+        .app-header-link[aria-current="page"] {
+          color: var(--color-text-primary);
+          box-shadow: inset 0 -2px 0 var(--color-accent);
         }
 
         .app-header-right {

@@ -8,10 +8,14 @@ import {
 } from "@/lib/cursorSources";
 import {
   type CursorThemeProject,
-  type SlotId,
+  createWindowsRoleRecord,
+  type WindowsRoleSlotId,
 } from "@/lib/cursorThemeProject";
 
-export type SlotSimulationSources = Partial<Record<SlotId, CursorSource | null>>;
+export type SlotSimulationSources = Record<
+  WindowsRoleSlotId,
+  CursorSource | null
+>;
 
 interface SlotSimulationAssetInput {
   kind: "static" | "animated";
@@ -24,24 +28,25 @@ interface SlotSimulationAssetInput {
 export function hasNormalSlotSimulationSource(
   sources: SlotSimulationSources | null | undefined
 ) {
-  return Boolean(sources?.normal);
+  return Boolean(sources?.normalSelect);
 }
 
 export function resolveZoneSimulationSource(
   zone: CursorSceneZone,
   sources: SlotSimulationSources | null | undefined
 ): CursorSource | null {
-  const normal = sources?.normal ?? null;
+  const normal = sources?.normalSelect ?? null;
+  const busy = sources?.busy ?? normal;
 
   switch (zone) {
     case "neutral":
       return normal;
     case "text":
-      return sources?.text ?? normal;
+      return sources?.textSelect ?? normal;
     case "link":
-      return sources?.link ?? normal;
+      return sources?.linkSelect ?? normal;
     case "button":
-      return sources?.button ?? normal;
+      return busy;
   }
 }
 
@@ -90,15 +95,15 @@ export function createSlotSimulationSource(
 export function buildProjectSlotSimulationSources(
   project: CursorThemeProject
 ): SlotSimulationSources {
-  return {
-    normal: createSlotSimulationSource(fromProjectSlot(project, "normal")),
-    text: createSlotSimulationSource(fromProjectSlot(project, "text")),
-    link: createSlotSimulationSource(fromProjectSlot(project, "link")),
-    button: createSlotSimulationSource(fromProjectSlot(project, "button")),
-  };
+  return createWindowsRoleRecord((slotId) =>
+    createSlotSimulationSource(fromProjectSlot(project, slotId))
+  );
 }
 
-function fromProjectSlot(project: CursorThemeProject, slotId: SlotId) {
+function fromProjectSlot(
+  project: CursorThemeProject,
+  slotId: WindowsRoleSlotId
+) {
   const slot = project.slots[slotId];
   const imageUrl = slot.asset.previewUrl ?? slot.asset.originalUrl;
 

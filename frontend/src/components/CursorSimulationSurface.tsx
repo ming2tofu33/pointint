@@ -24,13 +24,14 @@ import {
   type SlotSimulationSources,
 } from "@/lib/slotSimulationSources";
 
-type BackgroundMode = "dark" | "light";
+export type BackgroundMode = "dark" | "light";
 
 interface CursorSimulationSurfaceProps {
   source?: CursorSource | null;
   slotSources?: SlotSimulationSources;
   placeholder?: ReactNode;
   children?: ReactNode;
+  backgroundMode?: BackgroundMode;
 }
 
 export default function CursorSimulationSurface({
@@ -38,8 +39,8 @@ export default function CursorSimulationSurface({
   slotSources,
   placeholder,
   children,
+  backgroundMode = "dark",
 }: CursorSimulationSurfaceProps) {
-  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>("dark");
   const [pointer, setPointer] = useState({ x: 160, y: 120 });
   const [now, setNow] = useState(() => Date.now());
   const [activeZone, setActiveZone] = useState<CursorSceneZone>("neutral");
@@ -84,6 +85,7 @@ export default function CursorSimulationSurface({
       data-testid="cursor-simulation-surface"
       data-background-mode={backgroundMode}
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         width: "100%",
@@ -93,27 +95,6 @@ export default function CursorSimulationSurface({
         overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "0.375rem",
-          padding: "0.5rem 0.75rem 0",
-          flexShrink: 0,
-        }}
-      >
-        <BackgroundToggle
-          label="Light"
-          active={backgroundMode === "light"}
-          onClick={() => setBackgroundMode("light")}
-        />
-        <BackgroundToggle
-          label="Dark"
-          active={backgroundMode === "dark"}
-          onClick={() => setBackgroundMode("dark")}
-        />
-      </div>
-
       <style data-testid="cursor-simulation-cursor-lock">
         {`
           [data-cursor-lock-scope="true"],
@@ -132,11 +113,12 @@ export default function CursorSimulationSurface({
         style={{
           position: "relative",
           flex: 1,
+          minHeight: 0,
           overflow: "hidden",
           cursor: "none",
         }}
       >
-        <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ position: "relative", zIndex: 1, height: "100%" }}>
           {renderScene(children, setActiveZone)}
         </div>
         {snapshot ? (
@@ -199,34 +181,5 @@ function injectZoneTracking(
     node as ReactElement<{ children?: ReactNode }>,
     undefined,
     nextChildren
-  );
-}
-
-function BackgroundToggle({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      style={{
-        padding: "0.25rem 0.5rem",
-        fontSize: "0.6875rem",
-        borderRadius: "999px",
-        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
-        backgroundColor: active ? "var(--color-accent-subtle)" : "transparent",
-        color: active ? "var(--color-accent)" : "inherit",
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
   );
 }

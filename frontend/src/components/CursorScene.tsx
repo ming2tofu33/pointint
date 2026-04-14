@@ -19,10 +19,12 @@ export default function CursorScene({
       style={{
         display: "grid",
         gap: "0.75rem",
-        padding: "1.5rem",
-        minHeight: "18rem",
+        height: "100%",
+        minHeight: 0,
+        padding: "clamp(0.75rem, 1.4vw, 1.25rem)",
         boxSizing: "border-box",
         width: "100%",
+        alignContent: "start",
       }}
     >
       {children ?? (
@@ -34,7 +36,7 @@ export default function CursorScene({
               <span style={{ ...chromeDotStyle, backgroundColor: "#28c840" }} />
             </div>
             <div data-testid="cursor-scene-browser-address" style={addressBarStyle}>
-              docs.pointint.app/windows/cursor-theme
+              docs.pointtint.com/windows/cursor-theme
             </div>
           </div>
 
@@ -49,7 +51,10 @@ export default function CursorScene({
               <div style={tabMutedStyle}>Support</div>
             </div>
 
-            <div style={browserContentStyle}>
+            <div
+              data-testid="cursor-scene-browser-content"
+              style={browserContentStyle}
+            >
               <section style={articleStyle}>
                 <h3 style={titleStyle}>Installing a custom cursor theme</h3>
                 <p
@@ -145,7 +150,8 @@ const browserSurfaceStyle: CSSProperties = {
   backgroundColor: "var(--color-bg-primary)",
   color: "var(--color-text-primary)",
   display: "grid",
-  minHeight: "11rem",
+  gridTemplateRows: "auto 1fr",
+  minHeight: 0,
   overflow: "hidden",
 };
 
@@ -179,10 +185,11 @@ const tabMutedStyle: CSSProperties = {
 
 const browserContentStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.4fr) minmax(15rem, 0.9fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 14rem), 1fr))",
   gap: "1rem",
   padding: "1rem",
   alignItems: "start",
+  minHeight: 0,
 };
 
 const articleStyle: CSSProperties = {

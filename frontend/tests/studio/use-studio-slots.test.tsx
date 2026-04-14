@@ -1,14 +1,19 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateAniMock, ensureAniZipPackageMock } = vi.hoisted(() => ({
+const {
+  generateAniMock,
+  generateCursorMock,
+  ensureAniZipPackageMock,
+} = vi.hoisted(() => ({
   generateAniMock: vi.fn(),
+  generateCursorMock: vi.fn(),
   ensureAniZipPackageMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   generateAni: generateAniMock,
-  generateCursor: vi.fn(),
+  generateCursor: generateCursorMock,
   removeBackground: vi.fn(),
 }));
 
@@ -17,15 +22,41 @@ vi.mock("@/lib/aniDownload", () => ({
 }));
 
 import { useStudio } from "@/lib/useStudio";
+import * as studioDownload from "@/lib/studioDownload";
 
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
 const originalImage = global.Image;
+const windowsRoleIds = [
+  "normalSelect",
+  "textSelect",
+  "linkSelect",
+  "busy",
+  "workingInBackground",
+  "unavailable",
+  "move",
+  "horizontalResize",
+  "verticalResize",
+  "diagonalResize1",
+  "diagonalResize2",
+] as const;
 
 describe("useStudio slot contract", () => {
   beforeEach(() => {
     generateAniMock.mockReset();
+    generateCursorMock.mockReset();
     ensureAniZipPackageMock.mockReset();
+    generateCursorMock.mockResolvedValue(
+      new Blob(["cursor-zip"], { type: "application/zip" })
+    );
+    generateAniMock.mockResolvedValue({
+      blob: new Blob(["ani-zip"], { type: "application/zip" }),
+      filename: "orbit.ani",
+      contentType: "application/zip",
+    });
+    ensureAniZipPackageMock.mockResolvedValue(
+      new Blob(["ani-zip"], { type: "application/zip" })
+    );
     let objectUrlCount = 0;
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -71,154 +102,76 @@ describe("useStudio slot contract", () => {
     vi.restoreAllMocks();
   });
 
-  it("exposes a four-slot cursor theme project with normal selected by default", () => {
+  it("exposes an 11-role Windows cursor theme project with normalSelect selected by default", () => {
     const { result } = renderHook(() => useStudio());
 
-    expect(result.current).toHaveProperty("project");
-    expect(result.current).toHaveProperty("selectedSlotId", "normal");
-    expect(result.current.project?.slots).toEqual({
-      normal: expect.anything(),
-      text: expect.anything(),
-      link: expect.anything(),
-      button: expect.anything(),
-    });
-    expect(result.current.project.slots.normal.kind).toBeNull();
-    expect(result.current.project.slots.text.kind).toBeNull();
-    expect(result.current.project.slots.link.kind).toBeNull();
-    expect(result.current.project.slots.button.kind).toBeNull();
-  });
-
-  it("switches the bound editing target when a different slot is selected", () => {
-    const { result } = renderHook(() => useStudio());
-
-    expect(result.current).toHaveProperty("selectSlot");
-
-    act(() => {
-      result.current.selectSlot("text");
-    });
-
-    expect(result.current).toHaveProperty("selectedSlotId", "text");
-    expect(result.current).toHaveProperty("editingSlotId", "text");
-  });
-
-  it("stores a static upload in the selected slot and restores its editing state", async () => {
-    const { result } = renderHook(() => useStudio());
-    const file = new File(["slot"], "slot-image.png", { type: "image/png" });
-
-    act(() => {
-      result.current.selectSlot("text");
-    });
-
-    await act(async () => {
-      await result.current.selectSelectedSlotStaticFile(file);
-      await Promise.resolve();
-    });
-
-    expect(result.current.state).toBe("editing");
-    expect(result.current.selectedSlotId).toBe("text");
-    expect(result.current.project.slots.text.kind).toBe("static");
-    expect(result.current.project.slots.text.asset.originalUrl).toMatch(
-      /^blob:slot-object-/
+    expect(Object.keys(result.current.project.slots).sort()).toEqual(
+      [...windowsRoleIds].sort()
     );
-    expect(result.current.cursor?.originalFile).toBe(file);
-
-    act(() => {
-      result.current.setScale(1.5);
-      result.current.setHotspot(18, 22);
-      result.current.setCursorName("text-slot");
-    });
-
-    act(() => {
-      result.current.selectSlot("button");
-    });
-
-    act(() => {
-      result.current.selectSlot("text");
-    });
-
-    expect(result.current.state).toBe("editing");
-    expect(result.current.cursor?.cursorName).toBe("text-slot");
-    expect(result.current.cursor?.scale).toBe(1.5);
-    expect(result.current.cursor?.hotspotX).toBe(18);
-    expect(result.current.cursor?.hotspotY).toBe(22);
+    expect(result.current.selectedSlotId).toBe("normalSelect");
+    expect(result.current.editingSlotId).toBe("normalSelect");
+    expect(result.current.project.slots.normalSelect.kind).toBeNull();
   });
 
-  it("clears the active editor asset when switching from a populated slot to an empty slot", async () => {
+  it("packages only configured Windows roles into the full-set export zip", async () => {
+    const buildWindowsRoleMasterZipSpy = vi
+      .spyOn(studioDownload, "buildWindowsRoleMasterZip")
+      .mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+        const element = originalCreateElement(tagName, options);
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
+        return element;
+      });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
     const { result } = renderHook(() => useStudio());
-
-    act(() => {
-      result.current.selectSlot("text");
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+    const animatedFile = new File(["animated"], "orbit.gif", {
+      type: "image/gif",
     });
 
     await act(async () => {
-      await result.current.selectSelectedSlotStaticFile(
-        new File(["text"], "text-slot.png", { type: "image/png" })
-      );
-      await Promise.resolve();
+      await result.current.selectFile(staticFile);
     });
 
-    expect(result.current.cursor?.originalFile.name).toBe("text-slot.png");
-
     act(() => {
-      result.current.selectSlot("button");
-    });
-
-    expect(result.current.selectedSlotId).toBe("button");
-    expect(result.current.cursor).toBeNull();
-    expect(result.current.ani).toBeNull();
-  });
-
-  it("stores an animated upload in the selected slot and enters ani-editing", async () => {
-    const { result } = renderHook(() => useStudio());
-    const file = new File(["gif"], "slot-ani.gif", { type: "image/gif" });
-
-    act(() => {
-      result.current.selectSlot("link");
+      result.current.selectSlot("linkSelect");
     });
 
     await act(async () => {
-      await result.current.selectSelectedSlotAnimatedFile(file);
+      await result.current.selectSelectedSlotAnimatedFile(animatedFile);
       await Promise.resolve();
-    });
-
-    expect(result.current.state).toBe("ani-editing");
-    expect(result.current.selectedSlotId).toBe("link");
-    expect(result.current.project.slots.link.kind).toBe("animated");
-    expect(result.current.project.slots.link.asset.originalUrl).toMatch(
-      /^blob:slot-object-/
-    );
-    expect(result.current.ani?.originalFile).toBe(file);
-  });
-
-  it("does not revoke another populated slot when uploading into a new empty slot", async () => {
-    const { result } = renderHook(() => useStudio());
-    const revokeObjectUrlMock = vi.mocked(URL.revokeObjectURL);
-
-    act(() => {
-      result.current.selectSlot("text");
     });
 
     await act(async () => {
-      await result.current.selectSelectedSlotStaticFile(
-        new File(["text"], "text-slot.png", { type: "image/png" })
-      );
-      await Promise.resolve();
+      await result.current.downloadAll();
     });
 
-    const textSlotUrl = result.current.project.slots.text.asset.originalUrl;
+    expect(buildWindowsRoleMasterZipSpy).toHaveBeenCalledTimes(1);
+    expect(buildWindowsRoleMasterZipSpy.mock.calls[0][0]).toEqual([
+      {
+        name: studioDownload.buildWindowsRolePackagePath("normalSelect"),
+        blob: expect.any(Blob),
+      },
+      {
+        name: studioDownload.buildWindowsRolePackagePath("linkSelect"),
+        blob: expect.any(Blob),
+      },
+    ]);
+    expect(createdAnchors[0]?.download).toBe("pointint-windows-roles.zip");
 
-    act(() => {
-      result.current.selectSlot("button");
-    });
-
-    await act(async () => {
-      await result.current.selectSelectedSlotStaticFile(
-        new File(["button"], "button-slot.png", { type: "image/png" })
-      );
-      await Promise.resolve();
-    });
-
-    expect(textSlotUrl).toBeTruthy();
-    expect(revokeObjectUrlMock).not.toHaveBeenCalledWith(textSlotUrl);
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
+    buildWindowsRoleMasterZipSpy.mockRestore();
   });
 });

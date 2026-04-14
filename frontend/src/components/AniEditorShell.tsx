@@ -5,13 +5,16 @@ import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
 import AniSimulation from "@/components/AniSimulation";
+import type { BackgroundMode } from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
 import NameInput from "@/components/NameInput";
+import SimulationBackgroundModeSwitch from "@/components/SimulationBackgroundModeSwitch";
 import SlotRail from "@/components/SlotRail";
+import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import SimulationFooter from "@/components/SimulationFooter";
 import StudioInspector, {
-  StudioInspectorEmptyNotice,
+  StudioInspectorCompactGuidance,
   StudioInspectorRow,
   StudioInspectorSecondaryButton,
   StudioInspectorSection,
@@ -19,16 +22,14 @@ import StudioInspector, {
 } from "@/components/StudioInspector";
 import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
-import {
-  STUDIO_INTERACTION_TRANSITION,
-  StudioShellInteractionStyles,
-} from "@/components/StudioSurfaceCard";
+import { StudioShellInteractionStyles } from "@/components/StudioSurfaceCard";
 import { type FitMode } from "@/lib/cursorFrame";
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
-import { buildProjectSlotSimulationSources } from "@/lib/slotSimulationSources";
+import {
+  buildProjectSlotSimulationSources,
+  hasNormalSlotSimulationSource,
+} from "@/lib/slotSimulationSources";
 import { type AniData, type CursorSize } from "@/lib/useStudio";
-
-type Tool = "move" | "hotspot";
 
 interface AniEditorShellProps {
   ani: AniData | null;
@@ -36,8 +37,8 @@ interface AniEditorShellProps {
   project: CursorThemeProject;
   selectedSlotId: SlotId;
   error?: string | null;
-  activeTool: Tool;
-  onSetActiveTool: (tool: Tool) => void;
+  hotspotPickActive: boolean;
+  onSetHotspotPickActive: (active: boolean) => void;
   onSelectSlot: (slotId: SlotId) => void;
   onSelectSlotStaticFile: (file: File) => void;
   onSelectSlotAnimatedFile: (file: File) => void;
@@ -48,6 +49,10 @@ interface AniEditorShellProps {
   onAniCursorSizeChange: (size: CursorSize) => void;
   onAniNameChange: (name: string) => void;
   onRecommendHotspot: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   onResetHotspot: () => void;
   onReset: () => void;
 }
@@ -58,8 +63,8 @@ export default function AniEditorShell({
   project,
   selectedSlotId,
   error,
-  activeTool,
-  onSetActiveTool,
+  hotspotPickActive,
+  onSetHotspotPickActive,
   onSelectSlot,
   onSelectSlotStaticFile,
   onSelectSlotAnimatedFile,
@@ -70,12 +75,18 @@ export default function AniEditorShell({
   onAniCursorSizeChange,
   onAniNameChange,
   onRecommendHotspot,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   onResetHotspot,
   onReset,
 }: AniEditorShellProps) {
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
+  const [simulationBackgroundMode, setSimulationBackgroundMode] =
+    useState<BackgroundMode>("dark");
   const selectedSlot = project.slots[selectedSlotId];
   const selectedSlotBound = Boolean(
     selectedSlot.asset.originalUrl || selectedSlot.asset.previewUrl || ani
@@ -88,6 +99,7 @@ export default function AniEditorShell({
     () => buildProjectSlotSimulationSources(project),
     [project]
   );
+  const hasSimulationNormal = hasNormalSlotSimulationSource(slotSimulationSources);
 
   return (
     <div
@@ -100,35 +112,6 @@ export default function AniEditorShell({
       data-testid="ani-editor-shell"
     >
       <StudioShellInteractionStyles />
-      <aside
-        style={{
-          width: "3.5rem",
-          borderRight: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-bg-secondary)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          paddingTop: "1rem",
-          gap: "0.25rem",
-          flexShrink: 0,
-        }}
-      >
-        <ToolButton
-          label={t("move")}
-          shortcut="V"
-          active={activeTool === "move"}
-          onClick={() => onSetActiveTool("move")}
-        />
-        <ToolButton
-          label={t("hotspotShort")}
-          shortcut="H"
-          active={activeTool === "hotspot"}
-          onClick={() => onSetActiveTool("hotspot")}
-        />
-        <div style={{ flex: 1 }} />
-        <ToolButton label={t("new")} shortcut="" onClick={onReset} />
-      </aside>
-
       <div
         style={{
           flex: 1,
@@ -170,7 +153,9 @@ export default function AniEditorShell({
           >
             {selectedSlotBound && ani ? (
               <>
-                <div
+                <SlotReplacementSurface
+                  onStaticFile={onSelectSlotStaticFile}
+                  onAnimatedFile={onSelectSlotAnimatedFile}
                   style={{
                     flex: 1,
                     minHeight: 0,
@@ -211,12 +196,12 @@ export default function AniEditorShell({
                       hotspotY={ani.hotspotY}
                       onOffsetChange={onOffsetChange}
                       onHotspotChange={onHotspotChange}
-                      activeTool={activeTool}
+                      hotspotPickActive={hotspotPickActive}
+                      onHotspotPickComplete={() => onSetHotspotPickActive(false)}
                     />
                   </div>
-                </div>
 
-                <div
+                  <div
                   data-testid="studio-stage-actions"
                   style={{
                     display: "flex",
@@ -237,70 +222,118 @@ export default function AniEditorShell({
                     }}
                   >
                     <span>
-                      {activeTool === "move"
-                        ? t("dragToMove")
-                        : t("clickToSetHotspot")}
+                      {hotspotPickActive
+                        ? t("clickToSetHotspot")
+                        : t("dragToMove")}
                     </span>
-                    <span>{t("shortcutMove")}</span>
                     <span>{t("shortcutHotspot")}</span>
                   </div>
 
-                  <StudioStageActionBar
-                    actions={[
-                      {
-                        id: "ani-recommend-hotspot",
-                        label:
-                          ani.hotspotMode === "auto"
-                            ? tp("recommendHotspotAgain")
-                            : tp("recommendHotspot"),
-                        onClick: onRecommendHotspot,
-                        title:
-                          ani.hotspotMode === "auto"
-                            ? tp("recommendHotspotAgain")
-                            : tp("recommendHotspot"),
-                        ariaLabel:
-                          ani.hotspotMode === "auto"
-                            ? tp("recommendHotspotAgain")
-                            : tp("recommendHotspot"),
-                      },
-                      {
-                        id: "ani-reset-hotspot",
-                        label: tp("resetHotspot"),
-                        onClick: onResetHotspot,
-                        title: tp("resetHotspot"),
-                        ariaLabel: tp("resetHotspot"),
-                      },
-                    ]}
-                  />
-                </div>
+                    <StudioStageActionBar
+                      actions={[
+                        {
+                          id: "ani-undo",
+                          label: t("undo"),
+                          onClick: onUndo,
+                          disabled: !canUndo,
+                          title: t("undoShortcut"),
+                          ariaLabel: t("undoShortcut"),
+                        },
+                        {
+                          id: "ani-redo",
+                          label: t("redo"),
+                          onClick: onRedo,
+                          disabled: !canRedo,
+                          title: t("redoShortcut"),
+                          ariaLabel: t("redoShortcut"),
+                        },
+                        {
+                          id: "ani-pick-hotspot",
+                          label: hotspotPickActive
+                            ? t("clickToSetHotspot")
+                            : tp("hotspot"),
+                          onClick: () =>
+                            onSetHotspotPickActive(!hotspotPickActive),
+                          title: hotspotPickActive
+                            ? t("clickToSetHotspot")
+                            : tp("hotspot"),
+                          ariaLabel: hotspotPickActive
+                            ? t("clickToSetHotspot")
+                            : tp("hotspot"),
+                        },
+                        {
+                          id: "ani-recommend-hotspot",
+                          label:
+                            ani.hotspotMode === "auto"
+                              ? tp("recommendHotspotAgain")
+                              : tp("recommendHotspot"),
+                          onClick: onRecommendHotspot,
+                          title:
+                            ani.hotspotMode === "auto"
+                              ? tp("recommendHotspotAgain")
+                              : tp("recommendHotspot"),
+                          ariaLabel:
+                            ani.hotspotMode === "auto"
+                              ? tp("recommendHotspotAgain")
+                              : tp("recommendHotspot"),
+                        },
+                        {
+                          id: "ani-reset-hotspot",
+                          label: tp("resetHotspot"),
+                          onClick: onResetHotspot,
+                          title: tp("resetHotspot"),
+                          ariaLabel: tp("resetHotspot"),
+                        },
+                      ]}
+                    />
+                  </div>
+                </SlotReplacementSurface>
               </>
             ) : (
-              <SlotEmptyState
-                slotId={selectedSlotId}
-                onStaticFile={onSelectSlotStaticFile}
-                onAnimatedFile={onSelectSlotAnimatedFile}
-              />
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "2rem 2.25rem",
+                }}
+              >
+                <SlotEmptyState
+                  slotId={selectedSlotId}
+                  onStaticFile={onSelectSlotStaticFile}
+                  onAnimatedFile={onSelectSlotAnimatedFile}
+                />
+              </div>
             )}
           </main>
 
-          {selectedSlotBound && ani ? (
+          {hasSimulationNormal ? (
             <SimulationFooter
               collapsed={simulationCollapsed}
               onToggle={() => setSimulationCollapsed((current) => !current)}
+              headerControls={
+                <SimulationBackgroundModeSwitch
+                  value={simulationBackgroundMode}
+                  onChange={setSimulationBackgroundMode}
+                />
+              }
             >
               <AniSimulation
-                imageUrl={imageUrl}
-                sourceWidth={ani.sourceWidth}
-                sourceHeight={ani.sourceHeight}
-                fitMode={ani.fitMode}
-                offsetX={ani.offsetX}
-                offsetY={ani.offsetY}
-                scale={ani.scale}
-                cursorSize={ani.cursorSize}
-                hotspotX={ani.hotspotX}
-                hotspotY={ani.hotspotY}
+                imageUrl={selectedSlotBound && ani ? imageUrl : null}
+                sourceWidth={selectedSlotBound && ani ? ani.sourceWidth : 0}
+                sourceHeight={selectedSlotBound && ani ? ani.sourceHeight : 0}
+                fitMode={selectedSlotBound && ani ? ani.fitMode : "contain"}
+                offsetX={selectedSlotBound && ani ? ani.offsetX : 0}
+                offsetY={selectedSlotBound && ani ? ani.offsetY : 0}
+                scale={selectedSlotBound && ani ? ani.scale : 1}
+                cursorSize={selectedSlotBound && ani ? ani.cursorSize : 32}
+                hotspotX={selectedSlotBound && ani ? ani.hotspotX : 0}
+                hotspotY={selectedSlotBound && ani ? ani.hotspotY : 0}
                 slotSources={slotSimulationSources}
                 selectedSlotId={selectedSlotId}
+                backgroundMode={simulationBackgroundMode}
               />
             </SimulationFooter>
           ) : null}
@@ -309,7 +342,7 @@ export default function AniEditorShell({
 
       <StudioInspector
         style={{
-          width: "16rem",
+          width: selectedSlotBound ? "16rem" : "13rem",
           borderLeft: "1px solid var(--color-border)",
           backgroundColor: "var(--color-bg-secondary)",
           padding: "1.25rem",
@@ -330,21 +363,10 @@ export default function AniEditorShell({
               />
             </div>
           ) : (
-            <StudioInspectorEmptyNotice
-              slotLabel={stageSlotLabel}
+            <StudioInspectorCompactGuidance
               title={t("slotEmptyTitle")}
               summary={t("slotEmptySub")}
-              expectedControlsTitle={t("inspectorExpectedControlsTitle")}
-              expectedControls={[
-                tp("output"),
-                tp("framing"),
-                tp("name"),
-                tp("hotspot"),
-                tp("scale"),
-                tp("position"),
-              ]}
-              formatGuidanceTitle={t("inspectorFormatGuidanceTitle")}
-              formatGuidance={[t("slotStaticUploadSub"), t("slotAniUploadSub")]}
+              lines={[t("slotStaticUploadSub"), t("slotAniUploadSub")]}
             />
           )
         }
@@ -394,30 +416,6 @@ export default function AniEditorShell({
               <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
                 {tp("actualSize")}
               </div>
-            </div>
-          ) : null
-        }
-        quickActions={
-          selectedSlotBound && ani ? (
-            <div style={{ display: "grid", gap: "0.5rem" }}>
-              <StudioInspectorSecondaryButton
-                onClick={onRecommendHotspot}
-                style={{ justifyContent: "space-between" }}
-              >
-                <span>
-                  {ani.hotspotMode === "auto"
-                    ? tp("recommendHotspotAgain")
-                    : tp("recommendHotspot")}
-                </span>
-                <span aria-hidden="true">↺</span>
-              </StudioInspectorSecondaryButton>
-              <StudioInspectorSecondaryButton
-                onClick={onResetHotspot}
-                style={{ justifyContent: "space-between" }}
-              >
-                <span>{tp("resetHotspot")}</span>
-                <span aria-hidden="true">⟲</span>
-              </StudioInspectorSecondaryButton>
             </div>
           ) : null
         }
@@ -568,55 +566,12 @@ function ActualSizePreview({
   );
 }
 
-function ToolButton({
-  label,
-  shortcut,
-  active,
-  onClick,
-}: {
-  label: string;
-  shortcut: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      title={shortcut ? `${label} (${shortcut})` : label}
-      aria-label={shortcut ? `${label} (${shortcut})` : label}
-      onClick={onClick}
-      style={{
-        width: "2.75rem",
-        height: "2.75rem",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "0.5625rem",
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        backgroundColor: active
-          ? "var(--color-accent-subtle)"
-          : "transparent",
-        color: active ? "var(--color-accent)" : "var(--color-text-muted)",
-        transition: STUDIO_INTERACTION_TRANSITION,
-        gap: "1px",
-      }}
-    >
-      <span>{label}</span>
-      {shortcut && (
-        <span style={{ fontSize: "0.5rem", opacity: 0.6 }}>{shortcut}</span>
-      )}
-    </button>
-  );
-}
-
 function SlotEmptyState({
   slotId,
   onStaticFile,
   onAnimatedFile,
 }: {
-  slotId: SlotId;
+  slotId: string;
   onStaticFile: (file: File) => void;
   onAnimatedFile: (file: File) => void;
 }) {
@@ -687,7 +642,7 @@ function SlotEmptyState({
   );
 }
 
-function capitalizeSlotId(slotId: SlotId | undefined) {
+function capitalizeSlotId(slotId: string | undefined) {
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
 }

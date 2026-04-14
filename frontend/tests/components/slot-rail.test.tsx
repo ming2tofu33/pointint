@@ -1,60 +1,149 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const SLOT_RAIL_TRANSLATIONS: Record<string, string> = {
+  slotRailTitle: "Windows roles",
+  slotRailMore: "Additional 7 cursors",
+  slotRailConfigured: "configured",
+  slotSelected: "Selected",
+  slotFilled: "Configured",
+  slotEmpty: "Empty",
+  slotStatic: "Static",
+  slotAnimated: "Animated",
+  slotKindUnset: "Unset",
+  slotNormalSelect: "Normal Select",
+  slotNormalSelectHint: "Pointer on the desktop",
+  slotTextSelect: "Text Select",
+  slotTextSelectHint: "Text input area",
+  slotLinkSelect: "Link Select",
+  slotLinkSelectHint: "Link hover",
+  slotBusy: "Busy",
+  slotBusyHint: "Waiting cursor",
+  slotWorkingInBackground: "Working in Background",
+  slotWorkingInBackgroundHint: "Task continues in the background",
+  slotUnavailable: "Unavailable",
+  slotUnavailableHint: "Unavailable state",
+  slotMove: "Move",
+  slotMoveHint: "Move selection",
+  slotHorizontalResize: "Horizontal Resize",
+  slotHorizontalResizeHint: "Resize horizontally",
+  slotVerticalResize: "Vertical Resize",
+  slotVerticalResizeHint: "Resize vertically",
+  slotDiagonalResize1: "Diagonal Resize 1",
+  slotDiagonalResize1Hint: "Resize diagonally",
+  slotDiagonalResize2: "Diagonal Resize 2",
+  slotDiagonalResize2Hint: "Resize diagonally",
+};
+
+function humanizeKey(key: string) {
+  return (
+    SLOT_RAIL_TRANSLATIONS[key] ??
+    key
+      .replace(/^slot/, "")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+      .trim()
+      .toLowerCase()
+  );
+}
+
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string) => humanizeKey(key),
 }));
 
 import SlotRail from "@/components/SlotRail";
-import { createCursorThemeProject } from "@/lib/cursorThemeProject";
+
+const PRIMARY_ROLE_IDS = [
+  "normalSelect",
+  "textSelect",
+  "linkSelect",
+  "busy",
+] as const;
+
+const HIDDEN_ROLE_IDS = [
+  "workingInBackground",
+  "unavailable",
+  "move",
+  "horizontalResize",
+  "verticalResize",
+  "diagonalResize1",
+  "diagonalResize2",
+] as const;
+
+function createSlot(id: string, previewUrl: string | null = null) {
+  return {
+    id,
+    kind: previewUrl ? "static" : null,
+    asset: {
+      fileName: previewUrl ? `${id}.png` : null,
+      originalUrl: previewUrl,
+      previewUrl,
+    },
+    editing: {
+      cursorName: id,
+      cursorSize: 32,
+      fitMode: "contain",
+      hotspotMode: "auto",
+      hotspotX: 0,
+      hotspotY: 0,
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+    },
+  };
+}
 
 describe("SlotRail", () => {
-  it("locks the refreshed selected-state contract for selected badge, unset kind, and elevated emphasis", () => {
-    const project = createCursorThemeProject();
-    project.slots.normal.kind = "animated";
-    project.slots.normal.asset.previewUrl = "blob:normal-preview";
-    project.slots.link.kind = "static";
-    project.slots.link.asset.previewUrl = "blob:link-preview";
+  it("shows four primary roles by default and expands the hidden seven inline", () => {
+    const project = {
+      slots: {
+        normalSelect: createSlot("normalSelect", "blob:normal-preview"),
+        textSelect: createSlot("textSelect", "blob:text-preview"),
+        linkSelect: createSlot("linkSelect", "blob:link-preview"),
+        busy: createSlot("busy", "blob:busy-preview"),
+        workingInBackground: createSlot(
+          "workingInBackground",
+          "blob:workingInBackground-preview"
+        ),
+        unavailable: createSlot("unavailable"),
+        move: createSlot("move"),
+        horizontalResize: createSlot("horizontalResize"),
+        verticalResize: createSlot("verticalResize"),
+        diagonalResize1: createSlot("diagonalResize1"),
+        diagonalResize2: createSlot("diagonalResize2"),
+      },
+    } as never;
 
     render(
       <SlotRail
         project={project}
-        selectedSlotId="normal"
+        selectedSlotId="normalSelect"
         onSelectSlot={vi.fn()}
       />
     );
 
-    expect(screen.getByTestId("slot-selected-badge-normal")).toBeVisible();
-    expect(screen.getByTestId("slot-badge-stack-normal")).toHaveStyle({
-      display: "grid",
+    PRIMARY_ROLE_IDS.forEach((roleId) => {
+      expect(screen.getByTestId(`slot-${roleId}`)).toBeVisible();
     });
-    expect(screen.getByTestId("slot-thumbnail-normal")).toHaveStyle({
-      borderRadius: "0",
+
+    HIDDEN_ROLE_IDS.forEach((roleId) => {
+      expect(screen.queryByTestId(`slot-${roleId}`)).toBeNull();
     });
-    expect(screen.getByTestId("slot-title-normal")).toHaveTextContent(
-      "slotNormal"
+
+    expect(screen.getByTestId("slot-rail-more-summary")).toHaveTextContent("1");
+    expect(screen.getByTestId("slot-rail-more")).toHaveAttribute(
+      "aria-expanded",
+      "false"
     );
-    expect(screen.getByTestId("slot-title-normal")).not.toHaveTextContent(
-      "slotSelected"
+
+    fireEvent.click(screen.getByTestId("slot-rail-more"));
+    expect(screen.getByTestId("slot-rail-more")).toHaveAttribute(
+      "aria-expanded",
+      "true"
     );
-    expect(screen.getByTestId("slot-normal")).toHaveStyle({
-      border: "1px solid var(--color-accent)",
-      backgroundColor: "var(--color-accent-subtle)",
+
+    HIDDEN_ROLE_IDS.forEach((roleId) => {
+      expect(screen.getByTestId(`slot-${roleId}`)).toBeVisible();
     });
-    expect(screen.getByTestId("slot-normal")).toHaveStyle({
-      boxShadow: "0 0 0 1px var(--color-accent), 0 12px 28px rgba(0, 0, 0, 0.3)",
-    });
-    expect(screen.getByTestId("slot-link")).toHaveStyle({
-      border: "1px solid var(--color-border)",
-      backgroundColor: "var(--color-bg-primary)",
-      boxShadow: "none",
-    });
-    expect(screen.getByTestId("slot-text")).toHaveStyle({
-      border: "1px solid var(--color-border)",
-      backgroundColor: "var(--color-bg-primary)",
-      boxShadow: "none",
-    });
-    expect(screen.getByTestId("slot-status-text")).toHaveTextContent("slotEmpty");
-    expect(screen.getByTestId("slot-kind-text")).toHaveTextContent("slotKindUnset");
   });
 });

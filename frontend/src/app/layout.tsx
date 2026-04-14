@@ -51,7 +51,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme="dark">
       <head>
-        <meta name="theme-color" content="#0D0F12" />
+        <meta name="theme-color" content="#0C1017" />
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>

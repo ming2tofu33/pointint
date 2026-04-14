@@ -5,8 +5,6 @@ import { useTranslations } from "next-intl";
 
 import { FitMode, getFrameRect } from "@/lib/cursorFrame";
 
-type Tool = "move" | "hotspot";
-
 interface CursorCanvasProps {
   imageUrl: string;
   sourceWidth: number;
@@ -19,7 +17,8 @@ interface CursorCanvasProps {
   hotspotY: number;
   onOffsetChange: (x: number, y: number) => void;
   onHotspotChange: (x: number, y: number) => void;
-  activeTool: Tool;
+  hotspotPickActive?: boolean;
+  onHotspotPickComplete?: () => void;
 }
 
 const CANVAS_SIZE = 256;
@@ -36,7 +35,8 @@ export default function CursorCanvas({
   hotspotY,
   onOffsetChange,
   onHotspotChange,
-  activeTool,
+  hotspotPickActive = false,
+  onHotspotPickComplete,
 }: CursorCanvasProps) {
   const t = useTranslations("studio");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,8 +68,9 @@ export default function CursorCanvas({
     e.preventDefault();
     const pos = getRelativePos(e);
 
-    if (activeTool === "hotspot") {
+    if (hotspotPickActive) {
       onHotspotChange(pos.x, pos.y);
+      onHotspotPickComplete?.();
       return;
     }
 
@@ -84,7 +85,7 @@ export default function CursorCanvas({
   }
 
   function handleMouseMove(e: React.MouseEvent) {
-    if (!dragging || activeTool !== "move") return;
+    if (!dragging) return;
 
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
@@ -117,11 +118,7 @@ export default function CursorCanvas({
         backgroundPosition: "0 0, 8px 8px",
         overflow: "hidden",
         cursor:
-          activeTool === "move"
-            ? dragging
-              ? "grabbing"
-              : "grab"
-            : "crosshair",
+          hotspotPickActive ? "crosshair" : dragging ? "grabbing" : "grab",
         userSelect: "none",
       }}
     >
