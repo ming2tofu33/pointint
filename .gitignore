@@ -53,3 +53,8 @@ htmlcov/
 *.log
 *.pid
 *.seed
+
+# Pixellab work-in-progress assets
+assets/pixellab/raw/
+assets/pixellab/selected/
+assets/pixellab/references/
