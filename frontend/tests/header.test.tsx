@@ -139,6 +139,27 @@ describe("Header", () => {
     expect(screen.getByRole("button", { name: "Log in" })).toBeDisabled();
   });
 
+  it("renders the utility menu on an opaque surface instead of reusing the translucent header backdrop", () => {
+    mockUsePathname.mockReturnValue("/");
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Header />
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open utility menu" })
+    );
+
+    const menu = screen.getByRole("menu");
+    const style = menu.getAttribute("style") ?? "";
+
+    expect(style).toContain("background-color: var(--color-bg-card)");
+    expect(style).toContain("background-image:");
+    expect(style).not.toContain("var(--app-header-backdrop)");
+  });
+
   it("refreshes the page after choosing a locale from the utility menu", () => {
     mockUsePathname.mockReturnValue("/");
 
@@ -155,5 +176,21 @@ describe("Header", () => {
 
     expect(document.cookie).toContain("NEXT_LOCALE=ko");
     expect(mockRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses a profile icon for the utility trigger instead of the ellipsis icon", () => {
+    mockUsePathname.mockReturnValue("/");
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <Header />
+      </NextIntlClientProvider>
+    );
+
+    const trigger = screen.getByRole("button", { name: "Open utility menu" });
+    const icon = trigger.querySelector("svg");
+
+    expect(icon?.querySelectorAll("path")).toHaveLength(2);
+    expect(icon?.querySelector("circle")).toBeNull();
   });
 });

@@ -12,6 +12,7 @@ import {
   DEFAULT_PRIMARY_ROLE_SLOT_ID,
   createCursorThemeProject,
   createWindowsRoleRecord,
+  getDefaultCursorNameForSlot,
   WINDOWS_ROLE_SLOT_IDS,
   type CursorSize as ThemeCursorSize,
   type CursorThemeProject,
@@ -21,7 +22,10 @@ import {
 import {
   buildWindowsRoleMasterZip,
   buildWindowsRoleDownloadFilename,
+  buildWindowsRoleInstallInf,
   buildWindowsRolePackagePath,
+  buildWindowsRoleRestoreInf,
+  type WindowsRoleInstallerEntry,
 } from "@/lib/studioDownload";
 import { type StudioState } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
@@ -109,6 +113,17 @@ interface StudioSnapshot {
   cursor: CursorData | null;
   ani: AniData | null;
 }
+
+type HistoryActionKey =
+  | "offset"
+  | "scale"
+  | "hotspot"
+  | "fitMode"
+  | "cursorSize"
+  | "cursorName"
+  | "replaceSlot"
+  | "backgroundDecision"
+  | "recommendHotspot";
 
 type LegacySlotId = "normal" | "text" | "link" | "button" | "busySelect";
 
@@ -199,11 +214,6 @@ function loadImageDimensions(src: string): Promise<{ width: number; height: numb
   });
 }
 
-function createAniName(fileName: string) {
-  const baseName = fileName.replace(/\.[^.]+$/, "");
-  return baseName || "cursor";
-}
-
 function createEmptySlotRuntime(): Record<WindowsRoleSlotId, SlotRuntime> {
   return createWindowsRoleRecord(() => ({ cursor: null, ani: null }));
 }
@@ -223,7 +233,10 @@ function getPrimaryRoleSelection() {
   } as const;
 }
 
-function createCursorFromFile(file: File): CursorData {
+function createCursorFromFile(
+  file: File,
+  slotId: WindowsRoleSlotId
+): CursorData {
   const url = URL.createObjectURL(file);
   const renderedHotspot = getRenderedHotspot(0, 0, 32);
 
@@ -245,11 +258,16 @@ function createCursorFromFile(file: File): CursorData {
     scale: 1,
     fitMode: "contain",
     cursorSize: 32,
-    cursorName: "cursor",
+    cursorName: getDefaultCursorNameForSlot(slotId),
   };
 }
 
-function createAniFromFile(file: File, sourceWidth = 0, sourceHeight = 0): AniData {
+function createAniFromFile(
+  file: File,
+  slotId: WindowsRoleSlotId,
+  sourceWidth = 0,
+  sourceHeight = 0
+): AniData {
   return {
     originalFile: file,
     originalUrl: URL.createObjectURL(file),
@@ -263,7 +281,7 @@ function createAniFromFile(file: File, sourceWidth = 0, sourceHeight = 0): AniDa
     scale: 1,
     fitMode: "contain",
     cursorSize: 32,
-    cursorName: createAniName(file.name),
+    cursorName: getDefaultCursorNameForSlot(slotId),
   };
 }
 
@@ -446,6 +464,60 @@ function finalizeStudioSnapshot(snapshot: StudioSnapshot): StudioSnapshot {
   return snapshot;
 }
 
+function isUndoSessionState(state: StudioState) {
+  return state === "editing" || state === "ani-editing";
+}
+
+function matchesUndoSession(
+  snapshot: StudioSnapshot,
+  current: StudioSnapshot
+) {
+  if (
+    current.state === "editing" &&
+    current.cursor &&
+    snapshot.state === "editing"
+  ) {
+    return (
+      snapshot.selectedSlotId === current.selectedSlotId &&
+      snapshot.cursor?.originalUrl === current.cursor.originalUrl
+    );
+  }
+
+  if (
+    current.state === "ani-editing" &&
+    current.ani &&
+    snapshot.state === "ani-editing"
+  ) {
+    return (
+      snapshot.selectedSlotId === current.selectedSlotId &&
+      snapshot.ani?.originalUrl === current.ani.originalUrl
+    );
+  }
+
+  return false;
+}
+
+function popMatchingHistorySnapshot(
+  stack: StudioSnapshot[],
+  current: StudioSnapshot
+) {
+  while (stack.length > 0) {
+    const snapshot = stack.pop();
+    if (snapshot && matchesUndoSession(snapshot, current)) {
+      return snapshot;
+    }
+  }
+
+  return null;
+}
+
+function hasMatchingHistorySnapshot(
+  stack: StudioSnapshot[],
+  current: StudioSnapshot
+) {
+  return stack.some((snapshot) => matchesUndoSession(snapshot, current));
+}
+
 function collectCursorObjectUrls(cursor: CursorData | null, urls: Set<string>) {
   if (!cursor) return;
   if (cursor.originalUrl) {
@@ -496,6 +568,9 @@ export function useStudio() {
   const previewTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const undoStackRef = useRef<StudioSnapshot[]>([]);
   const redoStackRef = useRef<StudioSnapshot[]>([]);
+  const activeHistoryActionRef = useRef<HistoryActionKey | null>(null);
+  const bgRemovalRequestIdRef = useRef(0);
+  const bgRemovalInFlightRef = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const selectedSlot = project.slots[selectedSlotId];
@@ -534,14 +609,22 @@ export function useStudio() {
   };
   previewUrlRef.current = previewUrl;
 
-  const syncHistoryFlags = useCallback(() => {
-    setCanUndo(undoStackRef.current.length > 0);
-    setCanRedo(redoStackRef.current.length > 0);
-  }, []);
-
   const takeSnapshot = useCallback(() => {
     return finalizeStudioSnapshot(liveStateRef.current);
   }, []);
+
+  const syncHistoryFlags = useCallback(() => {
+    const current = takeSnapshot();
+
+    if (!isUndoSessionState(current.state)) {
+      setCanUndo(false);
+      setCanRedo(false);
+      return;
+    }
+
+    setCanUndo(hasMatchingHistorySnapshot(undoStackRef.current, current));
+    setCanRedo(hasMatchingHistorySnapshot(redoStackRef.current, current));
+  }, [takeSnapshot]);
 
   const clearPreview = useCallback(() => {
     setPreviewUrl((prev) => {
@@ -564,9 +647,51 @@ export function useStudio() {
     [syncHistoryFlags]
   );
 
+  const clearActiveHistoryAction = useCallback(() => {
+    activeHistoryActionRef.current = null;
+  }, []);
+
+  const cancelBgRemovalRequest = useCallback(() => {
+    bgRemovalRequestIdRef.current += 1;
+    bgRemovalInFlightRef.current = false;
+  }, []);
+
+  const pushHistoryForAction = useCallback(
+    (
+      snapshot: StudioSnapshot,
+      action: HistoryActionKey,
+      options?: { coalesce?: boolean }
+    ) => {
+      if (options?.coalesce && activeHistoryActionRef.current === action) {
+        return;
+      }
+
+      pushHistory(snapshot);
+      activeHistoryActionRef.current = action;
+    },
+    [pushHistory]
+  );
+
   const applySnapshot = useCallback(
     (snapshot: StudioSnapshot) => {
-      clearPreview();
+      cancelBgRemovalRequest();
+      clearActiveHistoryAction();
+      setPreviewUrl((prev) => {
+        if (prev) {
+          safeRevokeObjectUrl(prev);
+        }
+
+        if (
+          snapshot.cursor?.renderedBlob &&
+          (snapshot.state === "editing" ||
+            snapshot.state === "uploaded" ||
+            snapshot.state === "processing")
+        ) {
+          return URL.createObjectURL(snapshot.cursor.renderedBlob);
+        }
+
+        return null;
+      });
       setState(snapshot.state);
       setProject(snapshot.project);
       setSlotRuntime(snapshot.slotRuntime);
@@ -577,16 +702,17 @@ export function useStudio() {
       setError(null);
       setShowOriginal(false);
     },
-    [clearPreview]
+    [cancelBgRemovalRequest, clearActiveHistoryAction]
   );
 
   const undo = useCallback(() => {
-    const previous = undoStackRef.current.pop();
+    const current = takeSnapshot();
+    const previous = popMatchingHistorySnapshot(undoStackRef.current, current);
     if (!previous) {
+      syncHistoryFlags();
       return;
     }
 
-    const current = takeSnapshot();
     redoStackRef.current.push(current);
     if (redoStackRef.current.length > HISTORY_LIMIT) {
       redoStackRef.current = redoStackRef.current.slice(-HISTORY_LIMIT);
@@ -597,12 +723,13 @@ export function useStudio() {
   }, [applySnapshot, syncHistoryFlags, takeSnapshot]);
 
   const redo = useCallback(() => {
-    const next = redoStackRef.current.pop();
+    const current = takeSnapshot();
+    const next = popMatchingHistorySnapshot(redoStackRef.current, current);
     if (!next) {
+      syncHistoryFlags();
       return;
     }
 
-    const current = takeSnapshot();
     undoStackRef.current.push(current);
     if (undoStackRef.current.length > HISTORY_LIMIT) {
       undoStackRef.current = undoStackRef.current.slice(-HISTORY_LIMIT);
@@ -643,12 +770,14 @@ export function useStudio() {
   const uploadFileToSlot = useCallback(
     async (slotId: WindowsRoleSlotId, file: File, kind: SlotKind) => {
       const previous = takeSnapshot();
+      clearActiveHistoryAction();
       setError(null);
       cleanupSlotReplacement(slotId);
       clearPreview();
+      cancelBgRemovalRequest();
 
       if (kind === "static") {
-        const nextCursor = createCursorFromFile(file);
+        const nextCursor = createCursorFromFile(file, slotId);
 
         try {
           const dimensions = await loadImageDimensions(nextCursor.originalUrl);
@@ -658,7 +787,7 @@ export function useStudio() {
             sourceHeight: dimensions.height,
           };
 
-          pushHistory(previous);
+          pushHistoryForAction(previous, "replaceSlot");
           setCursor(hydratedCursor);
           setAni(null);
           commitSlotState(slotId, createStaticSlotState(hydratedCursor));
@@ -672,7 +801,7 @@ export function useStudio() {
         return;
       }
 
-      const nextAni = createAniFromFile(file);
+      const nextAni = createAniFromFile(file, slotId);
 
       try {
         const dimensions = await loadImageDimensions(nextAni.originalUrl);
@@ -682,7 +811,7 @@ export function useStudio() {
           sourceHeight: dimensions.height,
         };
 
-        pushHistory(previous);
+        pushHistoryForAction(previous, "replaceSlot");
         setCursor(null);
         setAni(hydratedAni);
         commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
@@ -697,7 +826,8 @@ export function useStudio() {
       cleanupSlotReplacement,
       clearPreview,
       commitSlotState,
-      pushHistory,
+      clearActiveHistoryAction,
+      pushHistoryForAction,
       takeSnapshot,
     ]
   );
@@ -725,7 +855,8 @@ export function useStudio() {
     const slot = project.slots[normalizedSlotId];
     const runtime = slotRuntime[normalizedSlotId];
 
-    if (slot.kind === "static" && runtime.cursor) {
+      if (slot.kind === "static" && runtime.cursor) {
+      cancelBgRemovalRequest();
       setPreviewUrl((prev) => {
         if (prev) {
           safeRevokeObjectUrl(prev);
@@ -739,6 +870,7 @@ export function useStudio() {
     }
 
     if (slot.kind === "animated" && runtime.ani) {
+      cancelBgRemovalRequest();
       setPreviewUrl((prev) => {
         if (prev) {
           safeRevokeObjectUrl(prev);
@@ -751,6 +883,7 @@ export function useStudio() {
       return;
     }
 
+    cancelBgRemovalRequest();
     setPreviewUrl((prev) => {
       if (prev) {
         safeRevokeObjectUrl(prev);
@@ -769,6 +902,7 @@ export function useStudio() {
     selectedSlotId,
     slotRuntime,
     state,
+    cancelBgRemovalRequest,
   ]);
 
   // UX-1: 파일 선택 후 "uploaded" 상태 (배경 제거 여부 선택 전)
@@ -794,13 +928,18 @@ export function useStudio() {
 
   // UX-1: 배경 제거 실행
   const processBgRemoval = useCallback(async () => {
-    if (!cursor) return;
+    if (!cursor || bgRemovalInFlightRef.current) return;
     const previous = takeSnapshot();
+    const requestId = bgRemovalRequestIdRef.current + 1;
+    bgRemovalRequestIdRef.current = requestId;
+    bgRemovalInFlightRef.current = true;
+    const sourceOriginalUrl = cursor.originalUrl;
+    const sourceFile = cursor.originalFile;
     setError(null);
     setState("processing");
 
     try {
-      const blob = await removeBackground(cursor.originalFile);
+      const blob = await removeBackground(sourceFile);
       const url = URL.createObjectURL(blob);
       const img = new Image();
 
@@ -810,9 +949,14 @@ export function useStudio() {
         img.src = url;
       });
 
-      pushHistory(previous);
+      if (bgRemovalRequestIdRef.current !== requestId) {
+        safeRevokeObjectUrl(url);
+        return;
+      }
+
+      pushHistoryForAction(previous, "backgroundDecision");
       setCursor((prev) =>
-        prev
+        prev && prev.originalUrl === sourceOriginalUrl
           ? {
               ...prev,
               processedUrl: url,
@@ -825,41 +969,68 @@ export function useStudio() {
       );
       setState("editing");
     } catch (err) {
+      if (bgRemovalRequestIdRef.current !== requestId) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Background removal failed");
       setState("uploaded");
+    } finally {
+      if (bgRemovalRequestIdRef.current === requestId) {
+        bgRemovalInFlightRef.current = false;
+      }
     }
-  }, [cursor, pushHistory, takeSnapshot]);
+  }, [cursor, pushHistoryForAction, takeSnapshot]);
 
   // UX-1: 배경 제거 건너뛰기
   const skipBgRemoval = useCallback(async () => {
-    if (!cursor) return;
+    if (!cursor || bgRemovalInFlightRef.current) return;
     const previous = takeSnapshot();
+    const requestId = bgRemovalRequestIdRef.current + 1;
+    bgRemovalRequestIdRef.current = requestId;
+    bgRemovalInFlightRef.current = true;
+    const sourceOriginalUrl = cursor.originalUrl;
 
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("Failed to load image"));
-      img.src = cursor.originalUrl;
-    });
+    try {
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = cursor.originalUrl;
+      });
 
-    const res = await fetch(cursor.originalUrl);
-    const blob = await res.blob();
+      const res = await fetch(cursor.originalUrl);
+      const blob = await res.blob();
 
-    pushHistory(previous);
-    setCursor((prev) =>
-      prev
-        ? {
-            ...prev,
-            processedUrl: prev.originalUrl,
-            processedBlob: blob,
-            sourceWidth: img.naturalWidth,
-            sourceHeight: img.naturalHeight,
-            renderedBlob: null,
-          }
-        : null
-    );
-    setState("editing");
-  }, [cursor, pushHistory, takeSnapshot]);
+      if (bgRemovalRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      pushHistoryForAction(previous, "backgroundDecision");
+      setCursor((prev) =>
+        prev && prev.originalUrl === sourceOriginalUrl
+          ? {
+              ...prev,
+              processedUrl: prev.originalUrl,
+              processedBlob: blob,
+              sourceWidth: img.naturalWidth,
+              sourceHeight: img.naturalHeight,
+              renderedBlob: null,
+            }
+          : null
+      );
+      setState("editing");
+    } catch (err) {
+      if (bgRemovalRequestIdRef.current !== requestId) {
+        return;
+      }
+      setError(err instanceof Error ? err.message : "Failed to keep original");
+      setState("uploaded");
+    } finally {
+      if (bgRemovalRequestIdRef.current === requestId) {
+        bgRemovalInFlightRef.current = false;
+      }
+    }
+  }, [cursor, pushHistoryForAction, takeSnapshot]);
 
   // UX-4: 원본/결과 토글
   const [showOriginal, setShowOriginal] = useState(false);
@@ -881,7 +1052,7 @@ export function useStudio() {
       ) {
         return;
       }
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "hotspot");
       setCursor((prev) => {
         if (!prev) return null;
         const renderedHotspot = getRenderedHotspot(x, y, prev.cursorSize);
@@ -906,7 +1077,7 @@ export function useStudio() {
       ) {
         return;
       }
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "hotspot");
       setAni((prev) =>
         prev
           ? {
@@ -914,61 +1085,61 @@ export function useStudio() {
               hotspotX: x,
               hotspotY: y,
               hotspotMode: "manual",
-            }
+          }
           : null
       );
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   const setOffset = useCallback((x: number, y: number) => {
     if (state === "editing") {
       if (!cursor || (cursor.offsetX === x && cursor.offsetY === y)) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
       setCursor((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
       return;
     }
 
     if (state === "ani-editing") {
       if (!ani || (ani.offsetX === x && ani.offsetY === y)) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
       setAni((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   const setScale = useCallback((scale: number) => {
     if (state === "editing") {
       if (!cursor || cursor.scale === scale) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
       setCursor((prev) => (prev ? { ...prev, scale } : null));
       return;
     }
 
     if (state === "ani-editing") {
       if (!ani || ani.scale === scale) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
       setAni((prev) => (prev ? { ...prev, scale } : null));
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   const setFitMode = useCallback((fitMode: FitMode) => {
     if (state === "editing") {
       if (!cursor || cursor.fitMode === fitMode) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "fitMode");
       setCursor((prev) => (prev ? { ...prev, fitMode } : null));
       return;
     }
 
     if (state === "ani-editing") {
       if (!ani || ani.fitMode === fitMode) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "fitMode");
       setAni((prev) => (prev ? { ...prev, fitMode } : null));
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   // UX-5: 커서 크기 변경
   const setCursorSize = useCallback((size: CursorSize) => {
     if (!cursor || cursor.cursorSize === size) return;
-    pushHistory(takeSnapshot());
+    pushHistoryForAction(takeSnapshot(), "cursorSize");
     setCursor((prev) => {
       if (!prev) return null;
       const renderedHotspot = getRenderedHotspot(
@@ -984,29 +1155,29 @@ export function useStudio() {
         renderedHotspotY: renderedHotspot.y,
       };
     });
-  }, [cursor, pushHistory, takeSnapshot]);
+  }, [cursor, pushHistoryForAction, takeSnapshot]);
 
   const setAniCursorSize = useCallback((size: CursorSize) => {
     if (!ani || ani.cursorSize === size) return;
-    pushHistory(takeSnapshot());
+    pushHistoryForAction(takeSnapshot(), "cursorSize");
     setAni((prev) => (prev ? { ...prev, cursorSize: size } : null));
-  }, [ani, pushHistory, takeSnapshot]);
+  }, [ani, pushHistoryForAction, takeSnapshot]);
 
   // UX-6: 커서 이름 변경
   const setCursorName = useCallback((name: string) => {
     if (state === "editing") {
       if (!cursor || cursor.cursorName === name) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "cursorName");
       setCursor((prev) => (prev ? { ...prev, cursorName: name } : null));
       return;
     }
 
     if (state === "ani-editing") {
       if (!ani || ani.cursorName === name) return;
-      pushHistory(takeSnapshot());
+      pushHistoryForAction(takeSnapshot(), "cursorName");
       setAni((prev) => (prev ? { ...prev, cursorName: name } : null));
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   const recommendHotspot = useCallback(async () => {
     if (state === "editing") {
@@ -1036,7 +1207,7 @@ export function useStudio() {
         return;
       }
 
-      pushHistory(previous);
+      pushHistoryForAction(previous, "recommendHotspot");
       setCursor((prev) => {
         if (!prev) return null;
         const renderedHotspot = getRenderedHotspot(
@@ -1084,7 +1255,7 @@ export function useStudio() {
         return;
       }
 
-      pushHistory(previous);
+      pushHistoryForAction(previous, "recommendHotspot");
       setAni((prev) =>
         prev
           ? {
@@ -1096,7 +1267,11 @@ export function useStudio() {
           : null
       );
     }
-  }, [ani, cursor, pushHistory, state, takeSnapshot]);
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
+
+  const endContinuousHistoryAction = useCallback(() => {
+    clearActiveHistoryAction();
+  }, [clearActiveHistoryAction]);
 
   const reset = useCallback(() => {
     const urls = new Set<string>();
@@ -1110,6 +1285,8 @@ export function useStudio() {
 
     undoStackRef.current = [];
     redoStackRef.current = [];
+    clearActiveHistoryAction();
+    cancelBgRemovalRequest();
     syncHistoryFlags();
     setCursor(null);
     setAni(null);
@@ -1122,7 +1299,7 @@ export function useStudio() {
     setState("editing");
     setError(null);
     setShowOriginal(false);
-  }, [syncHistoryFlags, takeSnapshot]);
+  }, [cancelBgRemovalRequest, clearActiveHistoryAction, syncHistoryFlags, takeSnapshot]);
 
   useEffect(() => {
     return () => {
@@ -1379,7 +1556,40 @@ export function useStudio() {
 
       if (!configuredEntries.length) return;
 
-      const fullSetZipBlob = await buildWindowsRoleMasterZip(configuredEntries);
+      const installerEntries: WindowsRoleInstallerEntry[] = configuredSlotIds
+        .map((slotId) => {
+          const slot = snapshot.project.slots[slotId];
+          if (slot.kind === "static") {
+            return { slotId, extension: "cur" as const };
+          }
+          if (slot.kind === "animated") {
+            return { slotId, extension: "ani" as const };
+          }
+          return null;
+        })
+        .filter(
+          (
+            entry
+          ): entry is WindowsRoleInstallerEntry => entry !== null
+        );
+
+      const fullSetEntries = [
+        ...configuredEntries,
+        {
+          name: "install.inf",
+          blob: new Blob([buildWindowsRoleInstallInf(installerEntries)], {
+            type: "text/plain;charset=utf-8",
+          }),
+        },
+        {
+          name: "restore-default.inf",
+          blob: new Blob([buildWindowsRoleRestoreInf()], {
+            type: "text/plain;charset=utf-8",
+          }),
+        },
+      ];
+
+      const fullSetZipBlob = await buildWindowsRoleMasterZip(fullSetEntries);
       const url = URL.createObjectURL(fullSetZipBlob);
       const a = document.createElement("a");
       a.href = url;
@@ -1494,6 +1704,7 @@ export function useStudio() {
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
     recommendHotspot,
+    endContinuousHistoryAction,
     undo,
     redo,
     canUndo,

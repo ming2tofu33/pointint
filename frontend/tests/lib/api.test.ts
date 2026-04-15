@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { generateAni, generateCursor } from "@/lib/api";
+import { checkCursorHealth, generateAni, generateCursor } from "@/lib/api";
 
 describe("generateAni", () => {
   beforeEach(() => {
@@ -101,5 +101,30 @@ describe("generateCursor", () => {
     const result = await generateCursor(blob, 4, 6, 32, "arrow", "raw");
 
     expect(result.type).toBe("application/octet-stream");
+  });
+});
+
+describe("checkCursorHealth", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns a safe fallback when the health endpoint is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }));
+
+    const result = await checkCursorHealth(
+      new Blob(["png"], { type: "image/png" }),
+      4,
+      6
+    );
+
+    expect(result).toEqual({
+      visibility: "pass",
+      hotspot: "pass",
+      readability: "pass",
+      messages: [],
+    });
   });
 });

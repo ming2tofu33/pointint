@@ -49,9 +49,24 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   emptySlotMultiplePngs: "Multiple PNGs",
   emptySlotAiGenerate: "AI generate",
   soon: "Soon",
+  themeLight: "Light mode",
+  themeDark: "Dark mode",
+  themeModeSwitch: "simulation theme mode",
   downloadAllRoles: "Download all roles (t)",
   downloadCurrentSlot: "Download current slot (t)",
+  viewZoom: "View zoom",
   compactGuidanceTitle: "Compact guidance",
+  backgroundDecisionCompactTitle: "Background removal pending",
+  backgroundDecisionCompactSummary:
+    "Choose whether to remove the background before entering the full editor.",
+  backgroundDecisionTitle: "Background removal",
+  backgroundDecisionSummary:
+    "Decide whether this static cursor should keep its background before you continue editing.",
+  backgroundDecisionHint:
+    "Review the edge detail in the canvas, then choose the version you want to keep in the slot.",
+  backgroundProcessingTitle: "Removing background",
+  backgroundProcessingSummary:
+    "Pointtint is preparing a transparent version of this image. Stay in the studio and keep reviewing the canvas.",
 };
 
 function humanizeStudioKey(key: string) {
@@ -374,11 +389,26 @@ function renderStudio(
     previewUrl?: string | null;
   } = {}
 ) {
+  useStudioMock.mockReturnValue(createStudioReturn(state, options));
+
+  return render(<StudioPage />);
+}
+
+function createStudioReturn(
+  state: StudioState,
+  options: {
+    cursor?: Record<string, unknown> | null;
+    ani?: Record<string, unknown> | null;
+    selectedSlotId?: WindowsRoleId;
+    project?: ReturnType<typeof createProject>;
+    previewUrl?: string | null;
+  } = {}
+) {
   const hasCursorOverride = Object.prototype.hasOwnProperty.call(options, "cursor");
   const hasAniOverride = Object.prototype.hasOwnProperty.call(options, "ani");
 
   const cursor =
-    state === "editing" || state === "uploaded"
+    state === "editing" || state === "uploaded" || state === "processing"
       ? hasCursorOverride
         ? options.cursor === null
           ? null
@@ -410,7 +440,7 @@ function renderStudio(
     return Boolean(slot && typeof slot === "object" && "kind" in slot && slot.kind !== null);
   });
 
-  useStudioMock.mockReturnValue({
+  return {
     state,
     cursor,
     ani,
@@ -450,9 +480,7 @@ function renderStudio(
     downloadAll: vi.fn(),
     download: vi.fn(),
     closeGuide: vi.fn(),
-  });
-
-  return render(<StudioPage />);
+  };
 }
 
 beforeEach(() => {
@@ -495,7 +523,7 @@ describe("Studio entry gate", () => {
     expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
     expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
     expect(screen.getByTestId("studio-empty-slot-source-animated")).toBeVisible();
-    expect(screen.queryByTestId("studio-stage-header")).toBeNull();
+    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
     expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
@@ -557,6 +585,20 @@ describe("Studio entry gate", () => {
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
   });
 
+  it("shows the one-shot background comparison preview after static background removal completes", () => {
+    renderStudio("editing", {
+      previewUrl: "blob:preview",
+      cursor: {
+        originalUrl: "blob:original",
+        processedUrl: "blob:processed",
+      },
+    });
+
+    expect(
+      screen.queryByTestId("background-compare-preview")
+    ).not.toBeInTheDocument();
+  });
+
   it("reads the ANI inspector as grouped summary and preview sections", () => {
     renderStudio("ani-editing");
 
@@ -593,7 +635,17 @@ describe("Studio entry gate", () => {
       },
     });
 
-    expect(screen.queryByTestId("studio-inspector-quick-actions")).toBeNull();
+    expect(screen.getByTestId("studio-inspector-quick-actions")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /recommend hotspot again/i })
+    ).toBeVisible();
+  });
+
+  it("renders the stage view zoom control in editing mode", () => {
+    renderStudio("editing");
+
+    expect(screen.getByRole("group", { name: "View zoom" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "1.5x" })).toBeVisible();
   });
 
   it("renders the simulation footer when the normalSelect slot is configured", () => {
@@ -628,6 +680,37 @@ describe("Studio entry gate", () => {
     expect(AniSimulationMock).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps the simulation theme mode shared when switching from CUR editing to ANI editing", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    let currentStudioReturn = createStudioReturn("editing", {
+      project,
+      previewUrl: "blob:preview",
+    });
+
+    useStudioMock.mockImplementation(() => currentStudioReturn);
+
+    const view = render(<StudioPage />);
+
+    fireEvent.click(screen.getByRole("switch", { name: "simulation theme mode" }));
+
+    currentStudioReturn = createStudioReturn("ani-editing", {
+      project,
+      selectedSlotId: "linkSelect",
+    });
+
+    view.rerender(<StudioPage />);
+
+    expect(AniSimulationMock).toHaveBeenCalled();
+    expect(AniSimulationMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      themeMode: "light",
+    });
+  });
+
   it("restores the CUR health check in the inspector when a rendered cursor is available", () => {
     renderStudio("editing");
 
@@ -653,18 +736,38 @@ describe("Studio entry gate", () => {
     });
 
     expect(screen.getByTestId("slot-textSelect")).not.toBeNull();
+    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
     expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("cursor-canvas")).toBeNull();
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
   });
 
-  it("keeps uploaded background-removal choice in compact guidance mode instead of the empty inspector notice", () => {
+  it("keeps uploaded background-removal choice inside the editor with an inline overlay", () => {
     renderStudio("uploaded");
 
-    expect(screen.getByTestId("upload-zone")).not.toBeNull();
+    expect(
+      screen.getByTestId("background-removal-decision-overlay")
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("background-removal-decision-overlay")
+    ).toHaveStyle({
+      alignItems: "flex-end",
+    });
+    expect(screen.getByTestId("cursor-canvas")).not.toBeNull();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
+    expect(screen.queryByTestId("upload-zone")).toBeNull();
+  });
+
+  it("anchors the processing overlay to the lower edge of the canvas area", () => {
+    renderStudio("processing");
+
+    expect(
+      screen.getByTestId("background-removal-processing-overlay")
+    ).toHaveStyle({
+      alignItems: "flex-end",
+    });
   });
 
   it("accepts dropped files in the slot source entry cards", () => {

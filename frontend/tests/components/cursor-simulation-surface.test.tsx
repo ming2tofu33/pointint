@@ -61,14 +61,29 @@ describe("CursorSimulationSurface", () => {
     rerender(<CursorScene sceneId="windowControls" />);
 
     expect(screen.getByTestId("cursor-scene-window-frame")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-window-toolbar")).not.toBeNull();
-    expect(screen.getByTestId("cursor-scene-window-properties-panel")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-guide-panel")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-window-canvas-workspace")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-body")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-desktop-stage")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-floating-frame")).not.toBeNull();
+    expect(screen.getByTestId("cursor-scene-window-helper-copy")).not.toBeNull();
+    expect(screen.queryByTestId("cursor-scene-window-toolbar")).toBeNull();
+    expect(screen.queryByTestId("cursor-scene-window-sidebar")).toBeNull();
     expect(screen.getByTestId("cursor-scene-station-window-titlebar-move")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-station-window-edge-horizontal-resize")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-station-window-edge-vertical-resize")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-station-window-corner-diagonal-resize-1")).not.toBeNull();
     expect(screen.getByTestId("cursor-scene-station-window-corner-diagonal-resize-2")).not.toBeNull();
+    expect(
+      screen.getByTestId(
+        "cursor-scene-window-guide-row-window-titlebar-move"
+      )
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId(
+        "cursor-scene-window-guide-row-window-edge-horizontal-resize"
+      )
+    ).not.toBeNull();
   });
 
   it("uses the hovered station's slot source and falls back to a native cursor when unset", () => {
@@ -251,7 +266,7 @@ describe("CursorSimulationSurface", () => {
     expect(preview).toHaveAttribute("data-frame-src", "blob:cursor");
   });
 
-  it("updates the rendered background mode without removing the scene", () => {
+  it("updates the rendered simulation theme mode without removing the scene", () => {
     const source = createStaticCursorSource(
       { src: "blob:cursor" },
       { x: 0, y: 0 },
@@ -265,34 +280,41 @@ describe("CursorSimulationSurface", () => {
     );
 
     const surface = screen.getByTestId("cursor-simulation-surface");
+    const initialStyle = surface.getAttribute("style") ?? "";
 
-    expect(surface).toHaveAttribute("data-background-mode", "dark");
+    expect(surface).toHaveAttribute("data-theme-mode", "dark");
     expect(surface).toHaveStyle({
-      backgroundColor: "var(--simulation-shell-dark-bg)",
-      color: "var(--simulation-shell-dark-fg)",
+      backgroundColor: "rgb(32, 32, 32)",
+      color: "rgb(243, 243, 243)",
     });
+    expect(initialStyle).toContain("--simulation-panel-bg:");
+    expect(initialStyle).toContain("--simulation-panel-elevated:");
+    expect(initialStyle).toContain("--simulation-scene-surface:");
+    expect(initialStyle).toContain("--simulation-link: #76b9ed");
     expect(
       screen.getByTestId("cursor-scene-browser-address").getAttribute("style")
     ).toContain("border: 1px solid var(--simulation-panel-border)");
     expect(
       screen.getByTestId("cursor-scene-browser-address").getAttribute("style")
-    ).toContain("background-color: var(--simulation-panel-elevated)");
+    ).toContain("background-color: var(--simulation-input-bg, var(--simulation-panel-elevated))");
 
     rerender(
       <CursorSimulationSurface
         source={source}
         sceneId="browser"
-        backgroundMode="light"
+        themeMode="light"
       >
         <CursorScene sceneId="browser" />
       </CursorSimulationSurface>
     );
 
-    expect(surface).toHaveAttribute("data-background-mode", "light");
+    expect(surface).toHaveAttribute("data-theme-mode", "light");
     expect(surface).toHaveStyle({
-      backgroundColor: "var(--simulation-shell-light-bg)",
-      color: "var(--simulation-shell-light-fg)",
+      backgroundColor: "rgb(243, 243, 243)",
+      color: "rgb(31, 31, 31)",
     });
+    expect(surface.getAttribute("style")).toContain("--simulation-panel-bg:");
+    expect(surface.getAttribute("style")).toContain("--simulation-link: #0f6cbd");
     expect(screen.getByTestId("cursor-scene")).not.toBeNull();
   });
 
@@ -324,7 +346,49 @@ describe("CursorSimulationSurface", () => {
       height: "100%",
     });
     expect(screen.getByTestId("cursor-scene-browser-content")).toHaveStyle({
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 14rem), 1fr))",
+      display: "flex",
+    });
+  });
+
+  it("keeps a narrow breathing space around the window-controls scene", () => {
+    render(<CursorScene sceneId="windowControls" />);
+
+    expect(screen.getByTestId("cursor-scene")).toHaveStyle({
+      padding: "0.4rem",
+    });
+    expect(screen.getByTestId("cursor-scene-window-frame")).toHaveStyle({
+      margin: "0",
+    });
+  });
+
+  it("uses a two-column layout for the simplified window-controls scene", () => {
+    render(<CursorScene sceneId="windowControls" />);
+
+    expect(screen.getByTestId("cursor-scene-window-body")).toHaveStyle({
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 1.9fr) minmax(14rem, 1fr)",
+    });
+  });
+
+  it("keeps browser and system scenes at the same outer size as the window-controls scene", () => {
+    const { rerender } = render(<CursorScene sceneId="browser" />);
+
+    expect(screen.getByTestId("cursor-scene")).toHaveStyle({
+      padding: "0.4rem",
+    });
+    expect(screen.getByTestId("cursor-scene-browser-frame")).toHaveStyle({
+      maxWidth: "none",
+      maxHeight: "100%",
+    });
+
+    rerender(<CursorScene sceneId="system" />);
+
+    expect(screen.getByTestId("cursor-scene")).toHaveStyle({
+      padding: "0.4rem",
+    });
+    expect(screen.getByTestId("cursor-scene-system-frame")).toHaveStyle({
+      maxWidth: "none",
+      maxHeight: "100%",
     });
   });
 
@@ -380,6 +444,80 @@ describe("CursorSimulationSurface", () => {
     fireEvent.mouseEnter(textStation);
 
     expect(stage).toHaveAttribute("data-active-station", "browser-text-input");
+  });
+
+  it("keeps browser article copy in the neutral zone and isolates the text cursor to a small note field", () => {
+    render(
+      <CursorSimulationSurface sceneId="browser">
+        <CursorScene sceneId="browser" />
+      </CursorSimulationSurface>
+    );
+
+    const stage = screen.getByTestId("cursor-simulation-stage");
+    const copyRegion = screen.getByTestId("cursor-scene-browser-copy-region");
+    const textNoteStation = screen.getByTestId(
+      "cursor-scene-station-browser-text-body"
+    );
+
+    expect(stage).toHaveAttribute("data-active-station", "browser-neutral");
+
+    fireEvent.mouseEnter(copyRegion);
+    expect(stage).toHaveAttribute("data-active-station", "browser-neutral");
+
+    fireEvent.mouseEnter(textNoteStation);
+    expect(stage).toHaveAttribute("data-active-station", "browser-text-body");
+  });
+
+  it("highlights the matching guide row for hovered window-control targets", () => {
+    render(
+      <CursorSimulationSurface sceneId="windowControls">
+        <CursorScene sceneId="windowControls" />
+      </CursorSimulationSurface>
+    );
+
+    const stage = screen.getByTestId("cursor-simulation-stage");
+    const titlebarStation = screen.getByTestId(
+      "cursor-scene-station-window-titlebar-move"
+    );
+    const horizontalStation = screen.getByTestId(
+      "cursor-scene-station-window-edge-horizontal-resize"
+    );
+    const diagonalStation = screen.getByTestId(
+      "cursor-scene-station-window-corner-diagonal-resize-2"
+    );
+    const titlebarGuide = screen.getByTestId(
+      "cursor-scene-window-guide-row-window-titlebar-move"
+    );
+    const horizontalGuide = screen.getByTestId(
+      "cursor-scene-window-guide-row-window-edge-horizontal-resize"
+    );
+    const diagonalGuide = screen.getByTestId(
+      "cursor-scene-window-guide-row-window-corner-diagonal-resize-2"
+    );
+
+    expect(stage).toHaveAttribute("data-active-station", "window-neutral");
+    expect(titlebarGuide).toHaveAttribute("data-guide-active", "false");
+
+    fireEvent.mouseEnter(titlebarStation);
+    expect(stage).toHaveAttribute("data-active-station", "window-titlebar-move");
+    expect(titlebarGuide).toHaveAttribute("data-guide-active", "true");
+    expect(horizontalGuide).toHaveAttribute("data-guide-active", "false");
+
+    fireEvent.mouseEnter(horizontalStation);
+    expect(stage).toHaveAttribute(
+      "data-active-station",
+      "window-edge-horizontal-resize"
+    );
+    expect(horizontalGuide).toHaveAttribute("data-guide-active", "true");
+    expect(titlebarGuide).toHaveAttribute("data-guide-active", "false");
+
+    fireEvent.mouseEnter(diagonalStation);
+    expect(stage).toHaveAttribute(
+      "data-active-station",
+      "window-corner-diagonal-resize-2"
+    );
+    expect(diagonalGuide).toHaveAttribute("data-guide-active", "true");
+    expect(horizontalGuide).toHaveAttribute("data-guide-active", "false");
   });
 
   it("schedules animated preview updates with requestAnimationFrame", async () => {

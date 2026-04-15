@@ -18,6 +18,19 @@ export type WindowsRoleSlotId = (typeof WINDOWS_ROLE_SLOT_IDS)[number];
 export type SlotId = WindowsRoleSlotId;
 export type SlotKind = "static" | "animated";
 export const DEFAULT_PRIMARY_ROLE_SLOT_ID = WINDOWS_ROLE_SLOT_IDS[0];
+export const WINDOWS_ROLE_DEFAULT_NAMES: Record<WindowsRoleSlotId, string> = {
+  normalSelect: "arrow",
+  textSelect: "ibeam",
+  linkSelect: "link",
+  busy: "busy",
+  workingInBackground: "working",
+  unavailable: "unavail",
+  move: "move",
+  horizontalResize: "ew",
+  verticalResize: "ns",
+  diagonalResize1: "nwse",
+  diagonalResize2: "nesw",
+};
 
 export interface CursorThemeSlot {
   id: SlotId;
@@ -48,6 +61,10 @@ export interface CursorThemeProject {
   slots: CursorThemeSlots;
 }
 
+export function getDefaultCursorNameForSlot(slotId: WindowsRoleSlotId) {
+  return WINDOWS_ROLE_DEFAULT_NAMES[slotId];
+}
+
 function createCursorThemeSlot(id: SlotId): CursorThemeSlot {
   return {
     id,
@@ -58,7 +75,7 @@ function createCursorThemeSlot(id: SlotId): CursorThemeSlot {
       previewUrl: null,
     },
     editing: {
-      cursorName: id,
+      cursorName: getDefaultCursorNameForSlot(id),
       cursorSize: 32,
       fitMode: "contain",
       hotspotMode: "auto",

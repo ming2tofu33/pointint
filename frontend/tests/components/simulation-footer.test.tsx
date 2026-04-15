@@ -20,8 +20,8 @@ describe("SimulationFooter", () => {
     );
 
     expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
-      flexBasis: "42%",
-      minHeight: "20rem",
+      flexBasis: "46%",
+      minHeight: "22rem",
     });
     expect(screen.getByTestId("studio-simulation-body")).toHaveStyle({
       overflowY: "auto",

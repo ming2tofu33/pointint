@@ -109,8 +109,8 @@ describe("useStudio hotspot recommendation", () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
-    act(() => {
-      result.current.selectFile(file);
+    await act(async () => {
+      await result.current.selectFile(file);
     });
 
     await act(async () => {
@@ -136,8 +136,8 @@ describe("useStudio hotspot recommendation", () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
-    act(() => {
-      result.current.selectFile(file);
+    await act(async () => {
+      await result.current.selectFile(file);
     });
 
     await act(async () => {
@@ -177,8 +177,8 @@ describe("useStudio hotspot recommendation", () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
-    act(() => {
-      result.current.selectFile(file);
+    await act(async () => {
+      await result.current.selectFile(file);
     });
 
     await act(async () => {

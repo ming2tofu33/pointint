@@ -1,17 +1,43 @@
-import { type WindowsRoleSlotId } from "@/lib/cursorThemeProject";
+import {
+  getDefaultCursorNameForSlot,
+  type WindowsRoleSlotId,
+} from "@/lib/cursorThemeProject";
 
 export interface WindowsRoleExportEntry {
   name: string;
   blob: Blob;
 }
 
+export interface WindowsRoleInstallerEntry {
+  slotId: WindowsRoleSlotId;
+  extension: Exclude<WindowsRoleExportExtension, "zip">;
+}
+
 export type WindowsRoleExportExtension = "cur" | "ani" | "zip";
+
+const WINDOWS_SCHEME_ORDER: Array<WindowsRoleSlotId | null> = [
+  "normalSelect",
+  null,
+  "workingInBackground",
+  "busy",
+  null,
+  "textSelect",
+  null,
+  "unavailable",
+  "verticalResize",
+  "horizontalResize",
+  "diagonalResize1",
+  "diagonalResize2",
+  "move",
+  null,
+  "linkSelect",
+];
 
 export function buildWindowsRoleDownloadFilename(
   slotId: WindowsRoleSlotId,
   extension: WindowsRoleExportExtension = "zip"
 ) {
-  const roleName = WINDOWS_ROLE_FILE_NAMES[slotId];
+  const roleName = getDefaultCursorNameForSlot(slotId);
   return `pointint_${roleName}.${extension}`;
 }
 
@@ -20,6 +46,78 @@ export function buildWindowsRolePackagePath(
   extension: Exclude<WindowsRoleExportExtension, "zip">
 ) {
   return `cursors/${buildWindowsRoleDownloadFilename(slotId, extension)}`;
+}
+
+export function buildWindowsRoleInstallInf(
+  entries: WindowsRoleInstallerEntry[]
+) {
+  const configuredPaths = new Map<WindowsRoleSlotId, string>();
+
+  entries.forEach((entry) => {
+    configuredPaths.set(
+      entry.slotId,
+      `%10%\\Cursors\\Pointint\\${buildWindowsRoleDownloadFilename(
+        entry.slotId,
+        entry.extension
+      )}`
+    );
+  });
+
+  const schemeValue = WINDOWS_SCHEME_ORDER.map((slotId) =>
+    slotId ? configuredPaths.get(slotId) ?? "" : ""
+  ).join(",");
+
+  const copyFiles = entries
+    .map((entry) => buildWindowsRoleDownloadFilename(entry.slotId, entry.extension))
+    .join("\n");
+
+  const inf = `; Pointint Windows role cursor set
+; Right-click this file and select "Install".
+; Then go to Settings > Mouse > Additional mouse settings > Pointers
+; and select "Pointint" from the Scheme dropdown.
+
+[Version]
+signature="$CHICAGO$"
+
+[DefaultInstall]
+CopyFiles = Scheme.Cursors
+AddReg    = Scheme.Reg
+
+[DestinationDirs]
+Scheme.Cursors = 10,"Cursors\\Pointint"
+
+[Scheme.Cursors]
+${copyFiles}
+
+[Scheme.Reg]
+HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"${schemeValue}"
+
+[Strings]
+`;
+
+  return inf.replace(/\n/g, "\r\n");
+}
+
+export function buildWindowsRoleRestoreInf() {
+  const inf = `; Pointint Cursor Restore Default
+; Right-click this file and select "Install".
+; This removes the Pointint cursor scheme.
+; Then go to Settings > Mouse > Additional mouse settings > Pointers
+; and select "None" or "Windows Default" from the Scheme dropdown.
+
+[Version]
+signature="$CHICAGO$"
+
+[DefaultInstall]
+DelReg = Restore.Reg
+
+[Restore.Reg]
+HKCU,"Control Panel\\Cursors\\Schemes","Pointint"
+
+[Strings]
+`;
+
+  return inf.replace(/\n/g, "\r\n");
 }
 
 export async function buildWindowsRoleMasterZip(
@@ -34,20 +132,6 @@ export async function buildWindowsRoleMasterZip(
 
   return buildZipArchive(binaryEntries, "application/zip");
 }
-
-const WINDOWS_ROLE_FILE_NAMES: Record<WindowsRoleSlotId, string> = {
-  normalSelect: "arrow",
-  textSelect: "ibeam",
-  linkSelect: "link",
-  busy: "busy",
-  workingInBackground: "working",
-  unavailable: "unavail",
-  move: "move",
-  horizontalResize: "ew",
-  verticalResize: "ns",
-  diagonalResize1: "nwse",
-  diagonalResize2: "nesw",
-};
 
 async function blobToUint8Array(blob: Blob): Promise<Uint8Array<ArrayBuffer>> {
   if (typeof blob.arrayBuffer === "function") {

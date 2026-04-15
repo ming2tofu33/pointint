@@ -17,8 +17,10 @@ interface CursorCanvasProps {
   hotspotY: number;
   onOffsetChange: (x: number, y: number) => void;
   onHotspotChange: (x: number, y: number) => void;
+  onGestureEnd?: () => void;
   hotspotPickActive?: boolean;
   onHotspotPickComplete?: () => void;
+  viewScale?: number;
 }
 
 const CANVAS_SIZE = 256;
@@ -35,8 +37,10 @@ export default function CursorCanvas({
   hotspotY,
   onOffsetChange,
   onHotspotChange,
+  onGestureEnd,
   hotspotPickActive = false,
   onHotspotPickComplete,
+  viewScale = 1,
 }: CursorCanvasProps) {
   const t = useTranslations("studio");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,11 +61,11 @@ export default function CursorCanvas({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return { x: 0, y: 0 };
       return {
-        x: Math.round(e.clientX - rect.left),
-        y: Math.round(e.clientY - rect.top),
+        x: Math.round((e.clientX - rect.left) / viewScale),
+        y: Math.round((e.clientY - rect.top) / viewScale),
       };
     },
-    []
+    [viewScale]
   );
 
   function handleMouseDown(e: React.MouseEvent) {
@@ -87,8 +91,8 @@ export default function CursorCanvas({
   function handleMouseMove(e: React.MouseEvent) {
     if (!dragging) return;
 
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
+    const dx = Math.round((e.clientX - dragStart.current.x) / viewScale);
+    const dy = Math.round((e.clientY - dragStart.current.y) / viewScale);
     onOffsetChange(
       dragStart.current.startOffsetX + dx,
       dragStart.current.startOffsetY + dy
@@ -96,121 +100,136 @@ export default function CursorCanvas({
   }
 
   function handleMouseUp() {
+    if (dragging) {
+      onGestureEnd?.();
+    }
     setDragging(false);
   }
 
   return (
     <div
       ref={containerRef}
+      data-testid="cursor-canvas-workspace"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       style={{
         position: "relative",
-        width: `${CANVAS_SIZE}px`,
-        height: `${CANVAS_SIZE}px`,
-        border: "1px solid var(--color-border)",
-        backgroundColor: "var(--color-bg-tertiary)",
-        backgroundImage:
-          "linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%), linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%)",
-        backgroundSize: "16px 16px",
-        backgroundPosition: "0 0, 8px 8px",
+        width: `${CANVAS_SIZE * viewScale}px`,
+        height: `${CANVAS_SIZE * viewScale}px`,
         overflow: "hidden",
         cursor:
           hotspotPickActive ? "crosshair" : dragging ? "grabbing" : "grab",
         userSelect: "none",
       }}
     >
-      {/* Image */}
-      <img
-        src={imageUrl}
-        alt={t("cursorPreview")}
-        draggable={false}
-        style={{
-          position: "absolute",
-          left: `${frameRect.drawX}px`,
-          top: `${frameRect.drawY}px`,
-          width: `${frameRect.drawWidth}px`,
-          height: `${frameRect.drawHeight}px`,
-          imageRendering: scale > 1.5 ? "pixelated" : "auto",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Hotspot marker */}
       <div
         style={{
           position: "absolute",
-          left: `${hotspotX}px`,
-          top: `${hotspotY}px`,
-          transform: "translate(-50%, -50%)",
-          pointerEvents: "none",
-          zIndex: 10,
+          inset: 0,
+          width: `${CANVAS_SIZE}px`,
+          height: `${CANVAS_SIZE}px`,
+          transform: viewScale === 1 ? undefined : `scale(${viewScale})`,
+          transformOrigin: "top left",
+          border: "1px solid var(--color-border)",
+          backgroundColor: "var(--color-bg-tertiary)",
+          backgroundImage:
+            "linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%), linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%, transparent 75%, var(--color-bg-secondary) 75%)",
+          backgroundSize: "16px 16px",
+          backgroundPosition: "0 0, 8px 8px",
         }}
       >
-        {/* Crosshair lines */}
-        <div
+        {/* Image */}
+        <img
+          src={imageUrl}
+          alt={t("cursorPreview")}
+          draggable={false}
           style={{
             position: "absolute",
-            left: "-8px",
-            top: "-0.5px",
-            width: "16px",
-            height: "1px",
-            backgroundColor: "var(--color-accent)",
+            left: `${frameRect.drawX}px`,
+            top: `${frameRect.drawY}px`,
+            width: `${frameRect.drawWidth}px`,
+            height: `${frameRect.drawHeight}px`,
+            imageRendering: scale > 1.5 ? "pixelated" : "auto",
+            pointerEvents: "none",
           }}
         />
+
+        {/* Hotspot marker */}
         <div
           style={{
             position: "absolute",
-            top: "-8px",
-            left: "-0.5px",
+            left: `${hotspotX}px`,
+            top: `${hotspotY}px`,
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          {/* Crosshair lines */}
+          <div
+            style={{
+              position: "absolute",
+              left: "-8px",
+              top: "-0.5px",
+              width: "16px",
+              height: "1px",
+              backgroundColor: "var(--color-accent)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: "-8px",
+              left: "-0.5px",
+              width: "1px",
+              height: "16px",
+              backgroundColor: "var(--color-accent)",
+            }}
+          />
+          {/* Center dot */}
+          <div
+            style={{
+              position: "absolute",
+              left: "-3px",
+              top: "-3px",
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              backgroundColor: "var(--color-accent)",
+              border: "1px solid #fff",
+              boxShadow: "0 0 6px var(--color-accent-glow)",
+            }}
+          />
+        </div>
+
+        {/* Grid center guides */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: 0,
+            bottom: 0,
             width: "1px",
-            height: "16px",
-            backgroundColor: "var(--color-accent)",
+            backgroundColor: "var(--color-border)",
+            opacity: 0.3,
+            pointerEvents: "none",
           }}
         />
-        {/* Center dot */}
         <div
           style={{
             position: "absolute",
-            left: "-3px",
-            top: "-3px",
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            backgroundColor: "var(--color-accent)",
-            border: "1px solid #fff",
-            boxShadow: "0 0 6px var(--color-accent-glow)",
+            top: "50%",
+            left: 0,
+            right: 0,
+            height: "1px",
+            backgroundColor: "var(--color-border)",
+            opacity: 0.3,
+            pointerEvents: "none",
           }}
         />
       </div>
-
-      {/* Grid center guides */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: 0,
-          bottom: 0,
-          width: "1px",
-          backgroundColor: "var(--color-border)",
-          opacity: 0.3,
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: 0,
-          right: 0,
-          height: "1px",
-          backgroundColor: "var(--color-border)",
-          opacity: 0.3,
-          pointerEvents: "none",
-        }}
-      />
     </div>
   );
 }

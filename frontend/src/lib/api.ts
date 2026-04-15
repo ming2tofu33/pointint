@@ -37,14 +37,29 @@ export async function checkCursorHealth(
   formData.append("hotspot_x", String(hotspotX));
   formData.append("hotspot_y", String(hotspotY));
 
-  const res = await fetch(`${BACKEND_URL}/api/cursor-health`, {
-    method: "POST",
-    body: formData,
-  });
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/cursor-health`, {
+      method: "POST",
+      body: formData,
+    });
 
-  if (!res.ok) return { visibility: "pass", hotspot: "pass", readability: "pass", messages: [] };
+    if (!res.ok) {
+      return getSafeHealthFallback();
+    }
 
-  return res.json();
+    return res.json();
+  } catch {
+    return getSafeHealthFallback();
+  }
+}
+
+function getSafeHealthFallback(): HealthResult {
+  return {
+    visibility: "pass",
+    hotspot: "pass",
+    readability: "pass",
+    messages: [],
+  };
 }
 
 export async function generateCursor(

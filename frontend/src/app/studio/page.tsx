@@ -7,35 +7,42 @@ import { useTranslations } from "next-intl";
 import CursorCanvas from "@/components/CursorCanvas";
 import AniEditorShell from "@/components/AniEditorShell";
 import AniSimulation from "@/components/AniSimulation";
+import CanvasViewZoomControl, {
+  type CanvasViewZoom,
+} from "@/components/CanvasViewZoomControl";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
-import SimulationBackgroundModeSwitch from "@/components/SimulationBackgroundModeSwitch";
+import SimulationThemeModeSwitch from "@/components/SimulationThemeModeSwitch";
+import SimulationSceneContextHint from "@/components/SimulationSceneContextHint";
 import SimulationSceneTabs from "@/components/SimulationSceneTabs";
 import SlotRail from "@/components/SlotRail";
-import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import Simulation from "@/components/Simulation";
 import SimulationFooter from "@/components/SimulationFooter";
 import SlotReplacementSurface from "@/components/SlotReplacementSurface";
+import StudioSelectionSummary from "@/components/StudioSelectionSummary";
 import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
   StudioInspectorEmptyNotice,
+  StudioInspectorGroup,
   StudioInspectorNumberField,
   StudioInspectorRow,
-  StudioInspectorSecondaryButton,
   StudioInspectorSection,
+  StudioInspectorSecondaryButton,
   StudioInspectorSegmentedControl,
+  StudioInspectorTextAction,
 } from "@/components/StudioInspector";
+import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
 import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
-import UploadZone from "@/components/UploadZone";
 import {
   STUDIO_INTERACTION_TRANSITION,
+  default as StudioSurfaceCard,
   StudioShellInteractionStyles,
 } from "@/components/StudioSurfaceCard";
-import type { BackgroundMode } from "@/components/CursorSimulationSurface";
+import type { SimulationThemeMode } from "@/components/CursorSimulationSurface";
 import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
 import { clearLandingFile, getLandingFile } from "@/lib/landingStore";
@@ -78,6 +85,7 @@ export default function StudioPage() {
     setAniCursorSize,
     setCursorName,
     recommendHotspot,
+    endContinuousHistoryAction,
     undo,
     redo,
     canUndo,
@@ -91,12 +99,14 @@ export default function StudioPage() {
   } = useStudio();
   const [hotspotPickActive, setHotspotPickActive] = useState(false);
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
-  const [simulationBackgroundMode, setSimulationBackgroundMode] =
-    useState<BackgroundMode>("dark");
+  const [simulationThemeMode, setSimulationThemeMode] =
+    useState<SimulationThemeMode>("dark");
+  const [canvasViewZoom, setCanvasViewZoom] = useState<CanvasViewZoom>(1);
   const [simulationSceneId, setSimulationSceneId] =
     useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
+  const tu = useTranslations("upload");
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -159,12 +169,13 @@ export default function StudioPage() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [redo, undo]);
 
-  const displayUrl =
-    state === "editing" && cursor
+  const displayUrl = cursor
+    ? state === "editing"
       ? showOriginal
         ? cursor.originalUrl
         : cursor.processedUrl
-      : "";
+      : cursor.originalUrl
+    : "";
   const selectedSlot = project.slots[selectedSlotId];
   const selectedSlotBound = Boolean(
     selectedSlot.asset.originalUrl ||
@@ -180,13 +191,39 @@ export default function StudioPage() {
         ? t("recommended")
         : t("manual")
       : null;
+  const stageHotspotSummary =
+    state === "editing" && cursor
+      ? cursor.hotspotMode === "auto"
+        ? tp("recommended")
+        : tp("manual")
+      : null;
+  const stageKindSummary = selectedSlot.kind
+    ? selectedSlot.kind === "static"
+      ? t("slotStatic")
+      : t("slotAnimated")
+    : t("slotKindUnset");
+  const canCompareOriginal = Boolean(
+    cursor &&
+      cursor.originalUrl &&
+      cursor.processedUrl &&
+      cursor.originalUrl !== cursor.processedUrl
+  );
   const stageGuidance = cursor
-    ? [
-        hotspotPickActive ? t("clickToSetHotspot") : t("dragToMove"),
-        t("shortcutHotspot"),
-      ]
-    : [t("emptySlotDescription")];
+    ? hotspotPickActive
+      ? t("clickToSetHotspot")
+      : `${t("dragToMove")} · ${t("shortcutHotspot")}`
+    : t("emptySlotDescription");
   const stageActions = [
+    {
+      id: "studio-pick-hotspot",
+      label: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+      onClick: () => setHotspotPickActive((current) => !current),
+      disabled: !cursor,
+      title: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+      ariaLabel: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
+      group: "tool",
+      tone: hotspotPickActive ? ("accent" as const) : ("default" as const),
+    },
     {
       id: "studio-undo",
       label: t("undo"),
@@ -194,6 +231,9 @@ export default function StudioPage() {
       disabled: !canUndo,
       title: t("undoShortcut"),
       ariaLabel: t("undoShortcut"),
+      group: "history",
+      icon: <UndoArrowIcon />,
+      shortcutHint: "Ctrl+Z",
     },
     {
       id: "studio-redo",
@@ -202,41 +242,55 @@ export default function StudioPage() {
       disabled: !canRedo,
       title: t("redoShortcut"),
       ariaLabel: t("redoShortcut"),
+      group: "history",
+      icon: <RedoArrowIcon />,
+      shortcutHint: "Ctrl+Y",
     },
-    {
-      id: "studio-pick-hotspot",
-      label: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
-      onClick: () => setHotspotPickActive((current) => !current),
-      disabled: !cursor,
-      title: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
-      ariaLabel: hotspotPickActive ? t("clickToSetHotspot") : tp("hotspot"),
-    },
-    {
-      id: "studio-toggle-original",
-      label: showOriginal ? t("showProcessed") : t("showOriginal"),
-      onClick: toggleOriginal,
-      disabled: !cursor,
-      title: showOriginal ? t("showProcessed") : t("showOriginal"),
-      ariaLabel: showOriginal ? t("showProcessed") : t("showOriginal"),
-    },
-    {
-      id: "studio-retry-bg",
-      label: t("retryBg"),
-      onClick: retryBgRemoval,
-      disabled: !cursor,
-      title: t("retryBg"),
-      ariaLabel: t("retryBg"),
-    },
+    ...(canCompareOriginal
+      ? [
+          {
+            id: "studio-toggle-original",
+            label: showOriginal ? t("showProcessed") : t("showOriginal"),
+            onClick: toggleOriginal,
+            disabled: !cursor,
+            title: showOriginal ? t("showProcessed") : t("showOriginal"),
+            ariaLabel: showOriginal ? t("showProcessed") : t("showOriginal"),
+            group: "view",
+            tone: "subtle" as const,
+          },
+        ]
+      : []),
   ];
   const slotSimulationSources = useMemo(
     () => buildProjectSlotSimulationSources(project),
     [project]
   );
   const hasSimulationNormal = hasNormalSlotSimulationSource(slotSimulationSources);
+  const showStaticStudioShell =
+    state === "editing" ||
+    ((state === "uploaded" || state === "processing") && Boolean(cursor));
   const showSlotSourceEntry =
     state !== "uploaded" && state !== "processing" && !selectedSlotBound;
   const showCompactInspectorGuidance =
     !selectedSlotBound || state === "uploaded" || state === "processing";
+  const compactGuidanceContent =
+    state === "uploaded"
+      ? {
+          title: tu("removeBg"),
+          summary: tu("removeBgSub"),
+          lines: [tu("skipBgSub")],
+        }
+      : state === "processing"
+        ? {
+            title: tu("removingBg"),
+            summary: tu("removeBgSub"),
+            lines: [],
+          }
+        : {
+            title: t("slotEmptyTitle"),
+            summary: t("emptySlotDescription"),
+            lines: [t("slotStaticUploadSub"), t("slotAniUploadSub")],
+          };
 
   return (
     <MobileGuard>
@@ -275,12 +329,17 @@ export default function StudioPage() {
             onAniCursorSizeChange={setAniCursorSize}
             onAniNameChange={setCursorName}
             onRecommendHotspot={recommendHotspot}
+            onEndContinuousHistoryAction={endContinuousHistoryAction}
             onUndo={undo}
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
+            simulationThemeMode={simulationThemeMode}
+            onSimulationThemeModeChange={setSimulationThemeMode}
             onResetHotspot={() => setHotspot(0, 0)}
             onReset={reset}
+            canvasViewZoom={canvasViewZoom}
+            onCanvasViewZoomChange={setCanvasViewZoom}
           />
         ) : (
           <>
@@ -290,38 +349,15 @@ export default function StudioPage() {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            alignItems:
-              state === "uploaded" ||
-              state === "processing"
-                ? "center"
-                : "stretch",
-            justifyContent:
-              state === "uploaded" ||
-              state === "processing"
-                ? "center"
-                : "flex-start",
+            alignItems: "stretch",
+            justifyContent: "flex-start",
             backgroundColor: "var(--color-bg-primary)",
             position: "relative",
             minWidth: 0,
             minHeight: 0,
           }}
         >
-          {state === "uploaded" && cursor && (
-            <UploadZone
-              onFile={selectFile}
-              processing={false}
-              showChoice
-              previewUrl={cursor.originalUrl}
-              onRemoveBg={processBgRemoval}
-              onSkipBg={skipBgRemoval}
-            />
-          )}
-
-          {state === "processing" && (
-            <UploadZone onFile={selectFile} processing={true} />
-          )}
-
-          {state === "editing" && (
+          {showStaticStudioShell && (
             <div
               style={{
                 flex: 1,
@@ -357,16 +393,32 @@ export default function StudioPage() {
                       display: "flex",
                       flexDirection: "column",
                       overflow: "hidden",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "2rem 2.25rem",
+                      padding: "1.25rem 1.25rem 0.875rem",
+                      gap: "1rem",
                     }}
                   >
-                    <SlotEmptyState
-                      slotId={selectedSlotId}
-                      onStaticFile={selectSelectedSlotStaticFile}
-                      onAnimatedFile={selectSelectedSlotAnimatedFile}
+                    <StudioStageHeader
+                      slotLabel={stageSlotLabel}
+                      style={{ padding: 0 }}
                     />
+                    <div
+                      style={{
+                        flex: 1,
+                        minHeight: 0,
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <StudioSlotEmptyState
+                        slotId={selectedSlotId}
+                        onStaticFile={selectSelectedSlotStaticFile}
+                        onAnimatedFile={selectSelectedSlotAnimatedFile}
+                      />
+                    </div>
                   </div>
                 ) : selectedSlotBound && cursor ? (
                   <SlotReplacementSurface
@@ -383,13 +435,19 @@ export default function StudioPage() {
                       gap: "1rem",
                     }}
                   >
-                    <StudioStageHeader
-                      slotLabel={stageSlotLabel}
-                      typeLabel={stageTypeLabel}
-                      cursorName={cursor.cursorName}
-                      statusBadge={stageHotspotBadge}
-                      style={{ padding: 0 }}
-                    />
+                  <StudioStageHeader
+                    slotLabel={stageSlotLabel}
+                    typeLabel={stageTypeLabel}
+                    cursorName={cursor.cursorName}
+                    statusBadge={stageHotspotBadge}
+                    actions={
+                      <CanvasViewZoomControl
+                        value={canvasViewZoom}
+                        onChange={setCanvasViewZoom}
+                      />
+                    }
+                    style={{ padding: 0 }}
+                  />
 
                     <div
                       style={{
@@ -410,6 +468,7 @@ export default function StudioPage() {
                           gap: "1rem",
                           flex: "1 1 58%",
                           minHeight: 0,
+                          position: "relative",
                         }}
                       >
                         <CursorCanvas
@@ -424,9 +483,32 @@ export default function StudioPage() {
                           hotspotY={cursor.hotspotY}
                           onOffsetChange={setOffset}
                           onHotspotChange={setHotspot}
+                          onGestureEnd={endContinuousHistoryAction}
                           hotspotPickActive={hotspotPickActive}
                           onHotspotPickComplete={() => setHotspotPickActive(false)}
+                          viewScale={canvasViewZoom}
                         />
+
+                        {state === "uploaded" ? (
+                          <BackgroundRemovalDecisionOverlay
+                            title={tu("removeBg")}
+                            summary={tu("removeBgSub")}
+                            hint={tu("skipBgSub")}
+                            removeLabel={tu("removeBg")}
+                            removeSub={tu("removeBgSub")}
+                            keepLabel={tu("useAsIs")}
+                            keepSub={tu("skipBgSub")}
+                            onRemoveBg={processBgRemoval}
+                            onSkipBg={skipBgRemoval}
+                          />
+                        ) : null}
+
+                        {state === "processing" ? (
+                          <BackgroundRemovalProcessingOverlay
+                            title={tu("removingBg")}
+                            summary={tu("removeBgSub")}
+                          />
+                        ) : null}
                       </div>
                     </div>
 
@@ -438,6 +520,8 @@ export default function StudioPage() {
                         gap: "0.75rem",
                         borderTop: "1px solid var(--color-border)",
                         paddingTop: "0.875rem",
+                        visibility: state === "editing" ? "visible" : "hidden",
+                        pointerEvents: state === "editing" ? "auto" : "none",
                       }}
                     >
                       <div
@@ -445,14 +529,12 @@ export default function StudioPage() {
                           fontSize: "0.6875rem",
                           color: "var(--color-text-muted)",
                           display: "flex",
-                          gap: "1rem",
+                          gap: "0.5rem",
                           alignItems: "center",
                           flexWrap: "wrap",
                         }}
                       >
-                        {stageGuidance.map((item) => (
-                          <span key={item}>{item}</span>
-                        ))}
+                        <span>{stageGuidance}</span>
                       </div>
 
                       <StudioStageActionBar actions={stageActions} />
@@ -478,9 +560,10 @@ export default function StudioPage() {
                           value={simulationSceneId}
                           onChange={setSimulationSceneId}
                         />
-                        <SimulationBackgroundModeSwitch
-                          value={simulationBackgroundMode}
-                          onChange={setSimulationBackgroundMode}
+                        <SimulationSceneContextHint sceneId={simulationSceneId} />
+                        <SimulationThemeModeSwitch
+                          value={simulationThemeMode}
+                          onChange={setSimulationThemeMode}
                         />
                       </div>
                     }
@@ -496,7 +579,7 @@ export default function StudioPage() {
                       }
                       slotSources={slotSimulationSources}
                       selectedSlotId={selectedSlotId}
-                      backgroundMode={simulationBackgroundMode}
+                      themeMode={simulationThemeMode}
                       sceneId={simulationSceneId}
                     />
                   </SimulationFooter>
@@ -517,34 +600,37 @@ export default function StudioPage() {
 
         <StudioInspector
           style={{
-            width: showCompactInspectorGuidance ? "13rem" : "16rem",
+            width: "17rem",
             borderLeft: "1px solid var(--color-border)",
             backgroundColor: "var(--color-bg-secondary)",
             padding: "1.25rem",
             flexShrink: 0,
             overflowY: "auto",
           }}
+          quickActions={
+            state === "editing" && cursor && selectedSlotBound && canCompareOriginal ? (
+              <StudioInspectorSecondaryButton onClick={retryBgRemoval}>
+                {t("retryBg")}
+              </StudioInspectorSecondaryButton>
+            ) : null
+          }
           summary={
             state === "editing" && cursor && selectedSlotBound ? (
-              <div style={{ display: "grid", gap: "0.375rem" }}>
-                <StudioInspectorRow label={t("slotRailTitle")} value={stageSlotLabel} />
-                <StudioInspectorRow label={tp("cursor")} value={cursor.cursorName} />
-              <StudioInspectorRow
-                label={t("slotFilled")}
-                value={
-                  selectedSlot.kind
-                    ? selectedSlot.kind === "static"
-                      ? t("slotStatic")
-                      : t("slotAnimated")
-                    : t("slotKindUnset")
-                }
+              <StudioSelectionSummary
+                slotLabelTitle={t("slotRailTitle")}
+                slotLabel={stageSlotLabel}
+                cursorLabelTitle={tp("cursor")}
+                cursorName={cursor.cursorName}
+                statusLabelTitle={tp("status")}
+                statusLabel={stageHotspotSummary ?? tp("manual")}
+                typeLabelTitle={t("slotTypeLabel")}
+                typeLabel={stageKindSummary}
               />
-              </div>
             ) : showCompactInspectorGuidance ? (
               <StudioInspectorCompactGuidance
-                title={t("slotEmptyTitle")}
-                summary={t("emptySlotDescription")}
-                lines={[t("slotStaticUploadSub"), t("slotAniUploadSub")]}
+                title={compactGuidanceContent.title}
+                summary={compactGuidanceContent.summary}
+                lines={compactGuidanceContent.lines}
               />
             ) : (
               <StudioInspectorEmptyNotice
@@ -600,176 +686,183 @@ export default function StudioPage() {
             ) : null
           }
         >
-          {state === "editing" && cursor && selectedSlotBound ? (
-            <>
-              <StudioInspectorSection title={tp("output")}>
-                <StudioInspectorRow
-                  label={tp("original")}
-                  value={`${cursor.sourceWidth} x ${cursor.sourceHeight}`}
-                />
-                <StudioInspectorSegmentedControl
-                  value={cursor.cursorSize}
-                  options={[32, 48, 64] as const}
-                  onChange={setCursorSize}
-                  ariaLabel={tp("output")}
-                  getLabel={(size) => `${size}`}
-                />
-              </StudioInspectorSection>
+        {state === "editing" && cursor && selectedSlotBound ? (
+          <>
+              <StudioInspectorGroup data-testid="studio-inspector-group-image">
+                <StudioInspectorSection title={tp("output")}>
+                  <StudioInspectorRow
+                    label={tp("original")}
+                    value={`${cursor.sourceWidth} x ${cursor.sourceHeight}`}
+                  />
+                  <StudioInspectorSegmentedControl
+                    value={cursor.cursorSize}
+                    options={[32, 48, 64] as const}
+                    onChange={setCursorSize}
+                    ariaLabel={tp("output")}
+                    getLabel={(size) => `${size}`}
+                  />
+                </StudioInspectorSection>
 
-              <StudioInspectorSection title={tp("framing")}>
-                <div style={{ display: "grid", gap: "0.5rem" }}>
-                  <StudioInspectorSecondaryButton
-                    onClick={() => setFitMode("contain")}
-                    style={
-                      cursor.fitMode === "contain"
-                        ? {
-                            borderColor: "var(--color-accent)",
-                            backgroundColor: "var(--color-accent-subtle)",
-                            color: "var(--color-accent)",
-                          }
-                        : undefined
+                <StudioInspectorSection title={tp("framing")}>
+                  <StudioInspectorSegmentedControl
+                    value={cursor.fitMode}
+                    options={["contain", "cover"] as const}
+                    onChange={setFitMode}
+                    ariaLabel={tp("framing")}
+                    getLabel={(value) =>
+                      value === "contain" ? tp("fitContain") : tp("fitCover")
                     }
+                  />
+                </StudioInspectorSection>
+
+                <StudioInspectorSection title={tp("name")}>
+                  <NameInput
+                    value={cursor.cursorName}
+                    onChange={setCursorName}
+                    placeholder={tp("namePlaceholder")}
+                  />
+                </StudioInspectorSection>
+              </StudioInspectorGroup>
+
+              <StudioInspectorGroup data-testid="studio-inspector-group-transform">
+                <StudioInspectorSection
+                  title={tp("hotspot")}
+                  action={
+                    <StudioInspectorTextAction onClick={recommendHotspot}>
+                      {cursor.hotspotMode === "auto"
+                        ? tp("recommendHotspotAgain")
+                        : tp("recommendHotspot")}
+                    </StudioInspectorTextAction>
+                  }
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "0.5rem",
+                    }}
                   >
-                    {tp("fitContain")}
-                  </StudioInspectorSecondaryButton>
-                  <StudioInspectorSecondaryButton
-                    onClick={() => setFitMode("cover")}
-                    style={
-                      cursor.fitMode === "cover"
-                        ? {
-                            borderColor: "var(--color-accent)",
-                            backgroundColor: "var(--color-accent-subtle)",
-                            color: "var(--color-accent)",
-                          }
-                        : undefined
+                    <StudioInspectorNumberField
+                      label={tp("hotspotX")}
+                      aria-label={tp("hotspotX")}
+                      value={cursor.hotspotX}
+                      step={1}
+                      onChange={(event) => {
+                        const nextX = Number(event.target.value);
+                        setHotspot(
+                          Number.isFinite(nextX) ? nextX : 0,
+                          cursor.hotspotY
+                        );
+                      }}
+                    />
+                    <StudioInspectorNumberField
+                      label={tp("hotspotY")}
+                      aria-label={tp("hotspotY")}
+                      value={cursor.hotspotY}
+                      step={1}
+                      onChange={(event) => {
+                        const nextY = Number(event.target.value);
+                        setHotspot(
+                          cursor.hotspotX,
+                          Number.isFinite(nextY) ? nextY : 0
+                        );
+                      }}
+                    />
+                  </div>
+                  <StudioInspectorRow
+                    label={tp("position")}
+                    value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
+                  />
+                  <StudioInspectorRow
+                    label={tp("status")}
+                    value={
+                      cursor.hotspotMode === "auto"
+                        ? tp("recommended")
+                        : tp("manual")
                     }
+                  />
+                </StudioInspectorSection>
+
+                <StudioInspectorSection title={tp("scale")}>
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="3"
+                    step="0.05"
+                    value={cursor.scale}
+                    onChange={(e) => setScale(Number(e.target.value))}
+                    onPointerUp={endContinuousHistoryAction}
+                    onPointerCancel={endContinuousHistoryAction}
+                    onBlur={endContinuousHistoryAction}
+                    style={{
+                      width: "100%",
+                      accentColor: "var(--color-accent)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: "0.6875rem",
+                      color: "var(--color-text-muted)",
+                      textAlign: "right",
+                      marginTop: "0.25rem",
+                    }}
                   >
-                    {tp("fitCover")}
-                  </StudioInspectorSecondaryButton>
-                </div>
-              </StudioInspectorSection>
+                    {Math.round(cursor.scale * 100)}%
+                  </div>
+                </StudioInspectorSection>
 
-              <StudioInspectorSection title={tp("name")}>
-                <NameInput
-                  value={cursor.cursorName}
-                  onChange={setCursorName}
-                  placeholder={tp("namePlaceholder")}
-                />
-              </StudioInspectorSection>
-
-              <StudioInspectorSection title={tp("hotspot")}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "0.5rem",
-                  }}
+                <StudioInspectorSection
+                  title={tp("position")}
+                  action={
+                    <StudioInspectorTextAction onClick={() => setOffset(0, 0)}>
+                      {tp("center")}
+                    </StudioInspectorTextAction>
+                  }
                 >
-                  <StudioInspectorNumberField
-                    label={tp("hotspotX")}
-                    aria-label={tp("hotspotX")}
-                    value={cursor.hotspotX}
-                    step={1}
-                    onChange={(event) => {
-                      const nextX = Number(event.target.value);
-                      setHotspot(
-                        Number.isFinite(nextX) ? nextX : 0,
-                        cursor.hotspotY
-                      );
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "0.5rem",
                     }}
-                  />
-                  <StudioInspectorNumberField
-                    label={tp("hotspotY")}
-                    aria-label={tp("hotspotY")}
-                    value={cursor.hotspotY}
-                    step={1}
-                    onChange={(event) => {
-                      const nextY = Number(event.target.value);
-                      setHotspot(
-                        cursor.hotspotX,
-                        Number.isFinite(nextY) ? nextY : 0
-                      );
-                    }}
-                  />
-                </div>
-                <StudioInspectorRow
-                  label={tp("position")}
-                  value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
-                />
-                <StudioInspectorRow
-                  label={tp("status")}
-                  value={cursor.hotspotMode === "auto" ? tp("recommended") : tp("manual")}
-                />
-              </StudioInspectorSection>
+                  >
+                    <StudioInspectorNumberField
+                      label={tp("offsetX")}
+                      aria-label={tp("offsetX")}
+                      value={cursor.offsetX}
+                      step={1}
+                      onChange={(event) => {
+                        const nextX = Number(event.target.value);
+                        setOffset(
+                          Number.isFinite(nextX) ? nextX : 0,
+                          cursor.offsetY
+                        );
+                      }}
+                    />
+                    <StudioInspectorNumberField
+                      label={tp("offsetY")}
+                      aria-label={tp("offsetY")}
+                      value={cursor.offsetY}
+                      step={1}
+                      onChange={(event) => {
+                        const nextY = Number(event.target.value);
+                        setOffset(
+                          cursor.offsetX,
+                          Number.isFinite(nextY) ? nextY : 0
+                        );
+                      }}
+                    />
+                  </div>
+                </StudioInspectorSection>
+              </StudioInspectorGroup>
 
-              <StudioInspectorSection title={tp("scale")}>
-                <input
-                  type="range"
-                  min="0.25"
-                  max="3"
-                  step="0.05"
-                  value={cursor.scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    accentColor: "var(--color-accent)",
-                  }}
+              <StudioInspectorGroup data-testid="studio-inspector-group-health">
+                <HealthCheck
+                  imageBlob={cursor.renderedBlob}
+                  hotspotX={cursor.renderedHotspotX}
+                  hotspotY={cursor.renderedHotspotY}
                 />
-                <div
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "var(--color-text-muted)",
-                    textAlign: "right",
-                    marginTop: "0.25rem",
-                  }}
-                >
-                  {Math.round(cursor.scale * 100)}%
-                </div>
-              </StudioInspectorSection>
-
-              <StudioInspectorSection title={tp("position")}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <StudioInspectorNumberField
-                    label={tp("offsetX")}
-                    aria-label={tp("offsetX")}
-                    value={cursor.offsetX}
-                    step={1}
-                    onChange={(event) => {
-                      const nextX = Number(event.target.value);
-                      setOffset(Number.isFinite(nextX) ? nextX : 0, cursor.offsetY);
-                    }}
-                  />
-                  <StudioInspectorNumberField
-                    label={tp("offsetY")}
-                    aria-label={tp("offsetY")}
-                    value={cursor.offsetY}
-                    step={1}
-                    onChange={(event) => {
-                      const nextY = Number(event.target.value);
-                      setOffset(cursor.offsetX, Number.isFinite(nextY) ? nextY : 0);
-                    }}
-                  />
-                </div>
-                <StudioInspectorSecondaryButton
-                  onClick={() => setOffset(0, 0)}
-                  style={{ justifyContent: "space-between" }}
-                >
-                  <span>{tp("center")}</span>
-                  <span aria-hidden="true">-</span>
-                </StudioInspectorSecondaryButton>
-              </StudioInspectorSection>
-
-              <HealthCheck
-                imageBlob={cursor.renderedBlob}
-                hotspotX={cursor.renderedHotspotX}
-                hotspotY={cursor.renderedHotspotY}
-              />
+              </StudioInspectorGroup>
             </>
           ) : null}
         </StudioInspector>
@@ -783,6 +876,266 @@ export default function StudioPage() {
       />
       </div>
     </MobileGuard>
+  );
+}
+
+function UndoArrowIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 14 4 9l5-5" />
+      <path d="M20 20a8 8 0 0 0-8-8H4" />
+    </svg>
+  );
+}
+
+function RedoArrowIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m15 14 5-5-5-5" />
+      <path d="M4 20a8 8 0 0 1 8-8h8" />
+    </svg>
+  );
+}
+
+function BackgroundRemovalDecisionOverlay({
+  title,
+  summary,
+  hint,
+  removeLabel,
+  removeSub,
+  keepLabel,
+  keepSub,
+  onRemoveBg,
+  onSkipBg,
+}: {
+  title: string;
+  summary: string;
+  hint: string;
+  removeLabel: string;
+  removeSub: string;
+  keepLabel: string;
+  keepSub: string;
+  onRemoveBg: () => void;
+  onSkipBg: () => void;
+}) {
+  return (
+    <div
+      data-testid="background-removal-decision-overlay"
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: "1rem 1rem 1.375rem",
+        background: "transparent",
+        pointerEvents: "none",
+      }}
+    >
+      <StudioSurfaceCard
+        style={{
+          width: "min(28rem, 100%)",
+          display: "grid",
+          gap: "0.875rem",
+          pointerEvents: "auto",
+          boxShadow:
+            "0 12px 24px rgba(8, 12, 18, 0.14), 0 2px 8px rgba(8, 12, 18, 0.08)",
+          backgroundColor:
+            "color-mix(in srgb, var(--color-bg-secondary) 96%, white 4%)",
+          borderColor: "color-mix(in srgb, var(--color-border) 84%, white 6%)",
+        }}
+      >
+        <div style={{ display: "grid", gap: "0.25rem" }}>
+          <div
+            style={{
+              fontSize: "0.6875rem",
+              fontWeight: 700,
+              color: "var(--color-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontSize: "0.9375rem",
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+              lineHeight: 1.45,
+            }}
+          >
+            {summary}
+          </div>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--color-text-secondary)",
+              lineHeight: 1.45,
+            }}
+          >
+            {hint}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "0.75rem",
+          }}
+        >
+          <BackgroundRemovalActionButton
+            label={removeLabel}
+            summary={removeSub}
+            accent
+            onClick={onRemoveBg}
+          />
+          <BackgroundRemovalActionButton
+            label={keepLabel}
+            summary={keepSub}
+            onClick={onSkipBg}
+          />
+        </div>
+      </StudioSurfaceCard>
+    </div>
+  );
+}
+
+function BackgroundRemovalProcessingOverlay({
+  title,
+  summary,
+}: {
+  title: string;
+  summary: string;
+}) {
+  return (
+    <div
+      data-testid="background-removal-processing-overlay"
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: "1rem 1rem 1.375rem",
+        background: "transparent",
+        pointerEvents: "none",
+      }}
+    >
+      <StudioSurfaceCard
+        style={{
+          width: "min(22rem, 100%)",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.875rem",
+          pointerEvents: "auto",
+          boxShadow:
+            "0 12px 24px rgba(8, 12, 18, 0.14), 0 2px 8px rgba(8, 12, 18, 0.08)",
+          backgroundColor:
+            "color-mix(in srgb, var(--color-bg-secondary) 96%, white 4%)",
+          borderColor: "color-mix(in srgb, var(--color-border) 84%, white 6%)",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            width: "1.125rem",
+            height: "1.125rem",
+            borderRadius: "999px",
+            border: "2px solid color-mix(in srgb, var(--color-border) 88%, white 8%)",
+            borderTopColor: "var(--color-accent)",
+            animation: "spin 0.8s linear infinite",
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ display: "grid", gap: "0.2rem" }}>
+          <div
+            style={{
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--color-text-secondary)",
+              lineHeight: 1.45,
+            }}
+          >
+            {summary}
+          </div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </StudioSurfaceCard>
+    </div>
+  );
+}
+
+function BackgroundRemovalActionButton({
+  label,
+  summary,
+  accent,
+  onClick,
+}: {
+  label: string;
+  summary: string;
+  accent?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: "grid",
+        gap: "0.2rem",
+        textAlign: "left",
+        padding: "0.75rem 0.875rem",
+        borderRadius: "0.875rem",
+        border: `1px solid ${
+          accent ? "var(--color-accent)" : "var(--color-border)"
+        }`,
+        backgroundColor: accent
+          ? "var(--color-accent-subtle)"
+          : "rgba(255,255,255,0.02)",
+        color: accent ? "var(--color-accent)" : "var(--color-text-primary)",
+        cursor: "pointer",
+        transition: STUDIO_INTERACTION_TRANSITION,
+      }}
+    >
+      <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{label}</span>
+      <span
+        style={{
+          fontSize: "0.6875rem",
+          lineHeight: 1.45,
+          color: "var(--color-text-muted)",
+        }}
+      >
+        {summary}
+      </span>
+    </button>
   );
 }
 
@@ -820,158 +1173,6 @@ function ActualSizePreview({
           imageRendering: "pixelated",
         }}
       />
-    </div>
-  );
-}
-
-function SlotEmptyState({
-  slotId,
-  onStaticFile,
-  onAnimatedFile,
-}: {
-  slotId: string;
-  onStaticFile: (file: File) => void;
-  onAnimatedFile: (file: File) => void;
-}) {
-  const t = useTranslations("studio");
-  const slotLabel = t(`slot${capitalizeSlotId(slotId)}`);
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
-
-  return (
-    <div
-      data-testid="studio-empty-slot-state"
-      style={{
-        width: "min(56rem, 100%)",
-        display: "grid",
-        gap: "1.25rem",
-        color: "var(--color-text-muted)",
-        textAlign: "left",
-        lineHeight: 1.6,
-      }}
-    >
-      <div style={{ display: "grid", gap: "0.375rem" }}>
-        <div
-          style={{
-            fontSize: "0.6875rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          {slotLabel} {t("slotLabelSuffix")}
-        </div>
-        <div
-          style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}
-        >
-          {t("emptySlotDescription")}
-        </div>
-      </div>
-
-      <div
-        data-testid="studio-empty-slot-source-cards"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
-          gap: "1rem",
-          padding: "1.125rem",
-          border: "1px solid var(--color-border)",
-          borderRadius: "1rem",
-          backgroundColor: "rgba(255,255,255,0.02)",
-        }}
-      >
-        <SlotSourceChoiceCard
-          dataTestId="studio-empty-slot-source-static"
-          title={t("slotStaticUpload")}
-          description={t("slotStaticUploadSub")}
-          ariaLabel={t("emptySlotStaticStart")}
-          mode="cur"
-          onFile={onStaticFile}
-        />
-        <SlotSourceChoiceCard
-          dataTestId="studio-empty-slot-source-animated"
-          title={t("slotAniUpload")}
-          description={t("slotAniUploadSub")}
-          ariaLabel={t("emptySlotAnimatedStart")}
-          mode="ani"
-          onFile={onAnimatedFile}
-        />
-      </div>
-
-      <div style={{ display: "grid", gap: "0.75rem" }}>
-        <button
-          type="button"
-          onClick={() => setShowMoreOptions((current) => !current)}
-          style={{
-            alignSelf: "flex-start",
-            background: "none",
-            border: "none",
-            color: "var(--color-text-secondary)",
-            fontSize: "0.75rem",
-            cursor: "pointer",
-            padding: 0,
-            transition: STUDIO_INTERACTION_TRANSITION,
-          }}
-        >
-          {t("moreSourceOptions")}
-        </button>
-
-        {showMoreOptions ? (
-          <div
-            style={{
-              display: "grid",
-              gap: "0.625rem",
-              borderTop: "1px solid var(--color-border)",
-              paddingTop: "0.875rem",
-            }}
-          >
-            <SoonSourceRow
-              title={t("emptySlotMultiplePngs")}
-              badge={t("soon")}
-            />
-            <SoonSourceRow
-              title={t("emptySlotAiGenerate")}
-              badge={t("soon")}
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function SoonSourceRow({
-  title,
-  badge,
-}: {
-  title: string;
-  badge: string;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "0.75rem",
-        border: "1px solid var(--color-border)",
-        borderRadius: "0.75rem",
-        padding: "0.75rem 0.875rem",
-        backgroundColor: "rgba(255,255,255,0.02)",
-      }}
-    >
-      <span style={{ fontSize: "0.8125rem", color: "var(--color-text-primary)" }}>
-        {title}
-      </span>
-      <span
-        style={{
-          fontSize: "0.625rem",
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          color: "var(--color-text-muted)",
-        }}
-      >
-        {badge}
-      </span>
     </div>
   );
 }

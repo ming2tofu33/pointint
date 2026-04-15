@@ -103,10 +103,40 @@ describe("useStudio workflow entry", () => {
     });
 
     expect(result.current.state).toBe("ani-editing");
-    expect(result.current.ani?.cursorName).toBe("orbit");
+    expect(result.current.ani?.cursorName).toBe("arrow");
     expect(result.current.ani?.sourceWidth).toBe(128);
     expect(result.current.ani?.sourceHeight).toBe(96);
     expect(result.current.ani?.cursorSize).toBe(32);
+  });
+
+  it("seeds uploaded names from the selected Windows role instead of the source filename", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["cursor"], "freeform-name.png", {
+      type: "image/png",
+    });
+    const animatedFile = new File(["gif"], "orbit.gif", { type: "image/gif" });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(staticFile);
+      await Promise.resolve();
+    });
+
+    expect(result.current.cursor?.cursorName).toBe("ibeam");
+
+    act(() => {
+      result.current.selectSlot("workingInBackground");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotAnimatedFile(animatedFile);
+      await Promise.resolve();
+    });
+
+    expect(result.current.ani?.cursorName).toBe("working");
   });
 
   it("returns to the generic slot entry when an empty slot is selected", () => {

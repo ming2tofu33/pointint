@@ -1,5 +1,6 @@
 "use client";
 
+import { Children, Fragment, isValidElement } from "react";
 import type {
   ButtonHTMLAttributes,
   HTMLAttributes,
@@ -26,6 +27,8 @@ export default function StudioInspector({
   style,
   ...props
 }: StudioInspectorProps) {
+  const controlSections = flattenInspectorSections(children);
+
   return (
     <aside
       {...props}
@@ -33,14 +36,19 @@ export default function StudioInspector({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "1rem",
+        gap: "0.875rem",
         ...style,
       }}
     >
-      <div style={{ display: "grid", gap: "0.875rem" }}>
+      <div style={{ display: "grid", gap: "0.75rem" }}>
         <StudioSurfaceCard
           data-testid="studio-inspector-summary-card"
-          style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+            padding: "0.9rem 1rem",
+          }}
         >
           {summary}
         </StudioSurfaceCard>
@@ -52,7 +60,8 @@ export default function StudioInspector({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "0.875rem",
+                gap: "0.75rem",
+                padding: "0.9rem 1rem",
               }}
             >
               {previews}
@@ -67,6 +76,7 @@ export default function StudioInspector({
               display: "flex",
               flexDirection: "column",
               gap: "0.625rem",
+              padding: "0.9rem 1rem",
             }}
           >
             {quickActions}
@@ -74,10 +84,93 @@ export default function StudioInspector({
         ) : null}
       </div>
 
-      {children != null ? (
-        <div style={{ display: "grid", gap: "1rem" }}>{children}</div>
+      {controlSections.length > 0 ? (
+        <StudioSurfaceCard
+          data-testid="studio-inspector-controls-card"
+          style={{
+            display: "grid",
+            gap: 0,
+            padding: "0.2rem 1rem",
+          }}
+        >
+          {controlSections.map((child, index) => (
+            <div key={index} style={{ display: "grid", gap: 0 }}>
+              {index > 0 ? (
+                <div
+                  aria-hidden="true"
+                  data-testid={`studio-inspector-divider-${index}`}
+                  style={{
+                    height: "1px",
+                    margin: "0.2rem 0 0.15rem",
+                    background:
+                      "color-mix(in srgb, var(--color-border) 74%, rgba(20, 24, 32, 0.32) 26%)",
+                    opacity: 0.95,
+                  }}
+                />
+              ) : null}
+              <div
+                style={{
+                  padding: "0.8rem 0",
+                }}
+              >
+                {child}
+              </div>
+            </div>
+          ))}
+        </StudioSurfaceCard>
       ) : null}
     </aside>
+  );
+}
+
+function flattenInspectorSections(children: ReactNode): ReactNode[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<{ children?: ReactNode }>(child)) return [child];
+    if (child.type === Fragment) {
+      return flattenInspectorSections(child.props.children);
+    }
+    return [child];
+  });
+}
+
+type StudioInspectorGroupProps = HTMLAttributes<HTMLDivElement> & {
+  children?: ReactNode;
+};
+
+export function StudioInspectorGroup({
+  children,
+  style,
+  ...props
+}: StudioInspectorGroupProps) {
+  const items = flattenInspectorSections(children);
+
+  return (
+    <div
+      {...props}
+      style={{
+        display: "grid",
+        gap: 0,
+        ...style,
+      }}
+    >
+      {items.map((item, index) => (
+        <div key={index} style={{ display: "grid", gap: 0 }}>
+          {index > 0 ? (
+            <div
+              aria-hidden="true"
+              style={{
+                height: "1px",
+                margin: "0.1rem 0 0.35rem",
+                background:
+                  "color-mix(in srgb, var(--color-border) 62%, rgba(20, 24, 32, 0.18) 38%)",
+                opacity: 0.82,
+              }}
+            />
+          ) : null}
+          <div style={{ padding: "0.1rem 0 0.35rem" }}>{item}</div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -145,9 +238,9 @@ export function StudioInspectorRow({ label, value }: StudioInspectorRowProps) {
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "baseline",
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
+        alignItems: "start",
         gap: "0.75rem",
         fontSize: "0.8125rem",
         lineHeight: 1.45,
@@ -181,8 +274,8 @@ export function StudioInspectorSecondaryButton({
         gap: "0.375rem",
         width: "100%",
         borderRadius: "0.75rem",
-        border: "1px solid var(--color-border)",
-        backgroundColor: "rgba(255,255,255,0.02)",
+        border: "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
+        backgroundColor: "rgba(255,255,255,0.03)",
         color: "var(--color-text-primary)",
         fontSize: "0.75rem",
         lineHeight: 1.4,
@@ -233,8 +326,8 @@ export function StudioInspectorNumberField({
         style={{
           width: "100%",
           borderRadius: "0.75rem",
-          border: "1px solid var(--color-border)",
-          backgroundColor: "rgba(255,255,255,0.02)",
+          border: "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
+          backgroundColor: "rgba(255,255,255,0.03)",
           color: "var(--color-text-primary)",
           fontSize: "0.8125rem",
           lineHeight: 1.4,
@@ -272,7 +365,7 @@ export function StudioInspectorSegmentedControl<T extends string | number>({
         border: "1px solid var(--color-border)",
         borderRadius: "0.75rem",
         overflow: "visible",
-        backgroundColor: "rgba(255,255,255,0.02)",
+        backgroundColor: "rgba(255,255,255,0.03)",
       }}
     >
       {options.map((option) => {
@@ -304,7 +397,7 @@ export function StudioInspectorSegmentedControl<T extends string | number>({
                     : undefined,
               fontSize: "0.75rem",
               lineHeight: 1.4,
-              padding: "0.5rem 0.625rem",
+              padding: "0.55rem 0.625rem",
               cursor: "pointer",
               transition: STUDIO_INTERACTION_TRANSITION,
             }}
@@ -314,6 +407,37 @@ export function StudioInspectorSegmentedControl<T extends string | number>({
         );
       })}
     </div>
+  );
+}
+
+type StudioInspectorTextActionProps =
+  ButtonHTMLAttributes<HTMLButtonElement>;
+
+export function StudioInspectorTextAction({
+  style,
+  children,
+  type = "button",
+  ...props
+}: StudioInspectorTextActionProps) {
+  return (
+    <button
+      {...props}
+      type={type}
+      style={{
+        border: "none",
+        background: "none",
+        padding: 0,
+        fontSize: "0.6875rem",
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+        color: "var(--color-text-secondary)",
+        cursor: "pointer",
+        transition: STUDIO_INTERACTION_TRANSITION,
+        ...style,
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

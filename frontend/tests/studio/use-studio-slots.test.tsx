@@ -4,16 +4,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const {
   generateAniMock,
   generateCursorMock,
+  rasterizeSquarePngMock,
+  removeBackgroundMock,
 } = vi.hoisted(() => ({
   generateAniMock: vi.fn(),
   generateCursorMock: vi.fn(),
+  rasterizeSquarePngMock: vi.fn(),
+  removeBackgroundMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   generateAni: generateAniMock,
   generateCursor: generateCursorMock,
-  removeBackground: vi.fn(),
+  removeBackground: removeBackgroundMock,
 }));
+
+vi.mock("@/lib/cursorFrame", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/cursorFrame")>(
+    "@/lib/cursorFrame"
+  );
+
+  return {
+    ...actual,
+    rasterizeSquarePng: rasterizeSquarePngMock,
+  };
+});
 
 import { useStudio } from "@/lib/useStudio";
 import * as studioDownload from "@/lib/studioDownload";
@@ -47,6 +62,22 @@ describe("useStudio slot contract", () => {
       blob: new Blob(["ani"], { type: "application/octet-stream" }),
       filename: "pointint-orbit.ani",
       contentType: "application/octet-stream",
+    });
+    removeBackgroundMock.mockReset();
+    removeBackgroundMock.mockResolvedValue(
+      new Blob(["processed"], { type: "image/png" })
+    );
+    rasterizeSquarePngMock.mockReset();
+    rasterizeSquarePngMock.mockResolvedValue({
+      blob: new Blob(["preview"], { type: "image/png" }),
+      hotspotX: 0,
+      hotspotY: 0,
+      frameRect: {
+        drawWidth: 256,
+        drawHeight: 256,
+        drawX: 0,
+        drawY: 0,
+      },
     });
     let objectUrlCount = 0;
     Object.defineProperty(URL, "createObjectURL", {
@@ -117,6 +148,8 @@ describe("useStudio slot contract", () => {
     expect(result.current.selectedSlotId).toBe("normalSelect");
     expect(result.current.editingSlotId).toBe("normalSelect");
     expect(result.current.project.slots.normalSelect.kind).toBeNull();
+    expect(result.current.project.slots.normalSelect.editing.cursorName).toBe("arrow");
+    expect(result.current.project.slots.textSelect.editing.cursorName).toBe("ibeam");
   });
 
   it("packages only configured Windows roles into a flattened full-set zip", async () => {
@@ -171,6 +204,14 @@ describe("useStudio slot contract", () => {
       },
       {
         name: studioDownload.buildWindowsRolePackagePath("linkSelect", "ani"),
+        blob: expect.any(Blob),
+      },
+      {
+        name: "install.inf",
+        blob: expect.any(Blob),
+      },
+      {
+        name: "restore-default.inf",
         blob: expect.any(Blob),
       },
     ]);
@@ -262,5 +303,242 @@ describe("useStudio slot contract", () => {
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
+  });
+
+  it("coalesces drag-move history so one undo reverts the whole move gesture", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    act(() => {
+      result.current.setOffset(12, 8);
+    });
+
+    act(() => {
+      result.current.setOffset(28, 24);
+    });
+
+    expect(result.current.cursor?.offsetX).toBe(28);
+    expect(result.current.cursor?.offsetY).toBe(24);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.cursor?.offsetX).toBe(0);
+    expect(result.current.cursor?.offsetY).toBe(0);
+  });
+
+  it("does not expose undo immediately after entering the upload stage", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    expect(result.current.state).toBe("uploaded");
+    expect(result.current.canUndo).toBe(false);
+    expect(result.current.canRedo).toBe(false);
+  });
+
+  it("coalesces scale history so one undo reverts the whole slider gesture", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    act(() => {
+      result.current.setScale(1.2);
+    });
+
+    act(() => {
+      result.current.setScale(1.6);
+    });
+
+    expect(result.current.cursor?.scale).toBe(1.6);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.cursor?.scale).toBe(1);
+  });
+
+  it("starts a new undo step after a move gesture ends", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    act(() => {
+      result.current.setOffset(12, 8);
+      result.current.setOffset(28, 24);
+      result.current.endContinuousHistoryAction();
+    });
+
+    act(() => {
+      result.current.setOffset(64, 48);
+      result.current.endContinuousHistoryAction();
+    });
+
+    expect(result.current.cursor?.offsetX).toBe(64);
+    expect(result.current.cursor?.offsetY).toBe(48);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.cursor?.offsetX).toBe(28);
+    expect(result.current.cursor?.offsetY).toBe(24);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.cursor?.offsetX).toBe(0);
+    expect(result.current.cursor?.offsetY).toBe(0);
+  });
+
+  it("does not undo past the editing session back into the upload stage", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    act(() => {
+      result.current.setOffset(28, 24);
+      result.current.endContinuousHistoryAction();
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor?.offsetX).toBe(28);
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor?.offsetX).toBe(0);
+    expect(result.current.cursor?.offsetY).toBe(0);
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor?.offsetX).toBe(0);
+    expect(result.current.cursor?.offsetY).toBe(0);
+    expect(result.current.canUndo).toBe(false);
+  });
+
+  it("keeps the actual-size preview available immediately after undo", async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      vi.advanceTimersByTime(250);
+      await Promise.resolve();
+    });
+
+    expect(result.current.previewUrl).toBeTruthy();
+
+    act(() => {
+      result.current.setOffset(28, 24);
+      result.current.endContinuousHistoryAction();
+    });
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.previewUrl).toBeTruthy();
+    vi.useRealTimers();
+  });
+
+  it("ignores duplicate background-removal requests while one is already running", async () => {
+    let resolveRemoval: ((value: Blob) => void) | null = null;
+    removeBackgroundMock.mockImplementation(
+      () =>
+        new Promise<Blob>((resolve) => {
+          resolveRemoval = resolve;
+        })
+    );
+
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    expect(result.current.state).toBe("uploaded");
+
+    act(() => {
+      void result.current.processBgRemoval();
+      void result.current.processBgRemoval();
+    });
+
+    expect(removeBackgroundMock).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe("processing");
+
+    await act(async () => {
+      resolveRemoval?.(new Blob(["processed"], { type: "image/png" }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("editing");
   });
 });

@@ -3,8 +3,8 @@
 import { useTranslations } from "next-intl";
 
 const COLLAPSED_HEIGHT = "3rem";
-const EXPANDED_BASIS = "42%";
-const EXPANDED_MIN_HEIGHT = "20rem";
+const EXPANDED_BASIS = "46%";
+const EXPANDED_MIN_HEIGHT = "22rem";
 
 export default function SimulationFooter({
   collapsed,
@@ -39,6 +39,9 @@ export default function SimulationFooter({
         style={{
           height: COLLAPSED_HEIGHT,
           padding: "0 1rem",
+          position: "relative",
+          zIndex: 3,
+          overflow: "visible",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -63,6 +66,8 @@ export default function SimulationFooter({
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
+            position: "relative",
+            zIndex: 4,
           }}
         >
           {headerControls}

@@ -4,9 +4,10 @@ import type { HTMLAttributes, ReactNode } from "react";
 
 type StudioStageHeaderProps = HTMLAttributes<HTMLDivElement> & {
   slotLabel: string;
-  typeLabel: string;
+  typeLabel?: string;
   cursorName?: string | null;
   statusBadge?: ReactNode;
+  actions?: ReactNode;
 };
 
 export default function StudioStageHeader({
@@ -14,6 +15,7 @@ export default function StudioStageHeader({
   typeLabel,
   cursorName,
   statusBadge,
+  actions,
   style,
   ...props
 }: StudioStageHeaderProps) {
@@ -65,22 +67,27 @@ export default function StudioStageHeader({
           alignItems: "center",
           gap: "0.5rem",
           flexShrink: 0,
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
         }}
       >
-        <span
-          style={{
-            fontSize: "0.6875rem",
-            fontWeight: 600,
-            padding: "0.25rem 0.5rem",
-            borderRadius: "999px",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-muted)",
-            backgroundColor: "rgba(255,255,255,0.03)",
-            lineHeight: 1,
-          }}
-        >
-          {typeLabel}
-        </span>
+        {actions}
+        {typeLabel ? (
+          <span
+            style={{
+              fontSize: "0.6875rem",
+              fontWeight: 600,
+              padding: "0.25rem 0.5rem",
+              borderRadius: "999px",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-muted)",
+              backgroundColor: "rgba(255,255,255,0.03)",
+              lineHeight: 1,
+            }}
+          >
+            {typeLabel}
+          </span>
+        ) : null}
         {statusBadge ? (
           <span
             style={{

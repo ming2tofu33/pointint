@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
@@ -21,6 +21,9 @@ type RoleDefinition = {
   hintKey: string;
   glyphSrc: string;
 };
+
+type ThemeName = "dark" | "light" | "custom";
+type SlotGlyphTheme = "dark" | "light";
 
 const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
@@ -116,6 +119,42 @@ export default function SlotRail({
 }: SlotRailProps) {
   const t = useTranslations("studio");
   const [showAdditionalRoles, setShowAdditionalRoles] = useState(false);
+  const [glyphTheme, setGlyphTheme] = useState<SlotGlyphTheme>(() =>
+    resolveSlotGlyphTheme(
+      typeof document === "undefined"
+        ? "dark"
+        : (document.documentElement.getAttribute("data-theme") as ThemeName | null)
+    )
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const syncGlyphTheme = () => {
+      setGlyphTheme(
+        resolveSlotGlyphTheme(
+          document.documentElement.getAttribute("data-theme") as ThemeName | null
+        )
+      );
+    };
+
+    syncGlyphTheme();
+
+    const themeObserver = new MutationObserver(() => {
+      syncGlyphTheme();
+    });
+
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      themeObserver.disconnect();
+    };
+  }, []);
 
   const hiddenConfiguredCount = HIDDEN_ROLE_DEFINITIONS.filter((definition) =>
     isSlotConfigured(project.slots[definition.id])
@@ -142,20 +181,6 @@ export default function SlotRail({
       }}
     >
       <div
-        style={{
-          padding: "1rem 0.75rem 0.75rem",
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: "var(--color-text-muted)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        {t("slotRailTitle")}
-      </div>
-
-      <div
         data-testid="slot-rail-scroll"
         style={{
           flex: 1,
@@ -163,7 +188,7 @@ export default function SlotRail({
           overflowY: "auto",
           overflowX: "hidden",
           scrollbarGutter: "stable",
-          padding: "0.875rem 0.75rem 1rem",
+          padding: "1rem 0.75rem 1rem",
           display: "grid",
           gap: "0.75rem",
           alignContent: "start",
@@ -190,6 +215,7 @@ export default function SlotRail({
                 kindLabel={getKindLabel(slot.kind, t)}
                 statusLabel={filled ? t("slotFilled") : t("slotEmpty")}
                 selectedLabel={t("slotSelected")}
+                glyphTheme={glyphTheme}
                 onSelect={() => {
                   if (canSelectSlot) onSelectSlot(definition.id);
                 }}
@@ -280,6 +306,7 @@ interface SlotRailCardProps {
   kindLabel: string;
   statusLabel: string;
   selectedLabel: string;
+  glyphTheme: SlotGlyphTheme;
   onSelect: () => void;
 }
 
@@ -293,6 +320,7 @@ function SlotRailCard({
   kindLabel,
   statusLabel,
   selectedLabel,
+  glyphTheme,
   onSelect,
 }: SlotRailCardProps) {
   const glyphSrc = ROLE_DEFINITIONS.find((definition) => definition.id === slotId)?.glyphSrc;
@@ -458,9 +486,13 @@ function SlotRailCard({
                 ? "color-mix(in srgb, var(--color-accent) 78%, white 8%)"
                 : "var(--color-text-muted)",
             }}
-          >
-            <SlotContextGlyph glyphSrc={glyphSrc} slotId={slotId} />
-          </span>
+            >
+              <SlotContextGlyph
+                glyphSrc={glyphSrc}
+                slotId={slotId}
+                glyphTheme={glyphTheme}
+              />
+            </span>
           <span
             style={{
               fontSize: "0.6875rem",
@@ -517,16 +549,18 @@ function getKindLabel(
 function SlotContextGlyph({
   glyphSrc,
   slotId,
+  glyphTheme,
 }: {
   glyphSrc: string | undefined;
   slotId: SlotId;
+  glyphTheme: SlotGlyphTheme;
 }) {
   if (!glyphSrc) return null;
 
   return (
     <img
       data-testid={`slot-glyph-${slotId}-image`}
-      src={glyphSrc}
+      src={getThemedGlyphSrc(glyphSrc, glyphTheme)}
       alt=""
       aria-hidden="true"
       width={16}
@@ -539,4 +573,19 @@ function SlotContextGlyph({
       }}
     />
   );
+}
+
+function resolveSlotGlyphTheme(themeName: ThemeName | null): SlotGlyphTheme {
+  if (themeName === "light" || themeName === "custom") {
+    return "light";
+  }
+
+  return "dark";
+}
+
+function getThemedGlyphSrc(
+  glyphSrc: string,
+  glyphTheme: SlotGlyphTheme
+): string {
+  return glyphSrc.replace("/ui/slot-glyphs/", `/ui/slot-glyphs/${glyphTheme}/`);
 }

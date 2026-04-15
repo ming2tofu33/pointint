@@ -2,14 +2,14 @@
 
 import { useTranslations } from "next-intl";
 
-type BackgroundMode = "dark" | "light";
+import { type SimulationThemeMode } from "@/components/CursorSimulationSurface";
 
-export default function SimulationBackgroundModeSwitch({
+export default function SimulationThemeModeSwitch({
   value,
   onChange,
 }: {
-  value: BackgroundMode;
-  onChange: (next: BackgroundMode) => void;
+  value: SimulationThemeMode;
+  onChange: (next: SimulationThemeMode) => void;
 }) {
   const t = useTranslations("simulation");
   const nextValue = value === "dark" ? "light" : "dark";
@@ -17,10 +17,10 @@ export default function SimulationBackgroundModeSwitch({
   return (
     <button
       type="button"
-      data-testid="simulation-background-mode-switch"
+      data-testid="simulation-theme-mode-switch"
       role="switch"
       aria-checked={value === "dark"}
-      aria-label={t("backgroundModeSwitch")}
+      aria-label={t("themeModeSwitch")}
       onClick={() => onChange(nextValue)}
       style={{
         position: "relative",
@@ -28,7 +28,7 @@ export default function SimulationBackgroundModeSwitch({
         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
         alignItems: "center",
         padding: "0.125rem",
-        minWidth: "6.5rem",
+        minWidth: "8rem",
         height: "1.875rem",
         border: "1px solid var(--simulation-panel-border)",
         borderRadius: "999px",
@@ -39,7 +39,7 @@ export default function SimulationBackgroundModeSwitch({
     >
       <div
         aria-hidden="true"
-        data-testid="simulation-background-mode-thumb"
+        data-testid="simulation-theme-mode-thumb"
         style={{
           position: "absolute",
           top: "0.125rem",
@@ -55,8 +55,8 @@ export default function SimulationBackgroundModeSwitch({
         }}
       />
 
-      <ModeLabel label={t("bgLight")} active={value === "light"} />
-      <ModeLabel label={t("bgDark")} active={value === "dark"} />
+      <ModeLabel label={t("themeLight")} active={value === "light"} />
+      <ModeLabel label={t("themeDark")} active={value === "dark"} />
     </button>
   );
 }

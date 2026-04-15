@@ -22,9 +22,20 @@ function getLocaleFromCookie(): Locale {
 function UtilityIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="5" cy="12" r="1.75" fill="currentColor" />
-      <circle cx="12" cy="12" r="1.75" fill="currentColor" />
-      <circle cx="19" cy="12" r="1.75" fill="currentColor" />
+      <path
+        d="M12 12.25a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.75 19.25a6.25 6.25 0 0 1 12.5 0"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -114,11 +125,12 @@ export default function HeaderUtilityMenu() {
             minWidth: "14rem",
             padding: "0.875rem",
             borderRadius: "1rem",
-            border: "1px solid var(--app-header-border)",
-            background:
-              "linear-gradient(180deg, var(--app-header-highlight), var(--app-header-backdrop))",
+            border: "1px solid var(--color-border)",
+            backgroundColor: "var(--color-bg-card)",
+            backgroundImage:
+              "linear-gradient(180deg, var(--app-header-highlight), transparent)",
             boxShadow:
-              "inset 0 1px 0 var(--app-header-highlight), 0 18px 40px var(--app-header-shadow)",
+              "inset 0 1px 0 var(--app-header-highlight), 0 18px 40px var(--color-shadow)",
             backdropFilter: "blur(18px) saturate(1.04)",
             display: "grid",
             gap: "0.875rem",
@@ -161,7 +173,7 @@ export default function HeaderUtilityMenu() {
                       border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
                       backgroundColor: active
                         ? "var(--color-accent-subtle)"
-                        : "rgba(255, 255, 255, 0.04)",
+                        : "var(--color-bg-secondary)",
                       color: active
                         ? "var(--color-accent)"
                         : "var(--color-text-secondary)",
@@ -181,7 +193,7 @@ export default function HeaderUtilityMenu() {
 
           <div
             style={{
-              borderTop: "1px solid var(--app-header-border)",
+              borderTop: "1px solid var(--color-border)",
               paddingTop: "0.875rem",
               display: "grid",
               gap: "0.5rem",
@@ -196,7 +208,7 @@ export default function HeaderUtilityMenu() {
                 minHeight: "2.5rem",
                 borderRadius: "0.875rem",
                 border: "1px solid var(--color-border)",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                backgroundColor: "var(--color-bg-secondary)",
                 color: "var(--color-text-secondary)",
                 opacity: 0.6,
                 cursor: "default",

@@ -17,6 +17,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@/components/CursorSimulationSurface", () => ({
   default: cursorSimulationSurfaceMock,
+  getSimulationThemeVariables: () => ({}),
 }));
 
 import Simulation from "@/components/Simulation";
@@ -81,6 +82,26 @@ describe("Simulation", () => {
     );
   });
 
+  it("passes the simulation theme mode through to the shared surface", async () => {
+    render(
+      <Simulation
+        imageUrl="blob:cursor"
+        cursorSize={32}
+        hotspotX={12}
+        hotspotY={8}
+        themeMode="light"
+      />
+    );
+
+    await waitFor(() => {
+      expect(cursorSimulationSurfaceMock).toHaveBeenCalled();
+    });
+
+    const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
+    expect(props?.themeMode).toBe("light");
+    expect(props?.backgroundMode).toBeUndefined();
+  });
+
   it("shows the simulation placeholder when the normal slot is missing", async () => {
     render(
       <Simulation
@@ -135,6 +156,42 @@ describe("Simulation", () => {
     );
     expect(props?.slotSources?.normalSelect?.getFrameAtTime(0).frame.src).toBe(
       "blob:normal"
+    );
+  });
+
+  it("preserves the existing selected-slot source when the live preview source is temporarily unavailable", async () => {
+    const normalSource = createStaticCursorSource(
+      { src: "blob:normal" },
+      { x: 1, y: 2 },
+      32
+    );
+    const textSource = createStaticCursorSource(
+      { src: "blob:text" },
+      { x: 3, y: 4 },
+      32
+    );
+
+    render(
+      <Simulation
+        imageUrl={null}
+        cursorSize={32}
+        hotspotX={12}
+        hotspotY={8}
+        selectedSlotId="textSelect"
+        slotSources={makeSlotSources({
+          normalSelect: normalSource,
+          textSelect: textSource,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(cursorSimulationSurfaceMock).toHaveBeenCalled();
+    });
+
+    const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
+    expect(props?.slotSources?.textSelect?.getFrameAtTime(0).frame.src).toBe(
+      "blob:text"
     );
   });
 });

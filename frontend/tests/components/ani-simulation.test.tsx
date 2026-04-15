@@ -31,6 +31,7 @@ vi.mock("@/lib/aniPreviewFrames", async (importOriginal) => {
 
 vi.mock("@/components/CursorSimulationSurface", () => ({
   default: cursorSimulationSurfaceMock,
+  getSimulationThemeVariables: () => ({}),
 }));
 
 import AniSimulation from "@/components/AniSimulation";
@@ -411,6 +412,20 @@ describe("AniSimulation", () => {
     );
   });
 
+  it("passes the simulation theme mode through to the shared surface", async () => {
+    renderSimulation({
+      themeMode: "light",
+    });
+
+    await waitFor(() => {
+      expect(cursorSimulationSurfaceMock).toHaveBeenCalled();
+    });
+
+    const props = cursorSimulationSurfaceMock.mock.calls.at(-1)?.[0];
+    expect(props?.themeMode).toBe("light");
+    expect(props?.backgroundMode).toBeUndefined();
+  });
+
   it("does not render a duplicate slot preview strip inside the simulation", async () => {
     renderSimulation();
 
@@ -507,6 +522,7 @@ function renderSimulation(
       hotspotY={overrides.hotspotY ?? 64}
       selectedSlotId={overrides.selectedSlotId}
       slotSources={overrides.slotSources}
+      themeMode={overrides.themeMode}
     />
   );
 }

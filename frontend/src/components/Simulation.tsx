@@ -3,8 +3,10 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 
-import CursorSimulationSurface from "@/components/CursorSimulationSurface";
-import type { BackgroundMode } from "@/components/CursorSimulationSurface";
+import CursorSimulationSurface, {
+  getSimulationThemeVariables,
+  type SimulationThemeMode,
+} from "@/components/CursorSimulationSurface";
 import { createStaticCursorSource } from "@/lib/cursorSources";
 import { type SlotId } from "@/lib/cursorThemeProject";
 import { type SimulationSceneId } from "@/lib/simulationScenes";
@@ -20,7 +22,7 @@ interface SimulationProps {
   hotspotY?: number;
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
-  backgroundMode?: BackgroundMode;
+  themeMode?: SimulationThemeMode;
   sceneId?: SimulationSceneId;
 }
 
@@ -31,7 +33,7 @@ export default function Simulation({
   hotspotY = 0,
   slotSources,
   selectedSlotId,
-  backgroundMode = "dark",
+  themeMode = "dark",
   sceneId,
 }: SimulationProps) {
   const t = useTranslations("simulation");
@@ -39,16 +41,16 @@ export default function Simulation({
     () =>
       imageUrl
         ? createStaticCursorSource(
-            { src: imageUrl },
-            { x: hotspotX, y: hotspotY },
-            cursorSize
-          )
+          { src: imageUrl },
+          { x: hotspotX, y: hotspotY },
+          cursorSize
+        )
         : null,
     [imageUrl, hotspotX, hotspotY, cursorSize]
   );
 
   const mergedSlotSources = useMemo(() => {
-    if (!slotSources || !selectedSlotId) {
+    if (!slotSources || !selectedSlotId || !source) {
       return slotSources;
     }
 
@@ -59,37 +61,64 @@ export default function Simulation({
   }, [selectedSlotId, slotSources, source]);
 
   if (mergedSlotSources && !hasNormalSlotSimulationSource(mergedSlotSources)) {
-    return <SimulationPlaceholder message={t("placeholderNormalRequired")} />;
+    return (
+      <SimulationPlaceholder
+        message={t("placeholderNormalRequired")}
+        themeMode={themeMode}
+      />
+    );
   }
 
   return (
     <CursorSimulationSurface
       source={source}
       slotSources={mergedSlotSources}
-      placeholder={<SimulationPlaceholder message={t("placeholderNormalRequired")} />}
-      backgroundMode={backgroundMode}
+      placeholder={
+        <SimulationPlaceholder
+          message={t("placeholderNormalRequired")}
+          themeMode={themeMode}
+        />
+      }
+      themeMode={themeMode}
       sceneId={sceneId}
     />
   );
 }
 
-function SimulationPlaceholder({ message }: { message: string }) {
+function SimulationPlaceholder({
+  message,
+  themeMode,
+}: {
+  message: string;
+  themeMode: SimulationThemeMode;
+}) {
   return (
     <div
       data-testid="simulation-placeholder"
       style={{
+        ...getSimulationThemeVariables(themeMode),
         width: "100%",
         height: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--simulation-panel-muted)",
-        fontSize: "0.8125rem",
-        textAlign: "center",
-        padding: "1rem",
+        backgroundColor: "var(--simulation-scene-surface, #fff)",
       }}
     >
-      {message}
+      <div style={{
+        maxWidth: "20rem",
+        padding: "1.5rem 2rem",
+        backgroundColor: "var(--simulation-scene-bg, #f3f3f3)",
+        border: "1px solid var(--simulation-panel-border, #e5e5e5)",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)",
+        color: "var(--simulation-panel-muted)",
+        fontSize: "0.875rem",
+        textAlign: "center",
+        lineHeight: 1.6
+      }}>
+        {message}
+      </div>
     </div>
   );
 }

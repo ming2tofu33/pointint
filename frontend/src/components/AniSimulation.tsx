@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import CursorSimulationSurface from "@/components/CursorSimulationSurface";
-import type { BackgroundMode } from "@/components/CursorSimulationSurface";
+import CursorSimulationSurface, {
+  getSimulationThemeVariables,
+  type SimulationThemeMode,
+} from "@/components/CursorSimulationSurface";
 import {
   buildAniPreviewFrameStack,
   createAniPreviewSourceFromFrames,
@@ -33,7 +35,7 @@ interface AniSimulationProps {
   hotspotY: number;
   slotSources?: SlotSimulationSources;
   selectedSlotId?: SlotId;
-  backgroundMode?: BackgroundMode;
+  themeMode?: SimulationThemeMode;
   sceneId?: SimulationSceneId;
 }
 
@@ -54,7 +56,7 @@ export default function AniSimulation({
   hotspotY,
   slotSources,
   selectedSlotId,
-  backgroundMode = "dark",
+  themeMode = "dark",
   sceneId,
 }: AniSimulationProps) {
   const [previewFrameStack, setPreviewFrameStack] =
@@ -220,7 +222,7 @@ export default function AniSimulation({
       previewTitle,
       previewBody,
       t("instruction"),
-      backgroundMode
+      themeMode
     );
   }
 
@@ -251,9 +253,9 @@ export default function AniSimulation({
               previewTitle,
               previewBody,
               t("instruction"),
-              backgroundMode
+              themeMode
             )}
-            backgroundMode={backgroundMode}
+            themeMode={themeMode}
             sceneId={sceneId}
           />
         ) : (
@@ -261,7 +263,7 @@ export default function AniSimulation({
             previewTitle,
             previewBody,
             t("instruction"),
-            backgroundMode
+            themeMode
           )
         )}
       </div>
@@ -273,62 +275,88 @@ function renderAniPlaceholder(
   title: string,
   body: string,
   instruction: string,
-  backgroundMode: BackgroundMode
+  themeMode: SimulationThemeMode
 ) {
   return (
     <div
       data-testid="ani-simulation-placeholder"
       style={{
+        ...getSimulationThemeVariables(themeMode),
         flex: 1,
-        backgroundColor:
-          backgroundMode === "dark"
-            ? "var(--simulation-shell-dark-bg)"
-            : "var(--simulation-shell-light-bg)",
-        padding: "1rem 1.5rem",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
-        gap: "0.625rem",
-        transition: "background-color 0.3s",
+        alignItems: "center",
+        backgroundColor: "var(--simulation-scene-surface, #fff)",
         overflow: "hidden",
         position: "relative",
       }}
     >
-      <p
-        style={{
-          fontSize: "0.75rem",
-          color: "var(--simulation-panel-muted)",
-          userSelect: "none",
-        }}
-      >
-        {title}
-      </p>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        gap: "1rem",
+        padding: "2rem",
+        maxWidth: "24rem",
+        backgroundColor: "var(--simulation-scene-bg, #f3f3f3)",
+        border: "1px solid var(--simulation-panel-border, #e5e5e5)",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)",
+        transition: "all 0.4s ease",
+      }}>
+        <p
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--simulation-link)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            margin: 0,
+            fontWeight: 600,
+          }}
+        >
+          {title}
+        </p>
 
-      <p
-        style={{
-          fontSize: "0.8125rem",
-          color: "var(--simulation-panel-text)",
-          lineHeight: 1.5,
-        }}
-      >
-        {body}
-      </p>
+        <p
+          style={{
+            fontSize: "0.875rem",
+            color: "var(--simulation-panel-text)",
+            lineHeight: 1.6,
+            margin: 0,
+          }}
+        >
+          {body}
+        </p>
 
-      <p
-        style={{
-          fontSize: "0.8125rem",
-          color: "var(--simulation-panel-muted)",
-        }}
-      >
-        {instruction}
-      </p>
+        <div
+          style={{
+            marginTop: "0.5rem",
+            padding: "0.5rem 1rem",
+            borderRadius: "6px",
+            backgroundColor: "var(--simulation-panel-elevated)",
+            border: "1px solid var(--simulation-panel-border, #e5e5e5)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--simulation-panel-muted)",
+              margin: 0,
+            }}
+          >
+            {instruction}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function clearPendingAniPreviewRebuild(
-  rebuildTimerRef: { current: ReturnType<typeof setTimeout> | null }
-) {
+function clearPendingAniPreviewRebuild(rebuildTimerRef: {
+  current: ReturnType<typeof setTimeout> | null;
+}) {
   if (rebuildTimerRef.current !== null) {
     clearTimeout(rebuildTimerRef.current);
     rebuildTimerRef.current = null;

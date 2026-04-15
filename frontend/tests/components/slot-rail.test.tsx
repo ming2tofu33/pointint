@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const SLOT_RAIL_TRANSLATIONS: Record<string, string> = {
@@ -155,18 +155,59 @@ describe("SlotRail", () => {
 
     expect(screen.getByTestId("slot-glyph-normalSelect-image")).toHaveAttribute(
       "src",
-      "/ui/slot-glyphs/normal.svg"
+      "/ui/slot-glyphs/dark/normal.svg"
     );
     expect(screen.getByTestId("slot-glyph-busy-image")).toHaveAttribute(
       "src",
-      "/ui/slot-glyphs/busy.svg"
+      "/ui/slot-glyphs/dark/busy.svg"
     );
     expect(
       screen.getByTestId("slot-glyph-workingInBackground-image")
-    ).toHaveAttribute("src", "/ui/slot-glyphs/working-in-background.svg");
+    ).toHaveAttribute("src", "/ui/slot-glyphs/dark/working-in-background.svg");
     expect(screen.getByTestId("slot-glyph-move-image")).toHaveAttribute(
       "src",
-      "/ui/slot-glyphs/move.svg"
+      "/ui/slot-glyphs/dark/move.svg"
     );
+  });
+
+  it("switches slot glyph assets between dark and light themes", async () => {
+    document.documentElement.setAttribute("data-theme", "light");
+
+    const project = {
+      slots: {
+        normalSelect: createSlot("normalSelect"),
+        textSelect: createSlot("textSelect"),
+        linkSelect: createSlot("linkSelect"),
+        busy: createSlot("busy"),
+        workingInBackground: createSlot("workingInBackground"),
+        unavailable: createSlot("unavailable"),
+        move: createSlot("move"),
+        horizontalResize: createSlot("horizontalResize"),
+        verticalResize: createSlot("verticalResize"),
+        diagonalResize1: createSlot("diagonalResize1"),
+        diagonalResize2: createSlot("diagonalResize2"),
+      },
+    } as never;
+
+    render(
+      <SlotRail
+        project={project}
+        selectedSlotId="normalSelect"
+        onSelectSlot={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("slot-glyph-normalSelect-image")).toHaveAttribute(
+      "src",
+      "/ui/slot-glyphs/light/normal.svg"
+    );
+
+    document.documentElement.setAttribute("data-theme", "dark");
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("slot-glyph-normalSelect-image")
+      ).toHaveAttribute("src", "/ui/slot-glyphs/dark/normal.svg");
+    });
   });
 });

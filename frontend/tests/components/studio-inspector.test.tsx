@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import StudioInspector, {
+  StudioInspectorGroup,
   StudioInspectorSegmentedControl,
 } from "@/components/StudioInspector";
 
@@ -49,6 +50,45 @@ describe("StudioInspector", () => {
       screen.queryByTestId("studio-inspector-actual-size-card")
     ).not.toBeInTheDocument();
     expect(within(screen.getByTestId("studio-inspector")).getByText("0")).toBeVisible();
+  });
+
+  it("renders dividers between inspector sections even when sections are passed in a fragment", () => {
+    render(
+      <StudioInspector summary={<div>Summary</div>} previews={null}>
+        <>
+          <section aria-label="Output">Output</section>
+          <section aria-label="Framing">Framing</section>
+          <section aria-label="Position">Position</section>
+        </>
+      </StudioInspector>
+    );
+
+    expect(screen.getByTestId("studio-inspector-controls-card")).toBeVisible();
+    expect(screen.getByTestId("studio-inspector-divider-1")).toBeVisible();
+    expect(screen.getByTestId("studio-inspector-divider-2")).toBeVisible();
+  });
+
+  it("renders grouped inspector blocks without losing subsection content", () => {
+    render(
+      <StudioInspector summary={<div>Summary</div>} previews={null}>
+        <StudioInspectorGroup data-testid="group-image">
+          <section aria-label="Output">Output</section>
+          <section aria-label="Framing">Framing</section>
+          <section aria-label="Name">Name</section>
+        </StudioInspectorGroup>
+        <StudioInspectorGroup data-testid="group-transform">
+          <section aria-label="Hotspot">Hotspot</section>
+          <section aria-label="Scale">Scale</section>
+          <section aria-label="Position">Position</section>
+        </StudioInspectorGroup>
+      </StudioInspector>
+    );
+
+    expect(screen.getByTestId("group-image")).toBeVisible();
+    expect(screen.getByTestId("group-transform")).toBeVisible();
+    expect(screen.getByText("Output")).toBeVisible();
+    expect(screen.getByText("Position")).toBeVisible();
+    expect(screen.getByTestId("studio-inspector-divider-1")).toBeVisible();
   });
 
   it("does not clip segmented-control focus treatment at the group boundary", () => {

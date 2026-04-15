@@ -114,15 +114,15 @@ export function createSlotSimulationSource(
 
   return input.kind === "animated"
     ? createAnimatedCursorSource(
-        [{ src: input.imageUrl, durationMs: 100 }],
-        hotspot,
-        input.cursorSize
-      )
+      [{ src: input.imageUrl, durationMs: 100 }],
+      hotspot,
+      input.cursorSize
+    )
     : createStaticCursorSource(
-        { src: input.imageUrl },
-        hotspot,
-        input.cursorSize
-      );
+      { src: input.imageUrl },
+      hotspot,
+      input.cursorSize
+    );
 }
 
 export function buildProjectSlotSimulationSources(
@@ -186,6 +186,7 @@ function fromProjectSlot(
   slotId: WindowsRoleSlotId
 ) {
   const slot = project.slots[slotId];
+  if (!slot || !slot.asset) return null;
   const imageUrl = slot.asset.previewUrl ?? slot.asset.originalUrl;
 
   if (!imageUrl || !slot.kind) {
