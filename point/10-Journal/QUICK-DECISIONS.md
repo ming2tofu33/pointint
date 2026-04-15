@@ -67,3 +67,8 @@ aliases:
 - Studio workspace styling should be scoped locally instead of rewriting global dark mode. `/studio` uses near-black workbench tokens so landing and explore can keep their browse-oriented surfaces.
 - Studio shell polish should use a premium product tool base with only a restrained creative accent. The intended reading order is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
 - Studio shell hierarchy is now shared across CUR and ANI. Empty slots keep a single central source-entry hub, and populated slots share the same stage header, validation footer, and inspector contract.
+
+## 2026-04-15
+
+- Background-removal model fine-tuning is tracked as an option spike, not current sprint scope.
+- The current backend path uses a remote HF inference wrapper. If quality work moves here, the likely shape is "train separately, deploy separately, then swap the serving endpoint" rather than tweaking the current app flow in place.

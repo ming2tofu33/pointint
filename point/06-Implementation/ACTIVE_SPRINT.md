@@ -11,7 +11,7 @@ aliases:
 # ACTIVE SPRINT
 
 > **Sprint Window:** 2026-03-27 onward
-> **Last Updated:** 2026-04-13
+> **Last Updated:** 2026-04-15
 > **Status:** Phase 1 gate closed, Phase 1.5 ANI v1 is now in progress
 > **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
@@ -42,6 +42,7 @@ aliases:
 | Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice now includes slot-based studio foundation, zone-mapped simulation, and minimum download guard on `normal` |
 | Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
 | Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
+| Option | `BG-FT-01` | option | Evaluate whether cursor-style background removal should move from the current remote HF Space to a custom fine-tuned model path |
 
 ## Next Session
 
@@ -50,6 +51,7 @@ aliases:
 - Validate focus, spacing, and inspector readability in a real browser pass now that the shared shell hierarchy is landed
 - Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
+- If background-removal quality becomes a visible trust issue, open `BG-FT-01` as a feasibility spike instead of changing the current HF path blindly
 
 ## Blockers
 
@@ -84,6 +86,7 @@ aliases:
 - 2026-04-13: Studio dark presentation now splits from landing browse mood. The shared header uses black-glass tokens, while `/studio` applies a scoped near-black workspace theme for focus-heavy editing.
 - 2026-04-13: Studio shell polish should follow a premium product tool direction with a restrained creative accent. The target hierarchy is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
 - 2026-04-13: Studio shell hierarchy is now unified across CUR and ANI. Empty slots keep one central source-entry hub, while populated slots share the same stage header, validation footer, and inspector contract.
+- 2026-04-15: Background removal fine-tuning is an option, not an active sprint item. The current HF path is a remote inference wrapper, so any quality upgrade should be evaluated as a separate train-and-redeploy spike.
 
 ## Document Follow-up
 
@@ -104,6 +107,7 @@ aliases:
 | `plans/2026-04-13-studio-black-glass-theme-design.md` | Studio black-glass header + near-black workspace design decisions | synced |
 | `plans/2026-04-13-studio-ui-ux-structure-refresh-design.md` | Studio premium-tool shell refresh design decisions | synced |
 | `plans/2026-04-13-studio-ui-ux-structure-refresh.md` | Studio premium-tool shell refresh implementation plan | synced |
+| `plans/2026-04-15-background-removal-finetune-option.md` | Background-removal fine-tune feasibility option | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
