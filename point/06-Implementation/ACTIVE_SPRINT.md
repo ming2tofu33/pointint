@@ -43,6 +43,7 @@ aliases:
 | Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
 | Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
 | Option | `BG-FT-01` | option | Evaluate whether cursor-style background removal should move from the current remote HF Space to a custom fine-tuned model path |
+| Option | `WIN-INSTALLER-EXE-01` | option | Evaluate a Windows `.exe` installer for one-step cursor set install, apply, restore, and uninstall |
 
 ## Next Session
 
@@ -52,6 +53,7 @@ aliases:
 - Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 - If background-removal quality becomes a visible trust issue, open `BG-FT-01` as a feasibility spike instead of changing the current HF path blindly
+- If the Windows install flow becomes a visible conversion issue, open `WIN-INSTALLER-EXE-01` as a distribution spike before building a signed installer
 
 ## Blockers
 
@@ -87,6 +89,7 @@ aliases:
 - 2026-04-13: Studio shell polish should follow a premium product tool direction with a restrained creative accent. The target hierarchy is `tool rail -> slot board -> edit stage -> validation stage -> inspector`.
 - 2026-04-13: Studio shell hierarchy is now unified across CUR and ANI. Empty slots keep one central source-entry hub, while populated slots share the same stage header, validation footer, and inspector contract.
 - 2026-04-15: Background removal fine-tuning is an option, not an active sprint item. The current HF path is a remote inference wrapper, so any quality upgrade should be evaluated as a separate train-and-redeploy spike.
+- 2026-04-24: A Windows `.exe` installer is worth tracking as an option, but should start as a feasibility spike because code signing, SmartScreen reputation, restore/uninstall behavior, and user trust are the main risks.
 
 ## Document Follow-up
 
@@ -108,6 +111,7 @@ aliases:
 | `plans/2026-04-13-studio-ui-ux-structure-refresh-design.md` | Studio premium-tool shell refresh design decisions | synced |
 | `plans/2026-04-13-studio-ui-ux-structure-refresh.md` | Studio premium-tool shell refresh implementation plan | synced |
 | `plans/2026-04-15-background-removal-finetune-option.md` | Background-removal fine-tune feasibility option | synced |
+| `plans/2026-04-24-windows-exe-installer-option.md` | Windows installer feasibility option | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---

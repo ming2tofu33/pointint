@@ -72,3 +72,8 @@ aliases:
 
 - Background-removal model fine-tuning is tracked as an option spike, not current sprint scope.
 - The current backend path uses a remote HF inference wrapper. If quality work moves here, the likely shape is "train separately, deploy separately, then swap the serving endpoint" rather than tweaking the current app flow in place.
+
+## 2026-04-24
+
+- A Windows `.exe` installer is worth tracking as a later option because the current ZIP + INF flow may be too manual for non-technical users.
+- The installer path should start as a feasibility spike, with code signing, SmartScreen reputation, restore/uninstall behavior, and immediate cursor application treated as core questions.
