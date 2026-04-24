@@ -9,10 +9,13 @@ import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
 interface SlotRailProps {
   project: CursorThemeProject;
   selectedSlotId: SlotId;
+  pendingBackgroundRemovalSlotIds?: SlotId[];
+  processingSlotId?: SlotId | null;
   onSelectSlot: (slotId: SlotId) => void;
 }
 
 type RoleSection = "primary" | "hidden";
+type SlotStatusTone = "empty" | "ready" | "attention" | "processing";
 
 type RoleDefinition = {
   id: SlotId;
@@ -115,10 +118,13 @@ const HIDDEN_ROLE_DEFINITIONS = ROLE_DEFINITIONS.filter(
 export default function SlotRail({
   project,
   selectedSlotId,
+  pendingBackgroundRemovalSlotIds = [],
+  processingSlotId = null,
   onSelectSlot,
 }: SlotRailProps) {
   const t = useTranslations("studio");
   const [showAdditionalRoles, setShowAdditionalRoles] = useState(false);
+  const pendingBackgroundRemovalSlotSet = new Set(pendingBackgroundRemovalSlotIds);
   const [glyphTheme, setGlyphTheme] = useState<SlotGlyphTheme>(() =>
     resolveSlotGlyphTheme(
       typeof document === "undefined"
@@ -197,6 +203,13 @@ export default function SlotRail({
         {visibleDefinitions.map((definition, index) => {
           const slot = project.slots[definition.id];
           const filled = isSlotConfigured(slot);
+          const slotStatus = getSlotStatus({
+            filled,
+            isPendingBackgroundRemoval:
+              pendingBackgroundRemovalSlotSet.has(definition.id),
+            isProcessing: processingSlotId === definition.id,
+            t,
+          });
           const canSelectSlot = definition.id !== selectedSlotId;
           const shouldInsertExpander =
             definition.section === "primary" &&
@@ -213,7 +226,8 @@ export default function SlotRail({
                 title={t(definition.labelKey)}
                 hint={t(definition.hintKey)}
                 kindLabel={getKindLabel(slot.kind, t)}
-                statusLabel={filled ? t("slotFilled") : t("slotEmpty")}
+                statusLabel={slotStatus.label}
+                statusTone={slotStatus.tone}
                 selectedLabel={t("slotSelected")}
                 glyphTheme={glyphTheme}
                 onSelect={() => {
@@ -305,6 +319,7 @@ interface SlotRailCardProps {
   hint: string;
   kindLabel: string;
   statusLabel: string;
+  statusTone: SlotStatusTone;
   selectedLabel: string;
   glyphTheme: SlotGlyphTheme;
   onSelect: () => void;
@@ -319,6 +334,7 @@ function SlotRailCard({
   hint,
   kindLabel,
   statusLabel,
+  statusTone,
   selectedLabel,
   glyphTheme,
   onSelect,
@@ -511,8 +527,12 @@ function SlotRailCard({
           data-testid={`slot-status-${slotId}`}
           style={{
             fontSize: "0.625rem",
-            color: filled ? "var(--color-text-secondary)" : "var(--color-text-muted)",
+            color: getStatusToneColor(statusTone, filled),
             lineHeight: 1.2,
+            fontWeight:
+              statusTone === "attention" || statusTone === "processing"
+                ? 700
+                : 500,
           }}
         >
           {statusLabel}
@@ -544,6 +564,39 @@ function getKindLabel(
   if (kind === "static") return t("slotStatic");
   if (kind === "animated") return t("slotAnimated");
   return t("slotKindUnset");
+}
+
+function getSlotStatus({
+  filled,
+  isPendingBackgroundRemoval,
+  isProcessing,
+  t,
+}: {
+  filled: boolean;
+  isPendingBackgroundRemoval: boolean;
+  isProcessing: boolean;
+  t: ReturnType<typeof useTranslations>;
+}): { label: string; tone: SlotStatusTone } {
+  if (isProcessing) {
+    return { label: t("slotProcessing"), tone: "processing" };
+  }
+
+  if (isPendingBackgroundRemoval) {
+    return { label: t("slotNeedsDecision"), tone: "attention" };
+  }
+
+  if (!filled) {
+    return { label: t("slotEmpty"), tone: "empty" };
+  }
+
+  return { label: t("slotReady"), tone: "ready" };
+}
+
+function getStatusToneColor(tone: SlotStatusTone, filled: boolean) {
+  if (tone === "attention") return "var(--color-accent)";
+  if (tone === "processing") return "var(--color-text-primary)";
+  if (tone === "ready") return "var(--color-text-secondary)";
+  return filled ? "var(--color-text-secondary)" : "var(--color-text-muted)";
 }
 
 function SlotContextGlyph({

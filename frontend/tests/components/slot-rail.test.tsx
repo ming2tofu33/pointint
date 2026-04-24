@@ -10,6 +10,9 @@ const SLOT_RAIL_TRANSLATIONS: Record<string, string> = {
   slotEmpty: "Empty",
   slotStatic: "Static",
   slotAnimated: "Animated",
+  slotReady: "Ready",
+  slotNeedsDecision: "Choose background",
+  slotProcessing: "Processing",
   slotKindUnset: "Unset",
   slotNormalSelect: "Normal Select",
   slotNormalSelectHint: "Pointer on the desktop",
@@ -209,5 +212,46 @@ describe("SlotRail", () => {
         screen.getByTestId("slot-glyph-normalSelect-image")
       ).toHaveAttribute("src", "/ui/slot-glyphs/dark/normal.svg");
     });
+  });
+
+  it("shows pending, processing, ready, and empty slot states", () => {
+    const project = {
+      slots: {
+        normalSelect: createSlot("normalSelect", "blob:normal-preview"),
+        textSelect: createSlot("textSelect", "blob:text-preview"),
+        linkSelect: createSlot("linkSelect"),
+        busy: createSlot("busy", "blob:busy-preview"),
+        workingInBackground: createSlot("workingInBackground"),
+        unavailable: createSlot("unavailable"),
+        move: createSlot("move"),
+        horizontalResize: createSlot("horizontalResize"),
+        verticalResize: createSlot("verticalResize"),
+        diagonalResize1: createSlot("diagonalResize1"),
+        diagonalResize2: createSlot("diagonalResize2"),
+      },
+    } as never;
+
+    render(
+      <SlotRail
+        project={project}
+        selectedSlotId="normalSelect"
+        pendingBackgroundRemovalSlotIds={["textSelect"]}
+        processingSlotId="busy"
+        onSelectSlot={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("slot-status-normalSelect")).toHaveTextContent(
+      "Ready"
+    );
+    expect(screen.getByTestId("slot-status-textSelect")).toHaveTextContent(
+      "Choose background"
+    );
+    expect(screen.getByTestId("slot-status-busy")).toHaveTextContent(
+      "Processing"
+    );
+    expect(screen.getByTestId("slot-status-linkSelect")).toHaveTextContent(
+      "Empty"
+    );
   });
 });

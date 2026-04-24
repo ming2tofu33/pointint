@@ -389,6 +389,8 @@ export default function StudioPage() {
               <SlotRail
                 project={project}
                 selectedSlotId={selectedSlotId}
+                pendingBackgroundRemovalSlotIds={pendingBackgroundRemovalSlotIds}
+                processingSlotId={state === "processing" ? selectedSlotId : null}
                 onSelectSlot={selectSlot}
               />
 
