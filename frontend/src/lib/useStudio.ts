@@ -81,6 +81,7 @@ export interface AniData {
 interface SlotRuntime {
   cursor: CursorData | null;
   ani: AniData | null;
+  backgroundRemovalPending: boolean;
 }
 
 interface SlotStateUpdate {
@@ -215,7 +216,11 @@ function loadImageDimensions(src: string): Promise<{ width: number; height: numb
 }
 
 function createEmptySlotRuntime(): Record<WindowsRoleSlotId, SlotRuntime> {
-  return createWindowsRoleRecord(() => ({ cursor: null, ani: null }));
+  return createWindowsRoleRecord(() => ({
+    cursor: null,
+    ani: null,
+    backgroundRemovalPending: false,
+  }));
 }
 
 function createLegacyCompatibleProject() {
@@ -353,7 +358,10 @@ function createSlotStateUpdate(
   };
 }
 
-function createStaticSlotState(nextCursor: CursorData): SlotStateUpdate {
+function createStaticSlotState(
+  nextCursor: CursorData,
+  backgroundRemovalPending = false
+): SlotStateUpdate {
   return createSlotStateUpdate(
     "static",
     {
@@ -372,7 +380,7 @@ function createStaticSlotState(nextCursor: CursorData): SlotStateUpdate {
       offsetY: nextCursor.offsetY,
       scale: nextCursor.scale,
     },
-    { cursor: nextCursor, ani: null }
+    { cursor: nextCursor, ani: null, backgroundRemovalPending }
   );
 }
 
@@ -395,7 +403,7 @@ function createAnimatedSlotState(nextAni: AniData): SlotStateUpdate {
       offsetY: nextAni.offsetY,
       scale: nextAni.scale,
     },
-    { cursor: null, ani: nextAni }
+    { cursor: null, ani: nextAni, backgroundRemovalPending: false }
   );
 }
 
@@ -438,7 +446,10 @@ function finalizeStudioSnapshot(snapshot: StudioSnapshot): StudioSnapshot {
       snapshot.project,
       snapshot.slotRuntime,
       snapshot.selectedSlotId,
-      createStaticSlotState(snapshot.cursor)
+      createStaticSlotState(
+        snapshot.cursor,
+        isBackgroundRemovalDecisionState(snapshot.state)
+      )
     );
 
     return {
@@ -462,6 +473,10 @@ function finalizeStudioSnapshot(snapshot: StudioSnapshot): StudioSnapshot {
   }
 
   return snapshot;
+}
+
+function isBackgroundRemovalDecisionState(state: StudioState) {
+  return state === "uploaded" || state === "processing";
 }
 
 function isUndoSessionState(state: StudioState) {
@@ -581,9 +596,14 @@ export function useStudio() {
       selectedSlotRuntime.cursor ||
       selectedSlotRuntime.ani
   );
+  const pendingBackgroundRemovalSlotIds = WINDOWS_ROLE_SLOT_IDS.filter(
+    (slotId) =>
+      slotRuntime[slotId].backgroundRemovalPending ||
+      (slotId === selectedSlotId && isBackgroundRemovalDecisionState(state))
+  );
   const canDownloadAll = WINDOWS_ROLE_SLOT_IDS.some(
     (slotId) => project.slots[slotId].kind !== null
-  );
+  ) && pendingBackgroundRemovalSlotIds.length === 0;
   const canDownload = Boolean(
     (state === "editing" || state === "ani-editing") && selectedSlotBound
   );
@@ -790,10 +810,8 @@ export function useStudio() {
           pushHistoryForAction(previous, "replaceSlot");
           setCursor(hydratedCursor);
           setAni(null);
-          commitSlotState(slotId, createStaticSlotState(hydratedCursor));
-          setState(
-            slotId === DEFAULT_PRIMARY_ROLE_SLOT_ID ? "uploaded" : "editing"
-          );
+          commitSlotState(slotId, createStaticSlotState(hydratedCursor, true));
+          setState("uploaded");
         } catch (err) {
           URL.revokeObjectURL(nextCursor.originalUrl);
           setError(err instanceof Error ? err.message : "Failed to load image");
@@ -841,8 +859,18 @@ export function useStudio() {
   const selectSlot = useCallback((slotId: WindowsRoleSlotId | LegacySlotId) => {
     const normalizedSlotId = normalizeSlotId(slotId);
 
-    if (selectedSlotBound && cursor && state === "editing") {
-      commitSlotState(selectedSlotId, createStaticSlotState(cursor));
+    if (
+      selectedSlotBound &&
+      cursor &&
+      (state === "editing" || isBackgroundRemovalDecisionState(state))
+    ) {
+      commitSlotState(
+        selectedSlotId,
+        createStaticSlotState(
+          cursor,
+          isBackgroundRemovalDecisionState(state)
+        )
+      );
     }
 
     if (selectedSlotBound && ani && state === "ani-editing") {
@@ -865,7 +893,7 @@ export function useStudio() {
       });
       setCursor(runtime.cursor);
       setAni(null);
-      setState("editing");
+      setState(runtime.backgroundRemovalPending ? "uploaded" : "editing");
       return;
     }
 
@@ -954,18 +982,31 @@ export function useStudio() {
         return;
       }
 
+      const processedCursor = {
+        ...cursor,
+        processedUrl: url,
+        processedBlob: blob,
+        sourceWidth: img.naturalWidth,
+        sourceHeight: img.naturalHeight,
+        renderedBlob: null,
+      };
+
       pushHistoryForAction(previous, "backgroundDecision");
       setCursor((prev) =>
         prev && prev.originalUrl === sourceOriginalUrl
           ? {
               ...prev,
-              processedUrl: url,
-              processedBlob: blob,
-              sourceWidth: img.naturalWidth,
-              sourceHeight: img.naturalHeight,
-              renderedBlob: null,
+              processedUrl: processedCursor.processedUrl,
+              processedBlob: processedCursor.processedBlob,
+              sourceWidth: processedCursor.sourceWidth,
+              sourceHeight: processedCursor.sourceHeight,
+              renderedBlob: processedCursor.renderedBlob,
             }
           : null
+      );
+      commitSlotState(
+        selectedSlotId,
+        createStaticSlotState(processedCursor, false)
       );
       setState("editing");
     } catch (err) {
@@ -979,7 +1020,7 @@ export function useStudio() {
         bgRemovalInFlightRef.current = false;
       }
     }
-  }, [cursor, pushHistoryForAction, takeSnapshot]);
+  }, [commitSlotState, cursor, pushHistoryForAction, selectedSlotId, takeSnapshot]);
 
   // UX-1: 배경 제거 건너뛰기
   const skipBgRemoval = useCallback(async () => {
@@ -1005,19 +1046,29 @@ export function useStudio() {
         return;
       }
 
+      const keptCursor = {
+        ...cursor,
+        processedUrl: cursor.originalUrl,
+        processedBlob: blob,
+        sourceWidth: img.naturalWidth,
+        sourceHeight: img.naturalHeight,
+        renderedBlob: null,
+      };
+
       pushHistoryForAction(previous, "backgroundDecision");
       setCursor((prev) =>
         prev && prev.originalUrl === sourceOriginalUrl
           ? {
               ...prev,
-              processedUrl: prev.originalUrl,
-              processedBlob: blob,
-              sourceWidth: img.naturalWidth,
-              sourceHeight: img.naturalHeight,
-              renderedBlob: null,
+              processedUrl: keptCursor.processedUrl,
+              processedBlob: keptCursor.processedBlob,
+              sourceWidth: keptCursor.sourceWidth,
+              sourceHeight: keptCursor.sourceHeight,
+              renderedBlob: keptCursor.renderedBlob,
             }
           : null
       );
+      commitSlotState(selectedSlotId, createStaticSlotState(keptCursor, false));
       setState("editing");
     } catch (err) {
       if (bgRemovalRequestIdRef.current !== requestId) {
@@ -1030,7 +1081,7 @@ export function useStudio() {
         bgRemovalInFlightRef.current = false;
       }
     }
-  }, [cursor, pushHistoryForAction, takeSnapshot]);
+  }, [commitSlotState, cursor, pushHistoryForAction, selectedSlotId, takeSnapshot]);
 
   // UX-4: 원본/결과 토글
   const [showOriginal, setShowOriginal] = useState(false);
@@ -1520,8 +1571,14 @@ export function useStudio() {
     const configuredSlotIds = WINDOWS_ROLE_SLOT_IDS.filter(
       (slotId) => snapshot.project.slots[slotId].kind !== null
     );
+    const pendingSlotIds = WINDOWS_ROLE_SLOT_IDS.filter(
+      (slotId) =>
+        snapshot.slotRuntime[slotId].backgroundRemovalPending ||
+        (slotId === snapshot.selectedSlotId &&
+          isBackgroundRemovalDecisionState(snapshot.state))
+    );
 
-    if (!configuredSlotIds.length) return;
+    if (!configuredSlotIds.length || pendingSlotIds.length) return;
 
     setDownloading(true);
     setError(null);
@@ -1612,6 +1669,8 @@ export function useStudio() {
   }, [takeSnapshot]);
 
   const download = useCallback(async () => {
+    if (state === "uploaded" || state === "processing") return;
+
     if (state === "ani-editing") {
       if (!ani) return;
       setDownloading(true);
@@ -1687,6 +1746,7 @@ export function useStudio() {
     showGuide,
     showOriginal,
     previewUrl,
+    pendingBackgroundRemovalSlotIds,
     selectFile,
     selectAniFile,
     processBgRemoval,

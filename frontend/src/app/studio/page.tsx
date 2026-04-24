@@ -68,6 +68,7 @@ export default function StudioPage() {
     showGuide,
     showOriginal,
     previewUrl,
+    pendingBackgroundRemovalSlotIds,
     selectFile,
     selectAniFile,
     selectSlot,
@@ -202,6 +203,13 @@ export default function StudioPage() {
       ? t("slotStatic")
       : t("slotAnimated")
     : t("slotKindUnset");
+  const pendingBackgroundRemovalSlotLabels = useMemo(
+    () =>
+      pendingBackgroundRemovalSlotIds.map((slotId) =>
+        t(`slot${capitalizeSlotId(slotId)}`)
+      ),
+    [pendingBackgroundRemovalSlotIds, t]
+  );
   const canCompareOriginal = Boolean(
     cursor &&
       cursor.originalUrl &&
@@ -309,6 +317,16 @@ export default function StudioPage() {
           primaryActionLabel={t("downloadAllRoles")}
           secondaryActionLabel={t("downloadCurrentSlot")}
         />
+        {pendingBackgroundRemovalSlotIds.length > 0 ? (
+          <PendingBackgroundDecisionNotice
+            title={t("backgroundPendingDownloadTitle")}
+            summary={t("backgroundPendingDownloadSummary", {
+              slots: pendingBackgroundRemovalSlotLabels.join(", "),
+            })}
+            actionLabel={t("backgroundPendingDownloadAction")}
+            onAction={() => selectSlot(pendingBackgroundRemovalSlotIds[0])}
+          />
+        ) : null}
 
         {state === "ani-editing" ? (
           <AniEditorShell
@@ -912,6 +930,78 @@ function RedoArrowIcon() {
       <path d="m15 14 5-5-5-5" />
       <path d="M4 20a8 8 0 0 1 8-8h8" />
     </svg>
+  );
+}
+
+function PendingBackgroundDecisionNotice({
+  title,
+  summary,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  summary: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div
+      data-testid="pending-background-decision-notice"
+      role="status"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "1rem",
+        padding: "0.625rem 1.25rem",
+        borderBottom: "1px solid var(--color-border)",
+        background:
+          "linear-gradient(90deg, rgba(255, 96, 130, 0.13), rgba(255, 255, 255, 0.025))",
+        color: "var(--color-text-primary)",
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ display: "grid", gap: "0.125rem", minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.01em",
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--color-text-secondary)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {summary}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onAction}
+        style={{
+          minHeight: "2rem",
+          padding: "0.375rem 0.75rem",
+          border: "1px solid var(--color-border)",
+          backgroundColor: "rgba(255,255,255,0.035)",
+          color: "var(--color-text-primary)",
+          cursor: "pointer",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          flexShrink: 0,
+          transition: STUDIO_INTERACTION_TRANSITION,
+        }}
+      >
+        {actionLabel}
+      </button>
+    </div>
   );
 }
 

@@ -54,6 +54,9 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   themeModeSwitch: "simulation theme mode",
   downloadAllRoles: "Download all roles (t)",
   downloadCurrentSlot: "Download current slot (t)",
+  backgroundPendingDownloadTitle: "Finish background choices",
+  backgroundPendingDownloadSummary: "Pending slots",
+  backgroundPendingDownloadAction: "Review slot",
   viewZoom: "View zoom",
   compactGuidanceTitle: "Compact guidance",
   backgroundDecisionCompactTitle: "Background removal pending",
@@ -387,6 +390,7 @@ function renderStudio(
     selectedSlotId?: WindowsRoleId;
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
+    pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
   } = {}
 ) {
   useStudioMock.mockReturnValue(createStudioReturn(state, options));
@@ -402,6 +406,7 @@ function createStudioReturn(
     selectedSlotId?: WindowsRoleId;
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
+    pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
   } = {}
 ) {
   const hasCursorOverride = Object.prototype.hasOwnProperty.call(options, "cursor");
@@ -452,6 +457,8 @@ function createStudioReturn(
     showGuide: false,
     showOriginal: false,
     previewUrl: options.previewUrl ?? null,
+    pendingBackgroundRemovalSlotIds:
+      options.pendingBackgroundRemovalSlotIds ?? [],
     selectFile: selectFileMock,
     selectAniFile: selectAniFileMock,
     selectSelectedSlotStaticFile: selectSlotStaticFileMock,
@@ -474,7 +481,9 @@ function createStudioReturn(
     canUndo: true,
     canRedo: true,
     reset: vi.fn(),
-    canDownloadAll: hasConfiguredRoleIncludingAliases,
+    canDownloadAll:
+      hasConfiguredRoleIncludingAliases &&
+      !(options.pendingBackgroundRemovalSlotIds?.length ?? 0),
     canDownload: hasConfiguredRoleIncludingAliases,
     canSecondaryDownload: state !== "uploaded" && selectedSlotBound,
     downloadAll: vi.fn(),
@@ -856,6 +865,27 @@ describe("Studio entry gate", () => {
 
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(true);
     expect(StudioBarMock.mock.calls[0][0].canSecondaryDownload).toBe(true);
+  });
+
+  it("shows pending background decisions before allowing full-set export", () => {
+    const project = createProject();
+    project.slots.textSelect = createStaticSlotAsset(
+      "textSelect",
+      "blob:text-preview"
+    );
+
+    renderStudio("editing", {
+      project,
+      selectedSlotId: "linkSelect",
+      pendingBackgroundRemovalSlotIds: ["textSelect"],
+    });
+
+    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
+    expect(screen.getByTestId("pending-background-decision-notice")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Review slot" }));
+
+    expect(selectSlotMock).toHaveBeenCalledWith("textSelect");
   });
 
   it("wires undo and redo keyboard shortcuts into the studio shell", () => {

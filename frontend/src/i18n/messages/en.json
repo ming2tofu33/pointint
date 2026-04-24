@@ -153,6 +153,9 @@
     "backgroundProcessingSummary": "Pointtint is preparing a transparent version of this image. Stay in the studio and keep reviewing the canvas.",
     "downloadAllRoles": "Download all roles",
     "downloadCurrentSlot": "Download selected cursor",
+    "backgroundPendingDownloadTitle": "Finish background choices before downloading",
+    "backgroundPendingDownloadSummary": "Pending slots: {slots}",
+    "backgroundPendingDownloadAction": "Review slot",
     "viewZoom": "View zoom"
   },
   "panel": {

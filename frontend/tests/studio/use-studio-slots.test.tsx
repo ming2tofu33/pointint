@@ -183,6 +183,10 @@ describe("useStudio slot contract", () => {
       await result.current.selectFile(staticFile);
     });
 
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
     act(() => {
       result.current.selectSlot("linkSelect");
     });
@@ -219,6 +223,35 @@ describe("useStudio slot contract", () => {
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
+    buildWindowsRoleMasterZipSpy.mockRestore();
+  });
+
+  it("blocks full-set export while any static slot still needs a background decision", async () => {
+    const buildWindowsRoleMasterZipSpy = vi.spyOn(
+      studioDownload,
+      "buildWindowsRoleMasterZip"
+    );
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    expect(result.current.state).toBe("uploaded");
+    expect(result.current.canDownloadAll).toBe(false);
+    expect(result.current.pendingBackgroundRemovalSlotIds).toEqual([
+      "normalSelect",
+    ]);
+
+    await act(async () => {
+      await result.current.downloadAll();
+    });
+
+    expect(buildWindowsRoleMasterZipSpy).not.toHaveBeenCalled();
+
     buildWindowsRoleMasterZipSpy.mockRestore();
   });
 
@@ -261,6 +294,44 @@ describe("useStudio slot contract", () => {
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
+  });
+
+  it("returns resolved non-primary static slots to the editor after switching back", async () => {
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "text-select.png", {
+      type: "image/png",
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(staticFile);
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("uploaded");
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    expect(result.current.state).toBe("editing");
+
+    act(() => {
+      result.current.selectSlot("linkSelect");
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor).toBeNull();
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor?.cursorName).toBe("ibeam");
   });
 
   it("downloads the current animated slot as a raw ANI file", async () => {

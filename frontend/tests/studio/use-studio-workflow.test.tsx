@@ -125,6 +125,7 @@ describe("useStudio workflow entry", () => {
       await Promise.resolve();
     });
 
+    expect(result.current.state).toBe("uploaded");
     expect(result.current.cursor?.cursorName).toBe("ibeam");
 
     act(() => {
@@ -166,7 +167,7 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani).toBeNull();
   });
 
-  it("keeps a configured non-primary static role in the slot editor when replacing it", () => {
+  it("keeps pending background-removal choice visible for non-primary static roles", async () => {
     const { result } = renderHook(() => useStudio());
     const initialFile = new File(["cursor"], "text-select.png", {
       type: "image/png",
@@ -179,28 +180,44 @@ describe("useStudio workflow entry", () => {
       result.current.selectSlot("textSelect");
     });
 
-    act(() => {
-      result.current.selectSelectedSlotStaticFile(initialFile);
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(initialFile);
+      await Promise.resolve();
     });
 
     act(() => {
       result.current.selectSlot("textSelect");
     });
 
-    expect(result.current.state).toBe("editing");
+    expect(result.current.state).toBe("uploaded");
     expect(result.current.selectedSlotId).toBe("textSelect");
     expect(result.current.editingSlotId).toBe("textSelect");
 
     act(() => {
-      result.current.selectSelectedSlotStaticFile(replacementFile);
+      result.current.selectSlot("linkSelect");
     });
 
     expect(result.current.state).toBe("editing");
+    expect(result.current.cursor).toBeNull();
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    expect(result.current.state).toBe("uploaded");
+    expect(result.current.cursor?.cursorName).toBe("ibeam");
+
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(replacementFile);
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("uploaded");
     expect(result.current.selectedSlotId).toBe("textSelect");
     expect(result.current.editingSlotId).toBe("textSelect");
   });
 
-  it("hydrates non-primary static uploads with source dimensions for preview rendering", async () => {
+  it("hydrates non-primary static uploads and waits for background-removal choice", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["cursor"], "text-select.png", {
       type: "image/png",
@@ -215,7 +232,7 @@ describe("useStudio workflow entry", () => {
       await Promise.resolve();
     });
 
-    expect(result.current.state).toBe("editing");
+    expect(result.current.state).toBe("uploaded");
     expect(result.current.selectedSlotId).toBe("textSelect");
     expect(result.current.cursor?.sourceWidth).toBe(128);
     expect(result.current.cursor?.sourceHeight).toBe(96);
