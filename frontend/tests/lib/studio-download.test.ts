@@ -8,31 +8,31 @@ import {
 describe("studioDownload", () => {
   it("uses Windows role-style filenames instead of internal slot ids", () => {
     expect(buildWindowsRoleDownloadFilename("normalSelect", "cur")).toBe(
-      "pointint_arrow.cur"
+      "pointint_arrow.cur",
     );
     expect(buildWindowsRoleDownloadFilename("textSelect", "cur")).toBe(
-      "pointint_ibeam.cur"
+      "pointint_ibeam.cur",
     );
     expect(buildWindowsRoleDownloadFilename("linkSelect", "ani")).toBe(
-      "pointint_link.ani"
+      "pointint_link.ani",
     );
     expect(buildWindowsRoleDownloadFilename("workingInBackground", "ani")).toBe(
-      "pointint_working.ani"
+      "pointint_working.ani",
     );
     expect(buildWindowsRoleDownloadFilename("horizontalResize", "cur")).toBe(
-      "pointint_ew.cur"
+      "pointint_ew.cur",
     );
     expect(buildWindowsRoleDownloadFilename("diagonalResize2", "cur")).toBe(
-      "pointint_nesw.cur"
+      "pointint_nesw.cur",
     );
   });
 
   it("builds package paths from the Windows role-style filenames", () => {
     expect(buildWindowsRolePackagePath("busy", "ani")).toBe(
-      "cursors/pointint_busy.ani"
+      "cursors/pointint_busy.ani",
     );
     expect(buildWindowsRolePackagePath("unavailable", "cur")).toBe(
-      "cursors/pointint_unavail.cur"
+      "cursors/pointint_unavail.cur",
     );
   });
 
@@ -51,34 +51,50 @@ describe("studioDownload", () => {
       { slotId: "unavailable", extension: "cur" },
     ]);
 
-    expect(inf).toContain('[DefaultInstall]');
-    expect(inf).toContain('CopyFiles = Scheme.Cursors');
-    expect(inf).toContain('pointint_arrow.cur');
-    expect(inf).toContain('pointint_working.ani');
-    expect(inf).toContain('pointint_busy.ani');
-    expect(inf).toContain('pointint_link.ani');
-    expect(inf).toContain('pointint_move.cur');
+    expect(inf).toContain("[DefaultInstall]");
+    expect(inf).toContain("CopyFiles = Scheme.Cursors");
+    expect(inf).toContain('Scheme.Cursors = 10,"Cursors\\Pointint"');
+    expect(inf).toContain('1 = "Pointint cursor files",,,');
+    expect(inf).toContain("pointint_arrow.cur = 1,\\cursors");
+    expect(inf).toContain("pointint_arrow.cur");
+    expect(inf).toContain("pointint_working.ani");
+    expect(inf).toContain("pointint_busy.ani");
+    expect(inf).toContain("pointint_link.ani");
+    expect(inf).toContain("pointint_move.cur");
     expect(inf).toContain(
-      'HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"%10%\\Cursors\\Pointint\\pointint_arrow.cur'
+      'HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"%10%\\Cursors\\Pointint\\pointint_arrow.cur',
     );
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_working.ani');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_busy.ani');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_link.ani');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_unavail.cur');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_ns.cur');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_ew.cur');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_nwse.cur');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_nesw.cur');
-    expect(inf).toContain('%10%\\Cursors\\Pointint\\pointint_move.cur');
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_working.ani");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_busy.ani");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_link.ani");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_unavail.cur");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_ns.cur");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_ew.cur");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_nwse.cur");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_nesw.cur");
+    expect(inf).toContain("%10%\\Cursors\\Pointint\\pointint_move.cur");
+  });
+
+  it("fills unconfigured Windows roles with system default cursors", () => {
+    const inf = buildWindowsRoleInstallInf([
+      { slotId: "normalSelect", extension: "cur" },
+    ]);
+
+    expect(inf).toContain(
+      'HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"%10%\\Cursors\\Pointint\\pointint_arrow.cur,%SystemRoot%\\cursors\\aero_helpsel.cur,%SystemRoot%\\cursors\\aero_working.ani,%SystemRoot%\\cursors\\aero_busy.ani,%SystemRoot%\\cursors\\cross_r.cur,%SystemRoot%\\cursors\\beam_r.cur,%SystemRoot%\\cursors\\aero_pen.cur,%SystemRoot%\\cursors\\aero_unavail.cur,%SystemRoot%\\cursors\\aero_ns.cur,%SystemRoot%\\cursors\\aero_ew.cur,%SystemRoot%\\cursors\\aero_nwse.cur,%SystemRoot%\\cursors\\aero_nesw.cur,%SystemRoot%\\cursors\\aero_move.cur,%SystemRoot%\\cursors\\aero_up.cur,%SystemRoot%\\cursors\\aero_link.cur"',
+    );
   });
 
   it("generates a restore INF that removes the Pointint scheme", () => {
     const inf = buildWindowsRoleRestoreInf();
 
+    expect(inf).toContain("; Pointint Cursor Remove");
+    expect(inf).toContain(
+      "; This removes the Pointint entry from Windows pointer settings.",
+    );
+    expect(inf).toContain('; and select "Windows Default".');
     expect(inf).toContain("[DefaultInstall]");
     expect(inf).toContain("DelReg = Restore.Reg");
-    expect(inf).toContain(
-      'HKCU,"Control Panel\\Cursors\\Schemes","Pointint"'
-    );
+    expect(inf).toContain('HKCU,"Control Panel\\Cursors\\Schemes","Pointint"');
   });
 });

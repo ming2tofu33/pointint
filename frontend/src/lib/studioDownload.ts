@@ -33,9 +33,27 @@ const WINDOWS_SCHEME_ORDER: Array<WindowsRoleSlotId | null> = [
   "linkSelect",
 ];
 
+const WINDOWS_DEFAULT_SCHEME_PATHS = [
+  "%SystemRoot%\\cursors\\aero_arrow.cur",
+  "%SystemRoot%\\cursors\\aero_helpsel.cur",
+  "%SystemRoot%\\cursors\\aero_working.ani",
+  "%SystemRoot%\\cursors\\aero_busy.ani",
+  "%SystemRoot%\\cursors\\cross_r.cur",
+  "%SystemRoot%\\cursors\\beam_r.cur",
+  "%SystemRoot%\\cursors\\aero_pen.cur",
+  "%SystemRoot%\\cursors\\aero_unavail.cur",
+  "%SystemRoot%\\cursors\\aero_ns.cur",
+  "%SystemRoot%\\cursors\\aero_ew.cur",
+  "%SystemRoot%\\cursors\\aero_nwse.cur",
+  "%SystemRoot%\\cursors\\aero_nesw.cur",
+  "%SystemRoot%\\cursors\\aero_move.cur",
+  "%SystemRoot%\\cursors\\aero_up.cur",
+  "%SystemRoot%\\cursors\\aero_link.cur",
+];
+
 export function buildWindowsRoleDownloadFilename(
   slotId: WindowsRoleSlotId,
-  extension: WindowsRoleExportExtension = "zip"
+  extension: WindowsRoleExportExtension = "zip",
 ) {
   const roleName = getDefaultCursorNameForSlot(slotId);
   return `pointint_${roleName}.${extension}`;
@@ -43,13 +61,13 @@ export function buildWindowsRoleDownloadFilename(
 
 export function buildWindowsRolePackagePath(
   slotId: WindowsRoleSlotId,
-  extension: Exclude<WindowsRoleExportExtension, "zip">
+  extension: Exclude<WindowsRoleExportExtension, "zip">,
 ) {
   return `cursors/${buildWindowsRoleDownloadFilename(slotId, extension)}`;
 }
 
 export function buildWindowsRoleInstallInf(
-  entries: WindowsRoleInstallerEntry[]
+  entries: WindowsRoleInstallerEntry[],
 ) {
   const configuredPaths = new Map<WindowsRoleSlotId, string>();
 
@@ -58,17 +76,23 @@ export function buildWindowsRoleInstallInf(
       entry.slotId,
       `%10%\\Cursors\\Pointint\\${buildWindowsRoleDownloadFilename(
         entry.slotId,
-        entry.extension
-      )}`
+        entry.extension,
+      )}`,
     );
   });
 
-  const schemeValue = WINDOWS_SCHEME_ORDER.map((slotId) =>
-    slotId ? configuredPaths.get(slotId) ?? "" : ""
+  const schemeValue = WINDOWS_SCHEME_ORDER.map((slotId, index) =>
+    slotId
+      ? (configuredPaths.get(slotId) ?? WINDOWS_DEFAULT_SCHEME_PATHS[index])
+      : WINDOWS_DEFAULT_SCHEME_PATHS[index],
   ).join(",");
 
-  const copyFiles = entries
-    .map((entry) => buildWindowsRoleDownloadFilename(entry.slotId, entry.extension))
+  const filenames = entries.map((entry) =>
+    buildWindowsRoleDownloadFilename(entry.slotId, entry.extension),
+  );
+  const copyFiles = filenames.join("\n");
+  const sourceFiles = filenames
+    .map((filename) => `${filename} = 1,\\cursors`)
     .join("\n");
 
   const inf = `; Pointint Windows role cursor set
@@ -86,6 +110,12 @@ AddReg    = Scheme.Reg
 [DestinationDirs]
 Scheme.Cursors = 10,"Cursors\\Pointint"
 
+[SourceDisksNames]
+1 = "Pointint cursor files",,,
+
+[SourceDisksFiles]
+${sourceFiles}
+
 [Scheme.Cursors]
 ${copyFiles}
 
@@ -99,11 +129,11 @@ HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"${schemeValue}"
 }
 
 export function buildWindowsRoleRestoreInf() {
-  const inf = `; Pointint Cursor Restore Default
+  const inf = `; Pointint Cursor Remove
 ; Right-click this file and select "Install".
-; This removes the Pointint cursor scheme.
-; Then go to Settings > Mouse > Additional mouse settings > Pointers
-; and select "None" or "Windows Default" from the Scheme dropdown.
+; This removes the Pointint entry from Windows pointer settings.
+; To switch back to default cursors, open Windows pointer settings
+; and select "Windows Default".
 
 [Version]
 signature="$CHICAGO$"
@@ -121,13 +151,13 @@ HKCU,"Control Panel\\Cursors\\Schemes","Pointint"
 }
 
 export async function buildWindowsRoleMasterZip(
-  entries: WindowsRoleExportEntry[]
+  entries: WindowsRoleExportEntry[],
 ): Promise<Blob> {
   const binaryEntries = await Promise.all(
     entries.map(async (entry) => ({
       name: entry.name,
       data: await blobToUint8Array(entry.blob),
-    }))
+    })),
   );
 
   return buildZipArchive(binaryEntries, "application/zip");
@@ -140,16 +170,20 @@ async function blobToUint8Array(blob: Blob): Promise<Uint8Array<ArrayBuffer>> {
 
   if (typeof blob.stream === "function") {
     const response = new Response(blob.stream());
-    return new Uint8Array(await response.arrayBuffer()) as Uint8Array<ArrayBuffer>;
+    return new Uint8Array(
+      await response.arrayBuffer(),
+    ) as Uint8Array<ArrayBuffer>;
   }
 
   const response = new Response(blob);
-  return new Uint8Array(await response.arrayBuffer()) as Uint8Array<ArrayBuffer>;
+  return new Uint8Array(
+    await response.arrayBuffer(),
+  ) as Uint8Array<ArrayBuffer>;
 }
 
 function buildZipArchive(
   entries: Array<{ name: string; data: Uint8Array<ArrayBuffer> }>,
-  mimeType: string
+  mimeType: string,
 ) {
   const localParts: Uint8Array<ArrayBuffer>[] = [];
   const centralParts: Uint8Array<ArrayBuffer>[] = [];
@@ -258,7 +292,7 @@ function createCrc32Table() {
   for (let i = 0; i < 256; i += 1) {
     let c = i;
     for (let bit = 0; bit < 8; bit += 1) {
-      c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
     table[i] = c >>> 0;
   }
