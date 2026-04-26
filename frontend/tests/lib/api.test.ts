@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { checkCursorHealth, generateAni, generateCursor } from "@/lib/api";
+import {
+  checkCursorHealth,
+  generateAni,
+  generateAniSequence,
+  generateCursor,
+} from "@/lib/api";
 
 describe("generateAni", () => {
   beforeEach(() => {
@@ -9,7 +14,7 @@ describe("generateAni", () => {
 
   it("posts the GIF blob to the ANI export endpoint", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      expect(_url).toContain("/api/generate-ani");
+      expect(new URL(_url).pathname).toBe("/api/generate-ani");
       expect(init?.method).toBe("POST");
 
       const formData = init?.body as FormData;
@@ -49,7 +54,7 @@ describe("generateAni", () => {
 
   it("falls back safely when the filename* header is malformed", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      expect(_url).toContain("/api/generate-ani");
+      expect(new URL(_url).pathname).toBe("/api/generate-ani");
       expect(init?.method).toBe("POST");
 
       return {
@@ -72,6 +77,102 @@ describe("generateAni", () => {
   });
 });
 
+describe("generateAniSequence", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("posts repeated frames with duration and settings and parses response metadata", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(new URL(_url).pathname).toBe("/api/generate-ani-sequence");
+      expect(init?.method).toBe("POST");
+
+      const formData = init?.body as FormData;
+      const frames = formData.getAll("frames");
+      expect(frames).toHaveLength(2);
+      expect(frames[0]).toBeInstanceOf(File);
+      expect(frames[1]).toBeInstanceOf(File);
+      expect((frames[0] as File).name).toBe("frame-a.png");
+      expect((frames[0] as File).type).toBe("image/png");
+      expect((frames[1] as File).name).toBe("frame-b.png");
+      expect((frames[1] as File).type).toBe("image/png");
+      expect(formData.get("duration_ms")).toBe("75");
+      expect(formData.get("cursor_name")).toBe("comet");
+      expect(formData.get("cursor_size")).toBe("64");
+      expect(formData.get("fit_mode")).toBe("cover");
+      expect(formData.get("hotspot_x")).toBe("10");
+      expect(formData.get("hotspot_y")).toBe("14");
+      expect(formData.get("offset_x")).toBe("-3");
+      expect(formData.get("offset_y")).toBe("5");
+      expect(formData.get("scale")).toBe("1.25");
+
+      return {
+        ok: true,
+        headers: new Headers({
+          "content-type": "application/octet-stream",
+          "content-disposition": "attachment; filename*=UTF-8''comet%20trail.ani",
+        }),
+        blob: async () => new Blob(["ani"], { type: "application/octet-stream" }),
+      } as Response;
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const frames = [
+      new File(["frame-a"], "frame-a.png", { type: "image/png" }),
+      new File(["frame-b"], "frame-b.png", { type: "image/png" }),
+    ];
+    const result = await generateAniSequence(frames, {
+      aniName: "comet",
+      durationMs: 75,
+      hotspotX: 10,
+      hotspotY: 14,
+      cursorSize: 64,
+      fitMode: "cover",
+      offsetX: -3,
+      offsetY: 5,
+      scale: 1.25,
+    });
+
+    expect(result.blob).toBeInstanceOf(Blob);
+    expect(result.blob.type).toBe("application/octet-stream");
+    expect(result.contentType).toBe("application/octet-stream");
+    expect(result.filename).toBe("comet trail.ani");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("uploads plain Blob frames without a type as PNG files", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const formData = init?.body as FormData;
+      const frames = formData.getAll("frames");
+
+      expect(frames).toHaveLength(2);
+      expect(frames[0]).toBeInstanceOf(File);
+      expect(frames[1]).toBeInstanceOf(File);
+      expect((frames[0] as File).name).toBe("frame-1.png");
+      expect((frames[0] as File).type).toBe("image/png");
+      expect((frames[1] as File).name).toBe("frame-2.png");
+      expect((frames[1] as File).type).toBe("image/png");
+
+      return {
+        ok: true,
+        headers: new Headers({
+          "content-type": "application/octet-stream",
+        }),
+        blob: async () => new Blob(["ani"], { type: "application/octet-stream" }),
+      } as Response;
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const frame = new Blob(["png-bytes"]);
+    expect(frame.type).toBe("");
+
+    await generateAniSequence([frame, new Blob(["png-bytes-2"])]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("generateCursor", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -79,7 +180,7 @@ describe("generateCursor", () => {
 
   it("can request a raw CUR payload for studio packaging", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      expect(_url).toContain("/api/generate-cursor");
+      expect(new URL(_url).pathname).toBe("/api/generate-cursor");
       expect(init?.method).toBe("POST");
 
       const formData = init?.body as FormData;
