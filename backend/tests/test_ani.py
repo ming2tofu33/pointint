@@ -5,6 +5,7 @@ from httpx import ASGITransport, AsyncClient
 from PIL import Image
 
 from app.main import app
+from app.services import ani as ani_service
 from app.services.ani import create_ani, extract_gif_frames
 
 
@@ -21,6 +22,13 @@ def _make_test_gif() -> bytes:
       loop=0,
       disposal=2,
     )
+    return buffer.getvalue()
+
+
+def _make_test_png(color: tuple[int, int, int], mode: str = "RGB") -> bytes:
+    image = Image.new(mode, (24, 24), color)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
     return buffer.getvalue()
 
 
@@ -87,6 +95,60 @@ def test_create_ani_rejects_empty_frame_sequence():
             scale=1.0,
             offset_x=0,
             offset_y=0,
+        )
+
+
+def test_image_sequence_to_ani_bytes_creates_ani_from_two_png_frames():
+    ani = ani_service.image_sequence_to_ani_bytes(
+        [
+            _make_test_png((255, 0, 0)),
+            _make_test_png((0, 0, 255)),
+        ]
+    )
+
+    assert ani[:4] == b"RIFF"
+    assert ani[8:12] == b"ACON"
+    assert b"anih" in ani
+    assert b"rate" in ani
+    assert b"LIST" in ani
+    assert b"fram" in ani
+    assert ani.count(b"icon") == 2
+
+
+def test_image_sequence_to_ani_bytes_rejects_fewer_than_two_frames():
+    with pytest.raises(ValueError, match="at least two frames"):
+        ani_service.image_sequence_to_ani_bytes([_make_test_png((255, 0, 0))])
+
+
+def test_image_sequence_to_ani_bytes_rejects_invalid_image_bytes():
+    with pytest.raises(ValueError, match="Unsupported or invalid image frame"):
+        ani_service.image_sequence_to_ani_bytes(
+            [
+                _make_test_png((255, 0, 0)),
+                b"not an image",
+            ]
+        )
+
+
+def test_image_sequence_to_ani_bytes_rejects_non_numeric_duration():
+    with pytest.raises(ValueError, match="Frame duration must be a number"):
+        ani_service.image_sequence_to_ani_bytes(
+            [
+                _make_test_png((255, 0, 0)),
+                _make_test_png((0, 0, 255)),
+            ],
+            duration_ms="fast",
+        )
+
+
+def test_image_sequence_to_ani_bytes_rejects_duration_too_large_for_ani_rate():
+    with pytest.raises(ValueError, match="Frame duration is too large"):
+        ani_service.image_sequence_to_ani_bytes(
+            [
+                _make_test_png((255, 0, 0)),
+                _make_test_png((0, 0, 255)),
+            ],
+            duration_ms=100_000_000_000_000,
         )
 
 

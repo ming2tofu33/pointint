@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Iterable
 
-from PIL import Image, ImageSequence
+from PIL import Image, ImageSequence, UnidentifiedImageError
 
 from app.services.cursor import create_cur
 
@@ -18,6 +18,8 @@ FIT_MODE_CHOICES = {"contain", "cover"}
 EDITOR_VIEWPORT_SIZE = 256
 ANI_FLAGS_ICON = 0x00000001
 ANI_FLAGS_SEQUENCE = 0x00000002
+MAX_ANI_RATE = 0xFFFFFFFF
+MAX_ANI_DURATION_MS = (MAX_ANI_RATE * 1000) // 60
 
 
 @dataclass(frozen=True)
@@ -32,7 +34,10 @@ class AniCursorFrame:
     duration_ms: int
 
 
-def extract_gif_frames(gif_bytes: bytes, max_frames: int | None = None) -> list[AniFrame]:
+def extract_gif_frames(
+    gif_bytes: bytes,
+    max_frames: int | None = None,
+) -> list[AniFrame]:
     gif = Image.open(BytesIO(gif_bytes))
     if gif.format != "GIF":
         raise ValueError("Unsupported file type. GIF only.")
@@ -111,7 +116,7 @@ def write_ani_bytes(frames: Iterable[AniCursorFrame]) -> bytes:
         raise ValueError("ANI requires at least one frame.")
 
     width, height = _read_cur_canvas_size(frames[0].cur_bytes)
-    durations = [max(1, frame.duration_ms) for frame in frames]
+    durations = [_validate_frame_duration_ms(frame.duration_ms) for frame in frames]
     rates = [_duration_to_jiffies(duration) for duration in durations]
     default_rate = max(1, _duration_to_jiffies(sum(durations) // len(durations)))
 
@@ -138,6 +143,47 @@ def write_ani_bytes(frames: Iterable[AniCursorFrame]) -> bytes:
         ),
     ]
     return _riff_file(b"ACON", b"".join(chunks))
+
+
+def image_sequence_to_ani_bytes(
+    image_frame_bytes: Iterable[bytes],
+    hotspot_x: int = 0,
+    hotspot_y: int = 0,
+    cursor_size: int = 32,
+    fit_mode: str = "contain",
+    scale: float = 1.0,
+    offset_x: int = 0,
+    offset_y: int = 0,
+    duration_ms: int = DEFAULT_FRAME_DURATION_MS,
+) -> bytes:
+    frame_duration = _validate_frame_duration_ms(duration_ms)
+    cursor_frames: list[AniCursorFrame] = []
+    for index, frame_bytes in enumerate(image_frame_bytes):
+        try:
+            with Image.open(BytesIO(frame_bytes)) as image:
+                cur_bytes = _frame_image_to_cur(
+                    image.convert("RGBA"),
+                    hotspot_x=hotspot_x,
+                    hotspot_y=hotspot_y,
+                    cursor_size=cursor_size,
+                    fit_mode=fit_mode,
+                    scale=scale,
+                    offset_x=offset_x,
+                    offset_y=offset_y,
+                )
+        except (UnidentifiedImageError, OSError) as exc:
+            raise ValueError(
+                f"Unsupported or invalid image frame at index {index}."
+            ) from exc
+
+        cursor_frames.append(
+            AniCursorFrame(cur_bytes=cur_bytes, duration_ms=frame_duration)
+        )
+
+    if len(cursor_frames) < 2:
+        raise ValueError("Image sequence ANI requires at least two frames.")
+
+    return write_ani_bytes(cursor_frames)
 
 
 def gif_to_ani_bytes(
@@ -232,6 +278,19 @@ def _render_frame_image(
 
 def _duration_to_jiffies(duration_ms: int) -> int:
     return max(1, math.ceil(duration_ms * 60 / 1000))
+
+
+def _validate_frame_duration_ms(duration_ms: object) -> int:
+    try:
+        duration = int(duration_ms)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Frame duration must be a number.") from exc
+
+    duration = max(1, duration)
+    if duration > MAX_ANI_DURATION_MS:
+        raise ValueError("Frame duration is too large.")
+
+    return duration
 
 
 def _read_cur_canvas_size(cur_bytes: bytes) -> tuple[int, int]:
