@@ -77,3 +77,10 @@ aliases:
 
 - A Windows `.exe` installer is worth tracking as a later option because the current ZIP + INF flow may be too manual for non-technical users.
 - The installer path should start as a feasibility spike, with code signing, SmartScreen reputation, restore/uninstall behavior, and immediate cursor application treated as core questions.
+
+## 2026-04-27
+
+- `.exe` installer work and background-removal fine-tuning stay deferred options for now.
+- The next Phase 1.5 slice is `ANI Source Maker / GIF Maker`: multiple images become an ordered frame sequence before entering the existing ANI cursor editor.
+- Pointint should borrow the clear source-making flow from tools like Ezgif, but should not become a generic GIF editing toolbox.
+- `Video to ANI` should reuse the same source-maker foundation later, after GIF Maker is stable.

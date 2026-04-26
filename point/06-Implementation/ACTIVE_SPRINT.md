@@ -11,8 +11,8 @@ aliases:
 # ACTIVE SPRINT
 
 > **Sprint Window:** 2026-03-27 onward
-> **Last Updated:** 2026-04-25
-> **Status:** Phase 1 gate closed, Windows installer feasibility spike is now in progress
+> **Last Updated:** 2026-04-27
+> **Status:** Phase 1 gate closed, ANI Source Maker / GIF Maker design is active
 > **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
@@ -39,22 +39,19 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
-| Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice now includes slot-based studio foundation, zone-mapped simulation, and minimum download guard on `normal` |
-| Now | `WIN-INSTALLER-EXE-01` | in progress | Feasibility spike: compare ZIP + INF, PowerShell helper, and signed installer paths before building a public installer |
-| Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
-| Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
-| Option | `BG-FT-01` | option | Evaluate whether cursor-style background removal should move from the current remote HF Space to a custom fine-tuned model path |
+| Now | `ANI-SOURCE-01` | in progress | Design and implementation plan for `ANI Source Maker / GIF Maker`: multiple images -> frame sequence -> existing ANI editor |
+| Next | `Phase 1.5 / Video to ANI` | queued | Add `Video -> FrameSequenceSource` after GIF Maker establishes the source-maker foundation |
+| Option | `WIN-INSTALLER-EXE-01` | deferred option | Keep as a later distribution spike; ZIP + INF RC and wording are already validated for now |
+| Option | `BG-FT-01` | deferred option | Fine-tuning/background-removal quality work is intentionally postponed until source-maker work needs it |
 
 ## Next Session
 
-- Run the `plans/2026-04-26-windows-installer-feasibility-spike` tasks in order
-- Audit the current ZIP + INF output and record exact failure modes
-- Compare ZIP + INF, PowerShell helper, and signed installer paths
-- Decide whether a local PowerShell prototype is worth creating before a signed `.exe`
-- Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
+- Finalize `plans/2026-04-27-ani-source-maker-gif-maker-design`
+- Execute `plans/2026-04-27-ani-source-maker-gif-maker` task-by-task
+- Start with `GIF Maker`: multiple image frames -> ordered `FrameSequenceSource` -> existing ANI editor
+- Keep `Video to ANI` queued until the source-maker foundation is stable
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
-- If background-removal quality becomes a visible trust issue, open `BG-FT-01` as a feasibility spike instead of changing the current HF path blindly
-- If the Windows install flow becomes a visible conversion issue, open `WIN-INSTALLER-EXE-01` as a distribution spike before building a signed installer
+- Keep `BG-FT-01` and `WIN-INSTALLER-EXE-01` as deferred options
 
 ## Blockers
 
@@ -75,6 +72,7 @@ aliases:
 - `Phase 1.5 / ANI-V1-01` advanced: Studio is moving from a single-cursor editor to a slot-based cursor theme editor with `normal / text / link / button`, zone-mapped simulation fallback, and download gated on a populated `normal` slot.
 - `Phase 1.5 / STUDIO-UX-01` complete: Studio now reads as a premium product tool with shared CUR/ANI stage headers, action regions, source-entry cards, inspector cards, and restrained motion/focus polish.
 - `Phase 1.5 / STUDIO-RC-QA-01` complete: multi-slot background-decision gating, Windows package ZIP structure, and mixed CUR/ANI browser download were regression-tested and documented.
+- `WIN-INSTALLER-ZIP-01` complete enough for now: current ZIP + INF output, Windows install failure modes, and user-facing install wording were audited and clarified. `.exe` stays a deferred option.
 
 ## Decision Follow-up
 
