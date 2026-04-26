@@ -7,7 +7,13 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type StudioState } from "@/lib/studioWorkflow";
+import en from "@/i18n/messages/en.json";
+import ko from "@/i18n/messages/ko.json";
+import {
+  WORKFLOW_OPTIONS,
+  isSelectableWorkflow,
+  type StudioState,
+} from "@/lib/studioWorkflow";
 
 const STUDIO_TRANSLATIONS: Record<string, string> = {
   slotRailTitle: "Windows roles",
@@ -46,7 +52,7 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   emptySlotStatic: "Static image",
   emptySlotAnimated: "Animated GIF",
   emptySlotMore: "More options",
-  emptySlotMultiplePngs: "Multiple PNGs",
+  emptySlotMultiplePngs: "GIF Maker",
   emptySlotAiGenerate: "AI generate",
   soon: "Soon",
   themeLight: "Light mode",
@@ -520,6 +526,60 @@ afterEach(() => {
 });
 
 describe("Studio entry gate", () => {
+  it("promotes the multiple-image GIF Maker source while keeping AI generation deferred", () => {
+    const aniOptions = WORKFLOW_OPTIONS.filter((option) => option.family === "ani");
+    const gifMakerOption = WORKFLOW_OPTIONS.find(
+      (option) => option.id === "ani-multiple-pngs"
+    );
+    const aiGenerateOption = WORKFLOW_OPTIONS.find(
+      (option) => option.id === "ani-ai-generate"
+    );
+
+    expect({
+      firstAniWorkflowId: aniOptions[0]?.id,
+      gifMakerAvailability: gifMakerOption?.availability,
+      gifMakerSelectable:
+        gifMakerOption && isSelectableWorkflow(gifMakerOption.id),
+      gifMakerEnglishTitle: en.upload.aniMultiplePngs,
+      gifMakerKoreanTitle: ko.upload.aniMultiplePngs,
+      emptySlotEnglishTitle: en.studio.emptySlotMultiplePngs,
+      emptySlotKoreanTitle: ko.studio.emptySlotMultiplePngs,
+      aiGenerateAvailability: aiGenerateOption?.availability,
+      aiGenerateSelectable:
+        aiGenerateOption && isSelectableWorkflow(aiGenerateOption.id),
+    }).toEqual({
+      firstAniWorkflowId: "ani-multiple-pngs",
+      gifMakerAvailability: "available",
+      gifMakerSelectable: true,
+      gifMakerEnglishTitle: "GIF Maker",
+      gifMakerKoreanTitle: "여러 이미지로 애니메이션 만들기",
+      emptySlotEnglishTitle: "GIF Maker",
+      emptySlotKoreanTitle: "여러 이미지로 애니메이션 만들기",
+      aiGenerateAvailability: "soon",
+      aiGenerateSelectable: false,
+    });
+  });
+
+  it("shows GIF Maker as a non-Soon expanded slot source while AI generation stays Soon", () => {
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "more source options" })
+    );
+
+    expect({
+      gifMakerVisible: Boolean(screen.queryByText("GIF Maker")),
+      aiGenerateVisible: Boolean(screen.queryByText("AI generate")),
+      soonBadgeCount: screen.getAllByText("Soon").length,
+    }).toEqual({
+      gifMakerVisible: true,
+      aiGenerateVisible: true,
+      soonBadgeCount: 1,
+    });
+  });
+
   it("renders the default slot source entry instead of the workflow picker", () => {
     renderStudio("editing", {
       cursor: null,

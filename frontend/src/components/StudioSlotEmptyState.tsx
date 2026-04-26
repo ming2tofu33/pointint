@@ -131,9 +131,8 @@ export default function StudioSlotEmptyState({
               paddingTop: "0.875rem",
             }}
           >
-            <SoonSourceRow
+            <AvailableSourceRow
               title={t("emptySlotMultiplePngs")}
-              badge={t("soon")}
             />
             <SoonSourceRow
               title={t("emptySlotAiGenerate")}
@@ -142,6 +141,29 @@ export default function StudioSlotEmptyState({
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function AvailableSourceRow({ title }: { title: string }) {
+  return (
+    <div
+      data-testid="studio-empty-slot-source-gif-maker"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "0.75rem",
+        border:
+          "1px solid color-mix(in srgb, var(--color-accent-primary) 48%, var(--color-border))",
+        borderRadius: "0.75rem",
+        padding: "0.75rem 0.875rem",
+        backgroundColor: "rgba(255,255,255,0.035)",
+      }}
+    >
+      <span style={{ fontSize: "0.8125rem", color: "var(--color-text-primary)" }}>
+        {title}
+      </span>
     </div>
   );
 }

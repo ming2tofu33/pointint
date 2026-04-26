@@ -91,8 +91,8 @@ describe("WorkflowPicker", () => {
       screen.getByRole("button", { name: /ANI GIF.*Available!/i }).disabled
     ).toBe(false);
     expect(
-      screen.getByRole("button", { name: /ANI PNGS.*Soon!/i }).disabled
-    ).toBe(true);
+      screen.getByRole("button", { name: /ANI PNGS.*Available!/i }).disabled
+    ).toBe(false);
     expect(screen.getByRole("button", { name: /ANI AI.*Soon!/i }).disabled).toBe(
       true
     );
