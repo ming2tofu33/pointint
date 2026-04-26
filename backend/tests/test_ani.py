@@ -179,3 +179,138 @@ async def test_generate_ani_route_rejects_non_gif(client: AsyncClient):
     )
 
     assert res.status_code == 400
+
+
+@pytest.mark.anyio
+async def test_generate_ani_route_sanitizes_non_ascii_cursor_name(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-ani",
+        files={"file": ("cursor.gif", _make_test_gif(), "image/gif")},
+        data={"cursor_name": "고양이 cursor"},
+    )
+
+    assert res.status_code == 200
+    assert (
+        res.headers["content-disposition"]
+        == "attachment; filename=pointint-cursor.ani"
+    )
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_returns_ani(client: AsyncClient):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", _make_test_png((0, 0, 255)), "image/png")),
+        ],
+        data={
+            "duration_ms": "125",
+            "hotspot_x": "4",
+            "hotspot_y": "5",
+            "cursor_size": "32",
+            "cursor_name": "sequence cursor",
+            "fit_mode": "contain",
+            "scale": "1",
+            "offset_x": "0",
+            "offset_y": "0",
+        },
+    )
+
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/octet-stream"
+    assert (
+        res.headers["content-disposition"]
+        == "attachment; filename=pointint-sequence cursor.ani"
+    )
+    assert res.content[:4] == b"RIFF"
+    assert res.content[8:12] == b"ACON"
+    assert res.content.count(b"icon") == 2
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_sanitizes_non_ascii_cursor_name(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", _make_test_png((0, 0, 255)), "image/png")),
+        ],
+        data={"cursor_name": "고양이 cursor"},
+    )
+
+    assert res.status_code == 200
+    assert (
+        res.headers["content-disposition"]
+        == "attachment; filename=pointint-cursor.ani"
+    )
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_rejects_one_frame(client: AsyncClient):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+        ],
+        data={"duration_ms": "100"},
+    )
+
+    assert res.status_code == 400
+    assert "at least two frames" in res.json()["detail"]
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_rejects_png_bytes_with_text_plain(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", _make_test_png((0, 0, 255)), "text/plain")),
+        ],
+        data={"duration_ms": "100"},
+    )
+
+    assert res.status_code == 400
+    assert "Unsupported frame content type" in res.json()["detail"]
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_rejects_non_image_frame(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", b"not an image", "image/png")),
+        ],
+        data={"duration_ms": "100"},
+    )
+
+    assert res.status_code == 400
+    assert "Unsupported or invalid image frame" in res.json()["detail"]
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_rejects_too_many_frames(
+    client: AsyncClient,
+):
+    frame = _make_test_png((255, 0, 0))
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", (f"frame-{index}.png", frame, "image/png"))
+            for index in range(65)
+        ],
+        data={"duration_ms": "100"},
+    )
+
+    assert res.status_code == 400
+    assert "up to 64 frames" in res.json()["detail"]
