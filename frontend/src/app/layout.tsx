@@ -17,6 +17,9 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: "https://pointtint.com",
     },
+    icons: {
+      icon: "/favicon.ico",
+    },
     robots: { index: true, follow: true },
     openGraph: {
       title: t("title"),
