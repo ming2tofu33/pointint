@@ -49,6 +49,62 @@ The current ZIP + INF flow works, but it still asks users to extract files, inst
 
 **Expected Output:** A short `Current Package Findings` section in this document.
 
+## Current Package Findings
+
+> **Status:** audited on 2026-04-26
+
+### ZIP structure
+
+- The full-set download is intentionally flat at the package root plus one cursor folder:
+  - `install.inf`
+  - `restore-default.inf`
+  - `cursors/pointint_*.cur`
+  - `cursors/pointint_*.ani`
+- This is the right structure for the current INF because `[SourceDisksFiles]` points each cursor file to `1,\cursors`.
+- The current structure avoids the earlier nested-extraction problem where Windows asked for `pointint_arrow.cur` even though the file was inside a subfolder.
+
+### INF install behavior
+
+- `install.inf` uses:
+  - `[DefaultInstall]`
+  - `CopyFiles = Scheme.Cursors`
+  - `AddReg = Scheme.Reg`
+  - `[DestinationDirs] Scheme.Cursors = 10,"Cursors\Pointint"`
+  - `[SourceDisksFiles] pointint_*.cur = 1,\cursors`
+- This should copy bundled cursor files into `%SystemRoot%\Cursors\Pointint` and register a `Pointint` pointer scheme under `HKCU\Control Panel\Cursors\Schemes`.
+- The INF does not apply the cursor scheme immediately. It only registers the scheme. The user still has to open Windows pointer settings and select `Pointint`.
+- Unconfigured roles are filled with Windows default cursor paths in the scheme string. This is correct for partial sets, but the user may not understand why some roles stay visually default.
+
+### Restore behavior
+
+- `restore-default.inf` currently deletes the `Pointint` scheme registration with `DelReg`.
+- It does not switch the active cursor scheme back to Windows Default.
+- It does not delete copied files from `%SystemRoot%\Cursors\Pointint`.
+- Current copy that says "restore the default cursor" is potentially misleading. Safer wording: "Remove the Pointint pointer set from the list. If it is currently active, switch to Windows Default in pointer settings first or after running this file."
+
+### Failure risks
+
+- If the user runs `install.inf` before extracting the ZIP, Windows may not find files under `cursors/`.
+- If Windows blocks or hides the `Install` context menu, the user may not know what to do next.
+- If the user expects install to apply immediately, the workflow feels broken because the scheme only appears in settings.
+- If the user runs `restore-default.inf` while `Pointint` is active, the active cursor values may not reset automatically.
+- If the user lacks permission to copy into `%SystemRoot%\Cursors\Pointint`, the copy step may fail or prompt unexpectedly.
+- The Korean and English product copy still contains "one-click installer" style language in some places. That overpromises the current ZIP + INF flow.
+
+### Copy audit
+
+- Keep the term `Scheme` in English copy because it matches the Windows UI.
+- In Korean copy, use `구성표(커서 세트)` on first mention instead of only `구성표`.
+- Replace "one-click installer" claims with "Windows install guide" or "Windows-ready install files" until an actual helper installer exists.
+- Restore copy should say "Pointint 항목 제거" rather than "기본 커서 복원" unless we implement immediate active-scheme reset.
+
+### References checked
+
+- Microsoft Learn: INF `DefaultInstall` supports `CopyFiles` and `AddReg` for install sections.
+- Microsoft Learn: INF `DestinationDirs` controls the target directory for copied files.
+- Microsoft Learn: INF `SourceDisksFiles` names the source files and their package subdirectories.
+- Microsoft Learn: INF `CopyFiles` requires source path information through `SourceDisksNames` and `SourceDisksFiles`.
+
 ## Task 2: Compare Installer Paths
 
 **Files:**
