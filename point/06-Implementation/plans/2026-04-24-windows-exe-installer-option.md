@@ -1,8 +1,10 @@
 # Windows EXE Installer Option
 
-> **Status:** option spike
+> **Status:** promoted to active spike
 > **Date:** 2026-04-24
 > **Type:** sprint option
+
+> **Active Plan:** [[2026-04-26-windows-installer-feasibility-spike]]
 
 ## Goal
 
@@ -86,5 +88,5 @@ Short term:
 
 Medium term:
 
-- Open `WIN-INSTALLER-EXE-01` if install friction shows up during real testing.
+- `WIN-INSTALLER-EXE-01` opened on 2026-04-26 because ZIP + INF now works, but install friction remains the next conversion risk.
 - Treat code signing and SmartScreen as first-class requirements, not late polish.

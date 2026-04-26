@@ -12,7 +12,7 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-04-25
-> **Status:** Phase 1 gate closed, Phase 1.5 ANI v1 + Studio RC QA hardening are now in progress
+> **Status:** Phase 1 gate closed, Windows installer feasibility spike is now in progress
 > **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
@@ -40,18 +40,17 @@ aliases:
 | Lane | Task | Status | Note |
 |---|---|---|---|
 | Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice now includes slot-based studio foundation, zone-mapped simulation, and minimum download guard on `normal` |
-| Now | `Phase 1.5 / STUDIO-RC-QA-01` | in progress | Lock multi-slot background-decision gating, Windows package regression coverage, and browser RC checklist before the next feature spike |
+| Now | `WIN-INSTALLER-EXE-01` | in progress | Feasibility spike: compare ZIP + INF, PowerShell helper, and signed installer paths before building a public installer |
 | Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
 | Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
 | Option | `BG-FT-01` | option | Evaluate whether cursor-style background removal should move from the current remote HF Space to a custom fine-tuned model path |
-| Option | `WIN-INSTALLER-EXE-01` | option | Evaluate a Windows `.exe` installer for one-step cursor set install, apply, restore, and uninstall |
 
 ## Next Session
 
-- Verify GIF upload -> ANI export manually in the refreshed studio against a few real samples
-- Run the `plans/2026-04-25-studio-rc-qa-hardening` checklist against all 11 Windows roles with mixed static and animated slots
-- Check slot-based simulation behavior with mixed `CUR` and `ANI` slots in real browser use
-- Validate focus, spacing, and inspector readability in a real browser pass now that the shared shell hierarchy is landed
+- Run the `plans/2026-04-26-windows-installer-feasibility-spike` tasks in order
+- Audit the current ZIP + INF output and record exact failure modes
+- Compare ZIP + INF, PowerShell helper, and signed installer paths
+- Decide whether a local PowerShell prototype is worth creating before a signed `.exe`
 - Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 - If background-removal quality becomes a visible trust issue, open `BG-FT-01` as a feasibility spike instead of changing the current HF path blindly
@@ -75,6 +74,7 @@ aliases:
 - `Phase 1.5 / ANI-V1-01` in progress: `ANI > Animated GIF` is selectable, GIF upload enters a dedicated ANI editor shell, shared framing/hotspot controls are reused, and the backend now exposes a `.ani` export route for GIF-first ANI creation.
 - `Phase 1.5 / ANI-V1-01` advanced: Studio is moving from a single-cursor editor to a slot-based cursor theme editor with `normal / text / link / button`, zone-mapped simulation fallback, and download gated on a populated `normal` slot.
 - `Phase 1.5 / STUDIO-UX-01` complete: Studio now reads as a premium product tool with shared CUR/ANI stage headers, action regions, source-entry cards, inspector cards, and restrained motion/focus polish.
+- `Phase 1.5 / STUDIO-RC-QA-01` complete: multi-slot background-decision gating, Windows package ZIP structure, and mixed CUR/ANI browser download were regression-tested and documented.
 
 ## Decision Follow-up
 
@@ -115,6 +115,7 @@ aliases:
 | `plans/2026-04-15-background-removal-finetune-option.md` | Background-removal fine-tune feasibility option | synced |
 | `plans/2026-04-24-windows-exe-installer-option.md` | Windows installer feasibility option | synced |
 | `plans/2026-04-25-studio-rc-qa-hardening.md` | Studio RC QA checklist and regression coverage scope | synced |
+| `plans/2026-04-26-windows-installer-feasibility-spike.md` | Windows installer feasibility spike plan | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
