@@ -53,6 +53,10 @@ describe("studioDownload", () => {
     ]);
 
     expect(inf).toContain("[DefaultInstall]");
+    expect(inf).toContain(
+      '; Extract the ZIP first, then right-click this file and select "Install".',
+    );
+    expect(inf).toContain("; This registers the Pointint pointer set.");
     expect(inf).toContain("CopyFiles = Scheme.Cursors");
     expect(inf).toContain('Scheme.Cursors = 10,"Cursors\\Pointint"');
     expect(inf).toContain('1 = "Pointint cursor files",,,');
@@ -89,11 +93,13 @@ describe("studioDownload", () => {
   it("generates a restore INF that removes the Pointint scheme", () => {
     const inf = buildWindowsRoleRestoreInf();
 
-    expect(inf).toContain("; Pointint Cursor Remove");
+    expect(inf).toContain("; Pointint pointer set removal");
     expect(inf).toContain(
-      "; This removes the Pointint entry from Windows pointer settings.",
+      "; This removes the Pointint pointer set entry from Windows pointer settings.",
     );
-    expect(inf).toContain('; and select "Windows Default".');
+    expect(inf).toContain(
+      '; and select "Windows Default" or another pointer set.',
+    );
     expect(inf).toContain("[DefaultInstall]");
     expect(inf).toContain("DelReg = Restore.Reg");
     expect(inf).toContain('HKCU,"Control Panel\\Cursors\\Schemes","Pointint"');

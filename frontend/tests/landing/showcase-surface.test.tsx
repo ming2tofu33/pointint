@@ -43,23 +43,24 @@ const showcaseSampleCopy = [
 const copy = {
   eyebrow: "Showcase",
   title: "Showcase",
-  sub: "First-party sample cursor bundles you can download and install immediately.",
+  sub: "First-party sample cursor bundles you can download and register in Windows.",
   installStripTitle: "Install summary",
   installStripBody:
-    "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later.",
+    "Each bundle includes .cur files, install.inf, and restore-default.inf so you can register the pointer set on Windows and remove it later.",
   installStripCta: "View install guide",
   studioCta: "Open studio",
   installGuide: {
     eyebrow: "Install guide",
     title: "Install your sample cursor bundle",
     close: "Close",
-    step1: "Unzip the downloaded file.",
+    step1: "Extract the downloaded ZIP.",
     step2: 'Right-click install.inf and choose "Install".',
     step3: 'Open Settings > Mouse > Additional mouse settings > Pointers tab.',
-    step4: 'Select "Pointint" from the Scheme dropdown and click OK.',
-    restore: "To restore the default cursor, right-click",
+    step4: 'Select "Pointint" from the Scheme dropdown, then click OK.',
+    restore: "To remove the Pointint pointer set from the list, right-click",
     restoreFile: "restore-default.inf",
-    restoreAction: '"Install"',
+    restoreAction:
+      '"Install". If Pointint is active, switch to Windows Default in pointer settings.',
     gotIt: "Got it",
   },
   samples: showcaseSamples.map((sample, index) => ({
@@ -81,12 +82,12 @@ describe("ShowcaseSurface", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Showcase" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "First-party sample cursor bundles you can download and install immediately."
+        "First-party sample cursor bundles you can download and register in Windows."
       )
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later."
+        "Each bundle includes .cur files, install.inf, and restore-default.inf so you can register the pointer set on Windows and remove it later."
       )
     ).toBeInTheDocument();
 
@@ -121,7 +122,7 @@ describe("ShowcaseSurface", () => {
     expect(
       screen.getByRole("heading", { level: 3, name: "Install your sample cursor bundle" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Unzip the downloaded file.")).toBeInTheDocument();
+    expect(screen.getByText("Extract the downloaded ZIP.")).toBeInTheDocument();
     expect(screen.getByText("restore-default.inf")).toBeInTheDocument();
     expect(trackEventMock).toHaveBeenCalledWith("install_guide_opened", {
       source: "showcase_surface",

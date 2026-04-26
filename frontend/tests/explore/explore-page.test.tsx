@@ -10,10 +10,10 @@ const messages = {
   landing: {
     showcaseEyebrow: "Showcase",
     showcaseTitle: "Showcase",
-    showcaseSub: "First-party sample cursor bundles you can download and install immediately.",
+    showcaseSub: "First-party sample cursor bundles you can download and register in Windows.",
     showcaseStripTitle: "Install summary",
     showcaseStripBody:
-      "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later.",
+      "Each bundle includes .cur files, install.inf, and restore-default.inf so you can register the pointer set on Windows and remove it later.",
     showcaseStripCta: "View install guide",
     showcaseStudioCta: "Open studio",
     showcaseGuideEyebrow: "Install guide",
@@ -34,14 +34,15 @@ const messages = {
   },
   guide: {
     close: "Close",
-    step1: "Unzip the downloaded file",
+    step1: "Extract the downloaded ZIP",
     step2: 'Right-click install.inf and choose "Install".',
     step3:
       "Open Settings > Mouse > Additional mouse settings > Pointers tab.",
-    step4: 'Select "Pointint" from the Scheme dropdown and click OK.',
-    restore: "To restore the default cursor, right-click",
+    step4: 'Select "Pointint" from the Scheme dropdown, then click OK.',
+    restore: "To remove the Pointint pointer set from the list, right-click",
     restoreFile: "restore-default.inf",
-    restoreAction: '"Install"',
+    restoreAction:
+      '"Install". If Pointint is active, switch to Windows Default in pointer settings.',
     gotIt: "Got it",
   },
 } as const;

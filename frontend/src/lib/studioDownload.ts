@@ -95,9 +95,10 @@ export function buildWindowsRoleInstallInf(
     .map((filename) => `${filename} = 1,\\cursors`)
     .join("\n");
 
-  const inf = `; Pointint Windows role cursor set
-; Right-click this file and select "Install".
-; Then go to Settings > Mouse > Additional mouse settings > Pointers
+  const inf = `; Pointint Windows cursor set
+; Extract the ZIP first, then right-click this file and select "Install".
+; This registers the Pointint pointer set.
+; To use it, open Settings > Mouse > Additional mouse settings > Pointers
 ; and select "Pointint" from the Scheme dropdown.
 
 [Version]
@@ -129,11 +130,11 @@ HKCU,"Control Panel\\Cursors\\Schemes","Pointint",,"${schemeValue}"
 }
 
 export function buildWindowsRoleRestoreInf() {
-  const inf = `; Pointint Cursor Remove
+  const inf = `; Pointint pointer set removal
 ; Right-click this file and select "Install".
-; This removes the Pointint entry from Windows pointer settings.
-; To switch back to default cursors, open Windows pointer settings
-; and select "Windows Default".
+; This removes the Pointint pointer set entry from Windows pointer settings.
+; If Pointint is currently active, open Windows pointer settings
+; and select "Windows Default" or another pointer set.
 
 [Version]
 signature="$CHICAGO$"

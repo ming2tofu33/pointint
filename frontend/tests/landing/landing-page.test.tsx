@@ -56,31 +56,32 @@ const copy = {
       },
       {
         title: "Download",
-        sub: "Get your .cur file with one-click Windows installer.",
+        sub: "Get Windows-ready cursor files with an install guide.",
       },
     ],
   },
   showcase: {
     eyebrow: "Showcase",
     title: "Showcase",
-    sub: "First-party sample cursor bundles you can download and install immediately.",
+    sub: "First-party sample cursor bundles you can download and register in Windows.",
     installStripTitle: "Install summary",
     installStripBody:
-      "Each bundle includes .cur, install.inf, and restore-default.inf so you can install it on Windows and roll back later.",
+      "Each bundle includes .cur files, install.inf, and restore-default.inf so you can register the pointer set on Windows and remove it later.",
     installStripCta: "View install guide",
     studioCta: "Open studio",
     installGuide: {
       eyebrow: "Install guide",
       title: "Install your sample cursor bundle",
       close: "Close",
-      step1: "Unzip the downloaded file.",
+      step1: "Extract the downloaded ZIP.",
       step2: 'Right-click install.inf and choose "Install".',
       step3:
         'Open Settings > Mouse > Additional mouse settings > Pointers tab.',
-      step4: 'Select "Pointint" from the Scheme dropdown and click OK.',
-      restore: "To restore the default cursor, right-click",
+      step4: 'Select "Pointint" from the Scheme dropdown, then click OK.',
+      restore: "To remove the Pointint pointer set from the list, right-click",
       restoreFile: "restore-default.inf",
-      restoreAction: '"Install"',
+      restoreAction:
+        '"Install". If Pointint is active, switch to Windows Default in pointer settings.',
       gotIt: "Got it",
     },
     samples: showcaseSamples.map((sample, index) => ({
