@@ -101,6 +101,9 @@ describe("ShowcaseSurface", () => {
       "/studio"
     );
 
+    bundleLinks[0].addEventListener("click", (event) => {
+      event.preventDefault();
+    });
     fireEvent.click(bundleLinks[0]);
 
     expect(trackEventMock).toHaveBeenCalledWith("sample_bundle_downloaded", {

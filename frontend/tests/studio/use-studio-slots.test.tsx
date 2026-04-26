@@ -255,6 +255,110 @@ describe("useStudio slot contract", () => {
     buildWindowsRoleMasterZipSpy.mockRestore();
   });
 
+  it("keeps full-set export blocked until every pending static slot is resolved", async () => {
+    const buildWindowsRoleMasterZipSpy = vi
+      .spyOn(studioDownload, "buildWindowsRoleMasterZip")
+      .mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+        const element = originalCreateElement(tagName, options);
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
+        return element;
+      });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useStudio());
+    const normalFile = new File(["normal"], "normal.png", {
+      type: "image/png",
+    });
+    const textFile = new File(["text"], "text.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(normalFile);
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotStaticFile(textFile);
+      await Promise.resolve();
+    });
+
+    expect(result.current.pendingBackgroundRemovalSlotIds.sort()).toEqual([
+      "normalSelect",
+      "textSelect",
+    ]);
+    expect(result.current.canDownloadAll).toBe(false);
+
+    await act(async () => {
+      await result.current.downloadAll();
+    });
+
+    expect(buildWindowsRoleMasterZipSpy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    expect(result.current.pendingBackgroundRemovalSlotIds).toEqual([
+      "normalSelect",
+    ]);
+    expect(result.current.canDownloadAll).toBe(false);
+
+    act(() => {
+      result.current.selectSlot("normalSelect");
+    });
+
+    expect(result.current.state).toBe("uploaded");
+
+    await act(async () => {
+      await result.current.skipBgRemoval();
+    });
+
+    expect(result.current.pendingBackgroundRemovalSlotIds).toEqual([]);
+    expect(result.current.canDownloadAll).toBe(true);
+
+    await act(async () => {
+      await result.current.downloadAll();
+    });
+
+    expect(buildWindowsRoleMasterZipSpy).toHaveBeenCalledTimes(1);
+    expect(buildWindowsRoleMasterZipSpy.mock.calls[0][0]).toEqual([
+      {
+        name: studioDownload.buildWindowsRolePackagePath("normalSelect", "cur"),
+        blob: expect.any(Blob),
+      },
+      {
+        name: studioDownload.buildWindowsRolePackagePath("textSelect", "cur"),
+        blob: expect.any(Blob),
+      },
+      {
+        name: "install.inf",
+        blob: expect.any(Blob),
+      },
+      {
+        name: "restore-default.inf",
+        blob: expect.any(Blob),
+      },
+    ]);
+    expect(createdAnchors[0]?.download).toBe("pointint-windows-roles.zip");
+
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
+    buildWindowsRoleMasterZipSpy.mockRestore();
+  });
+
   it("downloads the current static slot as a raw CUR file", async () => {
     const createdAnchors: HTMLAnchorElement[] = [];
     const originalCreateElement = document.createElement.bind(document);

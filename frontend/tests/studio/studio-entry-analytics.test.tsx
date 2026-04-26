@@ -73,6 +73,7 @@ vi.mock("@/components/NameInput", () => ({
 }));
 
 import StudioPage from "@/app/studio/page";
+import { createCursorThemeProject } from "@/lib/cursorThemeProject";
 
 describe("StudioPage analytics", () => {
   beforeEach(() => {
@@ -81,93 +82,10 @@ describe("StudioPage analytics", () => {
     replaceMock.mockReset();
 
     useStudioMock.mockReturnValue({
-      state: "workflow-pick",
-      project: {
-        slots: {
-          normal: {
-            id: "normal",
-            kind: "static",
-            asset: {
-              fileName: null,
-              originalUrl: null,
-              previewUrl: null,
-            },
-            editing: {
-              cursorName: "normal",
-              cursorSize: 32,
-              fitMode: "contain",
-              hotspotMode: "auto",
-              hotspotX: 0,
-              hotspotY: 0,
-              offsetX: 0,
-              offsetY: 0,
-              scale: 1,
-            },
-          },
-          text: {
-            id: "text",
-            kind: "static",
-            asset: {
-              fileName: null,
-              originalUrl: null,
-              previewUrl: null,
-            },
-            editing: {
-              cursorName: "text",
-              cursorSize: 32,
-              fitMode: "contain",
-              hotspotMode: "auto",
-              hotspotX: 0,
-              hotspotY: 0,
-              offsetX: 0,
-              offsetY: 0,
-              scale: 1,
-            },
-          },
-          link: {
-            id: "link",
-            kind: "static",
-            asset: {
-              fileName: null,
-              originalUrl: null,
-              previewUrl: null,
-            },
-            editing: {
-              cursorName: "link",
-              cursorSize: 32,
-              fitMode: "contain",
-              hotspotMode: "auto",
-              hotspotX: 0,
-              hotspotY: 0,
-              offsetX: 0,
-              offsetY: 0,
-              scale: 1,
-            },
-          },
-          button: {
-            id: "button",
-            kind: "static",
-            asset: {
-              fileName: null,
-              originalUrl: null,
-              previewUrl: null,
-            },
-            editing: {
-              cursorName: "button",
-              cursorSize: 32,
-              fitMode: "contain",
-              hotspotMode: "auto",
-              hotspotX: 0,
-              hotspotY: 0,
-              offsetX: 0,
-              offsetY: 0,
-              scale: 1,
-            },
-          },
-        },
-      },
-      selectedSlotId: "normal",
-      editingSlotId: "normal",
+      state: "editing",
+      project: createCursorThemeProject(),
+      selectedSlotId: "normalSelect",
+      editingSlotId: "normalSelect",
       cursor: null,
       ani: null,
       error: null,
@@ -175,8 +93,10 @@ describe("StudioPage analytics", () => {
       showGuide: false,
       showOriginal: false,
       previewUrl: null,
+      pendingBackgroundRemovalSlotIds: [],
       selectFile: vi.fn(),
-      selectWorkflow: vi.fn(),
+      selectAniFile: vi.fn(),
+      selectSlot: vi.fn(),
       selectSelectedSlotStaticFile: vi.fn(),
       selectSelectedSlotAnimatedFile: vi.fn(),
       processBgRemoval: vi.fn(),
@@ -188,9 +108,18 @@ describe("StudioPage analytics", () => {
       setScale: vi.fn(),
       setFitMode: vi.fn(),
       setCursorSize: vi.fn(),
+      setAniCursorSize: vi.fn(),
       setCursorName: vi.fn(),
       recommendHotspot: vi.fn(),
+      endContinuousHistoryAction: vi.fn(),
+      undo: vi.fn(),
+      redo: vi.fn(),
+      canUndo: false,
+      canRedo: false,
       reset: vi.fn(),
+      canDownloadAll: false,
+      canDownload: false,
+      downloadAll: vi.fn(),
       download: vi.fn(),
       closeGuide: vi.fn(),
     });

@@ -1,6 +1,7 @@
 import {
   buildWindowsRoleInstallInf,
   buildWindowsRoleDownloadFilename,
+  buildWindowsRoleMasterZip,
   buildWindowsRolePackagePath,
   buildWindowsRoleRestoreInf,
 } from "@/lib/studioDownload";
@@ -97,4 +98,43 @@ describe("studioDownload", () => {
     expect(inf).toContain("DelReg = Restore.Reg");
     expect(inf).toContain('HKCU,"Control Panel\\Cursors\\Schemes","Pointint"');
   });
+
+  it("builds a flat Windows package zip with cursor and installer entries", async () => {
+    const zip = await buildWindowsRoleMasterZip([
+      {
+        name: "cursors/pointint_arrow.cur",
+        blob: new Blob(["arrow"], { type: "application/octet-stream" }),
+      },
+      {
+        name: "cursors/pointint_ibeam.cur",
+        blob: new Blob(["ibeam"], { type: "application/octet-stream" }),
+      },
+      {
+        name: "install.inf",
+        blob: new Blob(["install"], { type: "text/plain" }),
+      },
+      {
+        name: "restore-default.inf",
+        blob: new Blob(["restore"], { type: "text/plain" }),
+      },
+    ]);
+
+    const zipBytes = new Uint8Array(await readBlobAsArrayBuffer(zip));
+    const zipText = new TextDecoder().decode(zipBytes);
+
+    expect(zip.type).toBe("application/zip");
+    expect(zipText).toContain("cursors/pointint_arrow.cur");
+    expect(zipText).toContain("cursors/pointint_ibeam.cur");
+    expect(zipText).toContain("install.inf");
+    expect(zipText).toContain("restore-default.inf");
+  });
 });
+
+function readBlobAsArrayBuffer(blob: Blob) {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(blob);
+  });
+}

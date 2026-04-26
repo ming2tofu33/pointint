@@ -116,36 +116,21 @@ describe("studio analytics events", () => {
     global.fetch = originalFetch;
   });
 
-  it("tracks workflow selection from the hook", () => {
-    const { result } = renderHook(() => useStudio());
-
-    act(() => {
-      result.current.selectWorkflow("cur-static-image");
-    });
-
-    expect(trackEventMock).toHaveBeenCalledWith("workflow_selected", {
-      workflow_id: "cur-static-image",
-    });
-  });
-
   it("tracks download completion after a successful cursor export", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
     const appendChildSpy = vi.spyOn(document.body, "appendChild");
     const removeChildSpy = vi.spyOn(document.body, "removeChild");
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
 
-    act(() => {
-      result.current.selectFile(file);
+    await act(async () => {
+      await result.current.selectFile(file);
     });
 
     await act(async () => {
       await result.current.skipBgRemoval();
-    });
-
-    await act(async () => {
-      vi.advanceTimersByTime(200);
-      await Promise.resolve();
-      await Promise.resolve();
     });
 
     await act(async () => {
@@ -159,5 +144,7 @@ describe("studio analytics events", () => {
     });
     expect(appendChildSpy).toHaveBeenCalled();
     expect(removeChildSpy).toHaveBeenCalled();
+
+    clickSpy.mockRestore();
   });
 });

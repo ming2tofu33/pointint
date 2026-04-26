@@ -11,8 +11,8 @@ aliases:
 # ACTIVE SPRINT
 
 > **Sprint Window:** 2026-03-27 onward
-> **Last Updated:** 2026-04-15
-> **Status:** Phase 1 gate closed, Phase 1.5 ANI v1 is now in progress
+> **Last Updated:** 2026-04-25
+> **Status:** Phase 1 gate closed, Phase 1.5 ANI v1 + Studio RC QA hardening are now in progress
 > **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
@@ -40,6 +40,7 @@ aliases:
 | Lane | Task | Status | Note |
 |---|---|---|---|
 | Now | `Phase 1.5 / ANI-V1-01` | in progress | GIF-first ANI slice now includes slot-based studio foundation, zone-mapped simulation, and minimum download guard on `normal` |
+| Now | `Phase 1.5 / STUDIO-RC-QA-01` | in progress | Lock multi-slot background-decision gating, Windows package regression coverage, and browser RC checklist before the next feature spike |
 | Next | `ANI-V1-02` | queued | Validate end-to-end export quality and close parity gaps if any remain |
 | Watch | `Phase 1.5 / Video input` | queued | Add `Video -> FrameSequenceSource` after GIF path is stable |
 | Option | `BG-FT-01` | option | Evaluate whether cursor-style background removal should move from the current remote HF Space to a custom fine-tuned model path |
@@ -48,6 +49,7 @@ aliases:
 ## Next Session
 
 - Verify GIF upload -> ANI export manually in the refreshed studio against a few real samples
+- Run the `plans/2026-04-25-studio-rc-qa-hardening` checklist against all 11 Windows roles with mixed static and animated slots
 - Check slot-based simulation behavior with mixed `CUR` and `ANI` slots in real browser use
 - Validate focus, spacing, and inspector readability in a real browser pass now that the shared shell hierarchy is landed
 - Decide whether ANI v1 needs a second trust/polish pass before opening `Video` input
@@ -112,6 +114,7 @@ aliases:
 | `plans/2026-04-13-studio-ui-ux-structure-refresh.md` | Studio premium-tool shell refresh implementation plan | synced |
 | `plans/2026-04-15-background-removal-finetune-option.md` | Background-removal fine-tune feasibility option | synced |
 | `plans/2026-04-24-windows-exe-installer-option.md` | Windows installer feasibility option | synced |
+| `plans/2026-04-25-studio-rc-qa-hardening.md` | Studio RC QA checklist and regression coverage scope | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
