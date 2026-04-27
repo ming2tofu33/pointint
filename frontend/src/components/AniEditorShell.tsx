@@ -137,6 +137,17 @@ export default function AniEditorShell({
   const activeImageUrl = selectedAniFrame?.url ?? imageUrl;
   const supportsFrameEditScope = ani?.sourceKind === "image-sequence";
   const activeEditScope = supportsFrameEditScope ? editScope : "all-frames";
+  const activeEdit =
+    ani == null
+      ? {
+          fitMode: "contain" as const,
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+        }
+      : activeEditScope === "all-frames"
+        ? ani.globalEdit
+        : ani;
   const handleOffsetChange = (x: number, y: number) =>
     onOffsetChange(x, y, activeEditScope);
   const handleScaleChange = (scale: number) =>
@@ -254,10 +265,10 @@ export default function AniEditorShell({
                       imageUrl={activeImageUrl}
                       sourceWidth={ani.sourceWidth}
                       sourceHeight={ani.sourceHeight}
-                      fitMode={ani.fitMode}
-                      offsetX={ani.offsetX}
-                      offsetY={ani.offsetY}
-                      scale={ani.scale}
+                      fitMode={activeEdit.fitMode}
+                      offsetX={activeEdit.offsetX}
+                      offsetY={activeEdit.offsetY}
+                      scale={activeEdit.scale}
                       hotspotX={ani.hotspotX}
                       hotspotY={ani.hotspotY}
                       onOffsetChange={handleOffsetChange}
@@ -413,10 +424,12 @@ export default function AniEditorShell({
                 imageUrl={selectedSlotBound && ani ? activeImageUrl : null}
                 sourceWidth={selectedSlotBound && ani ? ani.sourceWidth : 0}
                 sourceHeight={selectedSlotBound && ani ? ani.sourceHeight : 0}
-                fitMode={selectedSlotBound && ani ? ani.fitMode : "contain"}
-                offsetX={selectedSlotBound && ani ? ani.offsetX : 0}
-                offsetY={selectedSlotBound && ani ? ani.offsetY : 0}
-                scale={selectedSlotBound && ani ? ani.scale : 1}
+                fitMode={
+                  selectedSlotBound && ani ? activeEdit.fitMode : "contain"
+                }
+                offsetX={selectedSlotBound && ani ? activeEdit.offsetX : 0}
+                offsetY={selectedSlotBound && ani ? activeEdit.offsetY : 0}
+                scale={selectedSlotBound && ani ? activeEdit.scale : 1}
                 cursorSize={selectedSlotBound && ani ? ani.cursorSize : 32}
                 hotspotX={selectedSlotBound && ani ? ani.hotspotX : 0}
                 hotspotY={selectedSlotBound && ani ? ani.hotspotY : 0}
@@ -479,10 +492,10 @@ export default function AniEditorShell({
                     imageUrl={activeImageUrl}
                     sourceWidth={ani.sourceWidth}
                     sourceHeight={ani.sourceHeight}
-                    fitMode={ani.fitMode}
-                    offsetX={ani.offsetX}
-                    offsetY={ani.offsetY}
-                    scale={ani.scale}
+                    fitMode={activeEdit.fitMode}
+                    offsetX={activeEdit.offsetX}
+                    offsetY={activeEdit.offsetY}
+                    scale={activeEdit.scale}
                     viewportSize={ani.cursorSize}
                     alt={tp("lightPreview")}
                   />
@@ -495,10 +508,10 @@ export default function AniEditorShell({
                     imageUrl={activeImageUrl}
                     sourceWidth={ani.sourceWidth}
                     sourceHeight={ani.sourceHeight}
-                    fitMode={ani.fitMode}
-                    offsetX={ani.offsetX}
-                    offsetY={ani.offsetY}
-                    scale={ani.scale}
+                    fitMode={activeEdit.fitMode}
+                    offsetX={activeEdit.offsetX}
+                    offsetY={activeEdit.offsetY}
+                    scale={activeEdit.scale}
                     viewportSize={ani.cursorSize}
                     alt={tp("darkPreview")}
                   />
@@ -539,7 +552,7 @@ export default function AniEditorShell({
 
               <StudioInspectorSection title={tp("framing")}>
                 <StudioInspectorSegmentedControl
-                  value={ani.fitMode}
+                  value={activeEdit.fitMode}
                   options={["contain", "cover"] as const}
                   onChange={handleFitModeChange}
                   ariaLabel={tp("framing")}
@@ -637,7 +650,7 @@ export default function AniEditorShell({
                   min="0.25"
                   max="3"
                   step="0.05"
-                  value={ani.scale}
+                  value={activeEdit.scale}
                   onChange={(e) => handleScaleChange(Number(e.target.value))}
                   onPointerUp={onEndContinuousHistoryAction}
                   onPointerCancel={onEndContinuousHistoryAction}
@@ -655,7 +668,7 @@ export default function AniEditorShell({
                     marginTop: "0.25rem",
                   }}
                 >
-                  {Math.round(ani.scale * 100)}%
+                  {Math.round(activeEdit.scale * 100)}%
                 </div>
               </StudioInspectorSection>
 
@@ -679,25 +692,25 @@ export default function AniEditorShell({
                   <StudioInspectorNumberField
                     label={tp("offsetX")}
                     aria-label={tp("offsetX")}
-                    value={ani.offsetX}
+                    value={activeEdit.offsetX}
                     step={1}
                     onChange={(event) => {
                       const nextX = Number(event.target.value);
                       handleOffsetChange(
                         Number.isFinite(nextX) ? nextX : 0,
-                        ani.offsetY
+                        activeEdit.offsetY
                       );
                     }}
                   />
                   <StudioInspectorNumberField
                     label={tp("offsetY")}
                     aria-label={tp("offsetY")}
-                    value={ani.offsetY}
+                    value={activeEdit.offsetY}
                     step={1}
                     onChange={(event) => {
                       const nextY = Number(event.target.value);
                       handleOffsetChange(
-                        ani.offsetX,
+                        activeEdit.offsetX,
                         Number.isFinite(nextY) ? nextY : 0
                       );
                     }}

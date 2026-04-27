@@ -869,6 +869,60 @@ describe("Studio entry gate", () => {
     expect(setHotspotMock).toHaveBeenLastCalledWith(9, 18);
   });
 
+  it("preserves the untouched global offset axis when all-frame editing with a selected-frame override", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-2",
+        selectedFrameId: "frame-2",
+        globalEdit: {
+          fitMode: "contain",
+          scale: 1,
+          offsetX: 3,
+          offsetY: -4,
+        },
+        fitMode: "contain",
+        scale: 1,
+        offsetX: 3,
+        offsetY: 20,
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+            editOverride: {
+              offsetY: 20,
+            },
+          },
+        ],
+      },
+    });
+
+    const editScope = screen.getByRole("group", { name: /edit scope/i });
+    expect(
+      within(editScope).getByRole("button", { name: /all frames/i })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText(/offset y/i)).toHaveValue(-4);
+
+    fireEvent.change(screen.getByLabelText(/offset x/i), {
+      target: { value: "12" },
+    });
+
+    expect(setOffsetMock).toHaveBeenLastCalledWith(12, -4, "all-frames");
+    expect(setHotspotMock).not.toHaveBeenCalled();
+  });
+
   it("shows the one-shot background comparison preview after static background removal completes", () => {
     renderStudio("editing", {
       previewUrl: "blob:preview",
