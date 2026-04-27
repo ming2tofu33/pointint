@@ -194,6 +194,9 @@
     "scale": "배율",
     "offsetX": "X 오프셋",
     "offsetY": "Y 오프셋",
+    "editScope": "편집 범위",
+    "allFrames": "전체 프레임",
+    "selectedFrame": "선택한 프레임",
     "center": "중앙"
   },
   "guide": {

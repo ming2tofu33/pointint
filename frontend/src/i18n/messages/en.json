@@ -194,6 +194,9 @@
     "scale": "Scale",
     "offsetX": "Offset X",
     "offsetY": "Offset Y",
+    "editScope": "Edit scope",
+    "allFrames": "All frames",
+    "selectedFrame": "Selected frame",
     "center": "Center"
   },
   "guide": {

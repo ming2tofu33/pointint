@@ -48,6 +48,7 @@ import {
 
 export type CursorSize = ThemeCursorSize;
 export type AniFrameMoveDirection = "previous" | "next";
+export type AniFrameEditScope = "all-frames" | "selected-frame";
 
 const EDITOR_VIEWPORT_SIZE = 256;
 const DEFAULT_ANI_FRAME_EDIT: AniFrameEdit = {
@@ -346,6 +347,30 @@ function areAniFrameEditOverridesEqual(
     left?.offsetX === right?.offsetX &&
     left?.offsetY === right?.offsetY
   );
+}
+
+function syncSelectedAniFrameEditOverride(
+  ani: AniData,
+  editOverride: AniFrameEditOverride
+): AniData {
+  const selectedFrame = getSelectedAniFrame(ani);
+  if (!selectedFrame) {
+    return ani;
+  }
+
+  const nextEditOverride = normalizeAniFrameEditOverride({
+    ...selectedFrame.editOverride,
+    ...editOverride,
+  });
+
+  return syncAniActiveFrame({
+    ...ani,
+    frames: ani.frames.map((frame) =>
+      frame.id === selectedFrame.id
+        ? { ...frame, editOverride: nextEditOverride }
+        : frame
+    ),
+  });
 }
 
 function getSharedAniFrameDurationMs(ani: AniData) {
@@ -1830,7 +1855,11 @@ export function useStudio() {
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
-  const setOffset = useCallback((x: number, y: number) => {
+  const setOffset = useCallback((
+    x: number,
+    y: number,
+    editScope: AniFrameEditScope = "all-frames"
+  ) => {
     if (state === "editing") {
       if (!cursor || (cursor.offsetX === x && cursor.offsetY === y)) return;
       pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
@@ -1840,6 +1869,41 @@ export function useStudio() {
 
     if (state === "ani-editing") {
       if (!ani) return;
+
+      if (
+        editScope === "selected-frame" &&
+        ani.sourceKind === "image-sequence"
+      ) {
+        const selectedFrame = getSelectedAniFrame(ani);
+        const nextEditOverride = selectedFrame
+          ? normalizeAniFrameEditOverride({
+              ...selectedFrame.editOverride,
+              offsetX: x,
+              offsetY: y,
+            })
+          : undefined;
+        if (
+          !selectedFrame ||
+          areAniFrameEditOverridesEqual(
+            selectedFrame.editOverride,
+            nextEditOverride
+          )
+        ) {
+          return;
+        }
+
+        pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
+        setAni((prev) =>
+          prev && prev.sourceKind === "image-sequence"
+            ? syncSelectedAniFrameEditOverride(prev, {
+                offsetX: x,
+                offsetY: y,
+              })
+            : prev
+        );
+        return;
+      }
+
       const globalEdit = getAniGlobalEdit(ani);
       if (globalEdit.offsetX === x && globalEdit.offsetY === y) return;
       pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
@@ -1855,7 +1919,10 @@ export function useStudio() {
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
-  const setScale = useCallback((scale: number) => {
+  const setScale = useCallback((
+    scale: number,
+    editScope: AniFrameEditScope = "all-frames"
+  ) => {
     if (state === "editing") {
       if (!cursor || cursor.scale === scale) return;
       pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
@@ -1865,6 +1932,37 @@ export function useStudio() {
 
     if (state === "ani-editing") {
       if (!ani) return;
+
+      if (
+        editScope === "selected-frame" &&
+        ani.sourceKind === "image-sequence"
+      ) {
+        const selectedFrame = getSelectedAniFrame(ani);
+        const nextEditOverride = selectedFrame
+          ? normalizeAniFrameEditOverride({
+              ...selectedFrame.editOverride,
+              scale,
+            })
+          : undefined;
+        if (
+          !selectedFrame ||
+          areAniFrameEditOverridesEqual(
+            selectedFrame.editOverride,
+            nextEditOverride
+          )
+        ) {
+          return;
+        }
+
+        pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
+        setAni((prev) =>
+          prev && prev.sourceKind === "image-sequence"
+            ? syncSelectedAniFrameEditOverride(prev, { scale })
+            : prev
+        );
+        return;
+      }
+
       const globalEdit = getAniGlobalEdit(ani);
       if (globalEdit.scale === scale) return;
       pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
@@ -1879,7 +1977,10 @@ export function useStudio() {
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
-  const setFitMode = useCallback((fitMode: FitMode) => {
+  const setFitMode = useCallback((
+    fitMode: FitMode,
+    editScope: AniFrameEditScope = "all-frames"
+  ) => {
     if (state === "editing") {
       if (!cursor || cursor.fitMode === fitMode) return;
       pushHistoryForAction(takeSnapshot(), "fitMode");
@@ -1889,6 +1990,37 @@ export function useStudio() {
 
     if (state === "ani-editing") {
       if (!ani) return;
+
+      if (
+        editScope === "selected-frame" &&
+        ani.sourceKind === "image-sequence"
+      ) {
+        const selectedFrame = getSelectedAniFrame(ani);
+        const nextEditOverride = selectedFrame
+          ? normalizeAniFrameEditOverride({
+              ...selectedFrame.editOverride,
+              fitMode,
+            })
+          : undefined;
+        if (
+          !selectedFrame ||
+          areAniFrameEditOverridesEqual(
+            selectedFrame.editOverride,
+            nextEditOverride
+          )
+        ) {
+          return;
+        }
+
+        pushHistoryForAction(takeSnapshot(), "fitMode");
+        setAni((prev) =>
+          prev && prev.sourceKind === "image-sequence"
+            ? syncSelectedAniFrameEditOverride(prev, { fitMode })
+            : prev
+        );
+        return;
+      }
+
       const globalEdit = getAniGlobalEdit(ani);
       if (globalEdit.fitMode === fitMode) return;
       pushHistoryForAction(takeSnapshot(), "fitMode");

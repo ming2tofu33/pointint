@@ -680,6 +680,94 @@ describe("useStudio workflow entry", () => {
         offsetX: 8,
       });
     });
+
+    it("edits selected image sequence scale and offset as a frame override", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      act(() => {
+        result.current.setScale(1.5, "selected-frame");
+      });
+
+      expect(result.current.ani?.globalEdit.scale).toBe(1);
+      expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+        scale: 1.5,
+      });
+      expect(result.current.ani?.scale).toBe(1.5);
+
+      act(() => {
+        result.current.setOffset(9, -6, "selected-frame");
+      });
+
+      expect(result.current.ani?.globalEdit).toEqual({
+        fitMode: "contain",
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+      });
+      expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+        scale: 1.5,
+        offsetX: 9,
+        offsetY: -6,
+      });
+      expect(result.current.ani?.offsetX).toBe(9);
+      expect(result.current.ani?.offsetY).toBe(-6);
+    });
+
+    it("edits all image sequence frames through the global baseline by default", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      act(() => {
+        result.current.setScale(1.25);
+      });
+
+      act(() => {
+        result.current.setOffset(4, 5);
+      });
+
+      act(() => {
+        result.current.setHotspot(11, 12);
+      });
+
+      expect(result.current.ani?.globalEdit).toEqual({
+        fitMode: "contain",
+        scale: 1.25,
+        offsetX: 4,
+        offsetY: 5,
+      });
+      expect(result.current.ani?.frames[1]?.editOverride).toBeUndefined();
+      expect(result.current.ani?.hotspotX).toBe(11);
+      expect(result.current.ani?.hotspotY).toBe(12);
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-1-frame-001");
+      });
+
+      expect(result.current.ani?.scale).toBe(1.25);
+      expect(result.current.ani?.offsetX).toBe(4);
+      expect(result.current.ani?.offsetY).toBe(5);
+      expect(result.current.ani?.hotspotX).toBe(11);
+      expect(result.current.ani?.hotspotY).toBe(12);
+    });
   });
 
   it("seeds uploaded names from the selected Windows role instead of the source filename", async () => {

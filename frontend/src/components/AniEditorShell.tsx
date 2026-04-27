@@ -41,7 +41,11 @@ import {
   DEFAULT_SIMULATION_SCENE_ID,
   type SimulationSceneId,
 } from "@/lib/simulationScenes";
-import { type AniData, type CursorSize } from "@/lib/useStudio";
+import {
+  type AniData,
+  type AniFrameEditScope,
+  type CursorSize,
+} from "@/lib/useStudio";
 
 interface AniEditorShellProps {
   ani: AniData | null;
@@ -55,10 +59,17 @@ interface AniEditorShellProps {
   onSelectSlotStaticFile: (file: File) => void;
   onSelectSlotAnimatedFile: (file: File) => void;
   onSelectSlotImageSequenceFiles: (files: File[]) => void;
-  onOffsetChange: (x: number, y: number) => void;
+  onOffsetChange: (
+    x: number,
+    y: number,
+    editScope?: AniFrameEditScope
+  ) => void;
   onHotspotChange: (x: number, y: number) => void;
-  onScaleChange: (scale: number) => void;
-  onFitModeChange: (fitMode: FitMode) => void;
+  onScaleChange: (scale: number, editScope?: AniFrameEditScope) => void;
+  onFitModeChange: (
+    fitMode: FitMode,
+    editScope?: AniFrameEditScope
+  ) => void;
   onAniCursorSizeChange: (size: CursorSize) => void;
   onAniNameChange: (name: string) => void;
   onRecommendHotspot: () => void;
@@ -111,10 +122,27 @@ export default function AniEditorShell({
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
   const [simulationSceneId, setSimulationSceneId] =
     useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
+  const [editScope, setEditScope] =
+    useState<AniFrameEditScope>("all-frames");
   const selectedSlot = project.slots[selectedSlotId];
   const selectedSlotBound = Boolean(
     selectedSlot.asset.originalUrl || selectedSlot.asset.previewUrl || ani
   );
+  const selectedAniFrame =
+    ani?.sourceKind === "image-sequence"
+      ? ani.frames.find((frame) => frame.id === ani.selectedFrameId) ??
+        ani.frames[0] ??
+        null
+      : null;
+  const activeImageUrl = selectedAniFrame?.url ?? imageUrl;
+  const supportsFrameEditScope = ani?.sourceKind === "image-sequence";
+  const activeEditScope = supportsFrameEditScope ? editScope : "all-frames";
+  const handleOffsetChange = (x: number, y: number) =>
+    onOffsetChange(x, y, activeEditScope);
+  const handleScaleChange = (scale: number) =>
+    onScaleChange(scale, activeEditScope);
+  const handleFitModeChange = (fitMode: FitMode) =>
+    onFitModeChange(fitMode, activeEditScope);
   const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
   const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "ANI";
   const stageHotspotBadge =
@@ -223,7 +251,7 @@ export default function AniEditorShell({
                     }}
                   >
                     <CursorCanvas
-                      imageUrl={imageUrl}
+                      imageUrl={activeImageUrl}
                       sourceWidth={ani.sourceWidth}
                       sourceHeight={ani.sourceHeight}
                       fitMode={ani.fitMode}
@@ -232,7 +260,7 @@ export default function AniEditorShell({
                       scale={ani.scale}
                       hotspotX={ani.hotspotX}
                       hotspotY={ani.hotspotY}
-                      onOffsetChange={onOffsetChange}
+                      onOffsetChange={handleOffsetChange}
                       onHotspotChange={onHotspotChange}
                       onGestureEnd={onEndContinuousHistoryAction}
                       hotspotPickActive={hotspotPickActive}
@@ -382,7 +410,7 @@ export default function AniEditorShell({
               }
             >
               <AniSimulation
-                imageUrl={selectedSlotBound && ani ? imageUrl : null}
+                imageUrl={selectedSlotBound && ani ? activeImageUrl : null}
                 sourceWidth={selectedSlotBound && ani ? ani.sourceWidth : 0}
                 sourceHeight={selectedSlotBound && ani ? ani.sourceHeight : 0}
                 fitMode={selectedSlotBound && ani ? ani.fitMode : "contain"}
@@ -448,7 +476,7 @@ export default function AniEditorShell({
                   border="1px solid var(--color-border)"
                 >
                   <FramedCursorPreview
-                    imageUrl={imageUrl}
+                    imageUrl={activeImageUrl}
                     sourceWidth={ani.sourceWidth}
                     sourceHeight={ani.sourceHeight}
                     fitMode={ani.fitMode}
@@ -464,7 +492,7 @@ export default function AniEditorShell({
                   border="1px solid var(--color-border)"
                 >
                   <FramedCursorPreview
-                    imageUrl={imageUrl}
+                    imageUrl={activeImageUrl}
                     sourceWidth={ani.sourceWidth}
                     sourceHeight={ani.sourceHeight}
                     fitMode={ani.fitMode}
@@ -513,13 +541,29 @@ export default function AniEditorShell({
                 <StudioInspectorSegmentedControl
                   value={ani.fitMode}
                   options={["contain", "cover"] as const}
-                  onChange={onFitModeChange}
+                  onChange={handleFitModeChange}
                   ariaLabel={tp("framing")}
                   getLabel={(value) =>
                     value === "contain" ? tp("fitContain") : tp("fitCover")
                   }
                 />
               </StudioInspectorSection>
+
+              {supportsFrameEditScope ? (
+                <StudioInspectorSection title={tp("editScope")}>
+                  <StudioInspectorSegmentedControl
+                    value={activeEditScope}
+                    options={["all-frames", "selected-frame"] as const}
+                    onChange={setEditScope}
+                    ariaLabel={tp("editScope")}
+                    getLabel={(value) =>
+                      value === "all-frames"
+                        ? tp("allFrames")
+                        : tp("selectedFrame")
+                    }
+                  />
+                </StudioInspectorSection>
+              ) : null}
 
               <StudioInspectorSection title={tp("name")}>
                 <NameInput
@@ -594,7 +638,7 @@ export default function AniEditorShell({
                   max="3"
                   step="0.05"
                   value={ani.scale}
-                  onChange={(e) => onScaleChange(Number(e.target.value))}
+                  onChange={(e) => handleScaleChange(Number(e.target.value))}
                   onPointerUp={onEndContinuousHistoryAction}
                   onPointerCancel={onEndContinuousHistoryAction}
                   onBlur={onEndContinuousHistoryAction}
@@ -618,7 +662,9 @@ export default function AniEditorShell({
               <StudioInspectorSection
                 title={tp("position")}
                 action={
-                  <StudioInspectorTextAction onClick={() => onOffsetChange(0, 0)}>
+                  <StudioInspectorTextAction
+                    onClick={() => handleOffsetChange(0, 0)}
+                  >
                     {tp("center")}
                   </StudioInspectorTextAction>
                 }
@@ -637,7 +683,7 @@ export default function AniEditorShell({
                     step={1}
                     onChange={(event) => {
                       const nextX = Number(event.target.value);
-                      onOffsetChange(
+                      handleOffsetChange(
                         Number.isFinite(nextX) ? nextX : 0,
                         ani.offsetY
                       );
@@ -650,7 +696,7 @@ export default function AniEditorShell({
                     step={1}
                     onChange={(event) => {
                       const nextY = Number(event.target.value);
-                      onOffsetChange(
+                      handleOffsetChange(
                         ani.offsetX,
                         Number.isFinite(nextY) ? nextY : 0
                       );

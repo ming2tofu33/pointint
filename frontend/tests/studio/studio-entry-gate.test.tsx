@@ -98,6 +98,7 @@ const {
   StudioBarMock,
   SimulationMock,
   AniSimulationMock,
+  CursorCanvasMock,
   HealthCheckMock,
   useStudioMock,
   replaceMock,
@@ -111,6 +112,8 @@ const {
   selectSlotImageSequenceFilesMock,
   setOffsetMock,
   setHotspotMock,
+  setScaleMock,
+  setFitModeMock,
   undoMock,
   redoMock,
   searchParamsState,
@@ -122,6 +125,7 @@ const {
   StudioBarMock: vi.fn(() => <div data-testid="studio-bar" />),
   SimulationMock: vi.fn(() => <div data-testid="simulation" />),
   AniSimulationMock: vi.fn(() => <div data-testid="ani-simulation" />),
+  CursorCanvasMock: vi.fn(() => <div data-testid="cursor-canvas" />),
   HealthCheckMock: vi.fn(() => <div data-testid="health-check" />),
   useStudioMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -135,6 +139,8 @@ const {
   selectSlotImageSequenceFilesMock: vi.fn(),
   setOffsetMock: vi.fn(),
   setHotspotMock: vi.fn(),
+  setScaleMock: vi.fn(),
+  setFitModeMock: vi.fn(),
   undoMock: vi.fn(),
   redoMock: vi.fn(),
   searchParamsState: {
@@ -175,7 +181,7 @@ vi.mock("@/components/StudioBar", () => ({
 }));
 
 vi.mock("@/components/CursorCanvas", () => ({
-  default: () => <div data-testid="cursor-canvas" />,
+  default: CursorCanvasMock,
 }));
 
 vi.mock("@/components/GuideModal", () => ({
@@ -248,6 +254,15 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
   return {
     originalFile: new File(["gif"], "orbit.gif", { type: "image/gif" }),
     originalUrl: "blob:ani-original",
+    sourceKind: "gif",
+    frames: [],
+    selectedFrameId: null,
+    globalEdit: {
+      fitMode: "contain",
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+    },
     sourceWidth: 96,
     sourceHeight: 96,
     hotspotX: 24,
@@ -479,8 +494,8 @@ function createStudioReturn(
     retryBgRemoval: vi.fn(),
     setHotspot: setHotspotMock,
     setOffset: setOffsetMock,
-    setScale: vi.fn(),
-    setFitMode: vi.fn(),
+    setScale: setScaleMock,
+    setFitMode: setFitModeMock,
     setCursorSize: vi.fn(),
     setAniCursorSize: vi.fn(),
     setCursorName: vi.fn(),
@@ -508,6 +523,7 @@ beforeEach(() => {
   StudioBarMock.mockClear();
   SimulationMock.mockClear();
   AniSimulationMock.mockClear();
+  CursorCanvasMock.mockClear();
   HealthCheckMock.mockClear();
   useStudioMock.mockReset();
   selectFileMock.mockReset();
@@ -518,6 +534,8 @@ beforeEach(() => {
   selectSlotImageSequenceFilesMock.mockReset();
   setOffsetMock.mockReset();
   setHotspotMock.mockReset();
+  setScaleMock.mockReset();
+  setFitModeMock.mockReset();
   undoMock.mockReset();
   redoMock.mockReset();
   replaceMock.mockReset();
@@ -749,6 +767,106 @@ describe("Studio entry gate", () => {
     expect(barProps.secondaryActionLabel).toBe("Download current slot (t)");
     expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
+  });
+
+  it("passes the selected image sequence frame URL to the ANI canvas", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-1",
+        selectedFrameId: "frame-2",
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+        ],
+      },
+    });
+
+    expect(CursorCanvasMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      imageUrl: "blob:frame-2",
+    });
+  });
+
+  it("defaults ANI image sequences to all-frame edits and can route transforms to the selected frame", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-1",
+        selectedFrameId: "frame-2",
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+        ],
+      },
+    });
+
+    const editScope = screen.getByRole("group", { name: /edit scope/i });
+    const allFrames = within(editScope).getByRole("button", {
+      name: /all frames/i,
+    });
+    const selectedFrame = within(editScope).getByRole("button", {
+      name: /selected frame/i,
+    });
+
+    expect(allFrames).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.change(screen.getByRole("slider"), {
+      target: { value: "1.25" },
+    });
+    fireEvent.change(screen.getByLabelText(/offset y/i), {
+      target: { value: "7" },
+    });
+
+    expect(setScaleMock).toHaveBeenLastCalledWith(1.25, "all-frames");
+    expect(setOffsetMock).toHaveBeenLastCalledWith(0, 7, "all-frames");
+
+    setScaleMock.mockClear();
+    setOffsetMock.mockClear();
+    setHotspotMock.mockClear();
+
+    fireEvent.click(selectedFrame);
+    fireEvent.change(screen.getByRole("slider"), {
+      target: { value: "1.5" },
+    });
+    fireEvent.change(screen.getByLabelText(/offset x/i), {
+      target: { value: "12" },
+    });
+    fireEvent.change(screen.getByLabelText(/hotspot x/i), {
+      target: { value: "9" },
+    });
+
+    expect(selectedFrame).toHaveAttribute("aria-pressed", "true");
+    expect(setScaleMock).toHaveBeenLastCalledWith(1.5, "selected-frame");
+    expect(setOffsetMock).toHaveBeenLastCalledWith(12, 0, "selected-frame");
+    expect(setHotspotMock).toHaveBeenLastCalledWith(9, 18);
   });
 
   it("shows the one-shot background comparison preview after static background removal completes", () => {
