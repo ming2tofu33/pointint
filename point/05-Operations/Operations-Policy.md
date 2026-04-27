@@ -11,7 +11,7 @@ aliases:
 # Operations Policy
 
 > **Status:** Active
-> **Last Updated:** 2026-03-27
+> **Last Updated:** 2026-04-27
 > **Source:** `docs/운영 정책.md`
 
 ## 사용량 정책
@@ -37,8 +37,9 @@ aliases:
 
 ## 신뢰 & 안전
 
-- 기본 적용: zip + .cur/.ani + 적용 가이드 (사용자가 직접 적용)
-- 자동 설치(.inf)는 후순위
+- 기본 적용: zip + .cur/.ani + 적용 가이드
+- 현재 패키지: Windows 커서 세트 ZIP + `install.inf` + `restore-default.inf`
+- `.exe` 인스톨러는 후순위 feasibility option
 - 원복 가이드 항상 함께 안내
 
 ## 콘텐츠 정책
@@ -51,7 +52,7 @@ aliases:
 |---|---|
 | 제작 완료율 | 업로드→다운로드 끊기지 않는 비율 |
 | 시뮬→다운로드 전환율 | 시뮬레이션 가치 확인 |
-| Guest→로그인 전환율 | 무료 경험→가입 |
+| Guest→Member 전환율 | 무료 경험→가입 |
 | 배경 제거 처리 시간 | 대기 경험 |
 | 서버 비용 / 건수 | 건당 비용 추적 |
 

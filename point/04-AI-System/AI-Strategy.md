@@ -11,8 +11,8 @@ aliases:
 # AI Strategy
 
 > **Status:** Active
-> **Last Updated:** 2026-03-27
-> **Source:** `docs/AI 전략 상세.md`
+> **Last Updated:** 2026-04-27
+> **Source:** `docs/AI 전략 상세.md` (legacy source, current business model is [[08-Business/Tier-Pricing]])
 
 ## 핵심 원칙
 
@@ -56,14 +56,14 @@ Phase B      텍스트/이미지 기반 커서 생성 + 3종 변형안 자동 �
 
 ## AI와 유료화
 
-| 티어 | AI 접근 |
+| 상태 | AI 접근 |
 |---|---|
 | Guest | 배경 제거만 (MVP 기본) |
-| Free | 배경 제거만 |
-| Lite | AI 보조 + 매일 AI 생성 N회 |
-| Pro | 더 높은 AI 한도 |
+| Member | 배경 제거 + 무료 Tint 맛보기 |
+| Tint 구매자 | AI 보조 기능을 Tint로 사용 |
+| Creator | 제작/판매 활동에서 얻은 Tint를 AI와 콘텐츠에 재사용 |
 
-내부: credit 기반 (보정 1cr, 생성 2cr)
+내부: Tint 기반. AI 보조는 기능별 Tint를 소모하고, AI 생성 가격은 Phase 4에서 모델 비용과 반복 사용 데이터를 보고 확정한다.
 
 ## 모델 선택 기준
 
@@ -71,7 +71,7 @@ Phase B      텍스트/이미지 기반 커서 생성 + 3종 변형안 자동 �
 
 ## Related
 
-- [[04-AI-System/Prompts-Overview]] (이후 작성)
+- [[04-AI-System/Prompts-Overview]]
 
 ## See Also
 

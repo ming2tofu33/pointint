@@ -11,16 +11,16 @@ aliases:
 # Roadmap
 
 > **Status:** Active
-> **Last Updated:** 2026-03-27
+> **Last Updated:** 2026-04-27
 
-Phase 상세는 [[06-Implementation/Phase-Flow]] 참조.
+Phase 상세와 현재 실행 상태는 [[06-Implementation/Phase-Flow]]와 [[06-Implementation/ACTIVE_SPRINT]]를 기준으로 본다.
 
 ## Phase 1 — MVP Core
 
 **핵심 질문:** 사람들은 이미지를 커서로 만들고, 실제로 다운로드해서 적용할 만큼 이 흐름을 가치 있게 느끼는가?
 
-- .cur 정적 커서 + .ani 애니메이션 커서 제작
-- 이미지 업로드 (PNG, JPG, WebP, GIF)
+- .cur 정적 커서 제작
+- 이미지 업로드 (PNG, JPG, WebP)
 - 자동 배경 제거 (MVP부터 최선 품질)
 - 편집기, Hotspot, 시뮬레이션
 - 다운로드 (개별 + 세트)
@@ -32,13 +32,25 @@ Phase 상세는 [[06-Implementation/Phase-Flow]] 참조.
 
 ---
 
+## Phase 1.5 — ANI + Media Prep Foundation
+
+**핵심 질문:** 애니메이션 커서 제작이 Pointint만의 기술적 차별점이 되는가?
+
+- `.ani` 애니메이션 커서 제작
+- GIF 기반 ANI 제작
+- 여러 이미지 프레임을 정렬해 ANI 소스로 변환
+- 공유 framing / hotspot / 시뮬레이션 흐름 재사용
+- `Video to ANI`는 GIF Maker 기반이 안정된 뒤 같은 source-maker 구조로 확장
+
+---
+
 ## Phase 2a — Auth + Storage
 
 **핵심 질문:** 저장과 17종 전체가 가입 동기로 충분한가?
 
 - Supabase Auth (이메일 + 소셜)
 - 프로젝트 저장 / 재수정
-- 17종 전체 커서 제작 (Free)
+- 17종 전체 커서 제작 (Member)
 - 기본 약관 + 면책 조항
 
 ## Phase 2b — Install
@@ -50,11 +62,11 @@ Phase 상세는 [[06-Implementation/Phase-Flow]] 참조.
 
 ## Phase 3a — AI-Assisted
 
-**핵심 질문:** AI 보조가 유료 전환을 만드는가?
+**핵심 질문:** AI 보조가 Tint 구매 전환을 만드는가?
 
 - 가장자리 보정, 자동 크롭, 가독성 개선, 실루엣 정리
-- Lite 티어 (₩3,900/월)
-- AI credit 내부 구조
+- Tint 팩 구매
+- 기능별 Tint 소모량 확정
 
 ## Phase 3b — Community (4와 병렬)
 
@@ -72,8 +84,8 @@ Phase 상세는 [[06-Implementation/Phase-Flow]] 참조.
 
 - 텍스트/이미지 기반 커서 생성
 - 3종 변형안 자동 추천
-- Pro 티어 (₩9,900/월)
-- Credit 체계 (보정 1cr, 생성 2cr)
+- 생성형 AI의 Tint 가격 확정
+- 반복 구매를 만들 수 있는 생성/편집 루프 검증
 - `Generate -> Edit -> Expand -> Simulate -> Download`
 - ⚠️ AI 생성물 소유권 법률 검토 필요
 
@@ -83,8 +95,9 @@ Phase 상세는 [[06-Implementation/Phase-Flow]] 참조.
 
 **핵심 질문:** 제작과 소비가 하나의 루프로 도는가?
 
-- 판매/구매, 내부 재화
-- 수수료 (Lite 20%, Pro 10%)
+- Creator 승급, 판매/구매, 내부 재화 순환
+- Tint 기반 거래와 20% 마켓 수수료
+- 초기 현금 정산 없음
 - ⚠️ DMCA, 마켓플레이스 약관, NSFW, 콘텐츠 정책
 
 ## Phase 5b — Moniterior

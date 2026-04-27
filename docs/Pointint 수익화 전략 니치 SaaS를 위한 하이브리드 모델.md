@@ -1,5 +1,8 @@
 # Pointint 수익화 전략: 니치 SaaS를 위한 하이브리드 모델
 
+> [!warning] Superseded
+> 이 문서는 구독 + 내부 재화 하이브리드 모델을 검토하던 외부 공유용 초안이다. 현재 기준은 구독 없음, Tint 팩 구매, `Guest / Member / Creator` 구조다. 최신 문서는 `point/08-Business/Monetization-Strategy.md`와 `point/08-Business/Tier-Pricing.md`를 본다.
+
 이 문서는 현재 Pointint의 제품 방향을 기준으로, **무리하게 돈을 받기보다 강한 무료 경험을 바탕으로 자연스럽게 유료화와 생태계를 확장하는 구조**를 정리한 전략 문서다.
 
 핵심 전제는 아래와 같다.

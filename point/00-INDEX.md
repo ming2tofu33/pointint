@@ -12,9 +12,9 @@ aliases:
 # Pointint Point Index
 
 > [!info]
-> **Last Updated:** 2026-03-27  
+> **Last Updated:** 2026-04-27
 > **Point Name:** `point`
-> **Current Focus:** Brand, MVP, Business, Obsidian note system
+> **Current Focus:** Phase 1.5 ANI foundation, Tint Economy, document consistency
 
 Pointint 옵시디언 볼트의 기본 원칙은 아래와 같다.
 
@@ -113,11 +113,11 @@ Pointint의 철학, 카피, 내러티브, `모니테리어` 개념, 테마팩 �
 ## Current Priorities
 
 - `Your Point, Your Tint.` 브랜드 해석 고도화
-- 커서 중심 MVP 범위 고정
-- Guest / Free / Lite / Pro 구조 다듬기
-- AI 도입 순서 명확화
+- Phase 1.5 ANI / Media Prep Foundation 정리
+- Guest / Member / Creator + Tint Economy 기준 유지
+- AI 보조와 AI 생성의 Tint 소모 구조 명확화
 - 커서 이후 `모니테리어` 확장 논리 정리
-- 실행 전 plan-first 흐름 정착
+- 스프린트, Phase, 결정 로그 동기화 유지
 
 ## Working Notes
 

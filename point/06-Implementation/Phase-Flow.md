@@ -12,7 +12,7 @@ aliases:
 # Phase Flow
 
 Pointint's high-level phase summary lives here.
-Detailed task, wave, and gate status stays in [[plans/2026-03-27-implementation-phase-flow|Implementation Phase Flow]].
+Current execution status stays in [[ACTIVE_SPRINT]]. Historical task, wave, and gate details may still appear in [[plans/2026-03-27-implementation-phase-flow|Implementation Phase Flow]], but that note is a legacy snapshot and is not the current source of truth.
 
 > **Roadmap Reference:** [[plans/2026-04-12-cursor-suite-roadmap-design]]
 > This roadmap is a reference document. It does not replace sprint or phase execution docs.

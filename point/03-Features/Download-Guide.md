@@ -12,7 +12,7 @@ aliases:
 # Download & Guide
 
 > **Status:** Active
-> **Last Updated:** 2026-03-27
+> **Last Updated:** 2026-04-27
 > **Source:** `docs/기능 상세.md` §4, §5
 
 ## 다운로드 단위
@@ -27,7 +27,7 @@ aliases:
 - Windows 설정에서 커서를 바꾸는 방법을 단계별로 안내
 - 원복 방법도 함께 안내 (심리적 부담을 낮춤)
 
-## Guest vs 로그인 경계
+## Guest vs Member 경계
 
 ### Guest (비회원)
 
@@ -35,10 +35,11 @@ aliases:
 - 3종 (Normal / Text / Link)
 - 저장 없음, 재수정 없음, AI 없음
 
-### 로그인 (Free)
+### Member (무료 가입)
 
 - 프로젝트 저장, 재수정
 - 17종 전체 수동 제작
+- 일일/활동 기반 Tint 적립
 - 이후 확장 기능 접근 기반
 
 ## 핵심 원칙

@@ -14,7 +14,7 @@ aliases:
 > **Last Updated:** 2026-04-27
 > **Status:** Phase 1 gate closed, ANI Source Maker / GIF Maker slice is complete
 > **Goal:** Ship source-maker foundations that turn user media into Windows-ready ANI cursor roles
-> **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
+> **Phase Flow:** [[Phase-Flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
 > **North Star:** upload start -> download complete

@@ -1,5 +1,8 @@
 # AI 전략 상세
 
+> [!warning] Superseded
+> 이 문서는 `Free / Lite / Pro` 유료화 구조가 남아 있는 초안이다. 현재 기준은 `point/04-AI-System/AI-Strategy.md`와 `point/08-Business/Tier-Pricing.md`의 Tint 기반 AI 접근 구조를 따른다.
+
 ## 핵심 원칙
 
 - AI는 Pointint의 제작 워크플로우를 더 강하게 만드는 기능이다

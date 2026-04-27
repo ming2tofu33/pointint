@@ -13,7 +13,7 @@ aliases:
 # Windows Cursor Spec
 
 > **Status:** Active
-> **Last Updated:** 2026-03-27
+> **Last Updated:** 2026-04-27
 > **Source:** `docs/Windows 커서 스펙.md`
 
 ## .cur 파일 포맷
@@ -28,7 +28,7 @@ aliases:
 
 - 여러 프레임의 .cur을 묶은 애니메이션 포맷
 - 프레임 속도: jiffies (1/60초 단위)
-- MVP에서 포함
+- Phase 1.5 ANI + Media Prep Foundation에서 본격 지원
 
 ## 17종 역할
 
@@ -66,7 +66,7 @@ MVP: 3종 (Normal, Text, Link) → 이후: 17종 전체
 
 ## Related
 
-- [[API-Endpoints]] (이후 작성)
+- [[API-Endpoints]]
 
 ## See Also
 
