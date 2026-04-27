@@ -24,12 +24,12 @@ export default function SimulationFooter({
       data-testid="studio-simulation-footer"
       style={{
         height: collapsed ? COLLAPSED_HEIGHT : undefined,
-        flex: collapsed ? `0 0 ${COLLAPSED_HEIGHT}` : `0 0 ${EXPANDED_BASIS}`,
+        flexGrow: 0,
+        flexShrink: 0,
         flexBasis: collapsed ? COLLAPSED_HEIGHT : EXPANDED_BASIS,
         minHeight: collapsed ? COLLAPSED_HEIGHT : EXPANDED_MIN_HEIGHT,
         borderTop: "1px solid var(--simulation-frame-border)",
         backgroundColor: "var(--simulation-frame-bg)",
-        flexShrink: 0,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",

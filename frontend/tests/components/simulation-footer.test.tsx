@@ -19,10 +19,15 @@ describe("SimulationFooter", () => {
       </SimulationFooter>
     );
 
-    expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
+    const footer = screen.getByTestId("studio-simulation-footer");
+
+    expect(footer).toHaveStyle({
       flexBasis: "46%",
+      flexGrow: "0",
+      flexShrink: "0",
       minHeight: "22rem",
     });
+    expect(footer.getAttribute("style")).not.toMatch(/(?:^|;\s*)flex:/);
     expect(screen.getByTestId("studio-simulation-body")).toHaveStyle({
       overflowY: "auto",
       overflowX: "hidden",
@@ -43,9 +48,15 @@ describe("SimulationFooter", () => {
       </SimulationFooter>
     );
 
-    expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
+    const footer = screen.getByTestId("studio-simulation-footer");
+
+    expect(footer).toHaveStyle({
+      flexBasis: "3rem",
+      flexGrow: "0",
+      flexShrink: "0",
       height: "3rem",
     });
+    expect(footer.getAttribute("style")).not.toMatch(/(?:^|;\s*)flex:/);
     expect(screen.queryByTestId("simulation-body")).toBeNull();
 
     fireEvent.click(screen.getByTestId("studio-simulation-toggle"));
