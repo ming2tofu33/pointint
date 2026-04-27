@@ -30,6 +30,11 @@ const FRAGMENT_SHADER = `
   uniform vec4 u_ripples[${MAX_RIPPLES}];
   uniform int u_rippleCount;
 
+  // Pseudo-random hash function for sparkles
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+  }
+
   void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution;
     vec2 p = (gl_FragCoord.xy - u_resolution * 0.5) / u_resolution.y;
@@ -69,6 +74,32 @@ const FRAGMENT_SHADER = `
 
     float specular = pow(max(wave * 1.2, 0.0), 5.0) * u_specularStrength;
     waterColor += u_highlightColor * specular;
+
+    // --- Underwater Sparkles Layer ---
+    vec2 sparkleUV = p * 220.0;
+    sparkleUV += wave * 3.0; // Refraction effect from waves
+    vec2 id = floor(sparkleUV);
+    vec2 f = fract(sparkleUV);
+    float h = hash(id);
+    
+    // Very sparse dots
+    float sparkleMask = smoothstep(0.965, 0.99, h);
+    
+    // Position offset within the grid cell
+    vec2 cellOffset = vec2(hash(id + vec2(11.0, 17.0)), hash(id + vec2(23.0, 29.0))) * 0.6 - 0.3;
+    float d = length(f - (0.5 + cellOffset));
+    
+    // Tiny glowing dot
+    float dotFlare = smoothstep(0.3, 0.05, d) * 0.8;
+    dotFlare += smoothstep(0.1, 0.0, d) * 1.5; // intense center
+    
+    // Twinkling logic
+    float twinkle = sin(u_time * (1.0 + h * 3.0) + h * 6.28) * 0.5 + 0.5;
+    twinkle = pow(twinkle, 3.0); // sharp blinking
+    
+    vec3 sColor = mix(u_highlightColor, vec3(1.0), 0.8); // shiny tint
+    waterColor += sColor * dotFlare * twinkle * sparkleMask * 1.8;
+    // ---------------------------------
 
     float depthFade = mix(u_depthFloor, 1.0, uv.y);
     waterColor *= depthFade;
