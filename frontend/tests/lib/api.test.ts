@@ -4,6 +4,7 @@ import {
   checkCursorHealth,
   generateAni,
   generateAniSequence,
+  generateGifSequence,
   generateCursor,
 } from "@/lib/api";
 
@@ -106,6 +107,9 @@ describe("generateAniSequence", () => {
       expect(formData.get("offset_x")).toBe("-3");
       expect(formData.get("offset_y")).toBe("5");
       expect(formData.get("scale")).toBe("1.25");
+      expect(formData.get("rotation")).toBe("90");
+      expect(formData.get("flip_x")).toBe("true");
+      expect(formData.get("flip_y")).toBe("false");
 
       return {
         ok: true,
@@ -134,6 +138,9 @@ describe("generateAniSequence", () => {
       offsetX: -3,
       offsetY: 5,
       scale: 1.25,
+      rotation: 90,
+      flipX: true,
+      flipY: false,
     });
 
     expect(result.blob).toBeInstanceOf(Blob);
@@ -172,6 +179,50 @@ describe("generateAniSequence", () => {
 
     await generateAniSequence([frame, new Blob(["png-bytes-2"])]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("generateGifSequence", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("posts repeated frames with per-frame durations to the GIF export endpoint", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(new URL(_url).pathname).toBe("/api/generate-gif-sequence");
+      expect(init?.method).toBe("POST");
+
+      const formData = init?.body as FormData;
+      expect(formData.getAll("frames")).toHaveLength(2);
+      expect(formData.getAll("frame_durations_ms")).toEqual(["80", "140"]);
+      expect(formData.get("cursor_name")).toBe("orbit");
+
+      return {
+        ok: true,
+        headers: new Headers({
+          "content-type": "image/gif",
+          "content-disposition": 'attachment; filename="pointint-orbit.gif"',
+        }),
+        blob: async () => new Blob(["gif"], { type: "image/gif" }),
+      } as Response;
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await generateGifSequence(
+      [
+        new File(["one"], "frame-1.png", { type: "image/png" }),
+        new File(["two"], "frame-2.png", { type: "image/png" }),
+      ],
+      {
+        aniName: "orbit",
+        frameDurationsMs: [80, 140],
+      }
+    );
+
+    expect(result.blob.type).toBe("image/gif");
+    expect(result.contentType).toBe("image/gif");
+    expect(result.filename).toBe("pointint-orbit.gif");
   });
 });
 

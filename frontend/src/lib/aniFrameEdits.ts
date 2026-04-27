@@ -1,4 +1,4 @@
-import type { FitMode } from "@/lib/cursorFrame";
+import type { FitMode, ImageRotation } from "@/lib/cursorFrame";
 
 export const ANI_FRAME_MIN_DURATION_MS = 20;
 export const ANI_FRAME_DEFAULT_DURATION_MS = 100;
@@ -9,6 +9,9 @@ export type AniFrameEdit = {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation: ImageRotation;
+  flipX: boolean;
+  flipY: boolean;
 };
 
 export type AniFrameEditOverride = Partial<AniFrameEdit>;
@@ -36,6 +39,9 @@ export function resolveAniFrameEdit(
     scale: override?.scale ?? globalEdit.scale,
     offsetX: override?.offsetX ?? globalEdit.offsetX,
     offsetY: override?.offsetY ?? globalEdit.offsetY,
+    rotation: override?.rotation ?? globalEdit.rotation,
+    flipX: override?.flipX ?? globalEdit.flipX,
+    flipY: override?.flipY ?? globalEdit.flipY,
   };
 }
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  applyImageTransformAction,
   getFrameRect,
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
@@ -64,6 +65,47 @@ describe("getFrameRect", () => {
       drawY: -69,
     });
   });
+
+  it("fits against the rotated image bounds", () => {
+    expect(
+      getFrameRect({
+        sourceWidth: 400,
+        sourceHeight: 200,
+        viewportSize: 256,
+        fitMode: "contain",
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 90,
+      })
+    ).toEqual({
+      drawWidth: 128,
+      drawHeight: 256,
+      drawX: 64,
+      drawY: 0,
+    });
+  });
+});
+
+describe("applyImageTransformAction", () => {
+  it("rotates clockwise and toggles horizontal and vertical flips", () => {
+    const rotated = applyImageTransformAction(
+      { rotation: 270, flipX: false, flipY: false },
+      "rotate-clockwise"
+    );
+
+    expect(rotated).toEqual({ rotation: 0, flipX: false, flipY: false });
+    expect(applyImageTransformAction(rotated, "flip-horizontal")).toEqual({
+      rotation: 0,
+      flipX: true,
+      flipY: false,
+    });
+    expect(applyImageTransformAction(rotated, "flip-vertical")).toEqual({
+      rotation: 0,
+      flipX: false,
+      flipY: true,
+    });
+  });
 });
 
 describe("mapViewportHotspotToOutput", () => {
@@ -93,12 +135,22 @@ describe("mapViewportHotspotToOutput", () => {
 describe("rasterizeSquarePng", () => {
   const drawImage = vi.fn();
   const clearRect = vi.fn();
+  const save = vi.fn();
+  const restore = vi.fn();
+  const translate = vi.fn();
+  const rotate = vi.fn();
+  const scale = vi.fn();
   const toBlob = vi.fn();
   const createElement = document.createElement.bind(document);
 
   beforeEach(() => {
     drawImage.mockReset();
     clearRect.mockReset();
+    save.mockReset();
+    restore.mockReset();
+    translate.mockReset();
+    rotate.mockReset();
+    scale.mockReset();
     toBlob.mockReset();
 
     vi.stubGlobal(
@@ -128,6 +180,11 @@ describe("rasterizeSquarePng", () => {
         getContext: () => ({
           clearRect,
           drawImage,
+          save,
+          restore,
+          translate,
+          rotate,
+          scale,
         }),
         toBlob: (callback: BlobCallback) => {
           const blob = new Blob(["preview"], { type: "image/png" });
@@ -164,6 +221,32 @@ describe("rasterizeSquarePng", () => {
     expect(result.hotspotX).toBe(32);
     expect(result.hotspotY).toBe(32);
     expect(result.blob.type).toBe("image/png");
+  });
+
+  it("applies canvas transforms before drawing a rotated and flipped export", async () => {
+    await rasterizeSquarePng({
+      imageUrl: "blob:test",
+      sourceWidth: 400,
+      sourceHeight: 200,
+      fitMode: "contain",
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      outputSize: 64,
+      hotspotX: 128,
+      hotspotY: 128,
+      editorViewportSize: 256,
+      rotation: 90,
+      flipX: true,
+      flipY: false,
+    });
+
+    expect(save).toHaveBeenCalled();
+    expect(translate).toHaveBeenCalledWith(32, 32);
+    expect(scale).toHaveBeenCalledWith(-1, 1);
+    expect(rotate).toHaveBeenCalledWith(Math.PI / 2);
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), -32, -16, 64, 32);
+    expect(restore).toHaveBeenCalled();
   });
 });
 

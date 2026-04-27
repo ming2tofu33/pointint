@@ -12,6 +12,7 @@ import CanvasViewZoomControl, {
 } from "@/components/CanvasViewZoomControl";
 import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
+import ImageTransformControls from "@/components/ImageTransformControls";
 import MobileGuard from "@/components/MobileGuard";
 import NameInput from "@/components/NameInput";
 import SimulationThemeModeSwitch from "@/components/SimulationThemeModeSwitch";
@@ -66,6 +67,7 @@ export default function StudioPage() {
     error,
     downloading,
     showGuide,
+    downloadGuideVariant,
     showOriginal,
     previewUrl,
     pendingBackgroundRemovalSlotIds,
@@ -89,6 +91,7 @@ export default function StudioPage() {
     setOffset,
     setScale,
     setFitMode,
+    applyImageTransform,
     setCursorSize,
     setAniCursorSize,
     setCursorName,
@@ -101,8 +104,10 @@ export default function StudioPage() {
     reset,
     canDownloadAll,
     canDownload,
+    canDownloadGif,
     downloadAll,
     download,
+    downloadGif,
     closeGuide,
   } = useStudio();
   const [hotspotPickActive, setHotspotPickActive] = useState(false);
@@ -219,6 +224,15 @@ export default function StudioPage() {
           selectedSlot.kind === "static"
         ? t("downloadCurrentCur")
         : t("downloadCurrentSlot");
+  const currentSlotDownloadDescription =
+    state === "ani-editing" || selectedSlot.kind === "animated"
+      ? t("downloadCurrentAniLabel")
+      : state === "editing" ||
+          state === "uploaded" ||
+          state === "processing" ||
+          selectedSlot.kind === "static"
+        ? t("downloadCurrentCurLabel")
+        : t("downloadCurrentSlotLabel");
   const pendingBackgroundRemovalSlotLabels = useMemo(
     () =>
       pendingBackgroundRemovalSlotIds.map((slotId) =>
@@ -325,13 +339,26 @@ export default function StudioPage() {
       >
         <StudioShellInteractionStyles />
         <StudioBar
+          canSaveProject={false}
+          saveProjectLabel={t("saveProject")}
+          saveProjectDescription={t("saveProjectLoginRequiredDescription")}
+          saveProjectStatusLabel={t("saveProjectLoginRequired")}
+          projectTitleLabel={t("untitledProject")}
           onDownload={downloadAll}
           onSecondaryDownload={download}
+          onTertiaryDownload={downloadGif}
           downloading={downloading}
           canDownload={canDownloadAll}
           canSecondaryDownload={canDownload}
+          canTertiaryDownload={canDownloadGif}
           primaryActionLabel={t("downloadAllRoles")}
+          primaryActionDescription={t("downloadAllRolesLabel")}
           secondaryActionLabel={currentSlotDownloadLabel}
+          secondaryActionDescription={currentSlotDownloadDescription}
+          tertiaryActionLabel={canDownloadGif ? t("downloadGif") : undefined}
+          tertiaryActionDescription={
+            canDownloadGif ? t("downloadGifLabel") : undefined
+          }
         />
         {pendingBackgroundRemovalSlotIds.length > 0 ? (
           <PendingBackgroundDecisionNotice
@@ -367,6 +394,7 @@ export default function StudioPage() {
             onHotspotChange={setHotspot}
             onScaleChange={setScale}
             onFitModeChange={setFitMode}
+            onImageTransform={applyImageTransform}
             onAniCursorSizeChange={setAniCursorSize}
             onAniNameChange={setCursorName}
             onRecommendHotspot={recommendHotspot}
@@ -524,6 +552,9 @@ export default function StudioPage() {
                           offsetX={cursor.offsetX}
                           offsetY={cursor.offsetY}
                           scale={cursor.scale}
+                          rotation={cursor.rotation}
+                          flipX={cursor.flipX}
+                          flipY={cursor.flipY}
                           hotspotX={cursor.hotspotX}
                           hotspotY={cursor.hotspotY}
                           onOffsetChange={setOffset}
@@ -760,6 +791,15 @@ export default function StudioPage() {
                   />
                 </StudioInspectorSection>
 
+                <StudioInspectorSection title={tp("imageTransform")}>
+                  <ImageTransformControls
+                    rotation={cursor.rotation}
+                    flipX={cursor.flipX}
+                    flipY={cursor.flipY}
+                    onTransform={applyImageTransform}
+                  />
+                </StudioInspectorSection>
+
                 <StudioInspectorSection title={tp("name")}>
                   <NameInput
                     value={cursor.cursorName}
@@ -918,6 +958,7 @@ export default function StudioPage() {
       <GuideModal
         open={showGuide}
         onClose={closeGuide}
+        variant={downloadGuideVariant}
       />
       </div>
     </MobileGuard>

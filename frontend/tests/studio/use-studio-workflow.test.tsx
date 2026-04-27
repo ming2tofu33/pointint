@@ -5,15 +5,18 @@ const {
   extractGifFrameFilesMock,
   generateAniMock,
   generateAniSequenceMock,
+  generateGifSequenceMock,
 } = vi.hoisted(() => ({
   extractGifFrameFilesMock: vi.fn(),
   generateAniMock: vi.fn(),
   generateAniSequenceMock: vi.fn(),
+  generateGifSequenceMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   generateAni: generateAniMock,
   generateAniSequence: generateAniSequenceMock,
+  generateGifSequence: generateGifSequenceMock,
   generateCursor: vi.fn(),
   removeBackground: vi.fn(),
 }));
@@ -45,6 +48,7 @@ describe("useStudio workflow entry", () => {
     extractGifFrameFilesMock.mockReset();
     generateAniMock.mockReset();
     generateAniSequenceMock.mockReset();
+    generateGifSequenceMock.mockReset();
     extractGifFrameFilesMock.mockRejectedValue(new Error("not a real GIF"));
     let objectUrlIndex = 0;
     Object.defineProperty(URL, "createObjectURL", {
@@ -192,6 +196,9 @@ describe("useStudio workflow entry", () => {
       scale: 1,
       offsetX: 0,
       offsetY: 0,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     });
     expect(result.current.ani?.frames).toEqual([
       expect.objectContaining({
@@ -254,6 +261,9 @@ describe("useStudio workflow entry", () => {
       scale: 1,
       offsetX: 0,
       offsetY: 0,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     });
   });
 
@@ -869,6 +879,9 @@ describe("useStudio workflow entry", () => {
         scale: 1,
         offsetX: 0,
         offsetY: 0,
+        rotation: 0,
+        flipX: false,
+        flipY: false,
       });
       expect(result.current.ani?.frames[1]?.editOverride).toEqual({
         scale: 1.5,
@@ -909,6 +922,9 @@ describe("useStudio workflow entry", () => {
         scale: 1.25,
         offsetX: 4,
         offsetY: 5,
+        rotation: 0,
+        flipX: false,
+        flipY: false,
       });
       expect(result.current.ani?.frames[1]?.editOverride).toBeUndefined();
       expect(result.current.ani?.hotspotX).toBe(11);
@@ -923,6 +939,73 @@ describe("useStudio workflow entry", () => {
       expect(result.current.ani?.offsetY).toBe(5);
       expect(result.current.ani?.hotspotX).toBe(11);
       expect(result.current.ani?.hotspotY).toBe(12);
+    });
+
+    it("applies image transforms globally with undoable hotspot adjustment", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.setHotspot(64, 96);
+      });
+
+      act(() => {
+        result.current.applyImageTransform("rotate-clockwise");
+      });
+
+      expect(result.current.ani?.globalEdit.rotation).toBe(90);
+      expect(result.current.ani?.rotation).toBe(90);
+      expect(result.current.ani?.hotspotX).toBe(96);
+      expect(result.current.ani?.hotspotY).toBe(192);
+
+      act(() => {
+        result.current.applyImageTransform("flip-horizontal");
+      });
+
+      expect(result.current.ani?.globalEdit.flipX).toBe(true);
+      expect(result.current.ani?.hotspotX).toBe(160);
+      expect(result.current.ani?.hotspotY).toBe(192);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.globalEdit.flipX).toBe(false);
+      expect(result.current.ani?.globalEdit.rotation).toBe(90);
+    });
+
+    it("applies image transforms to the selected frame when scoped", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      act(() => {
+        result.current.applyImageTransform(
+          "flip-horizontal",
+          "selected-frame"
+        );
+      });
+
+      expect(result.current.ani?.globalEdit.flipX).toBe(false);
+      expect(result.current.ani?.frames[1]?.editOverride).toEqual(
+        expect.objectContaining({
+          flipX: true,
+        })
+      );
+      expect(result.current.ani?.flipX).toBe(true);
     });
   });
 
@@ -1105,6 +1188,7 @@ describe("useStudio workflow entry", () => {
     });
 
     expect(createdAnchors[0]?.download).toBe("pointint_arrow.ani");
+    expect(result.current.downloadGuideVariant).toBe("ani");
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
@@ -1203,5 +1287,76 @@ describe("useStudio workflow entry", () => {
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
+  });
+
+  it("exports image sequences as GIF files with frame durations", async () => {
+    generateGifSequenceMock.mockResolvedValue({
+      blob: new Blob(["gif"], { type: "image/gif" }),
+      filename: "pointint-sequence.gif",
+      contentType: "image/gif",
+    });
+
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+        const element = originalCreateElement(tagName, options);
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
+        return element;
+      });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useStudio());
+    const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(files);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setAniFrameDuration("ani-frame-2-frame-002", 240);
+    });
+
+    await act(async () => {
+      await result.current.downloadGif();
+    });
+
+    expect(generateGifSequenceMock).toHaveBeenCalledWith(
+      files,
+      expect.objectContaining({
+        aniName: "arrow",
+        frameDurationsMs: [100, 240],
+      })
+    );
+    expect(createdAnchors[0]?.download).toBe("pointint_arrow.gif");
+    expect(result.current.showGuide).toBe(false);
+
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
+  });
+
+  it("shows an actionable backend message when GIF export cannot reach the API", async () => {
+    generateGifSequenceMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const { result } = renderHook(() => useStudio());
+    const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(files);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await result.current.downloadGif();
+    });
+
+    expect(result.current.error).toBe(
+      "Backend connection failed. Start or redeploy the backend, then try again."
+    );
   });
 });

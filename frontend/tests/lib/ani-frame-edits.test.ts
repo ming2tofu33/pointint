@@ -17,6 +17,9 @@ describe("resolveAniFrameEdit", () => {
     scale: 1,
     offsetX: 0,
     offsetY: 0,
+    rotation: 0,
+    flipX: false,
+    flipY: false,
   };
 
   it("returns global values when the frame has no override", () => {
@@ -36,6 +39,9 @@ describe("resolveAniFrameEdit", () => {
       scale: 1.5,
       offsetX: 0,
       offsetY: -12,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     });
   });
 
@@ -47,6 +53,9 @@ describe("resolveAniFrameEdit", () => {
           scale: 2,
           offsetX: 12,
           offsetY: -8,
+          rotation: 90,
+          flipX: true,
+          flipY: false,
         },
         {
           editOverride: {
@@ -54,6 +63,8 @@ describe("resolveAniFrameEdit", () => {
             scale: undefined,
             offsetX: 0,
             offsetY: undefined,
+            rotation: undefined,
+            flipX: false,
           },
         }
       )
@@ -62,6 +73,9 @@ describe("resolveAniFrameEdit", () => {
       scale: 2,
       offsetX: 0,
       offsetY: -8,
+      rotation: 90,
+      flipX: false,
+      flipY: false,
     });
   });
 });

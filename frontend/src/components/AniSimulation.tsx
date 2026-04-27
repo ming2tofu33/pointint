@@ -12,7 +12,7 @@ import {
   createAniPreviewSourceFromFrames,
   releaseAniPreviewFrames,
 } from "@/lib/aniPreviewFrames";
-import { type FitMode } from "@/lib/cursorFrame";
+import { type FitMode, type ImageRotation } from "@/lib/cursorFrame";
 import { type CursorSource } from "@/lib/cursorSources";
 import { type SlotId } from "@/lib/cursorThemeProject";
 import { type SimulationSceneId } from "@/lib/simulationScenes";
@@ -30,6 +30,9 @@ interface AniSimulationProps {
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   cursorSize: number;
   hotspotX: number;
   hotspotY: number;
@@ -51,6 +54,9 @@ export default function AniSimulation({
   offsetX,
   offsetY,
   scale,
+  rotation = 0,
+  flipX = false,
+  flipY = false,
   cursorSize,
   hotspotX,
   hotspotY,
@@ -111,6 +117,9 @@ export default function AniSimulation({
         scale,
         offsetX,
         offsetY,
+        rotation,
+        flipX,
+        flipY,
         outputSize: cursorSize,
         editorViewportSize: ANI_PREVIEW_VIEWPORT_SIZE,
       })
@@ -155,6 +164,9 @@ export default function AniSimulation({
     imageUrl,
     offsetX,
     offsetY,
+    rotation,
+    flipX,
+    flipY,
     scale,
     sourceHeight,
     sourceWidth,

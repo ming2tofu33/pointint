@@ -17,6 +17,7 @@ import {
   ANI_FRAME_MAX_DURATION_MS,
   ANI_FRAME_MIN_DURATION_MS,
 } from "@/lib/aniFrameEdits";
+import type { ImageRotation } from "@/lib/cursorFrame";
 
 export type AniFrameTimelineFrame = {
   id: string;
@@ -24,6 +25,9 @@ export type AniFrameTimelineFrame = {
   durationMs: number;
   sourceWidth?: number;
   sourceHeight?: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   editOverride?: Record<string, unknown> | null;
 };
 
@@ -231,7 +235,7 @@ export default function AniFrameTimeline({
         borderTop: "1px solid var(--color-border)",
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
-        padding: "0.875rem 0 0",
+        padding: "0.875rem 1rem 0",
         ...style,
       }}
     >
@@ -371,6 +375,7 @@ export default function AniFrameTimeline({
 
       <ol
         className="ani-frame-timeline-strip"
+        data-testid="ani-frame-timeline-strip"
         onDragOver={handleTimelineDragOver}
         onDrop={(event) => handleDropAt(event, frames.length)}
         onDragLeave={(event) => {
@@ -385,7 +390,7 @@ export default function AniFrameTimeline({
           listStyle: "none",
           margin: 0,
           overflowX: "auto",
-          padding: "0.18rem 0.1rem 0.45rem",
+          padding: "0.18rem 0.25rem 0.45rem",
           scrollbarColor:
             "color-mix(in srgb, var(--color-accent) 44%, rgba(255,255,255,0.14)) transparent",
           scrollbarWidth: "thin",
@@ -396,6 +401,7 @@ export default function AniFrameTimeline({
           const selected = frame.id === selectedFrameId;
           const previewed = frame.id === previewFrameId;
           const edited = hasEditOverride(frame);
+          const thumbnailTransform = getThumbnailTransform(frame);
 
           return (
             <Fragment key={frame.id}>
@@ -464,6 +470,7 @@ export default function AniFrameTimeline({
                 >
                   <img
                     alt=""
+                    data-testid={`ani-frame-thumbnail-${frame.id}`}
                     draggable={false}
                     src={frame.url}
                     style={{
@@ -472,6 +479,9 @@ export default function AniFrameTimeline({
                       maxWidth: "100%",
                       objectFit: "contain",
                       pointerEvents: "none",
+                      transform: thumbnailTransform,
+                      transformOrigin: "center",
+                      transition: STUDIO_INTERACTION_TRANSITION,
                     }}
                   />
                   <span
@@ -879,4 +889,16 @@ function hasEditOverride(frame: AniFrameTimelineFrame) {
   if (!override) return false;
 
   return Object.values(override).some((value) => value !== undefined);
+}
+
+function getThumbnailTransform(frame: AniFrameTimelineFrame) {
+  const rotation = frame.rotation ?? 0;
+  const transforms = [
+    frame.flipX || frame.flipY
+      ? `scale(${frame.flipX ? -1 : 1}, ${frame.flipY ? -1 : 1})`
+      : null,
+    rotation !== 0 ? `rotate(${rotation}deg)` : null,
+  ].filter(Boolean);
+
+  return transforms.length > 0 ? transforms.join(" ") : undefined;
 }

@@ -3,7 +3,7 @@ from io import BytesIO
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from PIL import Image
+from PIL import Image, ImageSequence
 
 from app.main import app
 from app.services import ani as ani_service
@@ -134,6 +134,55 @@ def test_image_sequence_to_ani_bytes_preserves_per_frame_durations():
     )
 
     assert _read_ani_rates(ani) == [3, 8]
+
+
+def test_image_sequence_to_gif_bytes_preserves_per_frame_durations():
+    gif = ani_service.image_sequence_to_gif_bytes(
+        [
+            _make_test_png((255, 0, 0)),
+            _make_test_png((0, 0, 255)),
+        ],
+        frame_durations_ms=[40, 130],
+    )
+
+    with Image.open(BytesIO(gif)) as image:
+        frames = [frame.copy() for frame in ImageSequence.Iterator(image)]
+
+    assert image.format == "GIF"
+    assert len(frames) == 2
+    assert [frame.info["duration"] for frame in frames] == [40, 130]
+
+
+def test_render_frame_image_applies_rotation_and_flip_before_fitting():
+    image = Image.new("RGBA", (4, 2), (0, 0, 0, 0))
+    image.putpixel((0, 0), (255, 0, 0, 255))
+
+    rendered = ani_service._render_frame_image(
+        image,
+        cursor_size=4,
+        fit_mode="contain",
+        scale=1,
+        offset_x=0,
+        offset_y=0,
+        rotation=90,
+        flip_x=True,
+        flip_y=False,
+    )
+
+    assert rendered.size == (4, 4)
+    assert rendered.getpixel((1, 0)) == (255, 0, 0, 255)
+    assert rendered.getpixel((0, 0))[3] == 0
+
+
+def test_image_sequence_to_ani_bytes_rejects_invalid_rotation():
+    with pytest.raises(ValueError, match="Rotation"):
+        ani_service.image_sequence_to_ani_bytes(
+            [
+                _make_test_png((255, 0, 0)),
+                _make_test_png((0, 0, 255)),
+            ],
+            rotation=45,
+        )
 
 
 def test_image_sequence_to_ani_bytes_rejects_fewer_than_two_frames():
@@ -277,6 +326,36 @@ async def test_generate_ani_sequence_route_accepts_per_frame_durations(
 
     assert res.status_code == 200
     assert _read_ani_rates(res.content) == [3, 8]
+
+
+@pytest.mark.anyio
+async def test_generate_gif_sequence_route_returns_gif_with_durations(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-gif-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", _make_test_png((0, 0, 255)), "image/png")),
+        ],
+        data={
+            "cursor_name": "sequence cursor",
+            "frame_durations_ms": ["40", "130"],
+        },
+    )
+
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "image/gif"
+    assert (
+        res.headers["content-disposition"]
+        == "attachment; filename=pointint-sequence cursor.gif"
+    )
+    with Image.open(BytesIO(res.content)) as image:
+        frames = [frame.copy() for frame in ImageSequence.Iterator(image)]
+
+    assert image.format == "GIF"
+    assert len(frames) == 2
+    assert [frame.info["duration"] for frame in frames] == [40, 130]
 
 
 @pytest.mark.anyio

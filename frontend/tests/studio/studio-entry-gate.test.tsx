@@ -59,10 +59,20 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   themeLight: "Light mode",
   themeDark: "Dark mode",
   themeModeSwitch: "simulation theme mode",
-  downloadAllRoles: "Download all roles (t)",
-  downloadCurrentSlot: "Download current slot (t)",
-  downloadCurrentCur: "Download selected .CUR (t)",
-  downloadCurrentAni: "Download selected .ANI (t)",
+  untitledProject: "Untitled cursor set (t)",
+  saveProject: "Save (t)",
+  saveProjectLoginRequired: "Login required (t)",
+  saveProjectLoginRequiredDescription: "Log in to save project (t)",
+  downloadAllRoles: "Download all (t)",
+  downloadAllRolesLabel: "Download Windows cursor set (t)",
+  downloadGif: "Save GIF (t)",
+  downloadGifLabel: "Export as GIF file (t)",
+  downloadCurrentSlot: "Current cursor (t)",
+  downloadCurrentSlotLabel: "Download current slot (t)",
+  downloadCurrentCur: "Current cursor (t)",
+  downloadCurrentCurLabel: "Download Windows cursor file (t)",
+  downloadCurrentAni: "ANI cursor (t)",
+  downloadCurrentAniLabel: "Download Windows animated cursor file (t)",
   backgroundPendingDownloadTitle: "Finish background choices",
   backgroundPendingDownloadSummary: "Pending slots",
   backgroundPendingDownloadAction: "Review slot",
@@ -134,6 +144,7 @@ const {
   UploadZoneMock,
   MobileGuardMock,
   StudioBarMock,
+  GuideModalMock,
   SimulationMock,
   AniSimulationMock,
   CursorCanvasMock,
@@ -168,6 +179,7 @@ const {
     <>{children}</>
   )),
   StudioBarMock: vi.fn(() => <div data-testid="studio-bar" />),
+  GuideModalMock: vi.fn(() => null),
   SimulationMock: vi.fn(() => <div data-testid="simulation" />),
   AniSimulationMock: vi.fn(() => <div data-testid="ani-simulation" />),
   CursorCanvasMock: vi.fn(() => <div data-testid="cursor-canvas" />),
@@ -239,7 +251,7 @@ vi.mock("@/components/CursorCanvas", () => ({
 }));
 
 vi.mock("@/components/GuideModal", () => ({
-  default: () => null,
+  default: GuideModalMock,
 }));
 
 vi.mock("@/components/HealthCheck", () => ({
@@ -297,6 +309,9 @@ function createEditingCursor(overrides: Record<string, unknown> = {}) {
     offsetX: 0,
     offsetY: 0,
     scale: 1,
+    rotation: 0,
+    flipX: false,
+    flipY: false,
     fitMode: "contain",
     cursorSize: 32,
     cursorName: "cursor",
@@ -316,6 +331,9 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
       scale: 1,
       offsetX: 0,
       offsetY: 0,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
     sourceWidth: 96,
     sourceHeight: 96,
@@ -325,6 +343,9 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
     offsetX: 0,
     offsetY: 0,
     scale: 1,
+    rotation: 0,
+    flipX: false,
+    flipY: false,
     fitMode: "contain",
     cursorSize: 32,
     cursorName: "orbit",
@@ -351,6 +372,9 @@ function createProject() {
       offsetX: 0,
       offsetY: 0,
       scale: 1,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
   });
 
@@ -430,6 +454,9 @@ function createStaticSlotAsset(
       offsetX: 0,
       offsetY: 0,
       scale: 1,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
   };
 }
@@ -456,6 +483,9 @@ function createAnimatedSlotAsset(
       offsetX: 0,
       offsetY: 0,
       scale: 1,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
   };
 }
@@ -469,6 +499,8 @@ function renderStudio(
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
     pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
+    showGuide?: boolean;
+    downloadGuideVariant?: "package" | "cur" | "ani";
   } = {}
 ) {
   useStudioMock.mockReturnValue(createStudioReturn(state, options));
@@ -485,6 +517,8 @@ function createStudioReturn(
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
     pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
+    showGuide?: boolean;
+    downloadGuideVariant?: "package" | "cur" | "ani";
   } = {}
 ) {
   const hasCursorOverride = Object.prototype.hasOwnProperty.call(options, "cursor");
@@ -532,7 +566,8 @@ function createStudioReturn(
     editingSlotId: selectedSlotId,
     error: null,
     downloading: false,
-    showGuide: false,
+    showGuide: options.showGuide ?? false,
+    downloadGuideVariant: options.downloadGuideVariant ?? "package",
     showOriginal: false,
     previewUrl: options.previewUrl ?? null,
     pendingBackgroundRemovalSlotIds:
@@ -550,6 +585,7 @@ function createStudioReturn(
     setOffset: setOffsetMock,
     setScale: setScaleMock,
     setFitMode: setFitModeMock,
+    applyImageTransform: vi.fn(),
     setCursorSize: vi.fn(),
     setAniCursorSize: vi.fn(),
     setCursorName: vi.fn(),
@@ -573,9 +609,12 @@ function createStudioReturn(
       hasConfiguredRoleIncludingAliases &&
       !(options.pendingBackgroundRemovalSlotIds?.length ?? 0),
     canDownload: hasConfiguredRoleIncludingAliases,
+    canDownloadGif:
+      state === "ani-editing" && ani?.sourceKind === "image-sequence",
     canSecondaryDownload: state !== "uploaded" && selectedSlotBound,
     downloadAll: vi.fn(),
     download: vi.fn(),
+    downloadGif: vi.fn(),
     closeGuide: vi.fn(),
   };
 }
@@ -584,6 +623,7 @@ beforeEach(() => {
   UploadZoneMock.mockClear();
   MobileGuardMock.mockClear();
   StudioBarMock.mockClear();
+  GuideModalMock.mockClear();
   SimulationMock.mockClear();
   AniSimulationMock.mockClear();
   CursorCanvasMock.mockClear();
@@ -833,8 +873,19 @@ describe("Studio entry gate", () => {
     const barProps = StudioBarMock.mock.calls[0][0];
     expect(barProps.onDownload).toBeDefined();
     expect(barProps.onSecondaryDownload).toBeDefined();
-    expect(barProps.primaryActionLabel).toBe("Download all roles (t)");
-    expect(barProps.secondaryActionLabel).toBe("Download selected .ANI (t)");
+    expect(barProps.canSaveProject).toBe(false);
+    expect(barProps.projectTitleLabel).toBe("Untitled cursor set (t)");
+    expect(barProps.saveProjectLabel).toBe("Save (t)");
+    expect(barProps.saveProjectStatusLabel).toBe("Login required (t)");
+    expect(barProps.saveProjectDescription).toBe("Log in to save project (t)");
+    expect(barProps.primaryActionLabel).toBe("Download all (t)");
+    expect(barProps.primaryActionDescription).toBe(
+      "Download Windows cursor set (t)"
+    );
+    expect(barProps.secondaryActionLabel).toBe("ANI cursor (t)");
+    expect(barProps.secondaryActionDescription).toBe(
+      "Download Windows animated cursor file (t)"
+    );
     expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
   });
@@ -844,7 +895,56 @@ describe("Studio entry gate", () => {
 
     const barProps = StudioBarMock.mock.calls[0][0];
 
-    expect(barProps.secondaryActionLabel).toBe("Download selected .ANI (t)");
+    expect(barProps.secondaryActionLabel).toBe("ANI cursor (t)");
+    expect(barProps.secondaryActionDescription).toBe(
+      "Download Windows animated cursor file (t)"
+    );
+  });
+
+  it("offers a separate GIF export action for image sequence animations", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-1",
+        selectedFrameId: "frame-1",
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+        ],
+      },
+    });
+
+    const barProps = StudioBarMock.mock.calls[0][0];
+
+    expect(barProps.tertiaryActionLabel).toBe("Save GIF (t)");
+    expect(barProps.tertiaryActionDescription).toBe("Export as GIF file (t)");
+    expect(barProps.canTertiaryDownload).toBe(true);
+  });
+
+  it("passes the active download guide variant to the guide modal", () => {
+    renderStudio("ani-editing", {
+      showGuide: true,
+      downloadGuideVariant: "ani",
+    });
+
+    expect(GuideModalMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      open: true,
+      variant: "ani",
+    });
   });
 
   it("passes the selected image sequence frame URL to the ANI canvas", () => {

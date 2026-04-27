@@ -4,6 +4,9 @@ import { GifReader } from "omggif";
 
 import {
   getFrameRect,
+  normalizeImageTransform,
+  type ImageRotation,
+  type ImageTransform,
   mapViewportHotspotToOutput,
   type FitMode,
 } from "@/lib/cursorFrame";
@@ -24,6 +27,9 @@ export interface AniPreviewInput {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   outputSize: number;
   hotspotX: number;
   hotspotY: number;
@@ -195,6 +201,9 @@ async function rasterizeAniPreviewFrameUrls(
         scale: input.scale,
         offsetX: input.offsetX,
         offsetY: input.offsetY,
+        rotation: input.rotation,
+        flipX: input.flipX,
+        flipY: input.flipY,
         outputSize,
       });
 
@@ -399,6 +408,9 @@ async function renderAniPreviewFrame(input: {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   outputSize: number;
 }) {
   const {
@@ -409,8 +421,12 @@ async function renderAniPreviewFrame(input: {
     scale,
     offsetX,
     offsetY,
+    rotation,
+    flipX,
+    flipY,
     outputSize,
   } = input;
+  const transform = normalizeImageTransform({ rotation, flipX, flipY });
 
   const canvas = document.createElement("canvas");
   canvas.width = outputSize;
@@ -430,18 +446,59 @@ async function renderAniPreviewFrame(input: {
     scale,
     offsetX: offsetX * offsetScale,
     offsetY: offsetY * offsetScale,
+    ...transform,
   });
 
   context.clearRect(0, 0, outputSize, outputSize);
-  context.drawImage(
-    source,
-    frameRect.drawX,
-    frameRect.drawY,
-    frameRect.drawWidth,
-    frameRect.drawHeight
-  );
+  drawImageWithTransform(context, source, frameRect, transform);
 
   return canvas;
+}
+
+function drawImageWithTransform(
+  context: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  frameRect: {
+    drawWidth: number;
+    drawHeight: number;
+    drawX: number;
+    drawY: number;
+  },
+  transform: ImageTransform
+) {
+  const transformed =
+    transform.rotation !== 0 || transform.flipX || transform.flipY;
+
+  if (!transformed) {
+    context.drawImage(
+      source,
+      frameRect.drawX,
+      frameRect.drawY,
+      frameRect.drawWidth,
+      frameRect.drawHeight
+    );
+    return;
+  }
+
+  const sideways = transform.rotation === 90 || transform.rotation === 270;
+  const imageDrawWidth = sideways ? frameRect.drawHeight : frameRect.drawWidth;
+  const imageDrawHeight = sideways ? frameRect.drawWidth : frameRect.drawHeight;
+
+  context.save();
+  context.translate(
+    frameRect.drawX + frameRect.drawWidth / 2,
+    frameRect.drawY + frameRect.drawHeight / 2
+  );
+  context.scale(transform.flipX ? -1 : 1, transform.flipY ? -1 : 1);
+  context.rotate((transform.rotation * Math.PI) / 180);
+  context.drawImage(
+    source,
+    -imageDrawWidth / 2,
+    -imageDrawHeight / 2,
+    imageDrawWidth,
+    imageDrawHeight
+  );
+  context.restore();
 }
 
 function createCanvasElement(

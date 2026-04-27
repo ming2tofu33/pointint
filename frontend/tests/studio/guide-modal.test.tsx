@@ -16,6 +16,7 @@ vi.mock("@/lib/analytics", () => ({
 const messages = {
   guide: {
     downloaded: "Download complete",
+    packageTitle: "Apply your cursor set",
     title: "Apply your cursor",
     aniTitle: "Apply your animated cursor",
     close: "Close",
@@ -27,6 +28,10 @@ const messages = {
     aniStep2: 'Select a cursor role and choose "Browse"',
     aniStep3: "Pick the downloaded .ani file",
     aniStep4: 'Save the scheme if you want to reuse it later',
+    curStep1: "Open Settings > Mouse > Additional mouse settings > Pointers tab",
+    curStep2: 'Select a cursor role and choose "Browse"',
+    curStep3: "Pick the downloaded .cur file",
+    curStep4: 'Save the scheme if you want to reuse it later',
     restore: "To remove the Pointint pointer set from the list, right-click",
     restoreFile: "restore-default.inf",
     restoreAction:
@@ -48,7 +53,7 @@ describe("GuideModal", () => {
       </NextIntlClientProvider>
     );
 
-    const dialog = screen.getByRole("dialog", { name: "Apply your cursor" });
+    const dialog = screen.getByRole("dialog", { name: "Apply your cursor set" });
 
     expect(dialog).toHaveStyle({
       boxSizing: "border-box",
@@ -62,8 +67,23 @@ describe("GuideModal", () => {
     );
     expect(trackEventMock).toHaveBeenCalledWith("install_guide_opened", {
       source: "studio_download",
-      variant: "cur",
+      variant: "package",
     });
+  });
+
+  it("renders CUR-specific guidance without ZIP steps", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <GuideModal open={true} onClose={() => {}} variant="cur" />
+      </NextIntlClientProvider>
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "Apply your cursor" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pick the downloaded .cur file")).toBeInTheDocument();
+    expect(screen.queryByText("Extract the downloaded ZIP")).toBeNull();
+    expect(screen.queryByText("restore-default.inf")).toBeNull();
   });
 
   it("renders ANI-specific guidance when requested", () => {

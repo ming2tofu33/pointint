@@ -306,6 +306,50 @@ describe("AniFrameTimeline", () => {
     );
   });
 
+  it("keeps comfortable horizontal breathing room inside the timeline panel", () => {
+    render(
+      <AniFrameTimeline
+        frames={frames}
+        selectedFrameId="frame-a"
+        onSelectFrame={vi.fn()}
+        onDeleteFrame={vi.fn()}
+        onReorderFrame={vi.fn()}
+        onAddFrames={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("ani-frame-timeline")).toHaveStyle({
+      padding: "0.875rem 1rem 0",
+    });
+    expect(screen.getByTestId("ani-frame-timeline-strip")).toHaveStyle({
+      padding: "0.18rem 0.25rem 0.45rem",
+    });
+  });
+
+  it("applies resolved transform values to frame thumbnails", () => {
+    render(
+      <AniFrameTimeline
+        frames={[
+          {
+            ...frame("frame-a", 100, { rotation: 90, flipX: true }),
+            rotation: 90,
+            flipX: true,
+            flipY: false,
+          },
+        ]}
+        selectedFrameId="frame-a"
+        onSelectFrame={vi.fn()}
+        onDeleteFrame={vi.fn()}
+        onReorderFrame={vi.fn()}
+        onAddFrames={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("ani-frame-thumbnail-frame-a")).toHaveStyle({
+      transform: "scale(-1, 1) rotate(90deg)",
+    });
+  });
+
   it("shows a visible edited marker on modified frames", () => {
     render(
       <AniFrameTimeline

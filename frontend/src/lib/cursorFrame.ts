@@ -1,4 +1,15 @@
 export type FitMode = "contain" | "cover";
+export type ImageRotation = 0 | 90 | 180 | 270;
+export type ImageTransformAction =
+  | "rotate-clockwise"
+  | "flip-horizontal"
+  | "flip-vertical";
+
+export interface ImageTransform {
+  rotation: ImageRotation;
+  flipX: boolean;
+  flipY: boolean;
+}
 
 export interface FrameInput {
   sourceWidth: number;
@@ -8,6 +19,9 @@ export interface FrameInput {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
 }
 
 export interface FrameRect {
@@ -15,6 +29,12 @@ export interface FrameRect {
   drawHeight: number;
   drawX: number;
   drawY: number;
+}
+
+export interface TransformedImagePlacement {
+  imageDrawWidth: number;
+  imageDrawHeight: number;
+  transform: string | undefined;
 }
 
 export interface ViewportHotspotInput {
@@ -32,6 +52,9 @@ export interface RasterizeSquarePngInput {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   outputSize: number;
   hotspotX: number;
   hotspotY: number;
@@ -53,7 +76,63 @@ export interface SuggestViewportHotspotInput {
   scale: number;
   offsetX: number;
   offsetY: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   viewportSize: number;
+}
+
+export const DEFAULT_IMAGE_TRANSFORM: ImageTransform = {
+  rotation: 0,
+  flipX: false,
+  flipY: false,
+};
+
+export function createDefaultImageTransform(): ImageTransform {
+  return { ...DEFAULT_IMAGE_TRANSFORM };
+}
+
+export function applyImageTransformAction(
+  transform: ImageTransform,
+  action: ImageTransformAction
+): ImageTransform {
+  switch (action) {
+    case "rotate-clockwise":
+      return {
+        ...transform,
+        rotation: normalizeImageRotation(transform.rotation + 90),
+      };
+    case "flip-horizontal":
+      return { ...transform, flipX: !transform.flipX };
+    case "flip-vertical":
+      return { ...transform, flipY: !transform.flipY };
+  }
+}
+
+export function normalizeImageRotation(rotation: number): ImageRotation {
+  const normalized = ((Math.round(rotation / 90) * 90) % 360 + 360) % 360;
+  return normalized as ImageRotation;
+}
+
+export function normalizeImageTransform(
+  transform: Partial<ImageTransform> | undefined
+): ImageTransform {
+  return {
+    rotation: normalizeImageRotation(transform?.rotation ?? 0),
+    flipX: Boolean(transform?.flipX),
+    flipY: Boolean(transform?.flipY),
+  };
+}
+
+export function hasNonDefaultImageTransform(
+  transform: Partial<ImageTransform> | undefined
+) {
+  const normalized = normalizeImageTransform(transform);
+  return (
+    normalized.rotation !== 0 ||
+    normalized.flipX ||
+    normalized.flipY
+  );
 }
 
 export function getFrameRect(input: FrameInput): FrameRect {
@@ -66,9 +145,10 @@ export function getFrameRect(input: FrameInput): FrameRect {
     offsetX,
     offsetY,
   } = input;
+  const transform = normalizeImageTransform(input);
 
-  const safeWidth = Math.max(sourceWidth, 1);
-  const safeHeight = Math.max(sourceHeight, 1);
+  const { width: safeWidth, height: safeHeight } =
+    getEffectiveSourceDimensions(sourceWidth, sourceHeight, transform.rotation);
   const baseScale =
     fitMode === "cover"
       ? Math.max(viewportSize / safeWidth, viewportSize / safeHeight)
@@ -81,6 +161,25 @@ export function getFrameRect(input: FrameInput): FrameRect {
     drawHeight,
     drawX: (viewportSize - drawWidth) / 2 + offsetX,
     drawY: (viewportSize - drawHeight) / 2 + offsetY,
+  };
+}
+
+export function getTransformedImagePlacement(
+  frameRect: FrameRect,
+  transform: Partial<ImageTransform> | undefined
+): TransformedImagePlacement {
+  const normalized = normalizeImageTransform(transform);
+  const rotatedSideways =
+    normalized.rotation === 90 || normalized.rotation === 270;
+  const transforms = [
+    `scale(${normalized.flipX ? -1 : 1}, ${normalized.flipY ? -1 : 1})`,
+    normalized.rotation !== 0 ? `rotate(${normalized.rotation}deg)` : null,
+  ].filter(Boolean);
+
+  return {
+    imageDrawWidth: rotatedSideways ? frameRect.drawHeight : frameRect.drawWidth,
+    imageDrawHeight: rotatedSideways ? frameRect.drawWidth : frameRect.drawHeight,
+    transform: transforms.length > 0 ? transforms.join(" ") : undefined,
   };
 }
 
@@ -160,6 +259,7 @@ export async function suggestViewportHotspot(
     offsetY,
     viewportSize,
   } = input;
+  const transform = normalizeImageTransform(input);
 
   const image = await loadImage(imageUrl);
   const canvas = document.createElement("canvas");
@@ -179,16 +279,11 @@ export async function suggestViewportHotspot(
     scale,
     offsetX,
     offsetY,
+    ...transform,
   });
 
   ctx.clearRect(0, 0, viewportSize, viewportSize);
-  ctx.drawImage(
-    image,
-    frameRect.drawX,
-    frameRect.drawY,
-    frameRect.drawWidth,
-    frameRect.drawHeight
-  );
+  drawImageWithTransform(ctx, image, frameRect, transform);
 
   const imageData = ctx.getImageData(0, 0, viewportSize, viewportSize);
   const alpha = new Uint8ClampedArray(viewportSize * viewportSize);
@@ -211,11 +306,15 @@ export async function rasterizeSquarePng(
     scale,
     offsetX,
     offsetY,
+    rotation,
+    flipX,
+    flipY,
     outputSize,
     hotspotX,
     hotspotY,
     editorViewportSize,
   } = input;
+  const transform = normalizeImageTransform({ rotation, flipX, flipY });
 
   const image = await loadImage(imageUrl);
   const canvas = document.createElement("canvas");
@@ -236,16 +335,11 @@ export async function rasterizeSquarePng(
     scale,
     offsetX: offsetX * offsetScale,
     offsetY: offsetY * offsetScale,
+    ...transform,
   });
 
   ctx.clearRect(0, 0, outputSize, outputSize);
-  ctx.drawImage(
-    image,
-    frameRect.drawX,
-    frameRect.drawY,
-    frameRect.drawWidth,
-    frameRect.drawHeight
-  );
+  drawImageWithTransform(ctx, image, frameRect, transform);
 
   const blob = await canvasToBlob(canvas);
   const mappedHotspot = mapViewportHotspotToOutput({
@@ -351,6 +445,57 @@ function getLocalOpaqueCentroid(
     x: sumX / count,
     y: sumY / count,
   };
+}
+
+function getEffectiveSourceDimensions(
+  sourceWidth: number,
+  sourceHeight: number,
+  rotation: ImageRotation
+) {
+  const safeWidth = Math.max(sourceWidth, 1);
+  const safeHeight = Math.max(sourceHeight, 1);
+
+  if (rotation === 90 || rotation === 270) {
+    return { width: safeHeight, height: safeWidth };
+  }
+
+  return { width: safeWidth, height: safeHeight };
+}
+
+function drawImageWithTransform(
+  ctx: CanvasRenderingContext2D,
+  image: CanvasImageSource,
+  frameRect: FrameRect,
+  transform: ImageTransform
+) {
+  if (!hasNonDefaultImageTransform(transform)) {
+    ctx.drawImage(
+      image,
+      frameRect.drawX,
+      frameRect.drawY,
+      frameRect.drawWidth,
+      frameRect.drawHeight
+    );
+    return;
+  }
+
+  const placement = getTransformedImagePlacement(frameRect, transform);
+
+  ctx.save();
+  ctx.translate(
+    frameRect.drawX + frameRect.drawWidth / 2,
+    frameRect.drawY + frameRect.drawHeight / 2
+  );
+  ctx.scale(transform.flipX ? -1 : 1, transform.flipY ? -1 : 1);
+  ctx.rotate((transform.rotation * Math.PI) / 180);
+  ctx.drawImage(
+    image,
+    -placement.imageDrawWidth / 2,
+    -placement.imageDrawHeight / 2,
+    placement.imageDrawWidth,
+    placement.imageDrawHeight
+  );
+  ctx.restore();
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {

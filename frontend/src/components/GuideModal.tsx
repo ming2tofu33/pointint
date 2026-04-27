@@ -9,17 +9,24 @@ import { trackEvent } from "@/lib/analytics";
 interface GuideModalProps {
   open: boolean;
   onClose: () => void;
-  variant?: "cur" | "ani";
+  variant?: "package" | "cur" | "ani";
 }
 
 export default function GuideModal({
   open,
   onClose,
-  variant = "cur",
+  variant = "package",
 }: GuideModalProps) {
   const t = useTranslations("guide");
   const titleId = useId();
+  const isPackage = variant === "package";
   const isAni = variant === "ani";
+  const title = isPackage ? t("packageTitle") : isAni ? t("aniTitle") : t("title");
+  const steps = isPackage
+    ? [t("step1"), t("step2"), t("step3"), t("step4")]
+    : isAni
+      ? [t("aniStep1"), t("aniStep2"), t("aniStep3"), t("aniStep4")]
+      : [t("curStep1"), t("curStep2"), t("curStep3"), t("curStep4")];
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +104,7 @@ export default function GuideModal({
               color: "var(--color-text-primary)",
             }}
           >
-            {isAni ? t("aniTitle") : t("title")}
+            {title}
           </h2>
           <button
             onClick={onClose}
@@ -122,13 +129,12 @@ export default function GuideModal({
             gap: "1rem",
           }}
         >
-          <Step number={1} text={isAni ? t("aniStep1") : t("step1")} />
-          <Step number={2} text={isAni ? t("aniStep2") : t("step2")} />
-          <Step number={3} text={isAni ? t("aniStep3") : t("step3")} />
-          <Step number={4} text={isAni ? t("aniStep4") : t("step4")} />
+          {steps.map((step, index) => (
+            <Step key={step} number={index + 1} text={step} />
+          ))}
         </div>
 
-        {!isAni && (
+        {isPackage && (
           <>
             <div
               style={{

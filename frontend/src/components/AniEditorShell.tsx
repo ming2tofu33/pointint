@@ -11,6 +11,7 @@ import CanvasViewZoomControl, {
 } from "@/components/CanvasViewZoomControl";
 import type { SimulationThemeMode } from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
+import ImageTransformControls from "@/components/ImageTransformControls";
 import NameInput from "@/components/NameInput";
 import SimulationThemeModeSwitch from "@/components/SimulationThemeModeSwitch";
 import SimulationSceneContextHint from "@/components/SimulationSceneContextHint";
@@ -33,7 +34,7 @@ import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
 import { StudioShellInteractionStyles } from "@/components/StudioSurfaceCard";
 import { resolveAniFrameEdit } from "@/lib/aniFrameEdits";
-import { type FitMode } from "@/lib/cursorFrame";
+import { type FitMode, type ImageTransformAction } from "@/lib/cursorFrame";
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
 import {
   buildProjectSlotSimulationSources,
@@ -78,6 +79,10 @@ interface AniEditorShellProps {
     fitMode: FitMode,
     editScope?: AniFrameEditScope
   ) => void;
+  onImageTransform: (
+    action: ImageTransformAction,
+    editScope?: AniFrameEditScope
+  ) => void;
   onAniCursorSizeChange: (size: CursorSize) => void;
   onAniNameChange: (name: string) => void;
   onRecommendHotspot: () => void;
@@ -116,6 +121,7 @@ export default function AniEditorShell({
   onHotspotChange,
   onScaleChange,
   onFitModeChange,
+  onImageTransform,
   onAniCursorSizeChange,
   onAniNameChange,
   onRecommendHotspot,
@@ -167,6 +173,13 @@ export default function AniEditorShell({
   const activeSourceWidth = displayedAniFrame?.sourceWidth ?? ani?.sourceWidth ?? 0;
   const activeSourceHeight =
     displayedAniFrame?.sourceHeight ?? ani?.sourceHeight ?? 0;
+  const timelineFrames =
+    ani?.sourceKind === "image-sequence"
+      ? ani.frames.map((frame) => ({
+          ...frame,
+          ...resolveAniFrameEdit(ani.globalEdit, frame),
+        }))
+      : [];
   const activeEditScope = supportsFrameEditScope ? editScope : "all-frames";
   const activeEdit =
     ani == null
@@ -175,6 +188,9 @@ export default function AniEditorShell({
           scale: 1,
           offsetX: 0,
           offsetY: 0,
+          rotation: 0 as const,
+          flipX: false,
+          flipY: false,
         }
       : sequencePreviewActive && displayedAniFrame
         ? resolveAniFrameEdit(ani.globalEdit, displayedAniFrame)
@@ -238,6 +254,8 @@ export default function AniEditorShell({
     onScaleChange(scale, activeEditScope);
   const handleFitModeChange = (fitMode: FitMode) =>
     onFitModeChange(fitMode, activeEditScope);
+  const handleImageTransform = (action: ImageTransformAction) =>
+    onImageTransform(action, activeEditScope);
   const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
   const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "ANI";
   const stageHotspotBadge =
@@ -353,6 +371,9 @@ export default function AniEditorShell({
                       offsetX={activeEdit.offsetX}
                       offsetY={activeEdit.offsetY}
                       scale={activeEdit.scale}
+                      rotation={activeEdit.rotation}
+                      flipX={activeEdit.flipX}
+                      flipY={activeEdit.flipY}
                       hotspotX={ani.hotspotX}
                       hotspotY={ani.hotspotY}
                       onOffsetChange={handleOffsetChange}
@@ -367,7 +388,7 @@ export default function AniEditorShell({
                   {ani.sourceKind === "image-sequence" &&
                   ani.frames.length > 0 ? (
                     <AniFrameTimeline
-                      frames={ani.frames}
+                      frames={timelineFrames}
                       selectedFrameId={ani.selectedFrameId}
                       previewFrameId={
                         sequencePreviewActive ? displayedAniFrame?.id : null
@@ -553,6 +574,9 @@ export default function AniEditorShell({
                 offsetX={selectedSlotBound && ani ? activeEdit.offsetX : 0}
                 offsetY={selectedSlotBound && ani ? activeEdit.offsetY : 0}
                 scale={selectedSlotBound && ani ? activeEdit.scale : 1}
+                rotation={selectedSlotBound && ani ? activeEdit.rotation : 0}
+                flipX={selectedSlotBound && ani ? activeEdit.flipX : false}
+                flipY={selectedSlotBound && ani ? activeEdit.flipY : false}
                 cursorSize={selectedSlotBound && ani ? ani.cursorSize : 32}
                 hotspotX={selectedSlotBound && ani ? ani.hotspotX : 0}
                 hotspotY={selectedSlotBound && ani ? ani.hotspotY : 0}
@@ -619,6 +643,9 @@ export default function AniEditorShell({
                     offsetX={activeEdit.offsetX}
                     offsetY={activeEdit.offsetY}
                     scale={activeEdit.scale}
+                    rotation={activeEdit.rotation}
+                    flipX={activeEdit.flipX}
+                    flipY={activeEdit.flipY}
                     viewportSize={ani.cursorSize}
                     alt={tp("lightPreview")}
                   />
@@ -635,6 +662,9 @@ export default function AniEditorShell({
                     offsetX={activeEdit.offsetX}
                     offsetY={activeEdit.offsetY}
                     scale={activeEdit.scale}
+                    rotation={activeEdit.rotation}
+                    flipX={activeEdit.flipX}
+                    flipY={activeEdit.flipY}
                     viewportSize={ani.cursorSize}
                     alt={tp("darkPreview")}
                   />
@@ -682,6 +712,15 @@ export default function AniEditorShell({
                   getLabel={(value) =>
                     value === "contain" ? tp("fitContain") : tp("fitCover")
                   }
+                />
+              </StudioInspectorSection>
+
+              <StudioInspectorSection title={tp("imageTransform")}>
+                <ImageTransformControls
+                  rotation={activeEdit.rotation}
+                  flipX={activeEdit.flipX}
+                  flipY={activeEdit.flipY}
+                  onTransform={handleImageTransform}
                 />
               </StudioInspectorSection>
 

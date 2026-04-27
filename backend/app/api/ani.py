@@ -1,7 +1,11 @@
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 
-from app.services.ani import gif_to_ani_bytes, image_sequence_to_ani_bytes
+from app.services.ani import (
+    gif_to_ani_bytes,
+    image_sequence_to_ani_bytes,
+    image_sequence_to_gif_bytes,
+)
 
 router = APIRouter()
 
@@ -16,13 +20,13 @@ MAX_SEQUENCE_FRAME_BYTES = 8 * 1024 * 1024
 MAX_SEQUENCE_TOTAL_BYTES = 64 * 1024 * 1024
 
 
-def _safe_attachment_name(cursor_name: str) -> str:
+def _safe_attachment_name(cursor_name: str, extension: str = "ani") -> str:
     safe_name = "".join(
         c for c in cursor_name if c.isascii() and (c.isalnum() or c in "-_ ")
     ).strip()
     if not safe_name:
         safe_name = "cursor"
-    return f"pointint-{safe_name}.ani"
+    return f"pointint-{safe_name}.{extension}"
 
 
 def _ani_response(ani_bytes: bytes, cursor_name: str) -> Response:
@@ -30,6 +34,15 @@ def _ani_response(ani_bytes: bytes, cursor_name: str) -> Response:
     return Response(
         content=ani_bytes,
         media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename={attachment_name}"},
+    )
+
+
+def _gif_response(gif_bytes: bytes, cursor_name: str) -> Response:
+    attachment_name = _safe_attachment_name(cursor_name, "gif")
+    return Response(
+        content=gif_bytes,
+        media_type="image/gif",
         headers={"Content-Disposition": f"attachment; filename={attachment_name}"},
     )
 
@@ -107,6 +120,9 @@ async def api_generate_ani(
     scale: float = Form(1.0),
     offset_x: int = Form(0),
     offset_y: int = Form(0),
+    rotation: int = Form(0),
+    flip_x: bool = Form(False),
+    flip_y: bool = Form(False),
 ):
     if file.content_type != "image/gif":
         raise HTTPException(
@@ -126,6 +142,9 @@ async def api_generate_ani(
             scale=scale,
             offset_x=offset_x,
             offset_y=offset_y,
+            rotation=rotation,
+            flip_x=flip_x,
+            flip_y=flip_y,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -146,6 +165,9 @@ async def api_generate_ani_sequence(
     scale: float = Form(1.0),
     offset_x: int = Form(0),
     offset_y: int = Form(0),
+    rotation: int = Form(0),
+    flip_x: bool = Form(False),
+    flip_y: bool = Form(False),
 ):
     _validate_sequence_frame_count(frames)
     frame_bytes = await _read_sequence_frames(frames)
@@ -160,6 +182,9 @@ async def api_generate_ani_sequence(
             scale=scale,
             offset_x=offset_x,
             offset_y=offset_y,
+            rotation=rotation,
+            flip_x=flip_x,
+            flip_y=flip_y,
             duration_ms=duration_ms,
             frame_durations_ms=frame_durations_ms,
         )
@@ -167,3 +192,41 @@ async def api_generate_ani_sequence(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return _ani_response(ani_bytes, cursor_name)
+
+
+@router.post("/generate-gif-sequence")
+async def api_generate_gif_sequence(
+    frames: list[UploadFile] = File(...),
+    duration_ms: int = Form(100),
+    frame_durations_ms: list[int] | None = Form(None),
+    cursor_size: int = Form(32),
+    cursor_name: str = Form("cursor"),
+    fit_mode: str = Form("contain"),
+    scale: float = Form(1.0),
+    offset_x: int = Form(0),
+    offset_y: int = Form(0),
+    rotation: int = Form(0),
+    flip_x: bool = Form(False),
+    flip_y: bool = Form(False),
+):
+    _validate_sequence_frame_count(frames)
+    frame_bytes = await _read_sequence_frames(frames)
+
+    try:
+        gif_bytes = image_sequence_to_gif_bytes(
+            frame_bytes,
+            cursor_size=cursor_size,
+            fit_mode=fit_mode,
+            scale=scale,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            rotation=rotation,
+            flip_x=flip_x,
+            flip_y=flip_y,
+            duration_ms=duration_ms,
+            frame_durations_ms=frame_durations_ms,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _gif_response(gif_bytes, cursor_name)

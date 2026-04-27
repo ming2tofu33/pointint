@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  applyImageTransformAction,
+  createDefaultImageTransform,
   FitMode,
+  hasNonDefaultImageTransform,
+  ImageTransformAction,
+  ImageRotation,
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
   suggestViewportHotspot,
@@ -42,6 +47,7 @@ import {
   generateAni,
   generateAniSequence,
   generateCursor,
+  generateGifSequence,
   removeBackground,
   type BinaryDownloadResponse,
 } from "./api";
@@ -53,6 +59,7 @@ import {
 export type CursorSize = ThemeCursorSize;
 export type AniFrameMoveDirection = "previous" | "next";
 export type AniFrameEditScope = "all-frames" | "selected-frame";
+export type DownloadGuideVariant = "package" | "cur" | "ani";
 
 const EDITOR_VIEWPORT_SIZE = 256;
 const DEFAULT_ANI_FRAME_EDIT: AniFrameEdit = {
@@ -60,6 +67,9 @@ const DEFAULT_ANI_FRAME_EDIT: AniFrameEdit = {
   scale: 1,
   offsetX: 0,
   offsetY: 0,
+  rotation: 0,
+  flipX: false,
+  flipY: false,
 };
 
 export interface CursorData {
@@ -78,6 +88,9 @@ export interface CursorData {
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation: ImageRotation;
+  flipX: boolean;
+  flipY: boolean;
   fitMode: FitMode;
   cursorSize: CursorSize;
   cursorName: string;
@@ -104,6 +117,9 @@ export interface AniData {
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation: ImageRotation;
+  flipX: boolean;
+  flipY: boolean;
   fitMode: FitMode;
   cursorSize: CursorSize;
   cursorName: string;
@@ -132,6 +148,9 @@ interface SlotStateUpdate {
     offsetX: number;
     offsetY: number;
     scale: number;
+    rotation: ImageRotation;
+    flipX: boolean;
+    flipY: boolean;
   };
   runtime: SlotRuntime;
 }
@@ -162,7 +181,8 @@ type HistoryActionKey =
   | "aniFrameMove"
   | "aniFrameDuration"
   | "aniFrameEditOverride"
-  | "aniFrameReset";
+  | "aniFrameReset"
+  | "imageTransform";
 
 type LegacySlotId = "normal" | "text" | "link" | "button" | "busySelect";
 
@@ -336,6 +356,15 @@ function normalizeAniFrameEditOverride(
   if (editOverride.offsetY !== undefined) {
     nextEditOverride.offsetY = editOverride.offsetY;
   }
+  if (editOverride.rotation !== undefined) {
+    nextEditOverride.rotation = editOverride.rotation;
+  }
+  if (editOverride.flipX !== undefined) {
+    nextEditOverride.flipX = editOverride.flipX;
+  }
+  if (editOverride.flipY !== undefined) {
+    nextEditOverride.flipY = editOverride.flipY;
+  }
 
   return Object.keys(nextEditOverride).length > 0
     ? nextEditOverride
@@ -350,7 +379,10 @@ function areAniFrameEditOverridesEqual(
     left?.fitMode === right?.fitMode &&
     left?.scale === right?.scale &&
     left?.offsetX === right?.offsetX &&
-    left?.offsetY === right?.offsetY
+    left?.offsetY === right?.offsetY &&
+    left?.rotation === right?.rotation &&
+    left?.flipX === right?.flipX &&
+    left?.flipY === right?.flipY
   );
 }
 
@@ -397,6 +429,56 @@ function getAniFrameDurationsMs(ani: AniData) {
   }
 
   return ani.frames.map((frame) => clampAniFrameDuration(frame.durationMs));
+}
+
+function hasAniFrameSpecificEdits(ani: AniData) {
+  return (
+    ani.sourceKind === "image-sequence" &&
+    ani.frames.some((frame) => {
+      const override = frame.editOverride;
+      return Boolean(
+        override &&
+          (override.fitMode !== undefined ||
+            override.scale !== undefined ||
+            override.offsetX !== undefined ||
+            override.offsetY !== undefined ||
+            override.rotation !== undefined ||
+            override.flipX !== undefined ||
+            override.flipY !== undefined ||
+            hasNonDefaultImageTransform(override))
+      );
+    })
+  );
+}
+
+async function renderAniFramesForExport(ani: AniData) {
+  if (ani.sourceKind !== "image-sequence") {
+    return [];
+  }
+
+  return Promise.all(
+    ani.frames.map(async (frame) => {
+      const edit = resolveAniFrameEdit(getAniGlobalEdit(ani), frame);
+      const renderResult = await rasterizeSquarePng({
+        imageUrl: frame.url,
+        sourceWidth: frame.sourceWidth,
+        sourceHeight: frame.sourceHeight,
+        fitMode: edit.fitMode,
+        scale: edit.scale,
+        offsetX: edit.offsetX,
+        offsetY: edit.offsetY,
+        rotation: edit.rotation,
+        flipX: edit.flipX,
+        flipY: edit.flipY,
+        outputSize: ani.cursorSize,
+        hotspotX: ani.hotspotX,
+        hotspotY: ani.hotspotY,
+        editorViewportSize: EDITOR_VIEWPORT_SIZE,
+      });
+
+      return renderResult.blob;
+    })
+  );
 }
 
 function clampFrameInsertionIndex(index: number, frameCount: number) {
@@ -479,6 +561,9 @@ function syncAniActiveFrame(ani: AniData): AniData {
       scale: globalEdit.scale,
       offsetX: globalEdit.offsetX,
       offsetY: globalEdit.offsetY,
+      rotation: globalEdit.rotation,
+      flipX: globalEdit.flipX,
+      flipY: globalEdit.flipY,
     };
   }
 
@@ -499,6 +584,9 @@ function syncAniActiveFrame(ani: AniData): AniData {
     scale: activeEdit.scale,
     offsetX: activeEdit.offsetX,
     offsetY: activeEdit.offsetY,
+    rotation: activeEdit.rotation,
+    flipX: activeEdit.flipX,
+    flipY: activeEdit.flipY,
   };
 }
 
@@ -540,6 +628,7 @@ function createCursorFromFile(
 ): CursorData {
   const url = URL.createObjectURL(file);
   const renderedHotspot = getRenderedHotspot(0, 0, 32);
+  const imageTransform = createDefaultImageTransform();
 
   return {
     originalFile: file,
@@ -557,6 +646,7 @@ function createCursorFromFile(
     offsetX: 0,
     offsetY: 0,
     scale: 1,
+    ...imageTransform,
     fitMode: "contain",
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
@@ -586,6 +676,9 @@ function createAniFromFile(
     offsetX: globalEdit.offsetX,
     offsetY: globalEdit.offsetY,
     scale: globalEdit.scale,
+    rotation: globalEdit.rotation,
+    flipX: globalEdit.flipX,
+    flipY: globalEdit.flipY,
     fitMode: globalEdit.fitMode,
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
@@ -656,6 +749,9 @@ function createAniFromFrameFiles(
     offsetX: globalEdit.offsetX,
     offsetY: globalEdit.offsetY,
     scale: globalEdit.scale,
+    rotation: globalEdit.rotation,
+    flipX: globalEdit.flipX,
+    flipY: globalEdit.flipY,
     fitMode: globalEdit.fitMode,
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
@@ -682,14 +778,38 @@ async function createCursorExportBlob(
   cursor: CursorData,
   packageFormat: "zip" | "raw" = "zip"
 ) {
-  const pngBlob = cursor.renderedBlob ?? cursor.processedBlob;
+  const renderResult =
+    cursor.renderedBlob !== null
+      ? null
+      : await rasterizeSquarePng({
+          imageUrl: cursor.processedUrl,
+          sourceWidth: cursor.sourceWidth,
+          sourceHeight: cursor.sourceHeight,
+          fitMode: cursor.fitMode,
+          scale: cursor.scale,
+          offsetX: cursor.offsetX,
+          offsetY: cursor.offsetY,
+          rotation: cursor.rotation,
+          flipX: cursor.flipX,
+          flipY: cursor.flipY,
+          outputSize: cursor.cursorSize,
+          hotspotX: cursor.hotspotX,
+          hotspotY: cursor.hotspotY,
+          editorViewportSize: EDITOR_VIEWPORT_SIZE,
+        });
+  const pngBlob = cursor.renderedBlob ?? renderResult?.blob ?? cursor.processedBlob;
   const renderedHotspot =
     cursor.renderedBlob !== null
       ? {
           x: cursor.renderedHotspotX,
           y: cursor.renderedHotspotY,
         }
-      : getRenderedHotspot(cursor.hotspotX, cursor.hotspotY, cursor.cursorSize);
+      : renderResult
+        ? {
+            x: renderResult.hotspotX,
+            y: renderResult.hotspotY,
+          }
+        : getRenderedHotspot(cursor.hotspotX, cursor.hotspotY, cursor.cursorSize);
 
   return generateCursor(
     pngBlob,
@@ -718,21 +838,104 @@ async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResp
     offsetX: edit.offsetX,
     offsetY: edit.offsetY,
     scale: edit.scale,
+    rotation: edit.rotation,
+    flipX: edit.flipX,
+    flipY: edit.flipY,
   };
 
   if (ani.sourceKind === "image-sequence") {
     const sharedDurationMs = getSharedAniFrameDurationMs(ani);
     const frameDurationsMs = getAniFrameDurationsMs(ani);
+    const renderedFrames = hasAniFrameSpecificEdits(ani)
+      ? await renderAniFramesForExport(ani)
+      : null;
+    const sequenceInput = renderedFrames
+      ? {
+          ...input,
+          fitMode: "contain" as const,
+          offsetX: 0,
+          offsetY: 0,
+          scale: 1,
+          rotation: 0 as const,
+          flipX: false,
+          flipY: false,
+        }
+      : input;
 
     return generateAniSequence(
-      ani.frames.map((frame) => frame.file),
+      renderedFrames ?? ani.frames.map((frame) => frame.file),
       typeof sharedDurationMs === "number"
-        ? { ...input, durationMs: sharedDurationMs, frameDurationsMs }
-        : { ...input, frameDurationsMs }
+        ? {
+            ...sequenceInput,
+            durationMs: sharedDurationMs,
+            frameDurationsMs,
+          }
+        : { ...sequenceInput, frameDurationsMs }
     );
   }
 
   return generateAni(ani.originalFile, input);
+}
+
+async function createGifExportDownload(
+  ani: AniData
+): Promise<BinaryDownloadResponse> {
+  if (ani.sourceKind !== "image-sequence") {
+    throw new Error("GIF export requires editable image sequence frames.");
+  }
+
+  const edit = getAniGlobalEdit(ani);
+  const sharedDurationMs = getSharedAniFrameDurationMs(ani);
+  const frameDurationsMs = getAniFrameDurationsMs(ani);
+  const input = {
+    aniName: ani.cursorName,
+    cursorSize: ani.cursorSize,
+    fitMode: edit.fitMode,
+    offsetX: edit.offsetX,
+    offsetY: edit.offsetY,
+    scale: edit.scale,
+    rotation: edit.rotation,
+    flipX: edit.flipX,
+    flipY: edit.flipY,
+  };
+  const renderedFrames = hasAniFrameSpecificEdits(ani)
+    ? await renderAniFramesForExport(ani)
+    : null;
+  const sequenceInput = renderedFrames
+    ? {
+        ...input,
+        fitMode: "contain" as const,
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1,
+        rotation: 0 as const,
+        flipX: false,
+        flipY: false,
+      }
+    : input;
+
+  return generateGifSequence(
+    renderedFrames ?? ani.frames.map((frame) => frame.file),
+    typeof sharedDurationMs === "number"
+      ? { ...sequenceInput, durationMs: sharedDurationMs, frameDurationsMs }
+      : { ...sequenceInput, frameDurationsMs }
+  );
+}
+
+function buildWindowsRoleGifFilename(slotId: WindowsRoleSlotId) {
+  return `pointint_${getDefaultCursorNameForSlot(slotId)}.gif`;
+}
+
+function getDownloadErrorMessage(err: unknown, fallback: string) {
+  const message = err instanceof Error ? err.message : "";
+  if (err instanceof TypeError || /failed to fetch/i.test(message)) {
+    return "Backend connection failed. Start or redeploy the backend, then try again.";
+  }
+  if (/404|not found/i.test(message)) {
+    return "Export endpoint is missing. Redeploy the backend and try again.";
+  }
+
+  return message || fallback;
 }
 
 function toSlotAssetUrl(cursor: CursorData) {
@@ -780,6 +983,9 @@ function createStaticSlotState(
       offsetX: nextCursor.offsetX,
       offsetY: nextCursor.offsetY,
       scale: nextCursor.scale,
+      rotation: nextCursor.rotation,
+      flipX: nextCursor.flipX,
+      flipY: nextCursor.flipY,
     },
     { cursor: nextCursor, ani: null, backgroundRemovalPending }
   );
@@ -806,6 +1012,9 @@ function createAnimatedSlotState(nextAni: AniData): SlotStateUpdate {
       offsetX: edit.offsetX,
       offsetY: edit.offsetY,
       scale: edit.scale,
+      rotation: edit.rotation,
+      flipX: edit.flipX,
+      flipY: edit.flipY,
     },
     { cursor: null, ani: nextAni, backgroundRemovalPending: false }
   );
@@ -943,6 +1152,43 @@ function isUndoSessionState(state: StudioState) {
   return state === "editing" || state === "ani-editing";
 }
 
+function transformViewportHotspotForAction(
+  hotspotX: number,
+  hotspotY: number,
+  action: ImageTransformAction,
+  edit: Pick<AniFrameEdit, "offsetX" | "offsetY">
+) {
+  const centerX = EDITOR_VIEWPORT_SIZE / 2 + edit.offsetX;
+  const centerY = EDITOR_VIEWPORT_SIZE / 2 + edit.offsetY;
+  const dx = hotspotX - centerX;
+  const dy = hotspotY - centerY;
+
+  switch (action) {
+    case "rotate-clockwise":
+      return {
+        x: clampViewportCoordinate(centerX + dy),
+        y: clampViewportCoordinate(centerY - dx),
+      };
+    case "flip-horizontal":
+      return {
+        x: clampViewportCoordinate(centerX - dx),
+        y: clampViewportCoordinate(hotspotY),
+      };
+    case "flip-vertical":
+      return {
+        x: clampViewportCoordinate(hotspotX),
+        y: clampViewportCoordinate(centerY - dy),
+      };
+  }
+}
+
+function clampViewportCoordinate(value: number) {
+  return Math.min(
+    EDITOR_VIEWPORT_SIZE - 1,
+    Math.max(0, Math.round(value))
+  );
+}
+
 function matchesUndoSession(
   snapshot: StudioSnapshot,
   current: StudioSnapshot
@@ -1064,6 +1310,8 @@ export function useStudio() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [downloadGuideVariant, setDownloadGuideVariant] =
+    useState<DownloadGuideVariant>("package");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const undoStackRef = useRef<StudioSnapshot[]>([]);
@@ -1092,6 +1340,11 @@ export function useStudio() {
   ) && pendingBackgroundRemovalSlotIds.length === 0;
   const canDownload = Boolean(
     (state === "editing" || state === "ani-editing") && selectedSlotBound
+  );
+  const canDownloadGif = Boolean(
+    state === "ani-editing" &&
+      ani?.sourceKind === "image-sequence" &&
+      ani.frames.length >= 2
   );
   const liveStateRef = useRef<StudioSnapshot>({
     state,
@@ -2376,6 +2629,96 @@ export function useStudio() {
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
   // UX-5: 커서 크기 변경
+  const applyImageTransform = useCallback((
+    action: ImageTransformAction,
+    editScope: AniFrameEditScope = "all-frames"
+  ) => {
+    if (state === "editing") {
+      if (!cursor) return;
+
+      const nextTransform = applyImageTransformAction(cursor, action);
+      const nextHotspot = transformViewportHotspotForAction(
+        cursor.hotspotX,
+        cursor.hotspotY,
+        action,
+        cursor
+      );
+      const renderedHotspot = getRenderedHotspot(
+        nextHotspot.x,
+        nextHotspot.y,
+        cursor.cursorSize
+      );
+
+      pushHistoryForAction(takeSnapshot(), "imageTransform");
+      setCursor((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...nextTransform,
+              hotspotX: nextHotspot.x,
+              hotspotY: nextHotspot.y,
+              renderedBlob: null,
+              renderedHotspotX: renderedHotspot.x,
+              renderedHotspotY: renderedHotspot.y,
+            }
+          : null
+      );
+      return;
+    }
+
+    if (state === "ani-editing") {
+      if (!ani) return;
+
+      if (
+        editScope === "selected-frame" &&
+        ani.sourceKind === "image-sequence"
+      ) {
+        const selectedFrame = getSelectedAniFrame(ani);
+        if (!selectedFrame) return;
+
+        const activeEdit = resolveAniFrameEdit(
+          getAniGlobalEdit(ani),
+          selectedFrame
+        );
+        const nextTransform = applyImageTransformAction(activeEdit, action);
+
+        pushHistoryForAction(takeSnapshot(), "imageTransform");
+        setAni((prev) =>
+          prev && prev.sourceKind === "image-sequence"
+            ? syncSelectedAniFrameEditOverride(prev, nextTransform)
+            : prev
+        );
+        return;
+      }
+
+      const globalEdit = getAniGlobalEdit(ani);
+      const nextGlobalEdit: AniFrameEdit = {
+        ...globalEdit,
+        ...applyImageTransformAction(globalEdit, action),
+      };
+      const nextHotspot = transformViewportHotspotForAction(
+        ani.hotspotX,
+        ani.hotspotY,
+        action,
+        globalEdit
+      );
+
+      pushHistoryForAction(takeSnapshot(), "imageTransform");
+      setAni((prev) =>
+        prev
+          ? syncAniGlobalEdit(
+              {
+                ...prev,
+                hotspotX: nextHotspot.x,
+                hotspotY: nextHotspot.y,
+              },
+              nextGlobalEdit
+            )
+          : null
+      );
+    }
+  }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
+
   const setCursorSize = useCallback((size: CursorSize) => {
     if (!cursor || cursor.cursorSize === size) return;
     pushHistoryForAction(takeSnapshot(), "cursorSize");
@@ -2585,6 +2928,9 @@ export function useStudio() {
         scale: cursor.scale,
         offsetX: cursor.offsetX,
         offsetY: cursor.offsetY,
+        rotation: cursor.rotation,
+        flipX: cursor.flipX,
+        flipY: cursor.flipY,
         outputSize: cursor.cursorSize,
         hotspotX: cursor.hotspotX,
         hotspotY: cursor.hotspotY,
@@ -2633,6 +2979,9 @@ export function useStudio() {
     cursor?.scale,
     cursor?.offsetX,
     cursor?.offsetY,
+    cursor?.rotation,
+    cursor?.flipX,
+    cursor?.flipY,
     cursor?.cursorSize,
     state,
   ]);
@@ -2659,6 +3008,9 @@ export function useStudio() {
         scale: cursor.scale,
         offsetX: cursor.offsetX,
         offsetY: cursor.offsetY,
+        rotation: cursor.rotation,
+        flipX: cursor.flipX,
+        flipY: cursor.flipY,
         viewportSize: EDITOR_VIEWPORT_SIZE,
       })
         .then((suggestion) => {
@@ -2699,6 +3051,9 @@ export function useStudio() {
     cursor?.scale,
     cursor?.offsetX,
     cursor?.offsetY,
+    cursor?.rotation,
+    cursor?.flipX,
+    cursor?.flipY,
     cursor?.hotspotMode,
     state,
   ]);
@@ -2725,6 +3080,9 @@ export function useStudio() {
         scale: ani.scale,
         offsetX: ani.offsetX,
         offsetY: ani.offsetY,
+        rotation: ani.rotation,
+        flipX: ani.flipX,
+        flipY: ani.flipY,
         viewportSize: EDITOR_VIEWPORT_SIZE,
       })
         .then((suggestion) => {
@@ -2758,6 +3116,9 @@ export function useStudio() {
     ani?.scale,
     ani?.offsetX,
     ani?.offsetY,
+    ani?.rotation,
+    ani?.flipX,
+    ani?.flipY,
     ani?.hotspotMode,
     state,
   ]);
@@ -2856,9 +3217,10 @@ export function useStudio() {
         export_scope: "full_set",
         configured_roles: configuredEntries.length,
       });
+      setDownloadGuideVariant("package");
       setShowGuide(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
+      setError(getDownloadErrorMessage(err, "Download failed"));
     } finally {
       setDownloading(false);
     }
@@ -2890,9 +3252,10 @@ export function useStudio() {
           source: "studio",
           workflow: "ani",
         });
+        setDownloadGuideVariant("ani");
         setShowGuide(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "ANI export failed");
+        setError(getDownloadErrorMessage(err, "ANI export failed"));
       } finally {
         setDownloading(false);
       }
@@ -2920,13 +3283,43 @@ export function useStudio() {
         fit_mode: cursor.fitMode,
         source: "studio",
       });
+      setDownloadGuideVariant("cur");
       setShowGuide(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
+      setError(getDownloadErrorMessage(err, "Download failed"));
     } finally {
       setDownloading(false);
     }
   }, [ani, cursor, selectedSlotId, state]);
+
+  const downloadGif = useCallback(async () => {
+    if (!canDownloadGif || !ani) return;
+
+    setDownloading(true);
+    setError(null);
+
+    try {
+      const gifDownload = await createGifExportDownload(ani);
+      const url = URL.createObjectURL(gifDownload.blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = buildWindowsRoleGifFilename(selectedSlotId);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      safeRevokeObjectUrl(url);
+      trackEvent("download_completed", {
+        cursor_size: ani.cursorSize,
+        fit_mode: ani.fitMode,
+        source: "studio",
+        workflow: "gif",
+      });
+    } catch (err) {
+      setError(getDownloadErrorMessage(err, "GIF export failed"));
+    } finally {
+      setDownloading(false);
+    }
+  }, [ani, canDownloadGif, selectedSlotId]);
 
   const closeGuide = useCallback(() => setShowGuide(false), []);
 
@@ -2940,6 +3333,7 @@ export function useStudio() {
     error,
     downloading,
     showGuide,
+    downloadGuideVariant,
     showOriginal,
     previewUrl,
     pendingBackgroundRemovalSlotIds,
@@ -2953,6 +3347,7 @@ export function useStudio() {
     setOffset,
     setScale,
     setFitMode,
+    applyImageTransform,
     setCursorSize,
     setAniCursorSize,
     setCursorName,
@@ -2978,8 +3373,10 @@ export function useStudio() {
     reset,
     canDownloadAll,
     canDownload,
+    canDownloadGif,
     downloadAll,
     download,
+    downloadGif,
     closeGuide,
   };
 }

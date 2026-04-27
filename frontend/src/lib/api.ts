@@ -1,4 +1,4 @@
-import { type FitMode } from "@/lib/cursorFrame";
+import { type FitMode, type ImageRotation } from "@/lib/cursorFrame";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -100,6 +100,9 @@ export interface GenerateAniInput {
   offsetX?: number;
   offsetY?: number;
   scale?: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
 }
 
 export interface BinaryDownloadResponse {
@@ -142,6 +145,7 @@ export async function generateAni(
   if (typeof input.scale === "number") {
     formData.append("scale", String(input.scale));
   }
+  appendImageTransformFields(formData, input);
 
   const res = await fetch(`${BACKEND_URL}/api/generate-ani`, {
     method: "POST",
@@ -209,6 +213,7 @@ export async function generateAniSequence(
   if (typeof input.scale === "number") {
     formData.append("scale", String(input.scale));
   }
+  appendImageTransformFields(formData, input);
 
   const res = await fetch(`${BACKEND_URL}/api/generate-ani-sequence`, {
     method: "POST",
@@ -227,6 +232,83 @@ export async function generateAniSequence(
     ),
     contentType: res.headers.get("content-type"),
   };
+}
+
+export async function generateGifSequence(
+  frames: Iterable<File | Blob>,
+  input: GenerateAniSequenceInput = {}
+): Promise<BinaryDownloadResponse> {
+  const formData = new FormData();
+
+  Array.from(frames).forEach((frame, index) => {
+    if (typeof File !== "undefined" && frame instanceof File) {
+      formData.append("frames", frame);
+      return;
+    }
+
+    const uploadFrame =
+      frame.type === "" ? new Blob([frame], { type: "image/png" }) : frame;
+    formData.append("frames", uploadFrame, `frame-${index + 1}.png`);
+  });
+
+  if (typeof input.durationMs === "number") {
+    formData.append("duration_ms", String(input.durationMs));
+  }
+  input.frameDurationsMs?.forEach((durationMs) => {
+    formData.append("frame_durations_ms", String(durationMs));
+  });
+  if (typeof input.aniName === "string") {
+    formData.append("cursor_name", input.aniName);
+  }
+  if (typeof input.cursorSize === "number") {
+    formData.append("cursor_size", String(input.cursorSize));
+  }
+  if (input.fitMode) {
+    formData.append("fit_mode", input.fitMode);
+  }
+  if (typeof input.offsetX === "number") {
+    formData.append("offset_x", String(input.offsetX));
+  }
+  if (typeof input.offsetY === "number") {
+    formData.append("offset_y", String(input.offsetY));
+  }
+  if (typeof input.scale === "number") {
+    formData.append("scale", String(input.scale));
+  }
+  appendImageTransformFields(formData, input);
+
+  const res = await fetch(`${BACKEND_URL}/api/generate-gif-sequence`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Unknown error" }));
+    throw new Error(error.detail || `Server error: ${res.status}`);
+  }
+
+  return {
+    blob: await res.blob(),
+    filename: parseContentDispositionFilename(
+      res.headers.get("content-disposition")
+    ),
+    contentType: res.headers.get("content-type"),
+  };
+}
+
+function appendImageTransformFields(
+  formData: FormData,
+  input: Pick<GenerateAniInput, "rotation" | "flipX" | "flipY">
+) {
+  if (typeof input.rotation === "number") {
+    formData.append("rotation", String(input.rotation));
+  }
+  if (typeof input.flipX === "boolean") {
+    formData.append("flip_x", String(input.flipX));
+  }
+  if (typeof input.flipY === "boolean") {
+    formData.append("flip_y", String(input.flipY));
+  }
 }
 
 function parseContentDispositionFilename(header: string | null) {

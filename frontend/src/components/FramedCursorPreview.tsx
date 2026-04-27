@@ -2,7 +2,12 @@
 
 import { CSSProperties } from "react";
 
-import { FitMode, getFrameRect } from "@/lib/cursorFrame";
+import {
+  FitMode,
+  getFrameRect,
+  getTransformedImagePlacement,
+  type ImageRotation,
+} from "@/lib/cursorFrame";
 
 interface FramedCursorPreviewProps {
   imageUrl: string;
@@ -12,6 +17,9 @@ interface FramedCursorPreviewProps {
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   viewportSize: number;
   alt: string;
   style?: CSSProperties;
@@ -25,6 +33,9 @@ export default function FramedCursorPreview({
   offsetX,
   offsetY,
   scale,
+  rotation = 0,
+  flipX = false,
+  flipY = false,
   viewportSize,
   alt,
   style,
@@ -37,6 +48,14 @@ export default function FramedCursorPreview({
     scale,
     offsetX: offsetX * (viewportSize / 256),
     offsetY: offsetY * (viewportSize / 256),
+    rotation,
+    flipX,
+    flipY,
+  });
+  const imagePlacement = getTransformedImagePlacement(frameRect, {
+    rotation,
+    flipX,
+    flipY,
   });
 
   return (
@@ -55,12 +74,20 @@ export default function FramedCursorPreview({
         alt={alt}
         style={{
           position: "absolute",
-          left: `${frameRect.drawX}px`,
-          top: `${frameRect.drawY}px`,
-          width: `${frameRect.drawWidth}px`,
-          height: `${frameRect.drawHeight}px`,
+          left: `${
+            frameRect.drawX +
+            (frameRect.drawWidth - imagePlacement.imageDrawWidth) / 2
+          }px`,
+          top: `${
+            frameRect.drawY +
+            (frameRect.drawHeight - imagePlacement.imageDrawHeight) / 2
+          }px`,
+          width: `${imagePlacement.imageDrawWidth}px`,
+          height: `${imagePlacement.imageDrawHeight}px`,
           imageRendering: scale > 1.5 ? "pixelated" : "auto",
           pointerEvents: "none",
+          transform: imagePlacement.transform,
+          transformOrigin: "center",
           userSelect: "none",
         }}
       />

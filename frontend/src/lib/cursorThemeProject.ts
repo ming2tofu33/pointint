@@ -1,4 +1,4 @@
-import { type FitMode } from "@/lib/cursorFrame";
+import { type FitMode, type ImageRotation } from "@/lib/cursorFrame";
 
 export type CursorSize = 32 | 48 | 64;
 export const WINDOWS_ROLE_SLOT_IDS = [
@@ -50,6 +50,9 @@ export interface CursorThemeSlot {
     offsetX: number;
     offsetY: number;
     scale: number;
+    rotation: ImageRotation;
+    flipX: boolean;
+    flipY: boolean;
   };
 }
 
@@ -84,6 +87,9 @@ function createCursorThemeSlot(id: SlotId): CursorThemeSlot {
       offsetX: 0,
       offsetY: 0,
       scale: 1,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
   };
 }

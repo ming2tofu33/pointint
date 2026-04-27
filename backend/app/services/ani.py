@@ -15,6 +15,7 @@ from app.services.cursor import create_cur
 DEFAULT_FRAME_DURATION_MS = 100
 CURSOR_SIZE_CHOICES = {32, 48, 64}
 FIT_MODE_CHOICES = {"contain", "cover"}
+ROTATION_CHOICES = {0, 90, 180, 270}
 EDITOR_VIEWPORT_SIZE = 256
 ANI_FLAGS_ICON = 0x00000001
 ANI_FLAGS_SEQUENCE = 0x00000002
@@ -90,6 +91,9 @@ def create_ani(
     scale: float = 1.0,
     offset_x: int = 0,
     offset_y: int = 0,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
 ) -> bytes:
     cursor_frames = [
         AniCursorFrame(
@@ -102,6 +106,9 @@ def create_ani(
                 scale=scale,
                 offset_x=offset_x,
                 offset_y=offset_y,
+                rotation=rotation,
+                flip_x=flip_x,
+                flip_y=flip_y,
             ),
             duration_ms=frame.duration_ms,
         )
@@ -154,6 +161,9 @@ def image_sequence_to_ani_bytes(
     scale: float = 1.0,
     offset_x: int = 0,
     offset_y: int = 0,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
     duration_ms: int = DEFAULT_FRAME_DURATION_MS,
     frame_durations_ms: Iterable[int] | None = None,
 ) -> bytes:
@@ -176,6 +186,9 @@ def image_sequence_to_ani_bytes(
                     scale=scale,
                     offset_x=offset_x,
                     offset_y=offset_y,
+                    rotation=rotation,
+                    flip_x=flip_x,
+                    flip_y=flip_y,
                 )
         except (UnidentifiedImageError, OSError) as exc:
             raise ValueError(
@@ -190,6 +203,63 @@ def image_sequence_to_ani_bytes(
         raise ValueError("Image sequence ANI requires at least two frames.")
 
     return write_ani_bytes(cursor_frames)
+
+
+def image_sequence_to_gif_bytes(
+    image_frame_bytes: Iterable[bytes],
+    cursor_size: int = 32,
+    fit_mode: str = "contain",
+    scale: float = 1.0,
+    offset_x: int = 0,
+    offset_y: int = 0,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
+    duration_ms: int = DEFAULT_FRAME_DURATION_MS,
+    frame_durations_ms: Iterable[int] | None = None,
+) -> bytes:
+    image_frame_bytes = list(image_frame_bytes)
+    frame_durations = _resolve_image_sequence_frame_durations(
+        frame_count=len(image_frame_bytes),
+        duration_ms=duration_ms,
+        frame_durations_ms=frame_durations_ms,
+    )
+    gif_frames: list[Image.Image] = []
+    for index, frame_bytes in enumerate(image_frame_bytes):
+        try:
+            with Image.open(BytesIO(frame_bytes)) as image:
+                rendered = _render_frame_image(
+                    image.convert("RGBA"),
+                    cursor_size=cursor_size,
+                    fit_mode=fit_mode,
+                    scale=scale,
+                    offset_x=offset_x,
+                    offset_y=offset_y,
+                    rotation=rotation,
+                    flip_x=flip_x,
+                    flip_y=flip_y,
+                )
+        except (UnidentifiedImageError, OSError) as exc:
+            raise ValueError(
+                f"Unsupported or invalid image frame at index {index}."
+            ) from exc
+
+        gif_frames.append(rendered)
+
+    if len(gif_frames) < 2:
+        raise ValueError("Image sequence GIF requires at least two frames.")
+
+    buffer = BytesIO()
+    gif_frames[0].save(
+        buffer,
+        format="GIF",
+        save_all=True,
+        append_images=gif_frames[1:],
+        duration=frame_durations,
+        loop=0,
+        disposal=2,
+    )
+    return buffer.getvalue()
 
 
 def _resolve_image_sequence_frame_durations(
@@ -220,6 +290,9 @@ def gif_to_ani_bytes(
     scale: float = 1.0,
     offset_x: int = 0,
     offset_y: int = 0,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
     max_frames: int | None = None,
 ) -> bytes:
     frames = extract_gif_frames(gif_bytes, max_frames=max_frames)
@@ -232,6 +305,9 @@ def gif_to_ani_bytes(
         scale=scale,
         offset_x=offset_x,
         offset_y=offset_y,
+        rotation=rotation,
+        flip_x=flip_x,
+        flip_y=flip_y,
     )
 
 
@@ -244,6 +320,9 @@ def _frame_image_to_cur(
     scale: float = 1.0,
     offset_x: int = 0,
     offset_y: int = 0,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
 ) -> bytes:
     if cursor_size not in CURSOR_SIZE_CHOICES:
         raise ValueError("Cursor size must be 32, 48, or 64.")
@@ -261,6 +340,9 @@ def _frame_image_to_cur(
         scale=scale,
         offset_x=offset_x,
         offset_y=offset_y,
+        rotation=rotation,
+        flip_x=flip_x,
+        flip_y=flip_y,
     )
 
     png_buffer = BytesIO()
@@ -280,8 +362,17 @@ def _render_frame_image(
     scale: float,
     offset_x: int,
     offset_y: int,
+    rotation: int = 0,
+    flip_x: bool = False,
+    flip_y: bool = False,
     editor_viewport_size: int = EDITOR_VIEWPORT_SIZE,
 ) -> Image.Image:
+    image = _apply_image_transform(
+        image,
+        rotation=rotation,
+        flip_x=flip_x,
+        flip_y=flip_y,
+    )
     safe_width = max(image.width, 1)
     safe_height = max(image.height, 1)
     base_scale = (
@@ -299,6 +390,31 @@ def _render_frame_image(
     resized = image.resize((draw_width, draw_height), Image.LANCZOS)
     canvas.paste(resized, (draw_x, draw_y), resized)
     return canvas
+
+
+def _apply_image_transform(
+    image: Image.Image,
+    rotation: int,
+    flip_x: bool,
+    flip_y: bool,
+) -> Image.Image:
+    if rotation not in ROTATION_CHOICES:
+        raise ValueError("Rotation must be 0, 90, 180, or 270.")
+
+    transformed = image
+    if rotation == 90:
+        transformed = transformed.transpose(Image.Transpose.ROTATE_270)
+    elif rotation == 180:
+        transformed = transformed.transpose(Image.Transpose.ROTATE_180)
+    elif rotation == 270:
+        transformed = transformed.transpose(Image.Transpose.ROTATE_90)
+
+    if flip_x:
+        transformed = transformed.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    if flip_y:
+        transformed = transformed.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+
+    return transformed
 
 
 def _duration_to_jiffies(duration_ms: int) -> int:

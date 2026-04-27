@@ -3,7 +3,12 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { FitMode, getFrameRect } from "@/lib/cursorFrame";
+import {
+  FitMode,
+  getFrameRect,
+  getTransformedImagePlacement,
+  type ImageRotation,
+} from "@/lib/cursorFrame";
 
 interface CursorCanvasProps {
   imageUrl: string;
@@ -13,6 +18,9 @@ interface CursorCanvasProps {
   offsetX: number;
   offsetY: number;
   scale: number;
+  rotation?: ImageRotation;
+  flipX?: boolean;
+  flipY?: boolean;
   hotspotX: number;
   hotspotY: number;
   onOffsetChange: (x: number, y: number) => void;
@@ -33,6 +41,9 @@ export default function CursorCanvas({
   offsetX,
   offsetY,
   scale,
+  rotation = 0,
+  flipX = false,
+  flipY = false,
   hotspotX,
   hotspotY,
   onOffsetChange,
@@ -54,6 +65,14 @@ export default function CursorCanvas({
     scale,
     offsetX,
     offsetY,
+    rotation,
+    flipX,
+    flipY,
+  });
+  const imagePlacement = getTransformedImagePlacement(frameRect, {
+    rotation,
+    flipX,
+    flipY,
   });
 
   const getRelativePos = useCallback(
@@ -147,12 +166,20 @@ export default function CursorCanvas({
           draggable={false}
           style={{
             position: "absolute",
-            left: `${frameRect.drawX}px`,
-            top: `${frameRect.drawY}px`,
-            width: `${frameRect.drawWidth}px`,
-            height: `${frameRect.drawHeight}px`,
+            left: `${
+              frameRect.drawX +
+              (frameRect.drawWidth - imagePlacement.imageDrawWidth) / 2
+            }px`,
+            top: `${
+              frameRect.drawY +
+              (frameRect.drawHeight - imagePlacement.imageDrawHeight) / 2
+            }px`,
+            width: `${imagePlacement.imageDrawWidth}px`,
+            height: `${imagePlacement.imageDrawHeight}px`,
             imageRendering: scale > 1.5 ? "pixelated" : "auto",
             pointerEvents: "none",
+            transform: imagePlacement.transform,
+            transformOrigin: "center",
           }}
         />
 

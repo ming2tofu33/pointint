@@ -92,6 +92,9 @@ function createSlot(id: string, previewUrl: string | null = null) {
       offsetX: 0,
       offsetY: 0,
       scale: 1,
+      rotation: 0,
+      flipX: false,
+      flipY: false,
     },
   };
 }

@@ -22,9 +22,7 @@ describe("ko slot rail copy", () => {
     expect(messages.studio.recommended).toBe("\ucd94\ucc9c");
     expect(messages.studio.manual).toBe("\uc218\ub3d9");
     expect(messages.studio.downloadAllRoles).toBe("\uc804\uccb4 \ub2e4\uc6b4\ub85c\ub4dc");
-    expect(messages.studio.downloadCurrentSlot).toBe(
-      "\uc120\ud0dd\ud55c \ucee4\uc11c \ub2e4\uc6b4\ub85c\ub4dc"
-    );
+    expect(messages.studio.downloadCurrentSlot).toBe("\ud604\uc7ac \ucee4\uc11c");
     expect(messages.studio.viewZoom).toBe("\ubcf4\uae30 \ud655\ub300");
   });
 
