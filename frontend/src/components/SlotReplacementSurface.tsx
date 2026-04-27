@@ -6,43 +6,53 @@ import { useTranslations } from "next-intl";
 
 import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
 
-type ReplacementKind = "static" | "animated";
+type ReplacementKind = "static" | "animated" | "imageSequence";
+
+interface PendingReplacement {
+  kind: ReplacementKind;
+  files: File[];
+}
 
 type SlotReplacementSurfaceProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   onStaticFile: (file: File) => void;
   onAnimatedFile: (file: File) => void;
+  onImageSequenceFiles?: (files: File[]) => void;
 };
 
 export default function SlotReplacementSurface({
   children,
   onStaticFile,
   onAnimatedFile,
+  onImageSequenceFiles,
   style,
   ...props
 }: SlotReplacementSurfaceProps) {
   const t = useTranslations("studio");
   const [dragActive, setDragActive] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const pendingKind = pendingFile ? getReplacementKind(pendingFile) : null;
+  const [pendingReplacement, setPendingReplacement] =
+    useState<PendingReplacement | null>(null);
 
-  const queueReplacement = (file: File | null | undefined) => {
-    if (!file) return;
-    if (!getReplacementKind(file)) return;
-    setPendingFile(file);
+  const queueReplacement = (files: FileList | File[] | null | undefined) => {
+    if (!files) return;
+    const replacement = getReplacement(files, Boolean(onImageSequenceFiles));
+    if (!replacement) return;
+    setPendingReplacement(replacement);
     setDragActive(false);
   };
 
   const confirmReplacement = () => {
-    if (!pendingFile || !pendingKind) return;
+    if (!pendingReplacement) return;
 
-    if (pendingKind === "animated") {
-      onAnimatedFile(pendingFile);
+    if (pendingReplacement.kind === "imageSequence") {
+      onImageSequenceFiles?.(pendingReplacement.files);
+    } else if (pendingReplacement.kind === "animated") {
+      onAnimatedFile(pendingReplacement.files[0]!);
     } else {
-      onStaticFile(pendingFile);
+      onStaticFile(pendingReplacement.files[0]!);
     }
 
-    setPendingFile(null);
+    setPendingReplacement(null);
   };
 
   return (
@@ -65,7 +75,7 @@ export default function SlotReplacementSurface({
       }}
       onDrop={(event) => {
         event.preventDefault();
-        queueReplacement(event.dataTransfer.files?.[0]);
+        queueReplacement(event.dataTransfer.files);
       }}
       style={{
         position: "relative",
@@ -83,7 +93,7 @@ export default function SlotReplacementSurface({
         ...style,
       }}
     >
-      {pendingFile ? (
+      {pendingReplacement ? (
         <div
           data-testid="slot-replacement-confirm"
           style={{
@@ -128,7 +138,7 @@ export default function SlotReplacementSurface({
           >
             <button
               type="button"
-              onClick={() => setPendingFile(null)}
+              onClick={() => setPendingReplacement(null)}
               aria-label={t("cancelReplace")}
               style={actionButtonStyle}
             >
@@ -179,7 +189,35 @@ export default function SlotReplacementSurface({
   );
 }
 
-function getReplacementKind(file: File): ReplacementKind | null {
+const IMAGE_SEQUENCE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+
+function getReplacement(
+  files: FileList | File[],
+  supportsImageSequence: boolean
+): PendingReplacement | null {
+  const fileList = Array.from(files);
+
+  if (supportsImageSequence) {
+    const imageSequenceFiles = fileList.filter(isImageSequenceFrame);
+    if (imageSequenceFiles.length >= 2) {
+      return { kind: "imageSequence", files: imageSequenceFiles };
+    }
+  }
+
+  const firstFile = fileList[0];
+  if (!firstFile) return null;
+
+  const kind = getSingleReplacementKind(firstFile);
+  return kind ? { kind, files: [firstFile] } : null;
+}
+
+function getSingleReplacementKind(
+  file: File
+): Exclude<ReplacementKind, "imageSequence"> | null {
   const type = file.type.toLowerCase();
   const name = file.name.toLowerCase();
 
@@ -200,6 +238,14 @@ function getReplacementKind(file: File): ReplacementKind | null {
   }
 
   return null;
+}
+
+function isImageSequenceFrame(file: File) {
+  if (file.type) {
+    return IMAGE_SEQUENCE_TYPES.has(file.type);
+  }
+
+  return /\.(png|jpe?g|webp)$/i.test(file.name);
 }
 
 const actionButtonStyle = {

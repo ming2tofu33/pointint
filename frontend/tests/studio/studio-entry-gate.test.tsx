@@ -955,6 +955,25 @@ describe("Studio entry gate", () => {
     expect(selectSlotAnimatedFileMock).toHaveBeenCalledWith(animatedFile);
   });
 
+  it("routes multiple image drops on the static source card to GIF Maker frames", () => {
+    const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
+    const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
+
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-static"), {
+      dataTransfer: { files: [firstFrame, secondFrame] },
+    });
+
+    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
+      firstFrame,
+      secondFrame,
+    ]);
+  });
+
   it("shows an inline confirm before replacing a populated slot from the stage drop surface", () => {
     const replacementFile = new File(["replacement"], "replacement.png", {
       type: "image/png",
@@ -976,6 +995,35 @@ describe("Studio entry gate", () => {
 
     expect(selectSlotStaticFileMock).toHaveBeenCalledTimes(1);
     expect(selectSlotStaticFileMock).toHaveBeenCalledWith(replacementFile);
+  });
+
+  it("routes multiple replacement frames from the populated stage drop surface to GIF Maker", () => {
+    const firstFrame = new File(["one"], "replace-01.png", {
+      type: "image/png",
+    });
+    const secondFrame = new File(["two"], "replace-02.webp", {
+      type: "image/webp",
+    });
+
+    renderStudio("editing");
+
+    fireEvent.drop(screen.getByTestId("slot-replacement-surface"), {
+      dataTransfer: { files: [firstFrame, secondFrame] },
+    });
+
+    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+    const confirm = screen.getByTestId("slot-replacement-confirm");
+    expect(confirm).not.toBeNull();
+
+    fireEvent.click(
+      within(confirm).getByRole("button", { name: "confirm replace" })
+    );
+
+    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
+      firstFrame,
+      secondFrame,
+    ]);
   });
 
   it("highlights the slot source card on hover with the accent border", () => {

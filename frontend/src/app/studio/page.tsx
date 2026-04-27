@@ -447,6 +447,7 @@ export default function StudioPage() {
                   <SlotReplacementSurface
                     onStaticFile={selectSelectedSlotStaticFile}
                     onAnimatedFile={selectSelectedSlotAnimatedFile}
+                    onImageSequenceFiles={selectSelectedSlotImageSequenceFiles}
                     style={{
                       flex: 1,
                       minHeight: 0,

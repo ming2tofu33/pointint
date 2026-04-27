@@ -11,12 +11,14 @@ describe("SlotReplacementSurface", () => {
   it("shows an inline confirm before replacing with a dropped static file", () => {
     const onStaticFile = vi.fn();
     const onAnimatedFile = vi.fn();
+    const onImageSequenceFiles = vi.fn();
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
 
     render(
       <SlotReplacementSurface
         onStaticFile={onStaticFile}
         onAnimatedFile={onAnimatedFile}
+        onImageSequenceFiles={onImageSequenceFiles}
       >
         <div>stage</div>
       </SlotReplacementSurface>
@@ -34,17 +36,20 @@ describe("SlotReplacementSurface", () => {
 
     expect(onStaticFile).toHaveBeenCalledWith(file);
     expect(onAnimatedFile).not.toHaveBeenCalled();
+    expect(onImageSequenceFiles).not.toHaveBeenCalled();
   });
 
   it("cancels a dropped animated replacement without applying it", () => {
     const onStaticFile = vi.fn();
     const onAnimatedFile = vi.fn();
+    const onImageSequenceFiles = vi.fn();
     const file = new File(["cursor"], "cursor.gif", { type: "image/gif" });
 
     render(
       <SlotReplacementSurface
         onStaticFile={onStaticFile}
         onAnimatedFile={onAnimatedFile}
+        onImageSequenceFiles={onImageSequenceFiles}
       >
         <div>stage</div>
       </SlotReplacementSurface>
@@ -58,6 +63,42 @@ describe("SlotReplacementSurface", () => {
 
     expect(onStaticFile).not.toHaveBeenCalled();
     expect(onAnimatedFile).not.toHaveBeenCalled();
+    expect(onImageSequenceFiles).not.toHaveBeenCalled();
     expect(screen.queryByText("replaceSlotPrompt")).toBeNull();
+  });
+
+  it("confirms dropped image sequences instead of treating the first frame as static", () => {
+    const onStaticFile = vi.fn();
+    const onAnimatedFile = vi.fn();
+    const onImageSequenceFiles = vi.fn();
+    const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
+    const secondFrame = new File(["two"], "frame-02.webp", {
+      type: "image/webp",
+    });
+
+    render(
+      <SlotReplacementSurface
+        onStaticFile={onStaticFile}
+        onAnimatedFile={onAnimatedFile}
+        onImageSequenceFiles={onImageSequenceFiles}
+      >
+        <div>stage</div>
+      </SlotReplacementSurface>
+    );
+
+    fireEvent.drop(screen.getByTestId("slot-replacement-surface"), {
+      dataTransfer: { files: [firstFrame, secondFrame] },
+    });
+
+    expect(screen.getByText("replaceSlotPrompt")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "confirmReplace" }));
+
+    expect(onStaticFile).not.toHaveBeenCalled();
+    expect(onAnimatedFile).not.toHaveBeenCalled();
+    expect(onImageSequenceFiles).toHaveBeenCalledWith([
+      firstFrame,
+      secondFrame,
+    ]);
   });
 });

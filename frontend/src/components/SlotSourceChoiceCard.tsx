@@ -12,6 +12,7 @@ interface SlotSourceChoiceCardProps {
   dataTestId: string;
   mode: SlotSourceChoiceCardMode;
   onFile: (file: File) => void;
+  onImageSequenceFiles?: (files: File[]) => void;
 }
 
 export default function SlotSourceChoiceCard({
@@ -21,6 +22,7 @@ export default function SlotSourceChoiceCard({
   dataTestId,
   mode,
   onFile,
+  onImageSequenceFiles,
 }: SlotSourceChoiceCardProps) {
   const t = useTranslations("upload");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +39,22 @@ export default function SlotSourceChoiceCard({
   const handleFile = (file: File) => {
     if (!acceptedTypes.includes(file.type)) return;
     onFile(file);
+  };
+  const handleFiles = (files: FileList | File[]) => {
+    const fileList = Array.from(files);
+
+    if (mode === "cur" && onImageSequenceFiles) {
+      const imageSequenceFiles = fileList.filter(isImageSequenceFrame);
+      if (imageSequenceFiles.length >= 2) {
+        onImageSequenceFiles(imageSequenceFiles);
+        return;
+      }
+    }
+
+    const file = fileList[0];
+    if (file) {
+      handleFile(file);
+    }
   };
 
   return (
@@ -66,10 +84,7 @@ export default function SlotSourceChoiceCard({
       onDrop={(event) => {
         event.preventDefault();
         setIsDragActive(false);
-        const file = event.dataTransfer.files?.[0];
-        if (file) {
-          handleFile(file);
-        }
+        handleFiles(event.dataTransfer.files);
       }}
       style={{
         border: isInteractiveActive
@@ -158,10 +173,10 @@ export default function SlotSourceChoiceCard({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={mode === "cur" && Boolean(onImageSequenceFiles)}
         onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) {
-            handleFile(file);
+          if (event.target.files) {
+            handleFiles(event.target.files);
           }
           event.currentTarget.value = "";
         }}
@@ -169,4 +184,18 @@ export default function SlotSourceChoiceCard({
       />
     </button>
   );
+}
+
+const IMAGE_SEQUENCE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+
+function isImageSequenceFrame(file: File) {
+  if (file.type) {
+    return IMAGE_SEQUENCE_TYPES.has(file.type);
+  }
+
+  return /\.(png|jpe?g|webp)$/i.test(file.name);
 }

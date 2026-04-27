@@ -187,6 +187,7 @@ export default function AniEditorShell({
                 <SlotReplacementSurface
                   onStaticFile={onSelectSlotStaticFile}
                   onAnimatedFile={onSelectSlotAnimatedFile}
+                  onImageSequenceFiles={onSelectSlotImageSequenceFiles}
                   style={{
                     flex: 1,
                     minHeight: 0,

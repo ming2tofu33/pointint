@@ -97,6 +97,7 @@ export default function StudioSlotEmptyState({
           ariaLabel={t("emptySlotStaticStart")}
           mode="cur"
           onFile={onStaticFile}
+          onImageSequenceFiles={onImageSequenceFiles}
         />
         <SlotSourceChoiceCard
           dataTestId="studio-empty-slot-source-animated"
