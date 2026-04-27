@@ -1,6 +1,6 @@
 "use client";
 
-import type { HTMLAttributes, ReactNode } from "react";
+import type { DragEvent, HTMLAttributes, ReactNode } from "react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -34,11 +34,11 @@ export default function SlotReplacementSurface({
     useState<PendingReplacement | null>(null);
 
   const queueReplacement = (files: FileList | File[] | null | undefined) => {
+    setDragActive(false);
     if (!files) return;
     const replacement = getReplacement(files, Boolean(onImageSequenceFiles));
     if (!replacement) return;
     setPendingReplacement(replacement);
-    setDragActive(false);
   };
 
   const confirmReplacement = () => {
@@ -60,20 +60,37 @@ export default function SlotReplacementSurface({
       {...props}
       data-testid="slot-replacement-surface"
       onDragOver={(event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+
         event.preventDefault();
         if (!dragActive) setDragActive(true);
       }}
       onDragEnter={(event) => {
+        if (!hasDraggedFiles(event)) {
+          return;
+        }
+
         event.preventDefault();
         setDragActive(true);
       }}
       onDragLeave={(event) => {
+        if (!dragActive) {
+          return;
+        }
+
         event.preventDefault();
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setDragActive(false);
         }
       }}
       onDrop={(event) => {
+        if (!hasDraggedFiles(event)) {
+          setDragActive(false);
+          return;
+        }
+
         event.preventDefault();
         queueReplacement(event.dataTransfer.files);
       }}
@@ -213,6 +230,15 @@ function getReplacement(
 
   const kind = getSingleReplacementKind(firstFile);
   return kind ? { kind, files: [firstFile] } : null;
+}
+
+function hasDraggedFiles(event: DragEvent<HTMLElement>) {
+  const files = event.dataTransfer.files;
+  if (files && files.length > 0) {
+    return true;
+  }
+
+  return Array.from(event.dataTransfer.types).includes("Files");
 }
 
 function getSingleReplacementKind(

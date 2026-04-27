@@ -8,6 +8,38 @@ vi.mock("next-intl", () => ({
 import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 
 describe("SlotReplacementSurface", () => {
+  it("ignores internal text drags so frame reordering does not trigger replacement UI", () => {
+    const onStaticFile = vi.fn();
+    const onAnimatedFile = vi.fn();
+    const onImageSequenceFiles = vi.fn();
+
+    render(
+      <SlotReplacementSurface
+        onStaticFile={onStaticFile}
+        onAnimatedFile={onAnimatedFile}
+        onImageSequenceFiles={onImageSequenceFiles}
+      >
+        <div>stage</div>
+      </SlotReplacementSurface>
+    );
+
+    const surface = screen.getByTestId("slot-replacement-surface");
+    const dataTransfer = {
+      files: [],
+      types: ["text/plain"],
+    };
+
+    fireEvent.dragEnter(surface, { dataTransfer });
+    fireEvent.dragOver(surface, { dataTransfer });
+    fireEvent.drop(surface, { dataTransfer });
+
+    expect(screen.queryByText("dropToReplace")).toBeNull();
+    expect(screen.queryByText("replaceSlotPrompt")).toBeNull();
+    expect(onStaticFile).not.toHaveBeenCalled();
+    expect(onAnimatedFile).not.toHaveBeenCalled();
+    expect(onImageSequenceFiles).not.toHaveBeenCalled();
+  });
+
   it("shows an inline confirm before replacing with a dropped static file", () => {
     const onStaticFile = vi.fn();
     const onAnimatedFile = vi.fn();
