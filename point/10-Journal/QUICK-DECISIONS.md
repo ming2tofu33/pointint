@@ -84,3 +84,5 @@ aliases:
 - The next Phase 1.5 slice is `ANI Source Maker / GIF Maker`: multiple images become an ordered frame sequence before entering the existing ANI cursor editor.
 - Pointint should borrow the clear source-making flow from tools like Ezgif, but should not become a generic GIF editing toolbox.
 - `Video to ANI` should reuse the same source-maker foundation later, after GIF Maker is stable.
+- `ANI Source Maker / GIF Maker` is now closed as the first source-maker slice: multiple PNG/JPG/WebP images enter the existing ANI editor as an ordered image sequence and export through the Windows role package flow.
+- `Video to ANI` remains the next natural extension, but it should reuse the same `source media -> ordered frames -> ANI editor` architecture rather than adding a separate animation editor.

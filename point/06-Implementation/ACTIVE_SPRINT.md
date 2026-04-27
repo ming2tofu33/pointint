@@ -12,8 +12,8 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-04-27
-> **Status:** Phase 1 gate closed, ANI Source Maker / GIF Maker design is active
-> **Goal:** Ship the first animated cursor slice: `GIF -> basic .ani export`
+> **Status:** Phase 1 gate closed, ANI Source Maker / GIF Maker slice is complete
+> **Goal:** Ship source-maker foundations that turn user media into Windows-ready ANI cursor roles
 > **Phase Flow:** [[plans/2026-03-27-implementation-phase-flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
@@ -39,24 +39,23 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
-| Now | `ANI-SOURCE-01` | in progress | Design and implementation plan for `ANI Source Maker / GIF Maker`: multiple images -> frame sequence -> existing ANI editor |
-| Next | `Phase 1.5 / Video to ANI` | queued | Add `Video -> FrameSequenceSource` after GIF Maker establishes the source-maker foundation |
+| Now | `Phase 1.5 / Video to ANI` | queued | Reuse the GIF Maker source foundation for `Video -> FrameSequenceSource` |
+| Done | `ANI-SOURCE-01` | complete | `GIF Maker`: multiple images -> sorted frame sequence -> ANI editor -> image-sequence export |
 | Option | `WIN-INSTALLER-EXE-01` | deferred option | Keep as a later distribution spike; ZIP + INF RC and wording are already validated for now |
 | Option | `BG-FT-01` | deferred option | Fine-tuning/background-removal quality work is intentionally postponed until source-maker work needs it |
 
 ## Next Session
 
-- Finalize `plans/2026-04-27-ani-source-maker-gif-maker-design`
-- Execute `plans/2026-04-27-ani-source-maker-gif-maker` task-by-task
-- Start with `GIF Maker`: multiple image frames -> ordered `FrameSequenceSource` -> existing ANI editor
-- Keep `Video to ANI` queued until the source-maker foundation is stable
+- Decide whether to start `Video to ANI` now that the GIF Maker source foundation is stable
+- If yes, design the video source-maker as `video file -> extracted frame sequence -> existing ANI editor`
+- Keep the GIF Maker v1 compact: multi-image upload/drop, sorted frames, shared hotspot/framing, and Windows `.ani` export
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 - Keep `BG-FT-01` and `WIN-INSTALLER-EXE-01` as deferred options
 
 ## Blockers
 
 - No technical blocker is open right now
-- ANI v1 is no longer blocked on phase entry. The remaining work is closing the first GIF-first slice and validating export quality.
+- ANI v1 is no longer blocked on phase entry. The GIF Maker source slice is implemented; the next open decision is whether to extend the same foundation to `Video to ANI`.
 
 ## Recently Done
 
@@ -73,6 +72,7 @@ aliases:
 - `Phase 1.5 / STUDIO-UX-01` complete: Studio now reads as a premium product tool with shared CUR/ANI stage headers, action regions, source-entry cards, inspector cards, and restrained motion/focus polish.
 - `Phase 1.5 / STUDIO-RC-QA-01` complete: multi-slot background-decision gating, Windows package ZIP structure, and mixed CUR/ANI browser download were regression-tested and documented.
 - `WIN-INSTALLER-ZIP-01` complete enough for now: current ZIP + INF output, Windows install failure modes, and user-facing install wording were audited and clarified. `.exe` stays a deferred option.
+- `ANI-SOURCE-01` complete: GIF Maker is exposed as an empty-slot source, multiple PNG/JPG/WebP frames enter `ani-editing` as an `image-sequence`, backend/frontend sequence export is wired, and Korean/English source copy is synchronized. Evidence: `18d5b6a`, `66c7586`, `8b9d5ca`, `85b4c9c`, `5d860fa`, `3dc411f`.
 
 ## Decision Follow-up
 
@@ -90,6 +90,7 @@ aliases:
 - 2026-04-13: Studio shell hierarchy is now unified across CUR and ANI. Empty slots keep one central source-entry hub, while populated slots share the same stage header, validation footer, and inspector contract.
 - 2026-04-15: Background removal fine-tuning is an option, not an active sprint item. The current HF path is a remote inference wrapper, so any quality upgrade should be evaluated as a separate train-and-redeploy spike.
 - 2026-04-24: A Windows `.exe` installer is worth tracking as an option, but should start as a feasibility spike because code signing, SmartScreen reputation, restore/uninstall behavior, and user trust are the main risks.
+- 2026-04-27: `ANI-SOURCE-01` is closed as a GIF Maker source slice. The source-maker pattern is now established as `source media -> ordered frames -> existing ANI editor -> Windows role export`; `Video to ANI` should reuse this path instead of creating a separate editor.
 
 ## Document Follow-up
 
