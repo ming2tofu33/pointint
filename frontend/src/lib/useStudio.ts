@@ -155,6 +155,7 @@ type HistoryActionKey =
   | "aniFrameDelete"
   | "aniFrameMove"
   | "aniFrameDuration"
+  | "aniFrameEditOverride"
   | "aniFrameReset";
 
 type LegacySlotId = "normal" | "text" | "link" | "button" | "busySelect";
@@ -310,6 +311,54 @@ function getSelectedAniFrame(ani: AniData) {
     ani.frames[0] ??
     null
   );
+}
+
+function normalizeAniFrameEditOverride(
+  editOverride: AniFrameEditOverride
+): AniFrameEditOverride | undefined {
+  const nextEditOverride: AniFrameEditOverride = {};
+
+  if (editOverride.fitMode !== undefined) {
+    nextEditOverride.fitMode = editOverride.fitMode;
+  }
+  if (editOverride.scale !== undefined) {
+    nextEditOverride.scale = editOverride.scale;
+  }
+  if (editOverride.offsetX !== undefined) {
+    nextEditOverride.offsetX = editOverride.offsetX;
+  }
+  if (editOverride.offsetY !== undefined) {
+    nextEditOverride.offsetY = editOverride.offsetY;
+  }
+
+  return Object.keys(nextEditOverride).length > 0
+    ? nextEditOverride
+    : undefined;
+}
+
+function areAniFrameEditOverridesEqual(
+  left: AniFrameEditOverride | undefined,
+  right: AniFrameEditOverride | undefined
+) {
+  return (
+    left?.fitMode === right?.fitMode &&
+    left?.scale === right?.scale &&
+    left?.offsetX === right?.offsetX &&
+    left?.offsetY === right?.offsetY
+  );
+}
+
+function getSharedAniFrameDurationMs(ani: AniData) {
+  if (ani.sourceKind !== "image-sequence" || ani.frames.length === 0) {
+    return undefined;
+  }
+
+  const firstDurationMs = clampAniFrameDuration(ani.frames[0].durationMs);
+  return ani.frames.every(
+    (frame) => clampAniFrameDuration(frame.durationMs) === firstDurationMs
+  )
+    ? firstDurationMs
+    : undefined;
 }
 
 function syncAniActiveFrame(ani: AniData): AniData {
@@ -513,9 +562,13 @@ async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResp
   };
 
   if (ani.sourceKind === "image-sequence") {
+    const sharedDurationMs = getSharedAniFrameDurationMs(ani);
+
     return generateAniSequence(
       ani.frames.map((frame) => frame.file),
-      input
+      typeof sharedDurationMs === "number"
+        ? { ...input, durationMs: sharedDurationMs }
+        : input
     );
   }
 
@@ -1516,6 +1569,48 @@ export function useStudio() {
     );
   }, [ani, pushHistoryForAction, state, takeSnapshot]);
 
+  const setSelectedAniFrameEditOverride = useCallback(
+    (editOverride: AniFrameEditOverride) => {
+      if (
+        state !== "ani-editing" ||
+        !ani ||
+        ani.sourceKind !== "image-sequence" ||
+        !ani.selectedFrameId
+      ) {
+        return;
+      }
+
+      const selectedFrame = ani.frames.find(
+        (frame) => frame.id === ani.selectedFrameId
+      );
+      const nextEditOverride = normalizeAniFrameEditOverride(editOverride);
+      if (
+        !selectedFrame ||
+        areAniFrameEditOverridesEqual(
+          selectedFrame.editOverride,
+          nextEditOverride
+        )
+      ) {
+        return;
+      }
+
+      pushHistoryForAction(takeSnapshot(), "aniFrameEditOverride");
+      setAni((prev) =>
+        prev && prev.sourceKind === "image-sequence"
+          ? syncAniActiveFrame({
+              ...prev,
+              frames: prev.frames.map((frame) =>
+                frame.id === prev.selectedFrameId
+                  ? { ...frame, editOverride: nextEditOverride }
+                  : frame
+              ),
+            })
+          : prev
+      );
+    },
+    [ani, pushHistoryForAction, state, takeSnapshot]
+  );
+
   const resetSelectedAniFrameEdit = useCallback(() => {
     if (
       state !== "ani-editing" ||
@@ -2397,6 +2492,7 @@ export function useStudio() {
     deleteAniFrame,
     moveAniFrame,
     setAniFrameDuration,
+    setSelectedAniFrameEditOverride,
     resetSelectedAniFrameEdit,
     recommendHotspot,
     endContinuousHistoryAction,

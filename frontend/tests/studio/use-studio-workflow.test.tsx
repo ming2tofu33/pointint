@@ -650,14 +650,18 @@ describe("useStudio workflow entry", () => {
       });
 
       act(() => {
-        const selectedFrame = result.current.ani?.frames[1];
-        if (selectedFrame) {
-          selectedFrame.editOverride = {
-            scale: 1.5,
-            offsetX: 8,
-          };
-        }
+        result.current.setSelectedAniFrameEditOverride({
+          scale: 1.5,
+          offsetX: 8,
+        });
       });
+
+      expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+        scale: 1.5,
+        offsetX: 8,
+      });
+      expect(result.current.ani?.scale).toBe(1.5);
+      expect(result.current.ani?.offsetX).toBe(8);
 
       act(() => {
         result.current.resetSelectedAniFrameEdit();
@@ -905,9 +909,53 @@ describe("useStudio workflow entry", () => {
         aniName: "arrow",
         cursorSize: 32,
         fitMode: "contain",
+        durationMs: 100,
       })
     );
     expect(createdAnchors[0]?.download).toBe("pointint_arrow.ani");
+
+    clickSpy.mockRestore();
+    createElementSpy.mockRestore();
+  });
+
+  it("omits sequence-wide duration when image sequence frame durations differ", async () => {
+    generateAniSequenceMock.mockResolvedValue({
+      blob: new Blob(["ani"], { type: "application/octet-stream" }),
+      filename: "pointint-sequence.ani",
+      contentType: "application/octet-stream",
+    });
+
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string, options?: ElementCreationOptions) =>
+        originalCreateElement(tagName, options)
+      );
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useStudio());
+    const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(files);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setAniFrameDuration("ani-frame-2-frame-002", 250);
+    });
+
+    await act(async () => {
+      await result.current.download();
+    });
+
+    expect(generateAniSequenceMock).toHaveBeenCalledWith(
+      files,
+      expect.not.objectContaining({
+        durationMs: expect.any(Number),
+      })
+    );
 
     clickSpy.mockRestore();
     createElementSpy.mockRestore();
