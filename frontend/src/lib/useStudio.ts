@@ -29,6 +29,13 @@ import {
 } from "@/lib/studioDownload";
 import { type StudioState } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
+import {
+  createAniFramesFromFiles,
+  resolveAniFrameEdit,
+  type AniFrameEdit,
+  type AniFrameEditOverride,
+  type AniImportedFrame,
+} from "@/lib/aniFrameEdits";
 
 import {
   generateAni,
@@ -41,6 +48,12 @@ import {
 export type CursorSize = ThemeCursorSize;
 
 const EDITOR_VIEWPORT_SIZE = 256;
+const DEFAULT_ANI_FRAME_EDIT: AniFrameEdit = {
+  fitMode: "contain",
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+};
 
 export interface CursorData {
   originalFile: File;
@@ -63,9 +76,10 @@ export interface CursorData {
   cursorName: string;
 }
 
-export interface AniFrameData {
-  file: File;
-  url: string;
+export interface AniFrameData extends AniImportedFrame {
+  sourceWidth: number;
+  sourceHeight: number;
+  editOverride?: AniFrameEditOverride;
 }
 
 export interface AniData {
@@ -73,6 +87,8 @@ export interface AniData {
   originalUrl: string;
   sourceKind: "gif" | "image-sequence";
   frames: AniFrameData[];
+  selectedFrameId: string | null;
+  globalEdit: AniFrameEdit;
   sourceWidth: number;
   sourceHeight: number;
   hotspotX: number;
@@ -251,6 +267,94 @@ function getPrimaryRoleSelection() {
   } as const;
 }
 
+function createDefaultAniFrameEdit(): AniFrameEdit {
+  return { ...DEFAULT_ANI_FRAME_EDIT };
+}
+
+function getAniGlobalEdit(ani: AniData): AniFrameEdit {
+  return ani.globalEdit ?? {
+    fitMode: ani.fitMode,
+    scale: ani.scale,
+    offsetX: ani.offsetX,
+    offsetY: ani.offsetY,
+  };
+}
+
+function getSelectedAniFrame(ani: AniData) {
+  return (
+    ani.frames.find((frame) => frame.id === ani.selectedFrameId) ??
+    ani.frames[0] ??
+    null
+  );
+}
+
+function syncAniActiveFrame(ani: AniData): AniData {
+  const globalEdit = getAniGlobalEdit(ani);
+
+  if (ani.sourceKind !== "image-sequence") {
+    return {
+      ...ani,
+      selectedFrameId: null,
+      globalEdit,
+      fitMode: globalEdit.fitMode,
+      scale: globalEdit.scale,
+      offsetX: globalEdit.offsetX,
+      offsetY: globalEdit.offsetY,
+    };
+  }
+
+  const selectedFrame = getSelectedAniFrame(ani);
+  const activeEdit = selectedFrame
+    ? resolveAniFrameEdit(globalEdit, selectedFrame)
+    : globalEdit;
+
+  return {
+    ...ani,
+    selectedFrameId: selectedFrame?.id ?? null,
+    originalFile: selectedFrame?.file ?? ani.originalFile,
+    originalUrl: selectedFrame?.url ?? ani.originalUrl,
+    sourceWidth: selectedFrame?.sourceWidth ?? ani.sourceWidth,
+    sourceHeight: selectedFrame?.sourceHeight ?? ani.sourceHeight,
+    globalEdit,
+    fitMode: activeEdit.fitMode,
+    scale: activeEdit.scale,
+    offsetX: activeEdit.offsetX,
+    offsetY: activeEdit.offsetY,
+  };
+}
+
+function syncAniGlobalEdit(ani: AniData, globalEdit: AniFrameEdit): AniData {
+  return syncAniActiveFrame({
+    ...ani,
+    globalEdit,
+  });
+}
+
+async function loadAniFrameDimensions(
+  frames: AniFrameData[],
+  firstFrameDimensions: { width: number; height: number },
+  isActive: () => boolean
+) {
+  const hydratedFrames: AniFrameData[] = [];
+
+  for (const [index, frame] of frames.entries()) {
+    const dimensions =
+      index === 0 ? firstFrameDimensions : await loadImageDimensions(frame.url);
+
+    if (!isActive()) {
+      return null;
+    }
+
+    hydratedFrames.push({
+      ...frame,
+      sourceWidth: dimensions.width,
+      sourceHeight: dimensions.height,
+    });
+  }
+
+  return hydratedFrames;
+}
+
 function createCursorFromFile(
   file: File,
   slotId: WindowsRoleSlotId
@@ -286,20 +390,24 @@ function createAniFromFile(
   sourceWidth = 0,
   sourceHeight = 0
 ): AniData {
+  const globalEdit = createDefaultAniFrameEdit();
+
   return {
     originalFile: file,
     originalUrl: URL.createObjectURL(file),
     sourceKind: "gif",
     frames: [],
+    selectedFrameId: null,
+    globalEdit,
     sourceWidth,
     sourceHeight,
     hotspotX: 0,
     hotspotY: 0,
     hotspotMode: "auto",
-    offsetX: 0,
-    offsetY: 0,
-    scale: 1,
-    fitMode: "contain",
+    offsetX: globalEdit.offsetX,
+    offsetY: globalEdit.offsetY,
+    scale: globalEdit.scale,
+    fitMode: globalEdit.fitMode,
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
   };
@@ -309,31 +417,33 @@ function createAniFromImageSequenceFiles(
   files: File[],
   slotId: WindowsRoleSlotId
 ): AniData {
-  const frames = [...files]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
+  const frames = createAniFramesFromFiles(files).map((frame) => ({
+    ...frame,
+    sourceWidth: 0,
+    sourceHeight: 0,
+  }));
   const firstFrame = frames[0];
+  const globalEdit = createDefaultAniFrameEdit();
 
-  return {
+  return syncAniActiveFrame({
     originalFile: firstFrame.file,
     originalUrl: firstFrame.url,
     sourceKind: "image-sequence",
     frames,
+    selectedFrameId: firstFrame.id,
+    globalEdit,
     sourceWidth: 0,
     sourceHeight: 0,
     hotspotX: 0,
     hotspotY: 0,
     hotspotMode: "auto",
-    offsetX: 0,
-    offsetY: 0,
-    scale: 1,
-    fitMode: "contain",
+    offsetX: globalEdit.offsetX,
+    offsetY: globalEdit.offsetY,
+    scale: globalEdit.scale,
+    fitMode: globalEdit.fitMode,
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
-  };
+  });
 }
 
 async function createCursorExportBlob(
@@ -360,6 +470,7 @@ async function createCursorExportBlob(
 }
 
 async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResponse> {
+  const edit = ani.sourceKind === "image-sequence" ? getAniGlobalEdit(ani) : ani;
   const renderedHotspot = mapViewportHotspotToOutput({
     hotspotX: ani.hotspotX,
     hotspotY: ani.hotspotY,
@@ -371,10 +482,10 @@ async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResp
     hotspotX: renderedHotspot.x,
     hotspotY: renderedHotspot.y,
     cursorSize: ani.cursorSize,
-    fitMode: ani.fitMode,
-    offsetX: ani.offsetX,
-    offsetY: ani.offsetY,
-    scale: ani.scale,
+    fitMode: edit.fitMode,
+    offsetX: edit.offsetX,
+    offsetY: edit.offsetY,
+    scale: edit.scale,
   };
 
   if (ani.sourceKind === "image-sequence") {
@@ -438,6 +549,9 @@ function createStaticSlotState(
 }
 
 function createAnimatedSlotState(nextAni: AniData): SlotStateUpdate {
+  const edit =
+    nextAni.sourceKind === "image-sequence" ? getAniGlobalEdit(nextAni) : nextAni;
+
   return createSlotStateUpdate(
     "animated",
     {
@@ -448,13 +562,13 @@ function createAnimatedSlotState(nextAni: AniData): SlotStateUpdate {
     {
       cursorName: nextAni.cursorName,
       cursorSize: nextAni.cursorSize,
-      fitMode: nextAni.fitMode,
+      fitMode: edit.fitMode,
       hotspotMode: nextAni.hotspotMode,
       hotspotX: nextAni.hotspotX,
       hotspotY: nextAni.hotspotY,
-      offsetX: nextAni.offsetX,
-      offsetY: nextAni.offsetY,
-      scale: nextAni.scale,
+      offsetX: edit.offsetX,
+      offsetY: edit.offsetY,
+      scale: edit.scale,
     },
     { cursor: null, ani: nextAni, backgroundRemovalPending: false }
   );
@@ -485,6 +599,62 @@ function applySlotStateUpdate(
       ...slotRuntime,
       [slotId]: nextSlotState.runtime,
     },
+  };
+}
+
+function cloneAniWithFreshFrameUrls(ani: AniData): AniData {
+  if (ani.sourceKind !== "image-sequence") {
+    return ani;
+  }
+
+  return syncAniActiveFrame({
+    ...ani,
+    frames: ani.frames.map((frame) => ({
+      ...frame,
+      url: URL.createObjectURL(frame.file),
+    })),
+  });
+}
+
+function replaceSnapshotAni(
+  snapshot: StudioSnapshot,
+  slotId: WindowsRoleSlotId,
+  nextAni: AniData
+): StudioSnapshot {
+  const synced = applySlotStateUpdate(
+    snapshot.project,
+    snapshot.slotRuntime,
+    slotId,
+    createAnimatedSlotState(nextAni)
+  );
+
+  return {
+    ...snapshot,
+    ...synced,
+    ani: snapshot.selectedSlotId === slotId ? nextAni : snapshot.ani,
+  };
+}
+
+function prepareImageSequenceReplacementSnapshot(
+  snapshot: StudioSnapshot,
+  slotId: WindowsRoleSlotId
+) {
+  const replacedAni = snapshot.slotRuntime[slotId]?.ani;
+
+  if (replacedAni?.sourceKind !== "image-sequence") {
+    return {
+      historySnapshot: snapshot,
+      replacedAni: null,
+    };
+  }
+
+  return {
+    historySnapshot: replaceSnapshotAni(
+      snapshot,
+      slotId,
+      cloneAniWithFreshFrameUrls(replacedAni)
+    ),
+    replacedAni,
   };
 }
 
@@ -939,11 +1109,17 @@ export function useStudio() {
             sourceHeight: dimensions.height,
           };
 
-          pushHistoryForAction(previous, "replaceSlot");
+          const { historySnapshot, replacedAni } =
+            prepareImageSequenceReplacementSnapshot(previous, slotId);
+
+          pushHistoryForAction(historySnapshot, "replaceSlot");
           setCursor(hydratedCursor);
           setAni(null);
           commitSlotState(slotId, createStaticSlotState(hydratedCursor, true));
           setState("uploaded");
+          if (replacedAni?.sourceKind === "image-sequence") {
+            revokeAniObjectUrls(replacedAni);
+          }
         } catch (err) {
           revokeCursorObjectUrls(nextCursor);
           if (!isAssetLoadRequestActive(requestId)) return;
@@ -961,17 +1137,23 @@ export function useStudio() {
           return;
         }
 
-        const hydratedAni = {
+        const hydratedAni = syncAniActiveFrame({
           ...nextAni,
           sourceWidth: dimensions.width,
           sourceHeight: dimensions.height,
-        };
+        });
 
-        pushHistoryForAction(previous, "replaceSlot");
+        const { historySnapshot, replacedAni } =
+          prepareImageSequenceReplacementSnapshot(previous, slotId);
+
+        pushHistoryForAction(historySnapshot, "replaceSlot");
         setCursor(null);
         setAni(hydratedAni);
         commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
         setState("ani-editing");
+        if (replacedAni?.sourceKind === "image-sequence") {
+          revokeAniObjectUrls(replacedAni);
+        }
       } catch (err) {
         revokeAniObjectUrls(nextAni);
         if (!isAssetLoadRequestActive(requestId)) return;
@@ -1013,17 +1195,33 @@ export function useStudio() {
           return;
         }
 
-        const hydratedAni = {
-          ...nextAni,
-          sourceWidth: dimensions.width,
-          sourceHeight: dimensions.height,
-        };
+        const hydratedFrames = await loadAniFrameDimensions(
+          nextAni.frames,
+          dimensions,
+          () => isAssetLoadRequestActive(requestId)
+        );
 
-        pushHistoryForAction(previous, "replaceSlot");
+        if (!hydratedFrames) {
+          revokeAniObjectUrls(nextAni);
+          return;
+        }
+
+        const hydratedAni = syncAniActiveFrame({
+          ...nextAni,
+          frames: hydratedFrames,
+        });
+
+        const { historySnapshot, replacedAni } =
+          prepareImageSequenceReplacementSnapshot(previous, slotId);
+
+        pushHistoryForAction(historySnapshot, "replaceSlot");
         setCursor(null);
         setAni(hydratedAni);
         commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
         setState("ani-editing");
+        if (replacedAni?.sourceKind === "image-sequence") {
+          revokeAniObjectUrls(replacedAni);
+        }
       } catch (err) {
         revokeAniObjectUrls(nextAni);
         if (!isAssetLoadRequestActive(requestId)) return;
@@ -1160,7 +1358,30 @@ export function useStudio() {
     [selectedSlotId, uploadImageSequenceFilesToSlot]
   );
 
-  // UX-1: 배경 제거 실행
+  const selectAniFrame = useCallback((frameId: string) => {
+    if (
+      state !== "ani-editing" ||
+      !ani ||
+      ani.sourceKind !== "image-sequence" ||
+      ani.selectedFrameId === frameId
+    ) {
+      return;
+    }
+
+    if (!ani.frames.some((frame) => frame.id === frameId)) {
+      return;
+    }
+
+    setAni((prev) =>
+      prev && prev.sourceKind === "image-sequence"
+        ? syncAniActiveFrame({
+            ...prev,
+            selectedFrameId: frameId,
+          })
+        : prev
+    );
+  }, [ani, state]);
+
   const processBgRemoval = useCallback(async () => {
     if (!cursor || bgRemovalInFlightRef.current) return;
     const previous = takeSnapshot();
@@ -1357,9 +1578,19 @@ export function useStudio() {
     }
 
     if (state === "ani-editing") {
-      if (!ani || (ani.offsetX === x && ani.offsetY === y)) return;
+      if (!ani) return;
+      const globalEdit = getAniGlobalEdit(ani);
+      if (globalEdit.offsetX === x && globalEdit.offsetY === y) return;
       pushHistoryForAction(takeSnapshot(), "offset", { coalesce: true });
-      setAni((prev) => (prev ? { ...prev, offsetX: x, offsetY: y } : null));
+      setAni((prev) =>
+        prev
+          ? syncAniGlobalEdit(prev, {
+              ...getAniGlobalEdit(prev),
+              offsetX: x,
+              offsetY: y,
+            })
+          : null
+      );
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
@@ -1372,9 +1603,18 @@ export function useStudio() {
     }
 
     if (state === "ani-editing") {
-      if (!ani || ani.scale === scale) return;
+      if (!ani) return;
+      const globalEdit = getAniGlobalEdit(ani);
+      if (globalEdit.scale === scale) return;
       pushHistoryForAction(takeSnapshot(), "scale", { coalesce: true });
-      setAni((prev) => (prev ? { ...prev, scale } : null));
+      setAni((prev) =>
+        prev
+          ? syncAniGlobalEdit(prev, {
+              ...getAniGlobalEdit(prev),
+              scale,
+            })
+          : null
+      );
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
@@ -1387,9 +1627,18 @@ export function useStudio() {
     }
 
     if (state === "ani-editing") {
-      if (!ani || ani.fitMode === fitMode) return;
+      if (!ani) return;
+      const globalEdit = getAniGlobalEdit(ani);
+      if (globalEdit.fitMode === fitMode) return;
       pushHistoryForAction(takeSnapshot(), "fitMode");
-      setAni((prev) => (prev ? { ...prev, fitMode } : null));
+      setAni((prev) =>
+        prev
+          ? syncAniGlobalEdit(prev, {
+              ...getAniGlobalEdit(prev),
+              fitMode,
+            })
+          : null
+      );
     }
   }, [ani, cursor, pushHistoryForAction, state, takeSnapshot]);
 
@@ -1978,6 +2227,7 @@ export function useStudio() {
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
     selectSelectedSlotImageSequenceFiles,
+    selectAniFrame,
     recommendHotspot,
     endContinuousHistoryAction,
     undo,

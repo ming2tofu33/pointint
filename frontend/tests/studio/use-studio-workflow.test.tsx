@@ -115,7 +115,7 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.frames).toEqual([]);
   });
 
-  it("sorts image sequence frames by filename before entering the ANI editor", async () => {
+  it("creates selectable image sequence frames by filename before entering the ANI editor", async () => {
     const { result } = renderHook(() => useStudio());
     const unsortedFiles = [
       new File(["third"], "frame-003.png", { type: "image/png" }),
@@ -134,20 +134,162 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.originalUrl).toBe("blob:cursor-0");
     expect(result.current.ani?.sourceWidth).toBe(128);
     expect(result.current.ani?.sourceHeight).toBe(96);
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-1-frame-001");
+    expect(result.current.ani?.globalEdit).toEqual({
+      fitMode: "contain",
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+    });
     expect(result.current.ani?.frames).toEqual([
-      {
+      expect.objectContaining({
+        id: "ani-frame-1-frame-001",
         file: unsortedFiles[1],
         url: "blob:cursor-0",
-      },
-      {
+        sourceWidth: 128,
+        sourceHeight: 96,
+        durationMs: 100,
+      }),
+      expect.objectContaining({
+        id: "ani-frame-2-frame-002",
         file: unsortedFiles[2],
         url: "blob:cursor-1",
-      },
-      {
+        sourceWidth: 128,
+        sourceHeight: 96,
+        durationMs: 100,
+      }),
+      expect.objectContaining({
+        id: "ani-frame-3-frame-003",
         file: unsortedFiles[0],
         url: "blob:cursor-2",
-      },
+        sourceWidth: 128,
+        sourceHeight: 96,
+        durationMs: 100,
+      }),
     ]);
+  });
+
+  it("selects an image sequence frame without changing the global hotspot", async () => {
+    const { result } = renderHook(() => useStudio());
+    const files = [
+      new File(["first"], "frame-001.png", { type: "image/png" }),
+      new File(["second"], "frame-002.png", { type: "image/png" }),
+    ];
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(files);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setHotspot(42, 64);
+    });
+
+    act(() => {
+      result.current.selectAniFrame("ani-frame-2-frame-002");
+    });
+
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    expect(result.current.ani?.originalFile).toBe(files[1]);
+    expect(result.current.ani?.originalUrl).toBe("blob:cursor-1");
+    expect(result.current.ani?.sourceWidth).toBe(128);
+    expect(result.current.ani?.sourceHeight).toBe(96);
+    expect(result.current.ani?.hotspotX).toBe(42);
+    expect(result.current.ani?.hotspotY).toBe(64);
+    expect(result.current.ani?.hotspotMode).toBe("manual");
+    expect(result.current.ani?.globalEdit).toEqual({
+      fitMode: "contain",
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+    });
+  });
+
+  it("revokes old image sequence frame URLs when replacing the sequence", async () => {
+    const { result } = renderHook(() => useStudio());
+    const firstSequence = [
+      new File(["first-a"], "frame-001.png", { type: "image/png" }),
+      new File(["first-b"], "frame-002.png", { type: "image/png" }),
+    ];
+    const secondSequence = [
+      new File(["second-a"], "frame-001.png", { type: "image/png" }),
+      new File(["second-b"], "frame-002.png", { type: "image/png" }),
+    ];
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(firstSequence);
+      await Promise.resolve();
+    });
+
+    vi.mocked(URL.revokeObjectURL).mockClear();
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(secondSequence);
+      await Promise.resolve();
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:cursor-0");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:cursor-1");
+  });
+
+  it("undoes and redoes global sequence edits without losing selected frame overrides", async () => {
+    const { result } = renderHook(() => useStudio());
+    const files = [
+      new File(["first"], "frame-001.png", { type: "image/png" }),
+      new File(["second"], "frame-002.png", { type: "image/png" }),
+    ];
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(files);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.selectAniFrame("ani-frame-2-frame-002");
+    });
+
+    act(() => {
+      const selectedFrame = result.current.ani?.frames[1];
+      if (selectedFrame) {
+        selectedFrame.editOverride = {
+          scale: 1.75,
+          offsetX: 12,
+        };
+      }
+    });
+
+    act(() => {
+      result.current.setScale(1.25);
+    });
+
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    expect(result.current.ani?.globalEdit.scale).toBe(1.25);
+    expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+      scale: 1.75,
+      offsetX: 12,
+    });
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    expect(result.current.ani?.globalEdit.scale).toBe(1);
+    expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+      scale: 1.75,
+      offsetX: 12,
+    });
+
+    act(() => {
+      result.current.redo();
+    });
+
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    expect(result.current.ani?.globalEdit.scale).toBe(1.25);
+    expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+      scale: 1.75,
+      offsetX: 12,
+    });
   });
 
   it("revokes all image sequence frame URLs on reset", async () => {
@@ -231,6 +373,21 @@ describe("useStudio workflow entry", () => {
       await Promise.resolve();
     });
 
+    const oldFrameUrls = result.current.ani?.frames.map((frame) => frame.url);
+
+    act(() => {
+      result.current.selectAniFrame("ani-frame-2-frame-002");
+    });
+
+    act(() => {
+      const selectedFrame = result.current.ani?.frames[1];
+      if (selectedFrame) {
+        selectedFrame.editOverride = {
+          offsetY: -8,
+        };
+      }
+    });
+
     await act(async () => {
       await result.current.selectSelectedSlotImageSequenceFiles(secondSequence);
       await Promise.resolve();
@@ -245,6 +402,13 @@ describe("useStudio workflow entry", () => {
 
     expect(result.current.state).toBe("ani-editing");
     expect(result.current.ani?.frames[0]?.file).toBe(firstSequence[0]);
+    expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+      offsetY: -8,
+    });
+    expect(result.current.ani?.frames.map((frame) => frame.url)).not.toEqual(
+      oldFrameUrls
+    );
 
     act(() => {
       result.current.undo();
