@@ -212,6 +212,23 @@ function revokeAniObjectUrls(ani: AniData | null) {
   urls.forEach((url) => safeRevokeObjectUrl(url));
 }
 
+function revokeAniObjectUrlsNotRetained(
+  ani: AniData | null,
+  retainedSnapshots: StudioSnapshot[]
+) {
+  if (!ani) return;
+
+  const candidateUrls = new Set<string>();
+  collectAniObjectUrls(ani, candidateUrls);
+  const retainedUrls = collectSnapshotsObjectUrls(retainedSnapshots);
+
+  candidateUrls.forEach((url) => {
+    if (!retainedUrls.has(url)) {
+      safeRevokeObjectUrl(url);
+    }
+  });
+}
+
 function revokeSlotRuntimeAssets(runtime: SlotRuntime | undefined) {
   if (!runtime) return;
   revokeCursorObjectUrls(runtime.cursor);
@@ -1118,7 +1135,10 @@ export function useStudio() {
           commitSlotState(slotId, createStaticSlotState(hydratedCursor, true));
           setState("uploaded");
           if (replacedAni?.sourceKind === "image-sequence") {
-            revokeAniObjectUrls(replacedAni);
+            revokeAniObjectUrlsNotRetained(replacedAni, [
+              ...undoStackRef.current,
+              ...redoStackRef.current,
+            ]);
           }
         } catch (err) {
           revokeCursorObjectUrls(nextCursor);
@@ -1152,7 +1172,10 @@ export function useStudio() {
         commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
         setState("ani-editing");
         if (replacedAni?.sourceKind === "image-sequence") {
-          revokeAniObjectUrls(replacedAni);
+          revokeAniObjectUrlsNotRetained(replacedAni, [
+            ...undoStackRef.current,
+            ...redoStackRef.current,
+          ]);
         }
       } catch (err) {
         revokeAniObjectUrls(nextAni);
@@ -1220,7 +1243,10 @@ export function useStudio() {
         commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
         setState("ani-editing");
         if (replacedAni?.sourceKind === "image-sequence") {
-          revokeAniObjectUrls(replacedAni);
+          revokeAniObjectUrlsNotRetained(replacedAni, [
+            ...undoStackRef.current,
+            ...redoStackRef.current,
+          ]);
         }
       } catch (err) {
         revokeAniObjectUrls(nextAni);

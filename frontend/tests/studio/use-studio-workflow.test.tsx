@@ -418,6 +418,54 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.frames[0]?.file).toBe(firstSequence[0]);
   });
 
+  it("does not restore revoked frame URLs when undoing an edit before replacement", async () => {
+    const { result } = renderHook(() => useStudio());
+    const firstSequence = [
+      new File(["first-a"], "frame-001.png", { type: "image/png" }),
+      new File(["first-b"], "frame-002.png", { type: "image/png" }),
+    ];
+    const secondSequence = [
+      new File(["second-a"], "frame-001.png", { type: "image/png" }),
+      new File(["second-b"], "frame-002.png", { type: "image/png" }),
+    ];
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(firstSequence);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setScale(1.25);
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(secondSequence);
+      await Promise.resolve();
+    });
+
+    const revokedUrls = new Set(
+      vi
+        .mocked(URL.revokeObjectURL)
+        .mock.calls.map(([url]) => url)
+    );
+
+    act(() => {
+      result.current.undo();
+    });
+
+    act(() => {
+      result.current.undo();
+    });
+
+    const restoredFrameUrls =
+      result.current.ani?.frames.map((frame) => frame.url) ?? [];
+
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.ani?.frames[0]?.file).toBe(firstSequence[0]);
+    expect(restoredFrameUrls.length).toBe(2);
+    expect(restoredFrameUrls.some((url) => revokedUrls.has(url))).toBe(false);
+  });
+
   it("seeds uploaded names from the selected Windows role instead of the source filename", async () => {
     const { result } = renderHook(() => useStudio());
     const staticFile = new File(["cursor"], "freeform-name.png", {
