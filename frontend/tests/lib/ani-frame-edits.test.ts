@@ -38,6 +38,32 @@ describe("resolveAniFrameEdit", () => {
       offsetY: -12,
     });
   });
+
+  it("ignores undefined overrides while preserving zero values", () => {
+    expect(
+      resolveAniFrameEdit(
+        {
+          fitMode: "cover",
+          scale: 2,
+          offsetX: 12,
+          offsetY: -8,
+        },
+        {
+          editOverride: {
+            fitMode: undefined,
+            scale: undefined,
+            offsetX: 0,
+            offsetY: undefined,
+          },
+        }
+      )
+    ).toEqual({
+      fitMode: "cover",
+      scale: 2,
+      offsetX: 0,
+      offsetY: -8,
+    });
+  });
 });
 
 describe("createAniFrameId", () => {
@@ -86,6 +112,50 @@ describe("createAniFramesFromFiles", () => {
       ]);
       expect(new Set(frames.map((frame) => frame.id)).size).toBe(frames.length);
       expect(createObjectURL).toHaveBeenCalledTimes(3);
+    } finally {
+      if (originalCreateObjectURL) {
+        Object.defineProperty(URL, "createObjectURL", {
+          configurable: true,
+          value: originalCreateObjectURL,
+        });
+      } else {
+        delete (URL as unknown as { createObjectURL?: typeof URL.createObjectURL })
+          .createObjectURL;
+      }
+    }
+  });
+
+  it("uses locale-stable filename ordering with original-index tie breaks", () => {
+    const originalCreateObjectURL = URL.createObjectURL;
+    const createObjectURL = vi.fn(
+      (file: Blob | MediaSource) => `blob:${(file as File).name}`
+    );
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectURL,
+    });
+    const files = [
+      new File(["upper"], "FRAME-2.png", { type: "image/png" }),
+      new File(["ten"], "frame-10.png", { type: "image/png" }),
+      new File(["one"], "frame-01.png", { type: "image/png" }),
+      new File(["mixed"], "Frame-2.png", { type: "image/png" }),
+    ];
+
+    try {
+      const frames = createAniFramesFromFiles(files);
+
+      expect(frames.map((frame) => frame.file.name)).toEqual([
+        "frame-01.png",
+        "frame-10.png",
+        "FRAME-2.png",
+        "Frame-2.png",
+      ]);
+      expect(frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-01",
+        "ani-frame-2-frame-10",
+        "ani-frame-3-frame-2",
+        "ani-frame-4-frame-2",
+      ]);
     } finally {
       if (originalCreateObjectURL) {
         Object.defineProperty(URL, "createObjectURL", {

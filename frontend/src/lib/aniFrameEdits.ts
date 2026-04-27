@@ -29,9 +29,13 @@ export function resolveAniFrameEdit(
   globalEdit: AniFrameEdit,
   frame: AniFrameWithEditOverride
 ): AniFrameEdit {
+  const override = frame.editOverride;
+
   return {
-    ...globalEdit,
-    ...(frame.editOverride ?? {}),
+    fitMode: override?.fitMode ?? globalEdit.fitMode,
+    scale: override?.scale ?? globalEdit.scale,
+    offsetX: override?.offsetX ?? globalEdit.offsetX,
+    offsetY: override?.offsetY ?? globalEdit.offsetY,
   };
 }
 
@@ -49,9 +53,18 @@ export function createAniFrameId(fileName: string, index: number): string {
 export function createAniFramesFromFiles(
   files: readonly File[]
 ): AniImportedFrame[] {
-  return [...files]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((file, index) => ({
+  return files
+    .map((file, originalIndex) => ({
+      file,
+      originalIndex,
+      sortKey: file.name.normalize("NFC").toLowerCase(),
+    }))
+    .sort((a, b) => {
+      if (a.sortKey < b.sortKey) return -1;
+      if (a.sortKey > b.sortKey) return 1;
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(({ file }, index) => ({
       id: createAniFrameId(file.name, index),
       file,
       url: URL.createObjectURL(file),
