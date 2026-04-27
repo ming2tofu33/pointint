@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -60,6 +61,8 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   themeModeSwitch: "simulation theme mode",
   downloadAllRoles: "Download all roles (t)",
   downloadCurrentSlot: "Download current slot (t)",
+  downloadCurrentCur: "Download selected .CUR (t)",
+  downloadCurrentAni: "Download selected .ANI (t)",
   backgroundPendingDownloadTitle: "Finish background choices",
   backgroundPendingDownloadSummary: "Pending slots",
   backgroundPendingDownloadAction: "Review slot",
@@ -77,10 +80,41 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   backgroundProcessingSummary:
     "Pointtint is preparing a transparent version of this image. Stay in the studio and keep reviewing the canvas.",
   imageSequenceMinimumError: "Select at least 2 PNG, JPG, or WebP frames.",
+  aniFrameTimeline: "ANI frame timeline",
+  aniFrameCountSingular: "{count} frame",
+  aniFrameCountPlural: "{count} frames",
+  aniFrameTotalDuration: "Total duration",
+  aniFrameTimelineHint: "Click to select. Drag to reorder.",
+  aniFrameEdited: "Edited",
+  aniFrameEditedState: "edited",
+  aniFrameNotEditedState: "not edited",
+  aniFrameSelectLabel: "Select frame {frame}, duration {duration}, {state}",
+  aniFrameActions: "Frame {frame} actions",
+  aniFrameMovePrevious: "Previous",
+  aniFrameMoveNext: "Next",
+  aniFrameDelete: "Delete",
+  aniFrameMovePreviousLabel: "Move frame {frame} previous",
+  aniFrameMoveNextLabel: "Move frame {frame} next",
+  aniFrameDeleteLabel: "Delete frame {frame}",
+  aniFrameAdd: "Add frame",
+  aniFrameAddLabel: "Add image frames",
+  aniFrameDurationLabel: "Frame {frame} duration in milliseconds",
+  aniFramePlay: "Play",
+  aniFramePause: "Pause",
+  aniFramePlayLabel: "Play animation",
+  aniFramePauseLabel: "Pause animation",
+  aniFrameSpeed: "Animation speed",
+  aniFrameSpeedSlow: "Slow",
+  aniFrameSpeedNormal: "Normal",
+  aniFrameSpeedFast: "Fast",
+  aniFrameSpeedLabel: "{label} speed, {duration} ms per frame",
 };
 
-function humanizeStudioKey(key: string) {
-  return (
+function humanizeStudioKey(
+  key: string,
+  values?: Record<string, string | number>
+) {
+  const message =
     STUDIO_TRANSLATIONS[key] ??
     key
       .replace(/^studio\./, "")
@@ -88,7 +122,11 @@ function humanizeStudioKey(key: string) {
       .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
       .replace(/\./g, " ")
       .trim()
-      .toLowerCase()
+      .toLowerCase();
+
+  return Object.entries(values ?? {}).reduce(
+    (current, [name, value]) => current.replaceAll(`{${name}}`, String(value)),
+    message
   );
 }
 
@@ -110,6 +148,13 @@ const {
   selectSlotStaticFileMock,
   selectSlotAnimatedFileMock,
   selectSlotImageSequenceFilesMock,
+  selectAniFrameMock,
+  deleteAniFrameMock,
+  moveAniFrameMock,
+  reorderAniFrameMock,
+  insertAniFrameFilesMock,
+  setAniFrameDurationMock,
+  setAllAniFrameDurationsMock,
   setOffsetMock,
   setHotspotMock,
   setScaleMock,
@@ -137,6 +182,13 @@ const {
   selectSlotStaticFileMock: vi.fn(),
   selectSlotAnimatedFileMock: vi.fn(),
   selectSlotImageSequenceFilesMock: vi.fn(),
+  selectAniFrameMock: vi.fn(),
+  deleteAniFrameMock: vi.fn(),
+  moveAniFrameMock: vi.fn(),
+  reorderAniFrameMock: vi.fn(),
+  insertAniFrameFilesMock: vi.fn(),
+  setAniFrameDurationMock: vi.fn(),
+  setAllAniFrameDurationsMock: vi.fn(),
   setOffsetMock: vi.fn(),
   setHotspotMock: vi.fn(),
   setScaleMock: vi.fn(),
@@ -149,7 +201,9 @@ const {
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => humanizeStudioKey(key),
+  useTranslations:
+    () => (key: string, values?: Record<string, string | number>) =>
+      humanizeStudioKey(key, values),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -500,6 +554,15 @@ function createStudioReturn(
     setAniCursorSize: vi.fn(),
     setCursorName: vi.fn(),
     selectSlot: selectSlotMock,
+    selectAniFrame: selectAniFrameMock,
+    deleteAniFrame: deleteAniFrameMock,
+    moveAniFrame: moveAniFrameMock,
+    reorderAniFrame: reorderAniFrameMock,
+    insertAniFrameFiles: insertAniFrameFilesMock,
+    setAniFrameDuration: setAniFrameDurationMock,
+    setAllAniFrameDurations: setAllAniFrameDurationsMock,
+    setSelectedAniFrameEditOverride: vi.fn(),
+    resetSelectedAniFrameEdit: vi.fn(),
     recommendHotspot: vi.fn(),
     undo: undoMock,
     redo: redoMock,
@@ -532,6 +595,13 @@ beforeEach(() => {
   selectSlotStaticFileMock.mockReset();
   selectSlotAnimatedFileMock.mockReset();
   selectSlotImageSequenceFilesMock.mockReset();
+  selectAniFrameMock.mockReset();
+  deleteAniFrameMock.mockReset();
+  moveAniFrameMock.mockReset();
+  reorderAniFrameMock.mockReset();
+  insertAniFrameFilesMock.mockReset();
+  setAniFrameDurationMock.mockReset();
+  setAllAniFrameDurationsMock.mockReset();
   setOffsetMock.mockReset();
   setHotspotMock.mockReset();
   setScaleMock.mockReset();
@@ -764,9 +834,17 @@ describe("Studio entry gate", () => {
     expect(barProps.onDownload).toBeDefined();
     expect(barProps.onSecondaryDownload).toBeDefined();
     expect(barProps.primaryActionLabel).toBe("Download all roles (t)");
-    expect(barProps.secondaryActionLabel).toBe("Download current slot (t)");
+    expect(barProps.secondaryActionLabel).toBe("Download selected .ANI (t)");
     expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
     expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
+  });
+
+  it("labels the current-slot download as an ANI file in animated editing", () => {
+    renderStudio("ani-editing");
+
+    const barProps = StudioBarMock.mock.calls[0][0];
+
+    expect(barProps.secondaryActionLabel).toBe("Download selected .ANI (t)");
   });
 
   it("passes the selected image sequence frame URL to the ANI canvas", () => {
@@ -799,6 +877,128 @@ describe("Studio entry gate", () => {
     expect(CursorCanvasMock.mock.calls.at(-1)?.[0]).toMatchObject({
       imageUrl: "blob:frame-2",
     });
+  });
+
+  it("shows image sequence frames as selectable timeline thumbnails", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-1",
+        selectedFrameId: "frame-1",
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 125,
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByTestId("ani-frame-timeline")).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select frame 2, duration 125 ms, not edited",
+      })
+    );
+
+    expect(selectAniFrameMock).toHaveBeenCalledWith("frame-2");
+  });
+
+  it("routes selected ANI frame duration edits from the timeline", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        sourceKind: "image-sequence",
+        originalUrl: "blob:frame-1",
+        selectedFrameId: "frame-2",
+        frames: [
+          {
+            id: "frame-1",
+            file: new File(["one"], "frame-001.png", { type: "image/png" }),
+            url: "blob:frame-1",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 100,
+          },
+          {
+            id: "frame-2",
+            file: new File(["two"], "frame-002.png", { type: "image/png" }),
+            url: "blob:frame-2",
+            sourceWidth: 64,
+            sourceHeight: 64,
+            durationMs: 125,
+          },
+        ],
+      },
+    });
+
+    const durationInput = screen.getByRole("spinbutton", {
+      name: "Frame 2 duration in milliseconds",
+    });
+
+    fireEvent.change(durationInput, { target: { value: "180" } });
+    fireEvent.blur(durationInput);
+
+    expect(setAniFrameDurationMock).toHaveBeenCalledWith("frame-2", 180);
+  });
+
+  it("plays image sequence frames inside the ANI canvas preview", () => {
+    vi.useFakeTimers();
+
+    try {
+      renderStudio("ani-editing", {
+        ani: {
+          sourceKind: "image-sequence",
+          originalUrl: "blob:frame-1",
+          selectedFrameId: "frame-1",
+          frames: [
+            {
+              id: "frame-1",
+              file: new File(["one"], "frame-001.png", { type: "image/png" }),
+              url: "blob:frame-1",
+              sourceWidth: 64,
+              sourceHeight: 64,
+              durationMs: 40,
+            },
+            {
+              id: "frame-2",
+              file: new File(["two"], "frame-002.png", { type: "image/png" }),
+              url: "blob:frame-2",
+              sourceWidth: 64,
+              sourceHeight: 64,
+              durationMs: 40,
+            },
+          ],
+        },
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Play animation" }));
+      expect(CursorCanvasMock.mock.calls.at(-1)?.[0]).toMatchObject({
+        imageUrl: "blob:frame-1",
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(40);
+      });
+
+      expect(CursorCanvasMock.mock.calls.at(-1)?.[0]).toMatchObject({
+        imageUrl: "blob:frame-2",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("defaults ANI image sequences to all-frame edits and can route transforms to the selected frame", () => {

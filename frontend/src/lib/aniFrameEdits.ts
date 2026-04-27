@@ -51,8 +51,11 @@ export function createAniFrameId(fileName: string, index: number): string {
 }
 
 export function createAniFramesFromFiles(
-  files: readonly File[]
+  files: readonly File[],
+  options?: { startIndex?: number }
 ): AniImportedFrame[] {
+  const startIndex = options?.startIndex ?? 0;
+
   return files
     .map((file, originalIndex) => ({
       file,
@@ -65,7 +68,7 @@ export function createAniFramesFromFiles(
       return a.originalIndex - b.originalIndex;
     })
     .map(({ file }, index) => ({
-      id: createAniFrameId(file.name, index),
+      id: createAniFrameId(file.name, startIndex + index),
       file,
       url: URL.createObjectURL(file),
       durationMs: ANI_FRAME_DEFAULT_DURATION_MS,

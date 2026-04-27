@@ -602,6 +602,121 @@ describe("useStudio workflow entry", () => {
       ]);
     });
 
+    it("reorders ani frames to an arbitrary insertion point", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles([
+        "frame-001.png",
+        "frame-002.png",
+        "frame-003.png",
+      ]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.reorderAniFrame("ani-frame-1-frame-001", 3);
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-2-frame-002",
+        "ani-frame-3-frame-003",
+        "ani-frame-1-frame-001",
+      ]);
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-1-frame-001");
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-2-frame-002",
+        "ani-frame-3-frame-003",
+      ]);
+    });
+
+    it("inserts additional image sequence frames without replacing the existing sequence", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+      const addedFrame = new File(["third"], "frame-003.png", {
+        type: "image/png",
+      });
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      await act(async () => {
+        await result.current.insertAniFrameFiles([addedFrame], 1);
+        await Promise.resolve();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-3-frame-003",
+        "ani-frame-2-frame-002",
+      ]);
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-3-frame-003");
+      expect(result.current.ani?.frames[1]?.file).toBe(addedFrame);
+      expect(result.current.ani?.frames[1]?.url).toBe("blob:cursor-2");
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-2-frame-002",
+      ]);
+    });
+
+    it("sets all image sequence frame durations with one undoable action", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles([
+        "frame-001.png",
+        "frame-002.png",
+        "frame-003.png",
+      ]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.setAllAniFrameDurations(60);
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.durationMs)).toEqual([
+        60,
+        60,
+        60,
+      ]);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.durationMs)).toEqual([
+        100,
+        100,
+        100,
+      ]);
+
+      act(() => {
+        result.current.redo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.durationMs)).toEqual([
+        60,
+        60,
+        60,
+      ]);
+    });
+
     it("sets ani frame duration through the duration clamp", async () => {
       const { result } = renderHook(() => useStudio());
       const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);

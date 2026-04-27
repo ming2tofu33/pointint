@@ -1,10 +1,11 @@
 "use client";
 
-import { CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
 import AniSimulation from "@/components/AniSimulation";
+import AniFrameTimeline from "@/components/AniFrameTimeline";
 import CanvasViewZoomControl, {
   type CanvasViewZoom,
 } from "@/components/CanvasViewZoomControl";
@@ -31,6 +32,7 @@ import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
 import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
 import { StudioShellInteractionStyles } from "@/components/StudioSurfaceCard";
+import { resolveAniFrameEdit } from "@/lib/aniFrameEdits";
 import { type FitMode } from "@/lib/cursorFrame";
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
 import {
@@ -59,6 +61,12 @@ interface AniEditorShellProps {
   onSelectSlotStaticFile: (file: File) => void;
   onSelectSlotAnimatedFile: (file: File) => void;
   onSelectSlotImageSequenceFiles: (files: File[]) => void;
+  onSelectAniFrame: (frameId: string) => void;
+  onDeleteAniFrame: (frameId: string) => void;
+  onReorderAniFrame: (frameId: string, insertionIndex: number) => void;
+  onInsertAniFrameFiles: (files: File[], insertionIndex?: number) => void;
+  onSetAniFrameDuration: (frameId: string, durationMs: number) => void;
+  onSetAllAniFrameDurations: (durationMs: number) => void;
   onOffsetChange: (
     x: number,
     y: number,
@@ -98,6 +106,12 @@ export default function AniEditorShell({
   onSelectSlotStaticFile,
   onSelectSlotAnimatedFile,
   onSelectSlotImageSequenceFiles,
+  onSelectAniFrame,
+  onDeleteAniFrame,
+  onReorderAniFrame,
+  onInsertAniFrameFiles,
+  onSetAniFrameDuration,
+  onSetAllAniFrameDurations,
   onOffsetChange,
   onHotspotChange,
   onScaleChange,
@@ -124,6 +138,10 @@ export default function AniEditorShell({
     useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
   const [editScope, setEditScope] =
     useState<AniFrameEditScope>("all-frames");
+  const [sequencePreviewPlaying, setSequencePreviewPlaying] = useState(false);
+  const [sequencePreviewFrameId, setSequencePreviewFrameId] = useState<
+    string | null
+  >(null);
   const selectedSlot = project.slots[selectedSlotId];
   const selectedSlotBound = Boolean(
     selectedSlot.asset.originalUrl || selectedSlot.asset.previewUrl || ani
@@ -134,8 +152,21 @@ export default function AniEditorShell({
         ani.frames[0] ??
         null
       : null;
-  const activeImageUrl = selectedAniFrame?.url ?? imageUrl;
   const supportsFrameEditScope = ani?.sourceKind === "image-sequence";
+  const sequencePreviewActive =
+    sequencePreviewPlaying &&
+    ani?.sourceKind === "image-sequence" &&
+    ani.frames.length > 0;
+  const sequencePreviewFrame =
+    sequencePreviewActive && ani?.sourceKind === "image-sequence"
+      ? ani.frames.find((frame) => frame.id === sequencePreviewFrameId) ??
+        selectedAniFrame
+      : null;
+  const displayedAniFrame = sequencePreviewFrame ?? selectedAniFrame;
+  const activeImageUrl = displayedAniFrame?.url ?? imageUrl;
+  const activeSourceWidth = displayedAniFrame?.sourceWidth ?? ani?.sourceWidth ?? 0;
+  const activeSourceHeight =
+    displayedAniFrame?.sourceHeight ?? ani?.sourceHeight ?? 0;
   const activeEditScope = supportsFrameEditScope ? editScope : "all-frames";
   const activeEdit =
     ani == null
@@ -145,9 +176,62 @@ export default function AniEditorShell({
           offsetX: 0,
           offsetY: 0,
         }
+      : sequencePreviewActive && displayedAniFrame
+        ? resolveAniFrameEdit(ani.globalEdit, displayedAniFrame)
       : activeEditScope === "all-frames"
         ? ani.globalEdit
         : ani;
+  useEffect(() => {
+    if (!supportsFrameEditScope || !ani || ani.frames.length === 0) {
+      setSequencePreviewPlaying(false);
+      setSequencePreviewFrameId(null);
+      return;
+    }
+
+    setSequencePreviewFrameId((current) =>
+      current && ani.frames.some((frame) => frame.id === current)
+        ? current
+        : ani.selectedFrameId ?? ani.frames[0]?.id ?? null
+    );
+  }, [ani, supportsFrameEditScope]);
+
+  useEffect(() => {
+    if (
+      !sequencePreviewPlaying ||
+      !ani ||
+      ani.sourceKind !== "image-sequence" ||
+      ani.frames.length === 0
+    ) {
+      return;
+    }
+
+    const currentFrameId =
+      sequencePreviewFrameId ?? ani.selectedFrameId ?? ani.frames[0]?.id ?? null;
+    const currentIndex = Math.max(
+      0,
+      ani.frames.findIndex((frame) => frame.id === currentFrameId)
+    );
+    const currentFrame = ani.frames[currentIndex] ?? ani.frames[0];
+    if (!currentFrame) {
+      return;
+    }
+
+    if (sequencePreviewFrameId !== currentFrame.id) {
+      setSequencePreviewFrameId(currentFrame.id);
+    }
+
+    const timer = window.setTimeout(() => {
+      const nextFrame = ani.frames[(currentIndex + 1) % ani.frames.length];
+      setSequencePreviewFrameId(nextFrame?.id ?? null);
+    }, Math.max(20, currentFrame.durationMs));
+
+    return () => window.clearTimeout(timer);
+  }, [ani, sequencePreviewFrameId, sequencePreviewPlaying]);
+
+  const stopSequencePreview = () => {
+    setSequencePreviewPlaying(false);
+    setSequencePreviewFrameId(null);
+  };
   const handleOffsetChange = (x: number, y: number) =>
     onOffsetChange(x, y, activeEditScope);
   const handleScaleChange = (scale: number) =>
@@ -263,8 +347,8 @@ export default function AniEditorShell({
                   >
                     <CursorCanvas
                       imageUrl={activeImageUrl}
-                      sourceWidth={ani.sourceWidth}
-                      sourceHeight={ani.sourceHeight}
+                      sourceWidth={activeSourceWidth}
+                      sourceHeight={activeSourceHeight}
                       fitMode={activeEdit.fitMode}
                       offsetX={activeEdit.offsetX}
                       offsetY={activeEdit.offsetY}
@@ -279,6 +363,45 @@ export default function AniEditorShell({
                       viewScale={canvasViewZoom}
                     />
                   </div>
+
+                  {ani.sourceKind === "image-sequence" &&
+                  ani.frames.length > 0 ? (
+                    <AniFrameTimeline
+                      frames={ani.frames}
+                      selectedFrameId={ani.selectedFrameId}
+                      previewFrameId={
+                        sequencePreviewActive ? displayedAniFrame?.id : null
+                      }
+                      isPlaying={sequencePreviewPlaying}
+                      onPlayToggle={(playing) => {
+                        setSequencePreviewFrameId(
+                          ani.selectedFrameId ?? ani.frames[0]?.id ?? null
+                        );
+                        setSequencePreviewPlaying(playing);
+                      }}
+                      onSelectFrame={(frameId) => {
+                        stopSequencePreview();
+                        onSelectAniFrame(frameId);
+                      }}
+                      onDeleteFrame={(frameId) => {
+                        stopSequencePreview();
+                        onDeleteAniFrame(frameId);
+                      }}
+                      onReorderFrame={(frameId, insertionIndex) => {
+                        stopSequencePreview();
+                        onReorderAniFrame(frameId, insertionIndex);
+                      }}
+                      onAddFrames={(files, insertionIndex) => {
+                        stopSequencePreview();
+                        onInsertAniFrameFiles(files, insertionIndex);
+                      }}
+                      onSetFrameDuration={onSetAniFrameDuration}
+                      onSetAllFrameDurations={onSetAllAniFrameDurations}
+                      style={{
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
 
                   <div
                     data-testid="studio-stage-actions"
@@ -422,8 +545,8 @@ export default function AniEditorShell({
             >
               <AniSimulation
                 imageUrl={selectedSlotBound && ani ? activeImageUrl : null}
-                sourceWidth={selectedSlotBound && ani ? ani.sourceWidth : 0}
-                sourceHeight={selectedSlotBound && ani ? ani.sourceHeight : 0}
+                sourceWidth={selectedSlotBound && ani ? activeSourceWidth : 0}
+                sourceHeight={selectedSlotBound && ani ? activeSourceHeight : 0}
                 fitMode={
                   selectedSlotBound && ani ? activeEdit.fitMode : "contain"
                 }
@@ -490,8 +613,8 @@ export default function AniEditorShell({
                 >
                   <FramedCursorPreview
                     imageUrl={activeImageUrl}
-                    sourceWidth={ani.sourceWidth}
-                    sourceHeight={ani.sourceHeight}
+                    sourceWidth={activeSourceWidth}
+                    sourceHeight={activeSourceHeight}
                     fitMode={activeEdit.fitMode}
                     offsetX={activeEdit.offsetX}
                     offsetY={activeEdit.offsetY}
@@ -506,8 +629,8 @@ export default function AniEditorShell({
                 >
                   <FramedCursorPreview
                     imageUrl={activeImageUrl}
-                    sourceWidth={ani.sourceWidth}
-                    sourceHeight={ani.sourceHeight}
+                    sourceWidth={activeSourceWidth}
+                    sourceHeight={activeSourceHeight}
                     fitMode={activeEdit.fitMode}
                     offsetX={activeEdit.offsetX}
                     offsetY={activeEdit.offsetY}

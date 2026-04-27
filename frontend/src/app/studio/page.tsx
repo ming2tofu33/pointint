@@ -75,6 +75,12 @@ export default function StudioPage() {
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
     selectSelectedSlotImageSequenceFiles,
+    selectAniFrame,
+    deleteAniFrame,
+    reorderAniFrame,
+    insertAniFrameFiles,
+    setAniFrameDuration,
+    setAllAniFrameDurations,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -204,6 +210,15 @@ export default function StudioPage() {
       ? t("slotStatic")
       : t("slotAnimated")
     : t("slotKindUnset");
+  const currentSlotDownloadLabel =
+    state === "ani-editing" || selectedSlot.kind === "animated"
+      ? t("downloadCurrentAni")
+      : state === "editing" ||
+          state === "uploaded" ||
+          state === "processing" ||
+          selectedSlot.kind === "static"
+        ? t("downloadCurrentCur")
+        : t("downloadCurrentSlot");
   const pendingBackgroundRemovalSlotLabels = useMemo(
     () =>
       pendingBackgroundRemovalSlotIds.map((slotId) =>
@@ -316,7 +331,7 @@ export default function StudioPage() {
           canDownload={canDownloadAll}
           canSecondaryDownload={canDownload}
           primaryActionLabel={t("downloadAllRoles")}
-          secondaryActionLabel={t("downloadCurrentSlot")}
+          secondaryActionLabel={currentSlotDownloadLabel}
         />
         {pendingBackgroundRemovalSlotIds.length > 0 ? (
           <PendingBackgroundDecisionNotice
@@ -342,6 +357,12 @@ export default function StudioPage() {
             onSelectSlotStaticFile={selectSelectedSlotStaticFile}
             onSelectSlotAnimatedFile={selectSelectedSlotAnimatedFile}
             onSelectSlotImageSequenceFiles={selectSelectedSlotImageSequenceFiles}
+            onSelectAniFrame={selectAniFrame}
+            onDeleteAniFrame={deleteAniFrame}
+            onReorderAniFrame={reorderAniFrame}
+            onInsertAniFrameFiles={insertAniFrameFiles}
+            onSetAniFrameDuration={setAniFrameDuration}
+            onSetAllAniFrameDurations={setAllAniFrameDurations}
             onOffsetChange={setOffset}
             onHotspotChange={setHotspot}
             onScaleChange={setScale}
