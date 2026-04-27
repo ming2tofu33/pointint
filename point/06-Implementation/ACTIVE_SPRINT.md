@@ -91,6 +91,7 @@ aliases:
 - 2026-04-15: Background removal fine-tuning is an option, not an active sprint item. The current HF path is a remote inference wrapper, so any quality upgrade should be evaluated as a separate train-and-redeploy spike.
 - 2026-04-24: A Windows `.exe` installer is worth tracking as an option, but should start as a feasibility spike because code signing, SmartScreen reputation, restore/uninstall behavior, and user trust are the main risks.
 - 2026-04-27: `ANI-SOURCE-01` is closed as a GIF Maker source slice. The source-maker pattern is now established as `source media -> ordered frames -> existing ANI editor -> Windows role export`; `Video to ANI` should reuse this path instead of creating a separate editor.
+- 2026-04-27: `Phase 2.5 / Theme Asset Foundation` is added as a queued future phase after Auth, project storage, 17-role generation, and install trust. It should start with folder icons, wallpaper export, and cursor/icon/wallpaper theme-pack drafts; it is not part of the current Phase 1.5 ANI scope.
 
 ## Document Follow-up
 
@@ -98,7 +99,8 @@ aliases:
 |---|---|---|
 | `ACTIVE_SPRINT.md` | Sprint state rewritten around actual shipped work and next follow-up choice | synced |
 | `Implementation-Plan.md` | Doc roles, follow-up rules, stale/ghost handling | synced |
-| `Phase-Flow.md` | Phase summary aligned to shipped work and Phase 1.5 framing | synced |
+| `Phase-Flow.md` | Phase summary aligned to shipped work, Phase 1.5 framing, and queued Phase 2.5 theme-asset foundation | synced |
+| `Roadmap.md` | Phase 2.5 Theme Asset Foundation added between Phase 2 and Phase 3 | synced |
 | `plans/2026-03-27-implementation-phase-flow.md` | Phase 1 and Phase 1.5 execution alignment | synced |
 | `plans/2026-04-11-framing-preview-export-parity.md` | Editor-confidence task record | synced |
 | `plans/2026-04-12-landing-showcase-install-confidence.md` | Landing showcase implementation plan | synced |

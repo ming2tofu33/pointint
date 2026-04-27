@@ -227,8 +227,8 @@ Pointint는 아래처럼 이해하는 것이 맞다.
 
 ## Sources
 
-- [Market Validation Analysis](C:/Users/amy/Desktop/pointint/point/09-Research/Market-Validation-Analysis.md)
-- [Competitor Analysis](C:/Users/amy/Desktop/pointint/point/09-Research/Competitor-Analysis.md)
+- [[Market-Validation-Analysis]]
+- [[Competitor-Analysis]]
 - [Custom Cursor for Windows](https://custom-cursor.com/en/products/custom-cursor-for-windows)
 - [Custom Cursor Community](https://community.custom-cursor.com/)
 - [Sweezy Cursors Chrome Web Store](https://chromewebstore.google.com/detail/sweezy-cursors-%E2%98%85-%E0%B9%80%E0%B8%84%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%8B%E0%B8%AD/gdcfjidbchfpojnfifkgghbamkdmbdaf?hl=th)

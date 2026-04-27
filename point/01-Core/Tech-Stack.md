@@ -11,7 +11,7 @@ aliases:
 # Tech Stack
 
 > **Status:** 확정
-> **Last Updated:** 2026-03-27
+> **Last Updated:** 2026-04-27
 
 ## 1. 확정 스택
 
@@ -20,7 +20,7 @@ aliases:
 | 프론트엔드 | **Next.js (React)** | UI, 캔버스 편집기, 시뮬레이션 |
 | 백엔드 | **FastAPI (Python)** | 배경 제거, .cur/.ani 생성, 이미지 처리 |
 | DB | **Supabase (Postgres)** | 유저, 프로젝트, 마켓플레이스 데이터 |
-| 인증 | **Supabase Auth** | 로그인/가입 |
+| 인증 | **Supabase Auth** | Google OAuth only 로그인/가입 |
 | 스토리지 | **Supabase Storage** | 업로드 이미지, 결과물 |
 | 프론트 배포 | **Vercel** | Next.js 배포 |
 | 백엔드 배포 | **Railway** | FastAPI 서버 배포 |
@@ -41,7 +41,7 @@ aliases:
 
 - **Next.js:** UI 렌더링, 캔버스 편집기, 시뮬레이션, Supabase Auth 연동
 - **FastAPI:** 배경 제거(AI), 이미지 전처리, .cur/.ani 바이너리 생성, 파일 변환
-- **Supabase:** 데이터 저장, 인증, 파일 저장
+- **Supabase:** 데이터 저장, Google OAuth only 인증, 파일 저장
 
 ## 3. 선택 근거
 

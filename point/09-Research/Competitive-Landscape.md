@@ -10,415 +10,433 @@ aliases:
   - 경쟁 시장 조사
   - 경쟁 구도 분석
   - Competitive Landscape
+status: active
+updated: 2026-04-27
 ---
 
 # Competitive Landscape
 
 > [!info]
-> **Status:** Working draft  
-> **Last Updated:** 2026-03-27  
-> **Purpose:** Pointint가 실제로 맞서게 될 경쟁 구도를 직접 경쟁, 인접 경쟁, 대체재까지 포함해 분석한다.
+> **Status:** Active<br>
+> **Last Updated:** 2026-04-27<br>
+> **Purpose:** Pointint가 실제로 맞서게 될 경쟁 구도를 직접 경쟁, 콘텐츠/마켓 경쟁, 인접 취향 플랫폼까지 포함해 재정리한다.
+
+## Research Scope
+
+이번 재조사는 2026-04-27 기준 공개 웹 자료를 기준으로 했다. 숫자는 사이트/스토어에 노출된 값이므로 계속 바뀔 수 있다.
+
+- Chrome Web Store, Steam, GitHub, Etsy, 공식 제품 페이지를 우선했다.
+- VSThemes는 현재 환경에서 직접 페이지 fetch가 403으로 막혀, 핵심 근거가 아니라 보조 watchlist로만 둔다.
+- 기존 `docs/경쟁 사이트.md`는 원자료로 남기되, 현재 기준 문서는 이 문서와 [[Competitor-Analysis]]다.
 
 ## Executive Summary
 
-Pointint의 경쟁 구도는 단순히 “커서 사이트 vs 커서 사이트”가 아니다. 실제 경쟁은 아래 네 레이어에서 동시에 발생한다.
+Pointint는 "커서 사이트 하나"와 경쟁하는 제품이 아니다. 실제 경쟁은 네 레이어에서 동시에 발생한다.
 
-1. **직접 경쟁**
-   커서를 보여주고, 적용하고, 일부 제작까지 지원하는 서비스
-2. **인접 경쟁**
-   배경화면, 위젯, 데스크톱 펫처럼 데스크톱 꾸미기 전체를 장악한 플랫폼
-3. **대체재**
-   Etsy 같은 마켓플레이스에서 완성된 커서/테마팩을 구매하는 방식
-4. **DIY 툴**
-   Cursor.cc, RealWorld Cursor Editor처럼 직접 만들 수는 있지만 난이도가 높은 제작 툴
-
-핵심 결론은 아래와 같다.
-
-- **가장 가까운 직접 경쟁자는 Custom Cursor다.**
-- **Sweezy는 브라우저 기반 감성·가벼움 쪽에서 강한 비교 대상이다.**
-- **Cursor.cc와 RealWorld Cursor Editor는 “만들 수는 있지만 어렵거나 오래된 경험”이라는 점에서 Pointint의 반대편에 있다.**
-- **Wallpaper Engine, Rainmeter, Desktop Mate는 Pointint의 장기 확장 방향을 이미 검증한 인접 강자다.**
-- **Etsy는 이미 ‘커서팩’과 ‘데스크톱 테마팩’에 돈을 쓰는 시장이 있다는 것을 보여주는 강한 대체재다.**
-
-즉, Pointint는 “콘텐츠가 부족한 시장”에 들어가는 것이 아니라, **콘텐츠는 넘치지만 제작 경험과 통합된 모니테리어 흐름이 부족한 시장**에 들어가는 것이다.
-
----
-
-## 1. 경쟁 구도를 읽는 방식
-
-Pointint의 핵심 질문은 이거다.
-
-`누가 이미 사용자의 데스크톱 취향 시간을 먹고 있는가?`
-
-이 질문으로 보면 경쟁은 아래처럼 나뉜다.
-
-| 레이어 | Pointint와의 관계 | 대표 플레이어 |
+| 레이어 | 설명 | 대표 플레이어 |
 |---|---|---|
-| 직접 경쟁 | 같은 문제를 더 직접적으로 푼다 | Custom Cursor, Sweezy, Cursor.cc, RealWorld Cursor Editor, Cursors-4U |
-| 인접 경쟁 | 다른 오브젝트로 같은 욕구를 먹는다 | Wallpaper Engine, Rainmeter, Lively |
-| 감성 오브젝트 경쟁 | 데스크톱 위 존재감과 수집욕을 먹는다 | Desktop Mate, Shimeji 계열 |
-| 대체재/마켓 | 완성품 구매로 문제를 해결한다 | Etsy seller ecosystem |
+| 직접 제작/적용 경쟁 | 커서를 만들거나 적용하거나 브라우저/Windows에서 쓰게 해준다 | Custom Cursor, Sweezy, ImageToCursor, Cursor.cc, RealWorld Cursor Editor, CursorFX |
+| 콘텐츠 라이브러리 경쟁 | 완성된 커서팩을 검색하고 다운로드한다 | Cursors-4U, DeviantArt, VSThemes |
+| 유료 대체재/마켓 | 사용자가 직접 만들지 않고 완성품을 산다 | Etsy cursor packs, Etsy desktop theme sellers |
+| 인접 취향 플랫폼 | 커서가 아니지만 데스크톱 꾸미기 시간을 장악한다 | Wallpaper Engine, Rainmeter, Lively, Desktop Mate |
 
-Pointint는 이 중 첫 번째 레이어만 보면 안 된다. 장기적으로 `모니테리어`를 하려면 네 레이어를 함께 봐야 한다.
+핵심 판단은 세 가지다.
 
----
+1. **Custom Cursor와 Sweezy는 이미 커서 취향 시장의 대중적 front door다.** 특히 Custom Cursor는 브라우저 확장, Windows 앱, Creator, 커뮤니티를 모두 갖고 있어 Pointint의 가장 직접적인 비교 대상이다.
+2. **ImageToCursor 같은 단순 변환기는 작지만 위험하다.** 제품 깊이는 얕지만 "image to cursor", "png to cur" 검색 의도를 바로 먹는다.
+3. **Pointint의 기회는 콘텐츠 수량이 아니라 end-to-end 제작 신뢰다.** 이미지에서 시작해 Windows role set, preview, hotspot, package, restore까지 닫는 제품은 아직 약하다.
 
-## 2. 직접 경쟁
+## 1. Direct Competitors
 
-### 2.1 Custom Cursor
+### 1.1 Custom Cursor
 
-Custom Cursor는 현재 Pointint와 가장 가까운 구조를 가진 플레이어다.
+Custom Cursor는 현재 가장 가까운 직접 경쟁자다.
 
-강한 신호:
+Current signals:
 
-- [Custom Cursor for Windows](https://custom-cursor.com/en/products/custom-cursor-for-windows)는 **“Over 8M users trust Custom Cursor”**를 전면에 내세운다.
-- [Custom Cursor Community](https://community.custom-cursor.com/)는 **General Discussion 25,002**, **Cursor Ideas 6,458**, **Cursor Collections 202** 같은 공개 커뮤니티 규모를 보여준다.
-- [Custom Cursor Creator tool guide](https://custom-cursor.com/es/how-to-use/windows/how-to-use-custom-cursor-win-creator-tool)는 **own images**, **remove backgrounds**, **active point**, **My Custom Cursor collection** 흐름을 지원한다고 설명한다.
-- [Windows app upload guide](https://custom-cursor.com/en/how-to-use/windows/how-to-add-your-own-cursors-to-custom-cursor-for-windows-app)는 사용자가 `.cur` 파일을 업로드하고 관리하고 적용할 수 있다고 안내한다.
+- [Custom Cursor for Chrome](https://chromewebstore.google.com/detail/custom-cursor-for-chrome/ogdlpmhglpejoiomcodnpjnfgcpmgale): 600만 사용자, 61.6K ratings, 4.7점, 2026-02-19 업데이트.
+- [Custom Cursor for Windows](https://custom-cursor.com/en/products/custom-cursor-for-windows): 800만+ 사용자 신뢰 문구, Windows desktop 적용 앱, pack 선택 후 Apply 흐름.
+- [Custom Cursor Community](https://community.custom-cursor.com/): General Discussion 25,002, Cursor Ideas 6,458, Cursor Collections 202 등 커뮤니티 토픽 규모.
+- [Creator guide](https://custom-cursor.com/es/how-to-use/windows/how-to-use-custom-cursor-win-creator-tool): own images, background removal, active point, My Custom Cursor collection 흐름 제공.
+- [Windows app upload guide](https://custom-cursor.com/en/how-to-use/windows/how-to-add-your-own-cursors-to-custom-cursor-for-windows-app): third-party `.cur` 파일 업로드, pack 저장, Apply 가능.
 
-왜 강한가:
+Strength:
 
-- 브라우저 확장, Windows 앱, 커뮤니티, 컬렉션, 제작 도구까지 갖고 있다
-- 이미 방대한 콘텐츠와 브랜드 인지도를 쌓았다
-- “커서를 바꾸는 재미”와 “팬덤형 콘텐츠”를 잘 다룬다
+- 확장 프로그램 유입, Windows 앱, 웹사이트 pack library, creator, community가 연결돼 있다.
+- 사용자 숫자와 콘텐츠 수량에서 가장 앞선다.
+- "커서를 바꾸는 재미"와 팬덤형 cursor pack을 잘 포장한다.
 
-어디가 비는가:
+Gap:
 
-- 여전히 구조 중심은 **라이브러리/확장/앱**이다
-- Windows 제작 흐름이 웹 하나로 매끈하게 닫히기보다 도구와 앱이 분리돼 있다
-- 이미지 업로드 후 편집, Hotspot, 시뮬레이션, 세트 완성도 검증까지 이어지는 “제작 워크플로우” 대표성은 약하다
+- 제작 흐름이 웹 하나에서 완결되기보다는 Chrome extension, Windows app, 웹 creator로 분산돼 있다.
+- Windows cursor set 품질 검증, role별 simulation, install/restore package까지 이어지는 제작 신뢰가 약하다.
+- Creator는 강력하지만 Pointint식 source-to-package workflow보다 collection/extension 보조 도구에 가깝다.
 
-Pointint 관점 해석:
+Pointint implication:
 
-- **가장 위험한 직접 경쟁자**
-- 동시에 Pointint가 어디까지 가야 하는지 보여주는 벤치마크
-- 하지만 Pointint는 `웹 기반 제작 경험`과 `모니테리어 확장성`으로 다른 포지션을 잡을 여지가 있다
+- Custom Cursor보다 콘텐츠 수량으로 이기려 하면 안 된다.
+- Pointint는 "커서 pack을 고르는 곳"이 아니라 "내 이미지를 실제 Windows cursor set으로 완성하는 곳"이어야 한다.
 
-### 2.2 Sweezy Cursors
+### 1.2 Sweezy Cursors
 
-Sweezy는 브라우저 확장 기반이지만, Pointint에게 매우 중요한 비교 대상이다.
+Sweezy는 감성 커서 브라우저 확장으로 강한 비교군이다.
 
-강한 신호:
+Current signals:
 
-- [Chrome Web Store - Sweezy Cursors](https://chromewebstore.google.com/detail/sweezy-cursors-%E2%98%85-%E0%B9%80%E0%B8%84%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%8B%E0%B8%AD/gdcfjidbchfpojnfifkgghbamkdmbdaf?hl=th)는 **300,000 users**, **1.6K ratings**, **4.8 rating**을 보여준다.
-- [Sweezy how-to page](https://sweezy-cursors.com/how-to-use/)는 Chromium 브라우저 제약을 명확히 설명한다.
-- 같은 가이드는 **CUR / ANI files for use in Windows** 다운로드를 지원하지만, 기본 제공 상태는 **Normal Select**와 **Link Select** 두 가지라고 설명한다.
+- [Chrome Web Store](https://chromewebstore.google.com/detail/sweezy-cursors-%E2%98%85-custom-c/gdcfjidbchfpojnfifkgghbamkdmbdaf): 50만 사용자, 2.6K ratings, 4.8점, 2026-02-22 업데이트.
+- [How-to guide](https://sweezy-cursors.com/how-to-use/): Chrome Web Store / Edge Add-ons 설치, 브라우저 내부 페이지 제약, Windows용 CUR/ANI 다운로드와 적용 가이드를 설명.
+- 같은 guide는 기본 pack이 Normal Select와 Link Select 중심이며, 다른 Windows roles는 사용자가 수동으로 지정해야 한다고 안내한다.
 
-왜 강한가:
+Strength:
 
-- 트렌디하고 가볍다
-- 브라우저 사용자에게 진입 장벽이 낮다
-- “귀엽고 감성적인 커서”의 톤이 명확하다
+- 귀엽고 animated cursor 톤이 명확하다.
+- 브라우저 설치 장벽이 낮다.
+- Windows-ready CUR/ANI 다운로드를 제공해 브라우저 밖으로 일부 확장했다.
 
-어디가 비는가:
+Gap:
 
-- 근본적으로 브라우저 확장 출신이라 브라우저 제약을 벗어나지 못한다
-- Windows 적용은 가능하지만, 설명 자체가 후행적 가이드에 가깝다
-- 기본 관점이 `브라우저용 2상태 중심`이라 OS 전체 세트 경험은 약하다
+- 출발점과 UX 중심이 여전히 브라우저 확장이다.
+- Windows 전체 role set은 기본 제품 경험이 아니라 수동 가이드에 가깝다.
+- 제작보다 선택/다운로드/적용의 성격이 강하다.
 
-Pointint 관점 해석:
+Pointint implication:
 
-- **초기 감성 비교군**으로 가장 중요
-- Pointint는 “Sweezy보다 덜 귀엽지 않으면서, 더 실제로 쓸 수 있는 Windows 제작 경험”을 만들어야 한다
+- Sweezy는 Pointint의 감성 tone benchmark다.
+- Pointint는 Sweezy보다 무겁게 느껴지면 안 되지만, 더 "진짜 Windows에서 쓰는" 제작 신뢰를 줘야 한다.
 
-### 2.3 Cursor.cc
+### 1.3 ImageToCursor
 
-Cursor.cc는 오래된 웹 기반 제작기의 대표 사례다.
+ImageToCursor는 이번 재조사에서 새로 직접 경쟁 레이어에 넣어야 하는 웹 변환기다.
 
-강한 신호:
+Current signals:
 
-- [Cursor.cc](https://www.cursor.cc/)는 픽셀 그리드 위에서 직접 커서를 그리고, **hotspot**을 정하고, `.cur` 파일을 다운로드하고, 공개 라이선스로 발행할 수 있다.
+- [ImageToCursor](https://imagetocursor.com/)는 이미지 업로드, hotspot 선택, `.cur` 다운로드, CSS-ready image를 제공한다고 설명한다.
+- [Desktop creator](https://imagetocursor.com/desktop)는 16/32/48/64 size 선택, hotspot preview, live preview, Windows 적용 가이드를 제공한다.
+- 설치 없이 브라우저에서 동작하고, 다운로드 기능까지 무료라고 설명한다.
 
-왜 강한가:
+Strength:
 
-- 웹에서 바로 만든다는 개념을 오래전부터 보여준 사례다
-- 아주 가볍고 단순하다
-- 최소한의 도구로 바로 결과물을 만들 수 있다
+- "이미지를 커서로 바꾸고 싶다"는 검색 의도에 매우 직접적이다.
+- 단일 목적이 선명하고 즉시 결과물을 준다.
+- Pointint의 초기 진입 문구와 겹칠 수 있다.
 
-어디가 비는가:
+Gap:
 
-- 픽셀 에디터 방식이라 일반 사용자에게 진입 장벽이 높다
-- 고해상도, 멀티사이즈, AI, Windows 세트 관리, 시뮬레이션이 없다
-- 취향 플랫폼이나 테마 경험으로 확장되지 않는다
+- 단일 `.cur` 변환에 가깝다.
+- AI 배경 제거, role set, animated cursor, hotspot recommendation, Windows role simulation, ZIP/INF packaging이 없다.
+- 브랜드/커뮤니티/마켓 구조가 약하다.
 
-Pointint 관점 해석:
+Pointint implication:
 
-- Cursor.cc는 Pointint의 직접 위협이라기보다 **“왜 더 나은 제작 워크플로우가 필요한지”를 보여주는 대비 사례**다
+- Pointint는 "image to cursor" SEO를 방치하면 안 된다.
+- 단, 제품 메시지는 단순 변환기가 아니라 "Windows cursor set maker"여야 한다.
 
-### 2.4 RealWorld Cursor Editor
+### 1.4 Cursor.cc
 
-RealWorld Cursor Editor는 파워 유저/제작자 쪽에서 매우 강한 툴이다.
+Cursor.cc는 오래된 웹 기반 cursor maker 기준점이다.
 
-강한 신호:
+Current signals:
 
-- [RealWorld Cursor Editor](https://www.rw-designer.com/cursor-maker)는 PNG/JPG/BMP/GIF에서 커서를 만들고, 애니메이션과 멀티해상도 커서를 편집할 수 있다고 설명한다.
-- 같은 페이지는 **Windows 7 multi-resolution animated cursors** 편집, **all cursor roles customization**, **portable edition**까지 강조한다.
+- [Cursor.cc](https://www.cursor.cc/)는 색을 고르고, grid에 직접 그리고, hotspot을 선택하고, cursor를 다운로드하는 흐름을 제공한다.
+- 공개 라이선스로 publish하는 옵션도 있다.
 
-왜 강한가:
+Strength:
 
-- 기술적으론 매우 강력하다
-- 실제 커서 제작자에게 필요한 기능이 깊다
-- 다중 해상도와 애니메이션까지 다룬다
+- 웹에서 직접 만든다는 개념을 오래전부터 보여줬다.
+- 도구가 가볍고 이해하기 쉽다.
 
-어디가 비는가:
+Gap:
 
-- 설치형 파워툴이라 진입 장벽이 높다
-- 제품 감성보다 기능 밀도가 앞선다
-- 대중적이고 빠른 창작 흐름과는 거리가 있다
+- 픽셀 제작 중심이라 일반 사용자에게 진입 장벽이 높다.
+- 현대적 이미지 업로드, AI cleanup, multi-size, ANI, role set, install package가 없다.
 
-Pointint 관점 해석:
+Pointint implication:
 
-- Pointint가 이겨야 하는 상대는 아니다
-- 대신 Pointint가 장기적으로 “결과물 품질”에서 참고해야 할 기준에 가깝다
+- Cursor.cc는 직접 위협보다 대비 사례다.
+- Pointint는 "웹에서 만들 수 있다"를 넘어 "웹에서 제대로 완성할 수 있다"를 보여줘야 한다.
 
-### 2.5 Cursors-4U
+### 1.5 RealWorld Cursor Editor
 
-Cursors-4U는 방대한 다운로드 라이브러리형의 대표 사례다.
+RealWorld Cursor Editor는 파워 유저와 제작자를 위한 품질 기준점이다.
 
-강한 신호:
+Current signals:
 
-- [Cursors-4U](https://www.cursors-4u.com/)는 “Since 2004”, “Millions of downloads later”를 강조한다.
-- 홈에서는 `Cursor Sets & Packs`, `Anime`, `Cute`, `Games` 등 방대한 카테고리를 보여준다.
+- [RealWorld Cursor Editor](https://www.rw-designer.com/cursor-maker)는 PNG/JPG/BMP/GIF에서 cursor를 만들고, animation editor와 multi-resolution cursor 편집을 제공한다.
+- Windows 7 multi-resolution animated cursor 편집, frame duration 조정 등 깊은 기능을 제공한다.
 
-왜 강한가:
+Strength:
 
-- 오래된 브랜드 자산이 있다
-- 다운로드 콘텐츠 풀이 매우 넓다
-- 검색형 유입과 아카이브 성격이 강하다
+- CUR/ANI 제작 기능이 깊다.
+- 다중 해상도와 animated cursor 편집에서 참고할 점이 많다.
 
-어디가 비는가:
+Gap:
 
-- 오래된 UI/UX
-- 신뢰와 미감 측면에서 최신 감성 플랫폼과 거리가 있다
-- 제작 워크플로우가 아니라 다운로드 저장소에 가깝다
+- 설치형 파워툴이다.
+- 일반 사용자의 빠른 이미지 기반 창작 흐름과 거리가 있다.
 
-Pointint 관점 해석:
+Pointint implication:
 
-- 직접 경쟁이지만, 방향이 다르다
-- Pointint는 더 많은 커서를 쌓기보다 더 나은 제작 경험을 팔아야 한다
+- Pointint가 당장 기능 깊이로 이겨야 하는 상대는 아니다.
+- export 품질, multi-resolution, animated cursor 안정성의 장기 기준으로 봐야 한다.
 
----
+### 1.6 CursorFX and Axialis CursorWorkshop
 
-## 3. 인접 경쟁
+이 둘은 consumer/professional 설치형 커서 도구 레이어다.
 
-### 3.1 Wallpaper Engine
+Current signals:
 
-Wallpaper Engine은 커서 서비스는 아니지만, 데스크톱 꾸미기 시장에서 가장 강한 인접 강자다.
+- [Stardock CursorFX](https://www.stardock.com/products/cursorfx/)는 Windows cursor customization, animated effects, click sounds, WinCustomize cursor downloads, PNG import를 제공한다.
+- [Axialis CursorWorkshop](https://www.axialis.com/cursorworkshop/)는 professional CUR/ANI authoring, alpha channel, Photoshop/Illustrator plug-ins, GIF-to-ANI, batch operations를 제공한다.
 
-강한 신호:
+Strength:
 
-- [Wallpaper Engine on Steam](https://store.steampowered.com/app/431960/Wallpaper_Engine/)은 **222,652 English reviews**, **900,250 total reviews**를 보유하고 있다.
-- 같은 페이지는 **over a million free wallpapers from the Steam Workshop**를 강조한다.
-- [Wallpaper Engine DLC / followers](https://store.steampowered.com/dlc/431960/Wallpaper_Engine/%3Fsnr%3D1_5_9__1061)는 **1,734,207 followers**를 보여준다.
+- Windows 전체 커서 customization과 전문 제작 기능이 강하다.
+- 표준 CUR/ANI와 animated cursor에 대한 깊은 히스토리를 가진다.
 
-왜 강한가:
+Gap:
 
-- 제작 + 배포 + 커뮤니티 + 플랫폼이 이미 완성돼 있다
-- 사용자가 “내 데스크톱을 꾸민다”는 행위 자체를 익숙하게 만들었다
-- 저가 유료 진입과 UGC 생태계를 동시에 보여준다
+- 둘 다 설치형 툴이다.
+- Pointint가 노리는 "웹에서 바로 만들고 검증하고 받는" 흐름과 다르다.
 
-어디가 비는가:
+Pointint implication:
 
-- 커서 중심이 아니다
-- 웹 기반 빠른 제작 흐름과는 다르다
-- 취향 오브젝트를 통합해 다루는 모니테리어 플랫폼으로는 아직 분절돼 있다
+- 제작 깊이의 upper bound로 참고하되, 포지셔닝은 "쉽고 웹 기반"이어야 한다.
 
-Pointint 관점 해석:
+## 2. Content Libraries
 
-- 커서 직접 경쟁자는 아니지만, **Pointint 장기 구조의 가장 큰 인접 벤치마크**
+### 2.1 Cursors-4U
 
-### 3.2 Rainmeter / Lively
+Current signals:
 
-이 둘은 “데스크톱을 깊게 꾸미는 사람”이 어디로 가는지를 보여준다.
+- [Cursors-4U](https://www.cursors-4u.com/)는 2004년부터 운영됐고 "millions of downloads"를 강조한다.
+- Top creators 페이지와 home에는 수천만 view 규모의 creator/archive 신호가 보인다.
+- Cursor Sets & Packs, Anime, Cute, Games 등 category browsing이 강하다.
 
-강한 신호:
+Strength:
 
-- [Rainmeter](https://www.rainmeter.net/)는 customizable skins, toolkit, community를 공식적으로 전면에 둔다.
-- Rainmeter 공식 문서의 [Customizing guide](https://docs.rainmeter.net/manual/getting-started/customizing/)는 중앙 저장소가 없고 커뮤니티와 외부 사이트에 분산된 오픈 생태계를 설명한다.
-- [Lively Wallpaper GitHub](https://github.com/rocksdanister/lively)는 **18.5k stars**, **1.3k forks** 규모다.
+- 긴 역사와 SEO 자산.
+- 방대한 cursor archive.
+- nostalgia와 fandom cursor 수요를 오래 흡수했다.
 
-왜 강한가:
+Gap:
 
-- 깊은 개인화 수요를 흡수한다
-- “내 데스크톱은 내가 만든다”는 문화를 형성했다
-- 오픈 생태계와 커뮤니티 기반 확산이 있다
+- 제작 흐름이 아니라 다운로드 archive다.
+- Pointint식 preview, role validation, install/restore confidence가 없다.
 
-어디가 비는가:
+Pointint implication:
 
-- 초보자에게 어렵다
-- 시각적으로는 멋져도 대중적 제품 흐름은 거칠다
-- 감성 브랜딩이나 쉬운 온보딩이 약하다
+- Pointint가 content library를 만들더라도 처음부터 Cursors-4U식 archive로 경쟁하면 불리하다.
+- 핵심은 "많이 찾기"보다 "내 것을 제대로 만들기"다.
 
-Pointint 관점 해석:
+### 2.2 DeviantArt and VSThemes
 
-- Pointint는 Rainmeter처럼 깊게 갈 필요는 없지만, **“가볍지만 취향 있는 데스크톱 개인화”** 영역을 더 쉽게 제품화할 수 있다
+Current signals:
 
-### 3.3 Desktop Mate
+- [DeviantArt cursor tag](https://www.deviantart.com/tag/cursor)는 Windows, anime, game IP 감성의 cursor 작품과 shop surface를 보여준다.
+- DeviantArt의 cursor 사용 가이드는 파일을 다운로드하고 Windows cursor folder에 넣고 Pointers tab에서 role별로 지정하는 오래된 수동 흐름을 보여준다.
+- VSThemes는 이번 환경에서 직접 crawl이 막혔지만, search result와 커뮤니티 링크에서는 Windows theme/cursor download archive로 계속 언급된다.
 
-Desktop Mate는 Pointint의 미래 콘텐츠 전략과 가장 닮아 있는 인접 사례다.
+Strength:
 
-강한 신호:
+- 개별 창작자와 팬덤형 콘텐츠가 강하다.
+- 고퀄리티 cursor pack이 존재한다.
 
-- [Desktop Mate on Steam](https://store.steampowered.com/app/3301060/Desktop_Mate/)는 데스크톱 캐릭터 플랫폼으로 소개되며, 현재 **4,865 English reviews**, **8,457 total reviews**와 **Browse all (29)** DLC를 전면에 보여준다.
-- 제품 설명은 `officially licensed` 캐릭터와 마우스 상호작용을 강조한다.
-- 공식 Steam 뉴스는 [1.3 million downloads](https://store.steampowered.com/news/app/3301060/view/804560736106841800) 돌파를 알렸다.
+Gap:
 
-왜 강한가:
+- 검색, 설치법, 안전성, 파일 품질이 분산돼 있다.
+- 사용자가 직접 역할별 파일을 이해하고 적용해야 한다.
 
-- 무료 코어 + 유료 캐릭터 DLC 구조가 명확하다
-- 사용자는 디지털 오브젝트에 돈을 쓴다
-- 캐릭터/IP와 데스크톱 개인화가 잘 연결된다
+Pointint implication:
 
-어디가 비는가:
+- Pointint는 아티스트/크리에이터가 만든 소스를 Windows-ready set으로 쉽게 포장해주는 방향으로 확장 가능하다.
 
-- 제작 플랫폼이 아니라 콘텐츠 플랫폼에 가깝다
-- 커서/배경/테마팩과의 통합은 없다
+## 3. Marketplace Substitutes
 
-Pointint 관점 해석:
+### 3.1 Etsy Cursor Packs
 
-- Pointint의 장기 `데스크톱 펫`과 `공식 콘텐츠` 방향을 검증해 주는 사례
+Current signals:
 
----
+- [Etsy cursor packs](https://www.etsy.com/market/cursor_packs)와 [mouse cursor packs](https://www.etsy.com/market/mouse_cursor_packs)는 Gengar, Stardew Valley, goth bunny 등 팬덤/감성 cursor pack을 디지털 다운로드로 판매한다.
+- 검색 결과 기준 17x Stardew Valley Cursors는 약 594 reviews, Animated Bunny Cursors는 104 reviews 등 유료 구매 신호가 있다.
 
-## 4. 대체재와 마켓 경쟁
+Strength:
 
-### 4.1 Etsy Cursor Packs
+- 사용자가 cursor pack에 돈을 쓴다는 증거다.
+- 팬덤형/감성형 pack이 잘 팔린다.
+- 완성품 구매는 제작보다 쉽다.
 
-Etsy는 Pointint의 강력한 대체재다. 사용자는 직접 만들지 않고 완성된 결과물을 사도 된다.
+Gap:
 
-강한 신호:
+- 개인 맞춤 제작이 아니다.
+- 설치와 적용은 여전히 수동이거나 안내서 의존이다.
+- 파일 구조와 품질이 seller마다 다르다.
 
-- [Etsy - Cursor Packs](https://www.etsy.com/market/cursor_packs)는 **954+ items** 규모다.
-- 같은 시장 안에서 `Cat Paw Mouse Cursor Set`은 **527 reviews**, `17x Stardew Valley Cursors`는 **593 reviews**다.
-- 다수 상품이 **$2~$12** 구간에 형성돼 있다.
+Pointint implication:
 
-왜 강한가:
+- Pointint의 유료화 가능성을 뒷받침한다.
+- 나중에 creator marketplace를 열 경우 Etsy seller ecosystem과 경쟁하거나 흡수할 수 있다.
 
-- 이미 지불 의사가 증명됐다
-- “완성품 구매”라는 가장 쉬운 해결책을 제공한다
-- 팬덤/감성/세트형 판매가 잘 먹힌다
+### 3.2 Etsy Desktop Theme Sellers
 
-어디가 비는가:
+Current signals:
 
-- 개인 맞춤 제작이 아니다
-- 설치와 적용의 번거로움이 남는다
-- 퀄리티와 파일 구조가 제각각이다
+- [Botanical Desktop Organizer Theme](https://www.etsy.com/listing/1517811101/botanical-desktop-organizer-theme-ui)는 icons, wallpapers, 3 custom cursors, PDF guide를 묶은 디지털 다운로드 상품이다.
+- 같은 listing은 28 reviews, 5.0 item quality, 8.6K shop sales 등 작은 유료 수요 신호를 보여준다.
 
-Pointint 관점 해석:
+Strength:
 
-- Etsy는 Pointint의 유료화 가능성을 증명하는 동시에, **나중에 Pointint 내부 마켓이 생기면 경쟁하게 될 외부 마켓**이다
+- 사용자는 cursor 하나보다 "desktop mood set"을 산다.
+- wallpaper, icons, cursors, guide를 묶는 패키징이 이미 받아들여지고 있다.
 
-### 4.2 Etsy Desktop Theme Sellers
+Gap:
 
-Pointint가 나중에 `테마팩`으로 갈 경우 이미 외부 시장에 유사한 상품 구조가 존재한다.
+- 적용은 사용자가 직접 해야 한다.
+- 상품은 정적 파일 bundle이고 동적 제작/개인화 도구가 아니다.
 
-강한 신호:
+Pointint implication:
 
-- [Botanical Desktop Organizer Theme on Etsy](https://www.etsy.com/listing/1517811101/botanical-desktop-organizer-theme-ui)는 **wallpaper**, **icons**, **3 custom mouse cursors**, **PDF guide**를 묶은 데스크톱 꾸미기 번들을 판매한다.
-- 이 상품은 **27 reviews**, **5.0/5** 평점을 보여준다.
+- "cursor only"에서 "theme pack"으로 넓히는 장기 방향은 시장에 이미 존재한다.
+- Pointint가 강해질 수 있는 지점은 theme pack을 직접 만들고, preview하고, 적용까지 돕는 workflow다.
 
-왜 강한가:
+## 4. Adjacent Taste Platforms
 
-- 사용자는 이미 “단일 파일”보다 “데스크톱 전체 무드 세트”를 산다
-- 바탕화면, 아이콘, 커서를 묶는 판매 방식이 받아들여진다
+### 4.1 Wallpaper Engine
 
-Pointint 관점 해석:
+Current signals:
 
-- 테마팩은 새로운 발명이라기보다, **흩어진 외부 상품을 플랫폼 안으로 가져오는 전략**에 가깝다
+- [Wallpaper Engine on Steam](https://store.steampowered.com/app/431960/Wallpaper_Engine/)은 Windows live wallpaper 제작/공유 플랫폼이다.
+- Steam page 기준 all language reviews 976,782, Steam purchasers 906,643, over a million free wallpapers from Steam Workshop을 보여준다.
+- animated wallpaper editor, Workshop sharing, Android companion app, performance pause rules를 제공한다.
 
----
+Why it matters:
 
-## 5. 위협 수준 정리
+- "데스크톱을 꾸미는 데 돈과 시간을 쓴다"는 행동이 대규모로 검증됐다.
+- UGC, editor, community distribution이 desktop customization에서 작동한다.
 
-| 플레이어 | 카테고리 | 위협 수준 | 이유 |
-|---|---|---|---|
-| Custom Cursor | 직접 경쟁 | High | 브라우저, Windows, 커뮤니티, creator tool까지 보유 |
-| Sweezy | 직접 경쟁 | High | 감성 톤과 브라우저 확장 접근성이 강함 |
-| Cursor.cc | DIY 툴 | Medium | 웹 제작기 상징성은 있지만 제품 경험이 낡음 |
-| RealWorld Cursor Editor | DIY 툴 | Medium | 제작 깊이는 강하지만 대중성은 낮음 |
-| Cursors-4U | 라이브러리 | Medium | 콘텐츠 아카이브는 크지만 방향이 다름 |
-| Wallpaper Engine | 인접 플랫폼 | High | 데스크톱 꾸미기 행동 자체를 장악 |
-| Rainmeter | 인접 플랫폼 | Medium | 파워 유저층 강하지만 진입장벽 높음 |
-| Lively | 인접 플랫폼 | Medium | 오픈소스 강점, 대중 브랜드력은 제한적 |
-| Desktop Mate | 감성 오브젝트 | Medium | 장기 콘텐츠 전략의 강한 선례 |
-| Etsy seller ecosystem | 대체재/마켓 | High | 이미 돈 쓰는 시장과 완성품 구매 흐름 존재 |
+Pointint implication:
 
----
+- 장기적으로 Pointint가 가야 할 benchmark는 단순 cursor archive가 아니라 Wallpaper Engine식 creator/distribution loop다.
 
-## 6. Pointint가 이겨야 하는 포인트
+### 4.2 Rainmeter and Lively
 
-이 경쟁 구도에서 Pointint가 잡아야 하는 포인트는 분명하다.
+Current signals:
 
-### 6.1 더 많은 콘텐츠가 아니라 더 나은 제작 흐름
+- [Rainmeter](https://www.rainmeter.net/)는 Windows desktop에 customizable skins를 표시하는 toolkit/community로 소개된다.
+- [Rainmeter customizing guide](https://docs.rainmeter.net/manual/getting-started/customizing/)는 중앙 공식 repository가 없고 skin이 인터넷 곳곳에 흩어져 있다고 설명한다.
+- [Lively](https://github.com/rocksdanister/lively)는 GitHub 기준 18.7K stars, 1.3K forks이며 WinUI 3 기반 무료 오픈소스 live wallpaper/screensaver 앱이다.
 
-기존 강자는 대체로 아래 한쪽에 치우쳐 있다.
+Why they matter:
 
-- 콘텐츠가 많다
-- 적용이 쉽다
-- 제작 기능이 깊다
+- 깊은 개인화 수요는 오래 유지된다.
+- 동시에 초보자에게는 설치, 설정, 코드, 외부 skin 탐색이 부담이다.
 
-하지만 이 세 가지를 동시에, 대중적인 감각으로 묶은 플레이어는 약하다.
+Pointint implication:
 
-Pointint는 여기에 들어가야 한다.
+- Pointint는 Rainmeter처럼 깊게 시작하면 안 된다.
+- Lively처럼 polished Windows desktop tool의 느낌은 참고하되, 첫 경험은 web-first로 더 쉬워야 한다.
 
-### 6.2 브라우저 제약을 벗어난 Windows 가치
+### 4.3 Desktop Mate
 
-Custom Cursor와 Sweezy는 강하지만 브라우저 출신이다.  
-Pointint는 처음부터 **실제로 쓰는 Windows 커서**를 기준으로 설계하면 다른 자리를 잡을 수 있다.
+Current signals:
 
-### 6.3 커서에서 끝나지 않는 확장성
+- [Desktop Mate on Steam](https://store.steampowered.com/app/3301060/Desktop_Mate/)는 공식 라이선스 캐릭터가 desktop 위에서 움직이고 mouse와 상호작용하는 mascot platform이다.
+- Steam page 기준 English reviews 4,990, total reviews 8,699, Browse all 32 DLC가 노출된다.
+- 제품 설명은 free core software와 paid character DLC 구조를 명확히 설명한다.
 
-Wallpaper Engine, Rainmeter, Desktop Mate, Etsy theme sellers가 보여주는 건 하나다.
+Why it matters:
 
-`사용자는 화면 전체 무드에 돈을 쓰고 시간을 쓴다`
+- 데스크톱 위의 작은 디지털 오브젝트가 유료 DLC 구조를 만들 수 있음을 보여준다.
+- 캐릭터/IP와 desktop personalization은 강하게 연결된다.
 
-그래서 Pointint는 커서로 시작하되, 테마팩과 모니테리어로 넓어지는 구조를 가져야 한다.
+Pointint implication:
 
----
+- Pointint의 장기 "desktop object" 또는 "monitor interior" 방향에서 공식 pack, creator pack, paid character/theme pack 가능성을 검토할 수 있다.
 
-## 7. 최종 판단
+## 5. Strategic Positioning
 
-### Verdict
+Pointint가 가져야 할 가장 현실적인 포지션은 아래다.
 
-**Pointint의 경쟁은 존재한다. 그러나 직접 경쟁자 대부분은 “제작 경험”보다 “콘텐츠/적용/확장” 한 축에 치우쳐 있다.**
+`내 이미지를 실제로 쓰는 Windows cursor set으로 바꾸는 가장 쉬운 웹 제작기`
 
-이게 Pointint의 기회다.
+이 문장은 세 경쟁 레이어를 동시에 피한다.
 
-가장 현실적인 포지션:
+- Custom Cursor/Sweezy처럼 **고르는 재미**만 말하지 않는다.
+- ImageToCursor/Cursor.cc처럼 **단일 파일 변환**에 머물지 않는다.
+- RealWorld/Axialis처럼 **전문 제작툴**이 되지 않는다.
 
-`내 이미지를 실제로 쓰는 Windows 커서로 바꾸는 가장 쉬운 웹 기반 제작기`
+Pointint의 제품 약속은 더 구체적이어야 한다.
 
-그리고 장기적으로는:
+1. 이미지를 올리면 커서에 맞게 정리된다.
+2. hotspot과 Windows role이 이해하기 쉬워진다.
+3. 적용 전 preview로 실패 가능성을 줄인다.
+4. ZIP + INF + restore INF로 Windows 적용이 덜 무섭다.
+5. 완성된 set은 나중에 theme pack으로 확장할 수 있다.
 
-`커서에서 배경화면, 테마팩, 데스크톱 펫으로 이어지는 모니테리어 플랫폼`
+## 6. Product and Content Implications
 
-즉 Pointint는 경쟁이 없는 시장에 들어가는 게 아니라, **경쟁은 많지만 아직 제대로 묶인 제품이 없는 시장**에 들어가는 것이다.
+### Landing/SEO
 
----
+- "image to cursor", "png to cur", "gif to ani cursor", "Windows cursor set maker" 검색 의도를 직접 겨냥해야 한다.
+- 단, headline은 변환기처럼 좁히기보다 "Make a Windows cursor set from your image" 쪽이 낫다.
+- 경쟁 비교 페이지는 Custom Cursor, Sweezy, ImageToCursor, Cursor.cc를 각각 다른 축으로 다뤄야 한다.
+
+### Product
+
+- 단일 normal cursor만 만들면 ImageToCursor와 비교된다.
+- 15-role 또는 최소 주요 role set, hotspot preview, role simulation이 Pointint의 방어선이다.
+- `.ani`는 "GIF to animated cursor" 검색 의도와 Sweezy의 animated cursor 감성을 동시에 받을 수 있다.
+- restore INF와 safe install guide는 Etsy/DeviantArt의 수동 설치 불안을 줄이는 차별점이다.
+
+### Monetization
+
+- Etsy와 Desktop Mate가 보여주는 것은 "디지털 데스크톱 오브젝트에 돈을 쓴다"는 신호다.
+- 초기 유료화는 AI credit/Tint보다 "premium pack export", "creator pack", "theme bundle"의 언어로 설명하면 더 자연스럽다.
+- 장기적으로 marketplace를 열 경우 creator quality control과 install safety가 핵심 운영 차별점이 된다.
+
+## 7. Final Verdict
+
+Pointint는 경쟁이 없는 시장에 들어가는 것이 아니다. 오히려 경쟁과 대체재는 많다.
+
+하지만 시장은 아직 분절돼 있다.
+
+- Custom Cursor와 Sweezy는 감성과 유입이 강하지만 extension/app 중심이다.
+- ImageToCursor와 Cursor.cc는 웹 제작이 쉽지만 깊이가 얕다.
+- RealWorld, CursorFX, Axialis는 강하지만 설치형/전문가형이다.
+- Cursors-4U, DeviantArt, Etsy는 콘텐츠와 수요를 보여주지만 제작/적용 경험이 흩어져 있다.
+- Wallpaper Engine, Rainmeter, Lively, Desktop Mate는 커서 너머의 데스크톱 취향 시장을 증명한다.
+
+따라서 Pointint의 기회는 이것이다.
+
+**커서 콘텐츠가 부족해서가 아니라, 사용자의 이미지를 Windows에서 실제로 쓸 수 있는 cursor set으로 안전하게 완성해주는 쉬운 제작 흐름이 부족해서 Pointint가 필요하다.**
 
 ## Sources
 
-- [Competitor Analysis](C:/Users/amy/Desktop/pointint/point/09-Research/Competitor-Analysis.md)
-- [Market Analysis](C:/Users/amy/Desktop/pointint/point/09-Research/Market-Analysis.md)
-- [Market Validation Analysis](C:/Users/amy/Desktop/pointint/point/09-Research/Market-Validation-Analysis.md)
+- [[Competitor-Analysis]]
+- [Custom Cursor for Chrome](https://chromewebstore.google.com/detail/custom-cursor-for-chrome/ogdlpmhglpejoiomcodnpjnfgcpmgale)
 - [Custom Cursor for Windows](https://custom-cursor.com/en/products/custom-cursor-for-windows)
 - [Custom Cursor Community](https://community.custom-cursor.com/)
-- [Custom Cursor add your own cursors to Windows app](https://custom-cursor.com/en/how-to-use/windows/how-to-add-your-own-cursors-to-custom-cursor-for-windows-app)
-- [Custom Cursor Creator tool guide](https://custom-cursor.com/es/how-to-use/windows/how-to-use-custom-cursor-win-creator-tool)
-- [Chrome Web Store - Sweezy Cursors](https://chromewebstore.google.com/detail/sweezy-cursors-%E2%98%85-%E0%B9%80%E0%B8%84%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%8B%E0%B8%AD/gdcfjidbchfpojnfifkgghbamkdmbdaf?hl=th)
+- [Custom Cursor add own cursors guide](https://custom-cursor.com/en/how-to-use/windows/how-to-add-your-own-cursors-to-custom-cursor-for-windows-app)
+- [Custom Cursor Creator guide](https://custom-cursor.com/es/how-to-use/windows/how-to-use-custom-cursor-win-creator-tool)
+- [Sweezy Cursors on Chrome Web Store](https://chromewebstore.google.com/detail/sweezy-cursors-%E2%98%85-custom-c/gdcfjidbchfpojnfifkgghbamkdmbdaf)
 - [Sweezy how-to guide](https://sweezy-cursors.com/how-to-use/)
+- [ImageToCursor](https://imagetocursor.com/)
+- [ImageToCursor desktop creator](https://imagetocursor.com/desktop)
 - [Cursor.cc](https://www.cursor.cc/)
 - [RealWorld Cursor Editor](https://www.rw-designer.com/cursor-maker)
+- [Stardock CursorFX](https://www.stardock.com/products/cursorfx/)
+- [Axialis CursorWorkshop](https://www.axialis.com/cursorworkshop/)
 - [Cursors-4U](https://www.cursors-4u.com/)
+- [DeviantArt cursor tag](https://www.deviantart.com/tag/cursor)
+- [DeviantArt custom cursor use guide](https://www.deviantart.com/theduckofpower/journal/How-To-Use-Custom-Cursors-313942331)
+- [Etsy cursor packs](https://www.etsy.com/market/cursor_packs)
+- [Etsy mouse cursor packs](https://www.etsy.com/market/mouse_cursor_packs)
+- [Etsy Botanical Desktop Organizer Theme](https://www.etsy.com/listing/1517811101/botanical-desktop-organizer-theme-ui)
+- [Wallpaper Engine on Steam](https://store.steampowered.com/app/431960/Wallpaper_Engine/)
 - [Rainmeter](https://www.rainmeter.net/)
 - [Rainmeter customizing guide](https://docs.rainmeter.net/manual/getting-started/customizing/)
-- [Lively Wallpaper GitHub](https://github.com/rocksdanister/lively)
-- [Wallpaper Engine on Steam](https://store.steampowered.com/app/431960/Wallpaper_Engine/)
-- [Wallpaper Engine DLC Page](https://store.steampowered.com/dlc/431960/Wallpaper_Engine/%3Fsnr%3D1_5_9__1061)
+- [Lively GitHub](https://github.com/rocksdanister/lively)
 - [Desktop Mate on Steam](https://store.steampowered.com/app/3301060/Desktop_Mate/)
-- [Desktop Mate 1.3M downloads news](https://store.steampowered.com/news/app/3301060/view/804560736106841800)
-- [Etsy - Cursor Packs](https://www.etsy.com/market/cursor_packs)
-- [Botanical Desktop Organizer Theme on Etsy](https://www.etsy.com/listing/1517811101/botanical-desktop-organizer-theme-ui)
+- [Microsoft Learn: About Cursors](https://learn.microsoft.com/en-us/windows/win32/menurc/about-cursors)
 
 ## Related
 

@@ -174,7 +174,7 @@ Phase 5: Marketplace + Moniterior
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P2-AUTH-01 | Supabase Auth 연동 (Google + GitHub OAuth, 이메일 없음) | todo | P0 |
+| P2-AUTH-01 | Supabase Auth 연동 (Google OAuth only, 이메일/비밀번호/GitHub 없음) | todo | P0 |
 | P2-DB-01 | Supabase 스키마 설계 (유저, 프로젝트, Tint 지갑 컬럼 예비) | todo | P0 |
 | P2-STORAGE-01 | 원본 이미지 + 결과물 저장 | todo | P0 |
 | P2-PROJECT-01 | 프로젝트 저장 / 목록 / 재수정 UI | todo | P0 |
@@ -182,7 +182,8 @@ Phase 5: Marketplace + Moniterior
 | P2-17ROLE-01 | 17종 자동 변형 엔진 (규칙 기반, Member 무료) | todo | P0 |
 | P2-17ROLE-02 | 17종 개별 확인/수정 UI | todo | P0 |
 | P2-17ROLE-03 | 17종 세트 다운로드 + .inf 포함 zip | todo | P0 |
-| P2-CONVERT-01 | Guest→Member 전환 프롬프트 UI (저장/17종 시도 시 가입 유도) | todo | P0 |
+| P2-CONVERT-01 | Guest→Member 전환 프롬프트 UI ([[03-Features/Auth-UX-Contract]] 기준, 저장/17종/재수정 시 가입 유도) | todo | P0 |
+| P2-AUTH-RETURN-01 | OAuth 전 Guest draft 보존 + 로그인 후 pending action 복귀 | todo | P0 |
 | P2-GALLERY-01 | 커서 갤러리 (공개 쇼케이스) | todo | P0 |
 | P2-MODERATION-01 | 갤러리 기본 신고 + 관리자 검토 시스템 | todo | P0 |
 | P2-TERMS-01 | 기본 약관 + 면책 조항 작성 | todo | P0 |
@@ -195,7 +196,8 @@ Phase 5: Marketplace + Moniterior
 | 1 | 로그인 + 프로젝트 저장 동작 | ⏳ | 저장→재수정 흐름 정상 |
 | 2 | 17종 자동 생성 + 다운로드 동작 | ⏳ | 1개→17종 변형→세트 다운로드 |
 | 3 | Guest→Member 전환 발생 | ⏳ | 의미 있는 전환율 확인 |
-| 4 | 약관 준비 완료 | ⏳ | 기본 면책 + 사용자 권리 보증 |
+| 4 | OAuth 복귀 동선 정상 | ⏳ | 저장/17종/재수정 트리거 후 원래 행동 자동 재개 |
+| 5 | 약관 준비 완료 | ⏳ | 기본 면책 + 사용자 권리 보증 |
 
 ### North Star Metric: **Guest→Member 전환율**
 
@@ -209,10 +211,8 @@ Phase 5: Marketplace + Moniterior
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P3-AI-EDGE-01 | AI 가장자리 보정 (500 Tint) | todo | P0 |
-| P3-AI-CROP-01 | AI 자동 크롭 (500 Tint) | todo | P0 |
-| P3-AI-BG-01 | AI 배경 제거 고도화 (500 Tint) | todo | P0 |
-| P3-AI-READ-01 | AI 가독성 개선 / 실루엣 정리 (500 Tint) | todo | P1 |
+| P3-AI-CORRECT-01 | 커서용 자동 보정 1회 (배경 잔여물/가장자리/크롭/선명도/중심 조정, 500 Tint) | todo | P0 |
+| P3-HIDPI-01 | HiDPI 내보내기 (64/128px, 1,000 Tint) | todo | P0 |
 | P3-HOTSPOT-02 | Hotspot AI 추천 고도화 | todo | P1 |
 | P3-TINT-01 | Tint 팩 결제 연동 (₩4,900~₩39,900) | todo | P0 |
 | P3-TINT-02 | Tint 지갑 + 소모 시스템 구현 | todo | P0 |

@@ -13,7 +13,7 @@ aliases:
 # DB Schema
 
 > **Status:** Active
-> **Last Updated:** 2026-03-28
+> **Last Updated:** 2026-04-27
 > **DB:** Supabase (PostgreSQL)
 > **원칙:** DB는 비즈니스 상태만 저장. 분석/추적은 GA4 + Clarity.
 
@@ -86,14 +86,15 @@ GA4 퍼널 보고서에서 `upload_start → download_complete` 전환율 = **No
 
 ### `users`
 
-Supabase Auth의 `auth.users`를 확장하는 public 프로필 테이블.
+Supabase Auth의 `auth.users`를 확장하는 public 프로필 테이블. 가입은 Google OAuth only로 운영하며, 이메일/비밀번호/GitHub 가입은 지원하지 않는다.
 
 ```sql
 create table public.users (
   id            uuid primary key references auth.users(id) on delete cascade,
   display_name  text,
   avatar_url    text,
-  auth_provider text not null,           -- google / github
+  auth_provider text not null default 'google'
+    check (auth_provider = 'google'),    -- Google OAuth only
   role          text not null default 'member',  -- member / creator (Phase 5)
   tint_balance  int not null default 0,  -- Phase 3에서 활성화
   total_creations int not null default 0,
@@ -244,12 +245,9 @@ create index idx_tint_tx_type on public.tint_transactions(type);
 | purchase | standard_pack | +12,000 | ₩9,900 |
 | purchase | creator_pack | +25,000 | ₩19,900 |
 | purchase | studio_pack | +55,000 | ₩39,900 |
-| spend | ai_bg_remove | -500 | AI 배경 제거 |
-| spend | ai_edge_fix | -500 | AI 가장자리 보정 |
-| spend | ai_auto_crop | -500 | AI 자동 크롭 |
-| spend | auto_17set | -3,000 | 17종 자동 변형 (Phase 3+) |
-| spend | hires_export | -1,000 | HiDPI 멀티사이즈 |
-| spend | ai_generate | -TBD | AI 커서 생성 (Phase 4) |
+| spend | cursor_auto_correct | -500 | 커서용 자동 보정 |
+| spend | hires_export | -1,000 | HiDPI 내보내기 |
+| spend | ai_generate | -1,500 | AI 커서 생성 (Phase 4 가정, 기본 보정 포함) |
 | spend | market_purchase | -N | 마켓 구매 (Phase 5) |
 | earn | market_sale | +N | 마켓 판매 수익 80% (Phase 5) |
 | commission_burn | market_commission | -N | 수수료 20% 소각 (Phase 5) |

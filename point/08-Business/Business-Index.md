@@ -15,16 +15,19 @@ aliases:
 
 - Guest / Member / Creator 구조 (Tint Economy)
 - Tint 단일 통화 기반 과금 (구독 없음)
-- AI 유료화 = Tint 소모
+- AI 보정 / AI 생성 / 프리미엄 출력 = Tint 소모
+- 17종 제작과 17종 자동 변형은 Member 무료 핵심 가치
 - 재방문 루프 (출석 +50, 제작 +50, 갤러리, 챌린지)
-- 마켓플레이스 수수료 20% 소각
+- 무료 Tint는 보정/HiDPI 맛보기 중심, AI 생성은 체험 1회 후 구매 Tint 중심
+- 마켓플레이스는 Phase 5 Creator Beta 실험
 - 획득 채널 전략 수립
 
 ## Key Principles
 
 - 무료 경험은 충분히 강해야 한다 (Guest 무제한 제작)
 - 구독 없음 — Tint 팩 구매로 과금
-- AI만 Tint로 게이팅, 제작 자체는 제한하지 않는다
+- 제작과 기본 다운로드는 무료, AI 보정/생성/프리미엄 출력만 Tint로 게이팅
+- 기본 ZIP/설치 안내/restore flow는 무료 신뢰 장치
 - 올리기는 쉽지만 내리기는 어렵다 — 보수적으로 시작
 - 장기 핵심 상품은 테마팩
 
@@ -40,9 +43,9 @@ aliases:
 
 ## Future Topics
 
-- Marketplace Policy 상세
+- Marketplace Policy 상세 (Phase 5 실험)
 - Official Theme Packs
-- Creator Economy Rules
+- Creator Economy Rules / 현금 정산 재검토
 - B2B 기업 커스텀 커서 기회
 - 한국 결제 연동 (토스페이먼츠)
 

@@ -21,13 +21,14 @@ Current execution status stays in [[ACTIVE_SPRINT]]. Historical task, wave, and 
 
 ## Current Snapshot
 
-> **Current State:** Phase 1 MVP Core is gate-closed. Phase 1.5 has now opened with a GIF-first ANI v1 slice in progress.
+> **Current State:** Phase 1 MVP Core is gate-closed. Phase 1.5 has now opened with a GIF-first ANI v1 slice in progress. Phase 2.5 has been added as a queued theme-asset foundation after Auth/17-role/install work.
 
 | Phase | Status | Summary |
 |---|---|---|
 | Phase 1: MVP Core | gate closed | `.cur` creation, preview, health check, install flow, browse/make IA split, and consent-gated analytics are shipped |
 | Phase 1.5: ANI + Media Prep Foundation | in progress | GIF-first ANI v1 plus the media-prep foundation for later video/PNG-sequence ingestion |
 | Phase 2: Auth + 17-role generation | queued | account system, projects, and 17-role conversion |
+| Phase 2.5: Theme Asset Foundation | queued | folder icons, wallpaper exports, and first theme-pack drafts after project storage and cursor-set trust are stable |
 | Phase 3: AI-Assisted + Tint | queued | AI editing assist plus paid utility loop |
 | Phase 4: AI Generation | queued | AI-first cursor generation |
 | Phase 5: Marketplace + Moniterior | queued | sharing, marketplace, and world expansion |
@@ -41,19 +42,22 @@ graph TD
     P1["Phase 1: MVP Core<br/>Static image to .cur creation, preview, health, apply, landing"]
     P15["Phase 1.5: ANI + Media Prep Foundation<br/>ANI export plus GIF/video/PNG-sequence ingestion"]
     P2["Phase 2: Auth + 17-role Generation<br/>Accounts, projects, lock-in"]
+    P25["Phase 2.5: Theme Asset Foundation<br/>Folder icons, wallpapers, theme-pack drafts"]
     P3["Phase 3: AI-Assisted + Tint<br/>AI editing help plus paid utility"]
     P4["Phase 4: AI Generation<br/>AI-first cursor creation"]
     P5["Phase 5: Marketplace + Moniterior<br/>Sharing, commerce, world expansion"]
 
     P1 -->|"Gate: static cursor flow is complete and stable"| P15
     P15 -->|"Gate: ANI foundation is complete"| P2
-    P2 -->|"Gate: guest-to-member conversion works"| P3
+    P2 -->|"Gate: projects, 17-role generation, and install trust are stable"| P25
+    P25 -->|"Gate: theme asset demand is validated"| P3
     P3 -->|"Gate: member-to-paid utility loop works"| P4
     P4 -->|"Gate: repeated AI generation purchase is proven"| P5
 
     style P1 fill:#2563eb,stroke:#1d4ed8,color:#fff
     style P15 fill:#f59e0b,stroke:#d97706,color:#fff
     style P2 fill:#6b7280,stroke:#4b5563,color:#fff
+    style P25 fill:#6b7280,stroke:#4b5563,color:#fff
     style P3 fill:#6b7280,stroke:#4b5563,color:#fff
     style P4 fill:#6b7280,stroke:#4b5563,color:#fff
     style P5 fill:#6b7280,stroke:#4b5563,color:#fff
@@ -82,6 +86,8 @@ graph TD
 - `ANI > Animated GIF` is now the first real ANI entry. The remaining ANI cards stay `Soon`.
 - The current Phase 1.5 slice is `GIF -> shared framing/hotspot -> .ani export`.
 - `Phase 1.5` is now defined more precisely as `ANI + Media Prep Foundation`.
+- `Phase 2.5: Theme Asset Foundation` is now queued after Phase 2, not promoted into current Phase 1.5 work.
+- Phase 2.5 should start with `Folder Icon Maker`, wallpaper export, and a cursor/icon/wallpaper theme-pack draft. Sound schemes, live wallpapers, desktop pets, marketplace sales, and automatic theme installers stay later.
 - The long-term roadmap stays in [[plans/2026-04-12-cursor-suite-roadmap-design]] and should only be promoted into official phase scope case by case.
 
 ---
