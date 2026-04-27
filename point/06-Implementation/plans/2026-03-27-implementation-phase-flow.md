@@ -6,28 +6,29 @@ tags:
   - phase-flow
   - master-plan
 aliases:
-  - Phase Flow
+  - Legacy Implementation Phase Flow
   - Master Implementation Plan
 ---
 
 # Implementation Phase Flow
 
-> **Status:** Active — 전체 구현 흐름의 메인 문서
-> **Last Updated:** 2026-04-11
-> **Current Phase:** Phase 1 — MVP Core (게이트 클로즈, follow-up running)
+> **Status:** Restored legacy detailed plan
+> **Last Updated:** 2026-04-27
+> **Current Source of Truth:** [[Phase-Flow|Phase Flow]] and [[ACTIVE_SPRINT|ACTIVE SPRINT]]
 > **Economy:** [[2026-03-27-pointint-economy-design]]
+> **Roadmap Reference:** [[2026-04-12-cursor-suite-roadmap-design]]
 
 ## Phase Flow Overview
 
 ```
-Phase 1: MVP Core ◄── 현재
+Phase 1: MVP Core (gate closed)
   이미지 → .cur 제작 + 시뮬레이션 + 건강 체크 + 원클릭 적용
   Guest 무제한 사용
       │
       ▼  Gate: 제작 완료율, 시뮬레이션 사용률
-Phase 1.5: .ani + 확장 ★ 전략적 우선순위
-  애니메이션 커서 (.ani) — 웹에서 유일한 제작 도구
-  인터랙티브 시뮬레이션, 편의 기능
+Phase 1.5: ANI + Media Prep Foundation ◄── 현재
+  GIF / 이미지 시퀀스 / 이후 video source를 Windows-ready .ani로 변환
+  기존 ANI editor, framing, hotspot, simulation, export 흐름 재사용
       │
       ▼  Gate: .ani 흐름 완결, 제작 완료율 유지
 Phase 2: Auth + 17종 자동 생성
@@ -49,6 +50,16 @@ Phase 5: Marketplace + Moniterior
   마켓플레이스(Creator 등급), Tint 순환 경제
   공식 콘텐츠, 테마팩 확장
 ```
+
+---
+
+## Cursor Suite Roadmap Alignment (2026-04-12)
+
+- Reference document: [[2026-04-12-cursor-suite-roadmap-design]]
+- Phase docs only import promoted scope from the roadmap.
+- Official `Phase 1.5` scope is now `ANI + Media Prep Foundation`.
+- Imported Phase 1.5 scope: ANI export, GIF input, video input, PNG-sequence input, frame normalization/prep, and ANI preview/edit basics.
+- Deferred roadmap items: CUR AI Generate, ANI AI Generate, `Animate this`, advanced utility surfaces, and broader suite tooling.
 
 ---
 
@@ -115,18 +126,23 @@ Phase 5: Marketplace + Moniterior
 
 ---
 
-## Phase 1.5: .ani + 확장 — 웹 유일의 애니메이션 커서 제작
+## Phase 1.5: ANI + Media Prep Foundation
 
 > **핵심 질문:** 애니메이션 커서 제작이 Pointint만의 기술적 해자가 되는가?
 >
 > **전략적 중요도:** 웹에서 .ani를 제대로 만들어주는 서비스가 사실상 없음. 기존 도구는 전부 설치형(AniTuner, AniCursor, Axialis)이거나 기능 빈약(Cursor.cc). Phase 1.5를 빠르게 완성하면 **"웹에서 유일하게 애니메이션 커서를 만드는 곳"** 포지셔닝 확보.
+>
+> **범위:** Phase 1.5는 단순 ANI 확장이 아니라, 여러 source media를 정렬된 frame sequence로 만들고 기존 ANI editor/export 흐름에 태우는 foundation이다.
 
 ### 태스크
 
 | Task ID | 제목 | 상태 | 우선도 |
 |---|---|---|---|
-| P1.5-ANI-01 | .ani 바이너리 생성 로직 | todo | P0 |
-| P1.5-GIF-01 | GIF → 프레임 분리 로직 | todo | P0 |
+| P1.5-ANI-01 | .ani binary generation pipeline | todo | P0 |
+| P1.5-GIF-01 | GIF → frame sequence input foundation | todo | P0 |
+| P1.5-VIDEO-01 | Video → frame sequence input foundation | todo | P0 |
+| P1.5-PNGSEQ-01 | Ordered image-sequence input foundation | todo | P0 |
+| P1.5-PREP-01 | Frame normalization + trim/sample/resize/pad foundation | todo | P0 |
 | P1.5-ANI-EDIT-01 | 애니메이션 편집기 (프레임 순서/속도/추가/삭제) | todo | P0 |
 | P1.5-ANI-EDIT-02 | 애니메이션 미리보기 (실시간 재생) | todo | P0 |
 | P1.5-SIM-02 | 시뮬레이션 — 인터랙티브 존 (실제 상황 재현) | todo | P0 |
@@ -140,7 +156,7 @@ Phase 5: Marketplace + Moniterior
 
 | # | 게이트 | 상태 | 기준 |
 |---|---|---|---|
-| 1 | .ani 제작 흐름 완결 | ⏳ | GIF/멀티이미지→편집→다운로드 끊김 없음 |
+| 1 | .ani 제작 흐름 완결 | ⏳ | GIF/이미지 시퀀스→편집→다운로드 끊김 없음 |
 | 2 | 애니메이션 시뮬레이션 | ⏳ | .ani 실시간 재생 + 인터랙티브 동작 |
 | 3 | 제작 완료율 유지 | ⏳ | Phase 1 대비 완료율 하락 없음 |
 
