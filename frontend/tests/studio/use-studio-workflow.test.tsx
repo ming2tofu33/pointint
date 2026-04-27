@@ -13,12 +13,23 @@ vi.mock("@/lib/api", () => ({
   removeBackground: vi.fn(),
 }));
 
+import {
+  ANI_FRAME_MAX_DURATION_MS,
+  ANI_FRAME_MIN_DURATION_MS,
+} from "@/lib/aniFrameEdits";
 import { useStudio } from "@/lib/useStudio";
 
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
 const originalImage = global.Image;
 const originalCreateElement = document.createElement.bind(document);
+
+function createSequenceFiles(names: string[]) {
+  return names.map(
+    (name, index) =>
+      new File([`frame-${index + 1}`], name, { type: "image/png" })
+  );
+}
 
 describe("useStudio workflow entry", () => {
   beforeEach(() => {
@@ -464,6 +475,207 @@ describe("useStudio workflow entry", () => {
     expect(result.current.ani?.frames[0]?.file).toBe(firstSequence[0]);
     expect(restoredFrameUrls.length).toBe(2);
     expect(restoredFrameUrls.some((url) => revokedUrls.has(url))).toBe(false);
+  });
+
+  describe("ani frame timeline actions", () => {
+    it("selects ani frames with one undoable history entry", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+      expect(result.current.canUndo).toBe(true);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-1-frame-001");
+
+      act(() => {
+        result.current.redo();
+      });
+
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    });
+
+    it("deletes ani frames without allowing fewer than two frames", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles([
+        "frame-001.png",
+        "frame-002.png",
+        "frame-003.png",
+      ]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      act(() => {
+        result.current.deleteAniFrame("ani-frame-2-frame-002");
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-3-frame-003",
+      ]);
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-3-frame-003");
+      expect(result.current.ani?.originalFile).toBe(files[2]);
+
+      act(() => {
+        result.current.deleteAniFrame("ani-frame-1-frame-001");
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-3-frame-003",
+      ]);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-2-frame-002",
+        "ani-frame-3-frame-003",
+      ]);
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-2-frame-002");
+    });
+
+    it("moves ani frames previous and next while preserving selection", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles([
+        "frame-001.png",
+        "frame-002.png",
+        "frame-003.png",
+      ]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.moveAniFrame("ani-frame-3-frame-003", "previous");
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-3-frame-003",
+        "ani-frame-2-frame-002",
+      ]);
+      expect(result.current.ani?.selectedFrameId).toBe("ani-frame-3-frame-003");
+      expect(result.current.ani?.originalFile).toBe(files[2]);
+
+      act(() => {
+        result.current.moveAniFrame("ani-frame-3-frame-003", "next");
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-2-frame-002",
+        "ani-frame-3-frame-003",
+      ]);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames.map((frame) => frame.id)).toEqual([
+        "ani-frame-1-frame-001",
+        "ani-frame-3-frame-003",
+        "ani-frame-2-frame-002",
+      ]);
+    });
+
+    it("sets ani frame duration through the duration clamp", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.setAniFrameDuration("ani-frame-1-frame-001", 3);
+      });
+
+      expect(result.current.ani?.frames[0]?.durationMs).toBe(
+        ANI_FRAME_MIN_DURATION_MS
+      );
+
+      act(() => {
+        result.current.setAniFrameDuration("ani-frame-1-frame-001", 99999);
+      });
+
+      expect(result.current.ani?.frames[0]?.durationMs).toBe(
+        ANI_FRAME_MAX_DURATION_MS
+      );
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames[0]?.durationMs).toBe(
+        ANI_FRAME_MIN_DURATION_MS
+      );
+    });
+
+    it("resets the selected ani frame edit override with undo", async () => {
+      const { result } = renderHook(() => useStudio());
+      const files = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+
+      await act(async () => {
+        await result.current.selectSelectedSlotImageSequenceFiles(files);
+        await Promise.resolve();
+      });
+
+      act(() => {
+        result.current.selectAniFrame("ani-frame-2-frame-002");
+      });
+
+      act(() => {
+        const selectedFrame = result.current.ani?.frames[1];
+        if (selectedFrame) {
+          selectedFrame.editOverride = {
+            scale: 1.5,
+            offsetX: 8,
+          };
+        }
+      });
+
+      act(() => {
+        result.current.resetSelectedAniFrameEdit();
+      });
+
+      expect(result.current.ani?.frames[1]?.editOverride).toBeUndefined();
+      expect(result.current.ani?.scale).toBe(1);
+      expect(result.current.ani?.offsetX).toBe(0);
+
+      act(() => {
+        result.current.undo();
+      });
+
+      expect(result.current.ani?.frames[1]?.editOverride).toEqual({
+        scale: 1.5,
+        offsetX: 8,
+      });
+    });
   });
 
   it("seeds uploaded names from the selected Windows role instead of the source filename", async () => {

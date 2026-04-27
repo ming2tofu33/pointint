@@ -30,6 +30,7 @@ import {
 import { type StudioState } from "@/lib/studioWorkflow";
 import { trackEvent } from "@/lib/analytics";
 import {
+  clampAniFrameDuration,
   createAniFramesFromFiles,
   resolveAniFrameEdit,
   type AniFrameEdit,
@@ -46,6 +47,7 @@ import {
 } from "./api";
 
 export type CursorSize = ThemeCursorSize;
+export type AniFrameMoveDirection = "previous" | "next";
 
 const EDITOR_VIEWPORT_SIZE = 256;
 const DEFAULT_ANI_FRAME_EDIT: AniFrameEdit = {
@@ -148,7 +150,12 @@ type HistoryActionKey =
   | "cursorName"
   | "replaceSlot"
   | "backgroundDecision"
-  | "recommendHotspot";
+  | "recommendHotspot"
+  | "aniFrameSelection"
+  | "aniFrameDelete"
+  | "aniFrameMove"
+  | "aniFrameDuration"
+  | "aniFrameReset";
 
 type LegacySlotId = "normal" | "text" | "link" | "button" | "busySelect";
 
@@ -1398,6 +1405,7 @@ export function useStudio() {
       return;
     }
 
+    pushHistoryForAction(takeSnapshot(), "aniFrameSelection");
     setAni((prev) =>
       prev && prev.sourceKind === "image-sequence"
         ? syncAniActiveFrame({
@@ -1406,7 +1414,139 @@ export function useStudio() {
           })
         : prev
     );
-  }, [ani, state]);
+  }, [ani, pushHistoryForAction, state, takeSnapshot]);
+
+  const deleteAniFrame = useCallback((frameId: string) => {
+    if (
+      state !== "ani-editing" ||
+      !ani ||
+      ani.sourceKind !== "image-sequence" ||
+      ani.frames.length <= 2
+    ) {
+      return;
+    }
+
+    const frameIndex = ani.frames.findIndex((frame) => frame.id === frameId);
+    if (frameIndex === -1) {
+      return;
+    }
+
+    const nextFrames = ani.frames.filter((frame) => frame.id !== frameId);
+    const nextSelectedFrameId =
+      ani.selectedFrameId === frameId
+        ? nextFrames[Math.min(frameIndex, nextFrames.length - 1)]?.id ?? null
+        : ani.selectedFrameId;
+
+    pushHistoryForAction(takeSnapshot(), "aniFrameDelete");
+    setAni((prev) =>
+      prev && prev.sourceKind === "image-sequence"
+        ? syncAniActiveFrame({
+            ...prev,
+            frames: prev.frames.filter((frame) => frame.id !== frameId),
+            selectedFrameId: nextSelectedFrameId,
+          })
+        : prev
+    );
+  }, [ani, pushHistoryForAction, state, takeSnapshot]);
+
+  const moveAniFrame = useCallback(
+    (frameId: string, direction: AniFrameMoveDirection) => {
+      if (state !== "ani-editing" || !ani || ani.sourceKind !== "image-sequence") {
+        return;
+      }
+
+      const frameIndex = ani.frames.findIndex((frame) => frame.id === frameId);
+      const targetIndex =
+        direction === "previous" ? frameIndex - 1 : frameIndex + 1;
+
+      if (
+        frameIndex === -1 ||
+        targetIndex < 0 ||
+        targetIndex >= ani.frames.length
+      ) {
+        return;
+      }
+
+      pushHistoryForAction(takeSnapshot(), "aniFrameMove");
+      setAni((prev) => {
+        if (!prev || prev.sourceKind !== "image-sequence") {
+          return prev;
+        }
+
+        const nextFrames = [...prev.frames];
+        const [movedFrame] = nextFrames.splice(frameIndex, 1);
+        if (!movedFrame) {
+          return prev;
+        }
+        nextFrames.splice(targetIndex, 0, movedFrame);
+
+        return syncAniActiveFrame({
+          ...prev,
+          frames: nextFrames,
+          selectedFrameId: frameId,
+        });
+      });
+    },
+    [ani, pushHistoryForAction, state, takeSnapshot]
+  );
+
+  const setAniFrameDuration = useCallback((frameId: string, durationMs: number) => {
+    if (state !== "ani-editing" || !ani || ani.sourceKind !== "image-sequence") {
+      return;
+    }
+
+    const clampedDurationMs = clampAniFrameDuration(durationMs);
+    const frame = ani.frames.find((candidate) => candidate.id === frameId);
+    if (!frame || frame.durationMs === clampedDurationMs) {
+      return;
+    }
+
+    pushHistoryForAction(takeSnapshot(), "aniFrameDuration");
+    setAni((prev) =>
+      prev && prev.sourceKind === "image-sequence"
+        ? syncAniActiveFrame({
+            ...prev,
+            frames: prev.frames.map((candidate) =>
+              candidate.id === frameId
+                ? { ...candidate, durationMs: clampedDurationMs }
+                : candidate
+            ),
+          })
+        : prev
+    );
+  }, [ani, pushHistoryForAction, state, takeSnapshot]);
+
+  const resetSelectedAniFrameEdit = useCallback(() => {
+    if (
+      state !== "ani-editing" ||
+      !ani ||
+      ani.sourceKind !== "image-sequence" ||
+      !ani.selectedFrameId
+    ) {
+      return;
+    }
+
+    const selectedFrame = ani.frames.find(
+      (frame) => frame.id === ani.selectedFrameId
+    );
+    if (!selectedFrame?.editOverride) {
+      return;
+    }
+
+    pushHistoryForAction(takeSnapshot(), "aniFrameReset");
+    setAni((prev) =>
+      prev && prev.sourceKind === "image-sequence"
+        ? syncAniActiveFrame({
+            ...prev,
+            frames: prev.frames.map((frame) =>
+              frame.id === prev.selectedFrameId
+                ? { ...frame, editOverride: undefined }
+                : frame
+            ),
+          })
+        : prev
+    );
+  }, [ani, pushHistoryForAction, state, takeSnapshot]);
 
   const processBgRemoval = useCallback(async () => {
     if (!cursor || bgRemovalInFlightRef.current) return;
@@ -2254,6 +2394,10 @@ export function useStudio() {
     selectSelectedSlotAnimatedFile,
     selectSelectedSlotImageSequenceFiles,
     selectAniFrame,
+    deleteAniFrame,
+    moveAniFrame,
+    setAniFrameDuration,
+    resetSelectedAniFrameEdit,
     recommendHotspot,
     endContinuousHistoryAction,
     undo,
