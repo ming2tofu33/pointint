@@ -76,6 +76,7 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   backgroundProcessingTitle: "Removing background",
   backgroundProcessingSummary:
     "Pointtint is preparing a transparent version of this image. Stay in the studio and keep reviewing the canvas.",
+  imageSequenceMinimumError: "Select at least 2 PNG, JPG, or WebP frames.",
 };
 
 function humanizeStudioKey(key: string) {
@@ -107,6 +108,7 @@ const {
   selectSlotMock,
   selectSlotStaticFileMock,
   selectSlotAnimatedFileMock,
+  selectSlotImageSequenceFilesMock,
   setOffsetMock,
   setHotspotMock,
   undoMock,
@@ -130,6 +132,7 @@ const {
   selectSlotMock: vi.fn(),
   selectSlotStaticFileMock: vi.fn(),
   selectSlotAnimatedFileMock: vi.fn(),
+  selectSlotImageSequenceFilesMock: vi.fn(),
   setOffsetMock: vi.fn(),
   setHotspotMock: vi.fn(),
   undoMock: vi.fn(),
@@ -469,6 +472,7 @@ function createStudioReturn(
     selectAniFile: selectAniFileMock,
     selectSelectedSlotStaticFile: selectSlotStaticFileMock,
     selectSelectedSlotAnimatedFile: selectSlotAnimatedFileMock,
+    selectSelectedSlotImageSequenceFiles: selectSlotImageSequenceFilesMock,
     processBgRemoval: vi.fn(),
     skipBgRemoval: vi.fn(),
     toggleOriginal: vi.fn(),
@@ -511,6 +515,7 @@ beforeEach(() => {
   selectSlotMock.mockReset();
   selectSlotStaticFileMock.mockReset();
   selectSlotAnimatedFileMock.mockReset();
+  selectSlotImageSequenceFilesMock.mockReset();
   setOffsetMock.mockReset();
   setHotspotMock.mockReset();
   undoMock.mockReset();
@@ -578,6 +583,98 @@ describe("Studio entry gate", () => {
       aiGenerateVisible: true,
       soonBadgeCount: 1,
     });
+  });
+
+  it("passes multiple valid image frames from the GIF Maker source input", () => {
+    const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
+    const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
+    const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
+    const renamedGifFile = new File(["animated"], "renamed.png", {
+      type: "image/gif",
+    });
+    const textFile = new File(["notes"], "notes.txt", { type: "text/plain" });
+
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    const moreOptionsButton = screen.getByRole("button", {
+      name: "more source options",
+    });
+    expect(moreOptionsButton).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(moreOptionsButton);
+    expect(moreOptionsButton).toHaveAttribute("aria-expanded", "true");
+
+    const gifMaker = screen.getByTestId("studio-empty-slot-source-gif-maker");
+    const fileInput = gifMaker.parentElement?.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement | null;
+
+    expect(fileInput).not.toBeNull();
+    expect(fileInput).toHaveAttribute("multiple");
+    expect(fileInput).toHaveAttribute("accept", ".png,.jpg,.jpeg,.webp");
+
+    fireEvent.click(gifMaker);
+    fireEvent.change(fileInput!, {
+      target: {
+        files: [textFile, firstFrame, gifFile, renamedGifFile, secondFrame],
+      },
+    });
+
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledTimes(1);
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
+      firstFrame,
+      secondFrame,
+    ]);
+    expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
+  });
+
+  it("passes multiple valid dropped frames from the GIF Maker source", () => {
+    const firstFrame = new File(["one"], "frame-01.jpg", { type: "image/jpeg" });
+    const secondFrame = new File(["two"], "frame-02.png", { type: "image/png" });
+    const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
+
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "more source options" })
+    );
+
+    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-gif-maker"), {
+      dataTransfer: { files: [gifFile, firstFrame, secondFrame] },
+    });
+
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledTimes(1);
+    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
+      firstFrame,
+      secondFrame,
+    ]);
+    expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
+  });
+
+  it("requires at least two valid frames before using the GIF Maker source", () => {
+    const onlyFrame = new File(["one"], "frame-01.png", { type: "image/png" });
+    const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
+
+    renderStudio("editing", {
+      cursor: null,
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "more source options" })
+    );
+
+    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-gif-maker"), {
+      dataTransfer: { files: [onlyFrame, gifFile] },
+    });
+
+    expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Select at least 2 PNG, JPG, or WebP frames."
+    );
   });
 
   it("renders the default slot source entry instead of the workflow picker", () => {

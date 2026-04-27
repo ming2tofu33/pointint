@@ -54,6 +54,7 @@ interface AniEditorShellProps {
   onSelectSlot: (slotId: SlotId) => void;
   onSelectSlotStaticFile: (file: File) => void;
   onSelectSlotAnimatedFile: (file: File) => void;
+  onSelectSlotImageSequenceFiles: (files: File[]) => void;
   onOffsetChange: (x: number, y: number) => void;
   onHotspotChange: (x: number, y: number) => void;
   onScaleChange: (scale: number) => void;
@@ -85,6 +86,7 @@ export default function AniEditorShell({
   onSelectSlot,
   onSelectSlotStaticFile,
   onSelectSlotAnimatedFile,
+  onSelectSlotImageSequenceFiles,
   onOffsetChange,
   onHotspotChange,
   onScaleChange,
@@ -342,6 +344,7 @@ export default function AniEditorShell({
                     slotId={selectedSlotId}
                     onStaticFile={onSelectSlotStaticFile}
                     onAnimatedFile={onSelectSlotAnimatedFile}
+                    onImageSequenceFiles={onSelectSlotImageSequenceFiles}
                     width="min(52rem, 100%)"
                     minHeight="20rem"
                     boxed

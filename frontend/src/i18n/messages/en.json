@@ -110,6 +110,7 @@
     "emptySlotAnimatedStart": "Start with Animated GIF",
     "moreSourceOptions": "See other methods",
     "emptySlotMultiplePngs": "GIF Maker",
+    "imageSequenceMinimumError": "Select at least 2 PNG, JPG, or WebP frames.",
     "emptySlotAiGenerate": "Create with AI",
     "slotEmptyTitle": "Choose media for this slot",
     "slotEmptySub": "Choose Static Image or Animated GIF to fill the selected slot.",

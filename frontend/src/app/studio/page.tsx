@@ -74,6 +74,7 @@ export default function StudioPage() {
     selectSlot,
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
+    selectSelectedSlotImageSequenceFiles,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -340,6 +341,7 @@ export default function StudioPage() {
             onSelectSlot={selectSlot}
             onSelectSlotStaticFile={selectSelectedSlotStaticFile}
             onSelectSlotAnimatedFile={selectSelectedSlotAnimatedFile}
+            onSelectSlotImageSequenceFiles={selectSelectedSlotImageSequenceFiles}
             onOffsetChange={setOffset}
             onHotspotChange={setHotspot}
             onScaleChange={setScale}
@@ -437,6 +439,7 @@ export default function StudioPage() {
                         slotId={selectedSlotId}
                         onStaticFile={selectSelectedSlotStaticFile}
                         onAnimatedFile={selectSelectedSlotAnimatedFile}
+                        onImageSequenceFiles={selectSelectedSlotImageSequenceFiles}
                       />
                     </div>
                   </div>
