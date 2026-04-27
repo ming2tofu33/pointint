@@ -1,3 +1,4 @@
+import struct
 from io import BytesIO
 
 import pytest
@@ -30,6 +31,14 @@ def _make_test_png(color: tuple[int, int, int], mode: str = "RGB") -> bytes:
     buffer = BytesIO()
     image.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def _read_ani_rates(ani: bytes) -> list[int]:
+    offset = ani.find(b"rate")
+    assert offset != -1
+    size = struct.unpack("<I", ani[offset + 4 : offset + 8])[0]
+    payload = ani[offset + 8 : offset + 8 + size]
+    return list(struct.unpack(f"<{size // 4}I", payload))
 
 
 @pytest.fixture
@@ -115,6 +124,18 @@ def test_image_sequence_to_ani_bytes_creates_ani_from_two_png_frames():
     assert ani.count(b"icon") == 2
 
 
+def test_image_sequence_to_ani_bytes_preserves_per_frame_durations():
+    ani = ani_service.image_sequence_to_ani_bytes(
+        [
+            _make_test_png((255, 0, 0)),
+            _make_test_png((0, 0, 255)),
+        ],
+        frame_durations_ms=[40, 125],
+    )
+
+    assert _read_ani_rates(ani) == [3, 8]
+
+
 def test_image_sequence_to_ani_bytes_rejects_fewer_than_two_frames():
     with pytest.raises(ValueError, match="at least two frames"):
         ani_service.image_sequence_to_ani_bytes([_make_test_png((255, 0, 0))])
@@ -149,6 +170,17 @@ def test_image_sequence_to_ani_bytes_rejects_duration_too_large_for_ani_rate():
                 _make_test_png((0, 0, 255)),
             ],
             duration_ms=100_000_000_000_000,
+        )
+
+
+def test_image_sequence_to_ani_bytes_rejects_mismatched_frame_durations():
+    with pytest.raises(ValueError, match="Frame duration count"):
+        ani_service.image_sequence_to_ani_bytes(
+            [
+                _make_test_png((255, 0, 0)),
+                _make_test_png((0, 0, 255)),
+            ],
+            frame_durations_ms=[100],
         )
 
 
@@ -228,6 +260,23 @@ async def test_generate_ani_sequence_route_returns_ani(client: AsyncClient):
     assert res.content[:4] == b"RIFF"
     assert res.content[8:12] == b"ACON"
     assert res.content.count(b"icon") == 2
+
+
+@pytest.mark.anyio
+async def test_generate_ani_sequence_route_accepts_per_frame_durations(
+    client: AsyncClient,
+):
+    res = await client.post(
+        "/api/generate-ani-sequence",
+        files=[
+            ("frames", ("frame-1.png", _make_test_png((255, 0, 0)), "image/png")),
+            ("frames", ("frame-2.png", _make_test_png((0, 0, 255)), "image/png")),
+        ],
+        data={"frame_durations_ms": ["40", "125"]},
+    )
+
+    assert res.status_code == 200
+    assert _read_ani_rates(res.content) == [3, 8]
 
 
 @pytest.mark.anyio

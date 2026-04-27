@@ -97,6 +97,7 @@ describe("generateAniSequence", () => {
       expect((frames[1] as File).name).toBe("frame-b.png");
       expect((frames[1] as File).type).toBe("image/png");
       expect(formData.get("duration_ms")).toBe("75");
+      expect(formData.getAll("frame_durations_ms")).toEqual(["75", "125"]);
       expect(formData.get("cursor_name")).toBe("comet");
       expect(formData.get("cursor_size")).toBe("64");
       expect(formData.get("fit_mode")).toBe("cover");
@@ -125,6 +126,7 @@ describe("generateAniSequence", () => {
     const result = await generateAniSequence(frames, {
       aniName: "comet",
       durationMs: 75,
+      frameDurationsMs: [75, 125],
       hotspotX: 10,
       hotspotY: 14,
       cursorSize: 64,

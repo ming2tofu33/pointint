@@ -53,6 +53,7 @@ const ANI_SPEED_PRESETS = [
   { id: "normal", durationMs: 100, labelKey: "aniFrameSpeedNormal" },
   { id: "fast", durationMs: 60, labelKey: "aniFrameSpeedFast" },
 ] as const;
+const FRAME_TILE_SIZE = "5.75rem";
 
 export default function AniFrameTimeline({
   frames,
@@ -384,7 +385,7 @@ export default function AniFrameTimeline({
           listStyle: "none",
           margin: 0,
           overflowX: "auto",
-          padding: "0 0 0.45rem",
+          padding: "0.18rem 0.1rem 0.45rem",
           scrollbarColor:
             "color-mix(in srgb, var(--color-accent) 44%, rgba(255,255,255,0.14)) transparent",
           scrollbarWidth: "thin",
@@ -414,7 +415,7 @@ export default function AniFrameTimeline({
                 style={{
                   position: "relative",
                   display: "grid",
-                  flex: "0 0 5.75rem",
+                  flex: `0 0 ${FRAME_TILE_SIZE}`,
                   gap: "0.45rem",
                   minWidth: 0,
                   opacity: draggedFrameId === frame.id ? 0.62 : 1,
@@ -434,9 +435,11 @@ export default function AniFrameTimeline({
                   onClick={() => onSelectFrame(frame.id)}
                   style={{
                     position: "relative",
+                    boxSizing: "border-box",
                     display: "grid",
                     placeItems: "center",
-                    aspectRatio: "1",
+                    height: FRAME_TILE_SIZE,
+                    width: "100%",
                     border: selected
                       ? "1px solid var(--color-accent)"
                       : previewed
@@ -616,7 +619,7 @@ export default function AniFrameTimeline({
         <li
           style={{
             display: "grid",
-            flex: "0 0 5.75rem",
+            flex: `0 0 ${FRAME_TILE_SIZE}`,
             gap: "0.45rem",
             minWidth: 0,
           }}
@@ -644,9 +647,11 @@ export default function AniFrameTimeline({
             }}
             onDrop={(event) => handleDropAt(event, frames.length)}
             style={{
+              boxSizing: "border-box",
               display: "grid",
               placeItems: "center",
-              aspectRatio: "1",
+              height: FRAME_TILE_SIZE,
+              width: "100%",
               border:
                 "1px dashed color-mix(in srgb, var(--color-accent) 56%, var(--color-border))",
               borderRadius: "0.9rem",

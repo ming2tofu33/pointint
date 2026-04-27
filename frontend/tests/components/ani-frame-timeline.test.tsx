@@ -276,6 +276,36 @@ describe("AniFrameTimeline", () => {
     expect(onAddFrames).toHaveBeenCalledWith([addedFile], frames.length);
   });
 
+  it("keeps the add-frame tile visually aligned with frame thumbnails", () => {
+    render(
+      <AniFrameTimeline
+        frames={frames}
+        selectedFrameId="frame-a"
+        onSelectFrame={vi.fn()}
+        onDeleteFrame={vi.fn()}
+        onReorderFrame={vi.fn()}
+        onAddFrames={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: "Select frame 1, duration 100 ms, not edited",
+      })
+    ).toHaveStyle({
+      boxSizing: "border-box",
+      height: "5.75rem",
+      width: "100%",
+    });
+    expect(screen.getByRole("button", { name: "Add image frames" })).toHaveStyle(
+      {
+        boxSizing: "border-box",
+        height: "5.75rem",
+        width: "100%",
+      }
+    );
+  });
+
   it("shows a visible edited marker on modified frames", () => {
     render(
       <AniFrameTimeline

@@ -137,6 +137,7 @@ async def api_generate_ani(
 async def api_generate_ani_sequence(
     frames: list[UploadFile] = File(...),
     duration_ms: int = Form(100),
+    frame_durations_ms: list[int] | None = Form(None),
     hotspot_x: int = Form(0),
     hotspot_y: int = Form(0),
     cursor_size: int = Form(32),
@@ -160,6 +161,7 @@ async def api_generate_ani_sequence(
             offset_x=offset_x,
             offset_y=offset_y,
             duration_ms=duration_ms,
+            frame_durations_ms=frame_durations_ms,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

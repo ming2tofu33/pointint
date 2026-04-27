@@ -1,7 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateAniMock, generateAniSequenceMock } = vi.hoisted(() => ({
+const {
+  extractGifFrameFilesMock,
+  generateAniMock,
+  generateAniSequenceMock,
+} = vi.hoisted(() => ({
+  extractGifFrameFilesMock: vi.fn(),
   generateAniMock: vi.fn(),
   generateAniSequenceMock: vi.fn(),
 }));
@@ -11,6 +16,10 @@ vi.mock("@/lib/api", () => ({
   generateAniSequence: generateAniSequenceMock,
   generateCursor: vi.fn(),
   removeBackground: vi.fn(),
+}));
+
+vi.mock("@/lib/gifFrameSequence", () => ({
+  extractGifFrameFiles: extractGifFrameFilesMock,
 }));
 
 import {
@@ -33,8 +42,10 @@ function createSequenceFiles(names: string[]) {
 
 describe("useStudio workflow entry", () => {
   beforeEach(() => {
+    extractGifFrameFilesMock.mockReset();
     generateAniMock.mockReset();
     generateAniSequenceMock.mockReset();
+    extractGifFrameFilesMock.mockRejectedValue(new Error("not a real GIF"));
     let objectUrlIndex = 0;
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -108,9 +119,22 @@ describe("useStudio workflow entry", () => {
     expect(result.current.state).toBe("editing");
   });
 
-  it("loads GIF uploads into the ANI editor shell", async () => {
+  it("loads GIF uploads as editable ANI frame sequences", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["gif"], "orbit.gif", { type: "image/gif" });
+    const gifFrames = [
+      new File(["frame-a"], "orbit-frame-001.png", { type: "image/png" }),
+      new File(["frame-b"], "orbit-frame-002.png", { type: "image/png" }),
+    ];
+
+    extractGifFrameFilesMock.mockResolvedValueOnce({
+      width: 48,
+      height: 40,
+      frames: [
+        { file: gifFrames[0], durationMs: 80 },
+        { file: gifFrames[1], durationMs: 140 },
+      ],
+    });
 
     await act(async () => {
       await result.current.selectAniFile(file);
@@ -118,12 +142,29 @@ describe("useStudio workflow entry", () => {
     });
 
     expect(result.current.state).toBe("ani-editing");
+    expect(extractGifFrameFilesMock).toHaveBeenCalledWith(file);
     expect(result.current.ani?.cursorName).toBe("arrow");
-    expect(result.current.ani?.sourceWidth).toBe(128);
-    expect(result.current.ani?.sourceHeight).toBe(96);
+    expect(result.current.ani?.sourceWidth).toBe(48);
+    expect(result.current.ani?.sourceHeight).toBe(40);
     expect(result.current.ani?.cursorSize).toBe(32);
-    expect(result.current.ani?.sourceKind).toBe("gif");
-    expect(result.current.ani?.frames).toEqual([]);
+    expect(result.current.ani?.sourceKind).toBe("image-sequence");
+    expect(result.current.ani?.selectedFrameId).toBe(
+      "ani-frame-1-orbit-frame-001"
+    );
+    expect(result.current.ani?.frames).toEqual([
+      expect.objectContaining({
+        file: gifFrames[0],
+        durationMs: 80,
+        sourceWidth: 48,
+        sourceHeight: 40,
+      }),
+      expect.objectContaining({
+        file: gifFrames[1],
+        durationMs: 140,
+        sourceWidth: 48,
+        sourceHeight: 40,
+      }),
+    ]);
   });
 
   it("creates selectable image sequence frames by filename before entering the ANI editor", async () => {
@@ -1121,7 +1162,7 @@ describe("useStudio workflow entry", () => {
     createElementSpy.mockRestore();
   });
 
-  it("omits sequence-wide duration when image sequence frame durations differ", async () => {
+  it("passes per-frame durations when image sequence frame durations differ", async () => {
     generateAniSequenceMock.mockResolvedValue({
       blob: new Blob(["ani"], { type: "application/octet-stream" }),
       filename: "pointint-sequence.ani",
@@ -1155,8 +1196,8 @@ describe("useStudio workflow entry", () => {
 
     expect(generateAniSequenceMock).toHaveBeenCalledWith(
       files,
-      expect.not.objectContaining({
-        durationMs: expect.any(Number),
+      expect.objectContaining({
+        frameDurationsMs: [100, 250],
       })
     );
 

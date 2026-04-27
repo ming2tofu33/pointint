@@ -52,26 +52,36 @@ export function createAniFrameId(fileName: string, index: number): string {
 
 export function createAniFramesFromFiles(
   files: readonly File[],
-  options?: { startIndex?: number }
+  options?: {
+    startIndex?: number;
+    preserveOrder?: boolean;
+    getDurationMs?: (file: File, originalIndex: number) => number | undefined;
+  }
 ): AniImportedFrame[] {
   const startIndex = options?.startIndex ?? 0;
+  const entries = files.map((file, originalIndex) => ({
+    file,
+    originalIndex,
+    sortKey: file.name.normalize("NFC").toLowerCase(),
+  }));
 
-  return files
-    .map((file, originalIndex) => ({
-      file,
-      originalIndex,
-      sortKey: file.name.normalize("NFC").toLowerCase(),
-    }))
-    .sort((a, b) => {
-      if (a.sortKey < b.sortKey) return -1;
-      if (a.sortKey > b.sortKey) return 1;
-      return a.originalIndex - b.originalIndex;
-    })
-    .map(({ file }, index) => ({
+  const orderedEntries = options?.preserveOrder
+    ? entries
+    : entries.sort((a, b) => {
+        if (a.sortKey < b.sortKey) return -1;
+        if (a.sortKey > b.sortKey) return 1;
+        return a.originalIndex - b.originalIndex;
+      });
+
+  return orderedEntries
+    .map(({ file, originalIndex }, index) => ({
       id: createAniFrameId(file.name, startIndex + index),
       file,
       url: URL.createObjectURL(file),
-      durationMs: ANI_FRAME_DEFAULT_DURATION_MS,
+      durationMs: clampAniFrameDuration(
+        options?.getDurationMs?.(file, originalIndex) ??
+          ANI_FRAME_DEFAULT_DURATION_MS
+      ),
     }));
 }
 

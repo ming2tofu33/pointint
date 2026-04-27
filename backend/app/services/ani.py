@@ -155,8 +155,14 @@ def image_sequence_to_ani_bytes(
     offset_x: int = 0,
     offset_y: int = 0,
     duration_ms: int = DEFAULT_FRAME_DURATION_MS,
+    frame_durations_ms: Iterable[int] | None = None,
 ) -> bytes:
-    frame_duration = _validate_frame_duration_ms(duration_ms)
+    image_frame_bytes = list(image_frame_bytes)
+    frame_durations = _resolve_image_sequence_frame_durations(
+        frame_count=len(image_frame_bytes),
+        duration_ms=duration_ms,
+        frame_durations_ms=frame_durations_ms,
+    )
     cursor_frames: list[AniCursorFrame] = []
     for index, frame_bytes in enumerate(image_frame_bytes):
         try:
@@ -177,13 +183,32 @@ def image_sequence_to_ani_bytes(
             ) from exc
 
         cursor_frames.append(
-            AniCursorFrame(cur_bytes=cur_bytes, duration_ms=frame_duration)
+            AniCursorFrame(cur_bytes=cur_bytes, duration_ms=frame_durations[index])
         )
 
     if len(cursor_frames) < 2:
         raise ValueError("Image sequence ANI requires at least two frames.")
 
     return write_ani_bytes(cursor_frames)
+
+
+def _resolve_image_sequence_frame_durations(
+    frame_count: int,
+    duration_ms: int,
+    frame_durations_ms: Iterable[int] | None,
+) -> list[int]:
+    if frame_durations_ms is None:
+        frame_duration = _validate_frame_duration_ms(duration_ms)
+        return [frame_duration] * frame_count
+
+    durations = [
+        _validate_frame_duration_ms(duration)
+        for duration in frame_durations_ms
+    ]
+    if len(durations) != frame_count:
+        raise ValueError("Frame duration count must match frame count.")
+
+    return durations
 
 
 def gif_to_ani_bytes(

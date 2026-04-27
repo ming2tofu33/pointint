@@ -45,6 +45,10 @@ import {
   removeBackground,
   type BinaryDownloadResponse,
 } from "./api";
+import {
+  extractGifFrameFiles,
+  type ExtractedGifFrameSequence,
+} from "./gifFrameSequence";
 
 export type CursorSize = ThemeCursorSize;
 export type AniFrameMoveDirection = "previous" | "next";
@@ -387,6 +391,14 @@ function getSharedAniFrameDurationMs(ani: AniData) {
     : undefined;
 }
 
+function getAniFrameDurationsMs(ani: AniData) {
+  if (ani.sourceKind !== "image-sequence" || ani.frames.length === 0) {
+    return undefined;
+  }
+
+  return ani.frames.map((frame) => clampAniFrameDuration(frame.durationMs));
+}
+
 function clampFrameInsertionIndex(index: number, frameCount: number) {
   if (!Number.isFinite(index)) {
     return frameCount;
@@ -584,10 +596,47 @@ function createAniFromImageSequenceFiles(
   files: File[],
   slotId: WindowsRoleSlotId
 ): AniData {
-  const frames = createAniFramesFromFiles(files).map((frame) => ({
+  return createAniFromFrameFiles(
+    files.map((file) => ({ file })),
+    slotId
+  );
+}
+
+function createAniFromExtractedGifFrames(
+  extractedGif: ExtractedGifFrameSequence,
+  slotId: WindowsRoleSlotId
+): AniData {
+  return createAniFromFrameFiles(
+    extractedGif.frames,
+    slotId,
+    {
+      preserveOrder: true,
+      sourceWidth: extractedGif.width,
+      sourceHeight: extractedGif.height,
+    }
+  );
+}
+
+function createAniFromFrameFiles(
+  frameInputs: Array<{
+    file: File;
+    durationMs?: number;
+  }>,
+  slotId: WindowsRoleSlotId,
+  options: {
+    preserveOrder?: boolean;
+    sourceWidth?: number;
+    sourceHeight?: number;
+  } = {}
+): AniData {
+  const files = frameInputs.map((frame) => frame.file);
+  const frames = createAniFramesFromFiles(files, {
+    preserveOrder: options.preserveOrder,
+    getDurationMs: (_file, index) => frameInputs[index]?.durationMs,
+  }).map((frame) => ({
     ...frame,
-    sourceWidth: 0,
-    sourceHeight: 0,
+    sourceWidth: options.sourceWidth ?? 0,
+    sourceHeight: options.sourceHeight ?? 0,
   }));
   const firstFrame = frames[0];
   const globalEdit = createDefaultAniFrameEdit();
@@ -611,6 +660,22 @@ function createAniFromImageSequenceFiles(
     cursorSize: 32,
     cursorName: getDefaultCursorNameForSlot(slotId),
   });
+}
+
+async function createAniFromAnimatedFile(
+  file: File,
+  slotId: WindowsRoleSlotId
+) {
+  try {
+    const extractedGif = await extractGifFrameFiles(file);
+    if (extractedGif.frames.length >= 2) {
+      return createAniFromExtractedGifFrames(extractedGif, slotId);
+    }
+  } catch {
+    // Keep the legacy GIF path as a safety net if browser-side decoding fails.
+  }
+
+  return createAniFromFile(file, slotId);
 }
 
 async function createCursorExportBlob(
@@ -657,12 +722,13 @@ async function createAniExportDownload(ani: AniData): Promise<BinaryDownloadResp
 
   if (ani.sourceKind === "image-sequence") {
     const sharedDurationMs = getSharedAniFrameDurationMs(ani);
+    const frameDurationsMs = getAniFrameDurationsMs(ani);
 
     return generateAniSequence(
       ani.frames.map((frame) => frame.file),
       typeof sharedDurationMs === "number"
-        ? { ...input, durationMs: sharedDurationMs }
-        : input
+        ? { ...input, durationMs: sharedDurationMs, frameDurationsMs }
+        : { ...input, frameDurationsMs }
     );
   }
 
@@ -1302,20 +1368,53 @@ export function useStudio() {
         return;
       }
 
-      const nextAni = createAniFromFile(file, slotId);
+      const nextAni = await createAniFromAnimatedFile(file, slotId);
 
       try {
-        const dimensions = await loadImageDimensions(nextAni.originalUrl);
-        if (!isAssetLoadRequestActive(requestId)) {
-          revokeAniObjectUrls(nextAni);
-          return;
-        }
+        let hydratedAni: AniData;
 
-        const hydratedAni = syncAniActiveFrame({
-          ...nextAni,
-          sourceWidth: dimensions.width,
-          sourceHeight: dimensions.height,
-        });
+        if (
+          nextAni.sourceKind === "image-sequence" &&
+          nextAni.frames.every(
+            (frame) => frame.sourceWidth > 0 && frame.sourceHeight > 0
+          )
+        ) {
+          hydratedAni = syncAniActiveFrame(nextAni);
+        } else if (nextAni.sourceKind === "image-sequence") {
+          const dimensions = await loadImageDimensions(nextAni.originalUrl);
+          if (!isAssetLoadRequestActive(requestId)) {
+            revokeAniObjectUrls(nextAni);
+            return;
+          }
+
+          const hydratedFrames = await loadAniFrameDimensions(
+            nextAni.frames,
+            dimensions,
+            () => isAssetLoadRequestActive(requestId)
+          );
+
+          if (!hydratedFrames) {
+            revokeAniObjectUrls(nextAni);
+            return;
+          }
+
+          hydratedAni = syncAniActiveFrame({
+            ...nextAni,
+            frames: hydratedFrames,
+          });
+        } else {
+          const dimensions = await loadImageDimensions(nextAni.originalUrl);
+          if (!isAssetLoadRequestActive(requestId)) {
+            revokeAniObjectUrls(nextAni);
+            return;
+          }
+
+          hydratedAni = syncAniActiveFrame({
+            ...nextAni,
+            sourceWidth: dimensions.width,
+            sourceHeight: dimensions.height,
+          });
+        }
 
         const { historySnapshot, replacedAni } =
           prepareImageSequenceReplacementSnapshot(previous, slotId);

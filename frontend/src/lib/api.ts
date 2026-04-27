@@ -110,6 +110,7 @@ export interface BinaryDownloadResponse {
 
 export interface GenerateAniSequenceInput extends GenerateAniInput {
   durationMs?: number;
+  frameDurationsMs?: number[];
 }
 
 export async function generateAni(
@@ -181,6 +182,9 @@ export async function generateAniSequence(
   if (typeof input.durationMs === "number") {
     formData.append("duration_ms", String(input.durationMs));
   }
+  input.frameDurationsMs?.forEach((durationMs) => {
+    formData.append("frame_durations_ms", String(durationMs));
+  });
   if (typeof input.aniName === "string") {
     formData.append("cursor_name", input.aniName);
   }
