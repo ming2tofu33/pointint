@@ -122,21 +122,7 @@ export default function Hero({ copy }: HeroProps) {
           <div style={{ paddingTop: "0.35rem" }}>
             <Link
               href="/studio"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: "3.35rem",
-                padding: "0 1.35rem",
-                borderRadius: "999px",
-                background: "var(--color-accent)",
-                border: "1px solid var(--landing-surface-border)",
-                color: "#fff",
-                textDecoration: "none",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                boxShadow: "0 16px 36px rgba(232, 73, 106, 0.25)",
-              }}
+              className="landing-glass-cta"
             >
               {copy.cta}
             </Link>
@@ -297,3 +283,4 @@ export default function Hero({ copy }: HeroProps) {
     </section>
   );
 }
+

@@ -79,21 +79,7 @@ export default function TrustCTA({ copy }: TrustCTAProps) {
         <div>
           <Link
             href="/studio"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "3.25rem",
-              padding: "0 1.25rem",
-              borderRadius: "999px",
-              background: "var(--color-accent)",
-              border: "1px solid var(--landing-surface-border)",
-              color: "#fff",
-              textDecoration: "none",
-              fontSize: "0.95rem",
-              fontWeight: 700,
-              boxShadow: "0 14px 30px rgba(232, 73, 106, 0.24)",
-            }}
+            className="landing-glass-cta"
           >
             {copy.cta}
           </Link>
