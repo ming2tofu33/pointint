@@ -102,7 +102,11 @@ export default function AniFrameTimeline({
             >
               <button
                 type="button"
-                aria-label={`Select frame ${frameNumber}`}
+                aria-label={formatFrameSelectLabel(
+                  frameNumber,
+                  frame.durationMs,
+                  edited
+                )}
                 aria-pressed={selected}
                 onClick={() => onSelectFrame(frame.id)}
                 style={{
@@ -193,6 +197,7 @@ export default function AniFrameTimeline({
                 </div>
 
                 <div
+                  role="group"
                   aria-label={`Frame ${frameNumber} actions`}
                   style={{
                     display: "grid",
@@ -283,6 +288,16 @@ function formatFrameCount(count: number) {
 
 function formatDuration(durationMs: number) {
   return `${durationMs} ms`;
+}
+
+function formatFrameSelectLabel(
+  frameNumber: number,
+  durationMs: number,
+  edited: boolean
+) {
+  return `Select frame ${frameNumber}, duration ${formatDuration(durationMs)}, ${
+    edited ? "edited" : "not edited"
+  }`;
 }
 
 function hasEditOverride(frame: AniFrameTimelineFrame) {

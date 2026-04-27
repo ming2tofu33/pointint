@@ -55,7 +55,11 @@ describe("AniFrameTimeline", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Select frame 2" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select frame 2, duration 125 ms, edited",
+      })
+    );
 
     expect(onSelectFrame).toHaveBeenCalledWith("frame-b");
   });
@@ -95,8 +99,14 @@ describe("AniFrameTimeline", () => {
       />
     );
 
+    const frameTwoActions = screen.getByRole("group", {
+      name: "Frame 2 actions",
+    });
+
     fireEvent.click(
-      screen.getByRole("button", { name: "Move frame 2 previous" })
+      within(frameTwoActions).getByRole("button", {
+        name: "Move frame 2 previous",
+      })
     );
     expect(onReorderFrames).toHaveBeenLastCalledWith([
       "frame-b",
@@ -104,7 +114,9 @@ describe("AniFrameTimeline", () => {
       "frame-c",
     ]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Move frame 2 next" }));
+    fireEvent.click(
+      within(frameTwoActions).getByRole("button", { name: "Move frame 2 next" })
+    );
     expect(onReorderFrames).toHaveBeenLastCalledWith([
       "frame-a",
       "frame-c",
@@ -127,7 +139,17 @@ describe("AniFrameTimeline", () => {
       within(screen.getByTestId("ani-frame-frame-b")).getByText("Edited")
     ).toBeVisible();
     expect(
+      within(screen.getByTestId("ani-frame-frame-b")).getByRole("button", {
+        name: "Select frame 2, duration 125 ms, edited",
+      })
+    ).toBeVisible();
+    expect(
       within(screen.getByTestId("ani-frame-frame-a")).queryByText("Edited")
     ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("ani-frame-frame-a")).getByRole("button", {
+        name: "Select frame 1, duration 100 ms, not edited",
+      })
+    ).toBeVisible();
   });
 });
