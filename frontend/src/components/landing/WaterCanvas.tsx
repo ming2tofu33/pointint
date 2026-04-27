@@ -93,9 +93,9 @@ const FRAGMENT_SHADER = `
     float dotFlare = smoothstep(0.3, 0.05, d) * 0.4;
     dotFlare += smoothstep(0.1, 0.0, d) * 0.8; // intense center
     
-    // Twinkling logic
-    float twinkle = sin(u_time * (1.0 + h * 3.0) + h * 6.28) * 0.5 + 0.5;
-    twinkle = pow(twinkle, 3.0); // sharp blinking
+    // Twinkling logic (constant soft glow rather than sharp blinking)
+    float twinkleOsc = sin(u_time * (0.8 + h * 2.5) + h * 6.28) * 0.5 + 0.5;
+    float twinkle = mix(0.4, 1.0, twinkleOsc); // never invisible
     
     vec3 sColor = mix(u_highlightColor, vec3(1.0), 0.4); // softer tint
     waterColor += sColor * dotFlare * twinkle * sparkleMask * 0.8;
