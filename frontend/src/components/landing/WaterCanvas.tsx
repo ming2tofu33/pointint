@@ -90,15 +90,15 @@ const FRAGMENT_SHADER = `
     float d = length(f - (0.5 + cellOffset));
     
     // Tiny glowing dot
-    float dotFlare = smoothstep(0.3, 0.05, d) * 0.8;
-    dotFlare += smoothstep(0.1, 0.0, d) * 1.5; // intense center
+    float dotFlare = smoothstep(0.3, 0.05, d) * 0.4;
+    dotFlare += smoothstep(0.1, 0.0, d) * 0.8; // intense center
     
     // Twinkling logic
     float twinkle = sin(u_time * (1.0 + h * 3.0) + h * 6.28) * 0.5 + 0.5;
     twinkle = pow(twinkle, 3.0); // sharp blinking
     
-    vec3 sColor = mix(u_highlightColor, vec3(1.0), 0.8); // shiny tint
-    waterColor += sColor * dotFlare * twinkle * sparkleMask * 1.8;
+    vec3 sColor = mix(u_highlightColor, vec3(1.0), 0.4); // softer tint
+    waterColor += sColor * dotFlare * twinkle * sparkleMask * 0.8;
     // ---------------------------------
 
     float depthFade = mix(u_depthFloor, 1.0, uv.y);
