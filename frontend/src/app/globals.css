@@ -276,31 +276,36 @@
   min-height: 3.35rem;
   padding: 0 1.6rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--landing-divider) 75%, var(--color-accent));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  border-top-color: color-mix(in srgb, var(--landing-proof-frame-top) 80%, var(--color-accent) 20%);
+  border-bottom-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
   background: linear-gradient(180deg,
-      color-mix(in srgb, var(--landing-header-highlight) 92%, var(--color-accent)),
-      color-mix(in srgb, var(--landing-header-backdrop) 86%, var(--color-accent)));
+      color-mix(in srgb, var(--color-accent) 15%, transparent),
+      color-mix(in srgb, var(--color-accent) 5%, transparent));
   color: var(--color-text-primary);
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 700;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--landing-header-highlight) 70%, var(--color-accent)),
-    0 12px 28px color-mix(in srgb, var(--landing-header-shadow) 50%, var(--color-accent-glow));
-  backdrop-filter: blur(24px) saturate(1.25);
-  -webkit-backdrop-filter: blur(24px) saturate(1.25);
-  transition: all 0.2s ease;
+    inset 0 1px 1px color-mix(in srgb, var(--landing-proof-frame-top) 80%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 10%, transparent),
+    0 12px 28px color-mix(in srgb, var(--color-accent-glow) 60%, transparent);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .landing-glass-cta:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--landing-divider) 50%, var(--color-accent));
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  border-top-color: color-mix(in srgb, var(--landing-proof-frame-top) 100%, var(--color-accent) 40%);
   background: linear-gradient(180deg,
-      color-mix(in srgb, var(--landing-surface-fill-strong) 85%, var(--color-accent)),
-      color-mix(in srgb, var(--landing-surface-fill) 80%, var(--color-accent)));
+      color-mix(in srgb, var(--color-accent) 25%, transparent),
+      color-mix(in srgb, var(--color-accent) 10%, transparent));
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--landing-proof-frame-top) 50%, var(--color-accent)),
-    0 16px 32px color-mix(in srgb, var(--landing-surface-shadow) 30%, var(--color-accent-glow));
+    inset 0 1px 1px color-mix(in srgb, var(--landing-proof-frame-top) 100%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 20%, transparent),
+    0 16px 32px color-mix(in srgb, var(--color-accent-glow) 100%, transparent);
 }
 
 .landing-glass-cta:active {

@@ -90,8 +90,8 @@ const FRAGMENT_SHADER = `
     float d = length(f - (0.5 + cellOffset));
     
     // Tiny glowing dot
-    float dotFlare = smoothstep(0.3, 0.05, d) * 0.4;
-    dotFlare += smoothstep(0.1, 0.0, d) * 0.8; // intense center
+    float dotFlare = smoothstep(0.3, 0.05, d) * 0.8;
+    dotFlare += smoothstep(0.1, 0.0, d) * 1.5; // intense center
     
     // Twinkling logic (constant soft glow rather than sharp blinking)
     float twinkleOsc = sin(u_time * (0.8 + h * 2.5) + h * 6.28) * 0.5 + 0.5;
