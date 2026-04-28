@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { trackEvent } from "@/lib/analytics";
+
 export type HeroCopy = {
   logo: string;
   tagline: string;
@@ -24,6 +26,8 @@ const proofCaptionStyle: React.CSSProperties = {
   letterSpacing: "0.1em",
   textTransform: "uppercase",
 };
+
+const primaryStudioCtaHref = "/studio?workflow=cur-static-image";
 
 export default function Hero({ copy }: HeroProps) {
   return (
@@ -121,8 +125,14 @@ export default function Hero({ copy }: HeroProps) {
 
           <div style={{ paddingTop: "0.35rem" }}>
             <Link
-              href="/studio"
+              href={primaryStudioCtaHref}
               className="landing-glass-cta"
+              onClick={() =>
+                trackEvent("landing_cta_clicked", {
+                  cta: "hero",
+                  target: primaryStudioCtaHref,
+                })
+              }
             >
               {copy.cta}
             </Link>

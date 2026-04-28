@@ -45,14 +45,14 @@ export default function ConsentBanner({
         inset: "auto 1rem 1rem 1rem",
         zIndex: 120,
         margin: "0 auto",
-        width: "min(52rem, calc(100% - 2rem))",
+        width: "min(44rem, calc(100% - 2rem))",
         border: "1px solid var(--landing-surface-border)",
-        borderRadius: "18px",
+        borderRadius: "16px",
         background:
           "linear-gradient(180deg, var(--landing-surface-fill-strong), var(--landing-surface-fill))",
-        boxShadow: "0 12px 28px rgba(4, 10, 22, 0.22)",
-        backdropFilter: "blur(14px)",
-        padding: "0.75rem 0.9rem",
+        boxShadow: "0 10px 22px rgba(4, 10, 22, 0.18)",
+        backdropFilter: "blur(12px)",
+        padding: "0.55rem 0.7rem",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -73,7 +73,7 @@ export default function ConsentBanner({
         <h2
           style={{
             margin: 0,
-            fontSize: "0.78rem",
+            fontSize: "0.72rem",
             fontWeight: 700,
             color: "var(--color-text-primary)",
             whiteSpace: "nowrap",
@@ -84,7 +84,7 @@ export default function ConsentBanner({
         <p
           style={{
             margin: 0,
-            fontSize: "0.74rem",
+            fontSize: "0.7rem",
             lineHeight: 1.45,
             color: "var(--color-text-secondary)",
             flex: "0 1 auto",
@@ -95,7 +95,7 @@ export default function ConsentBanner({
         <Link
           href="/cookie-policy"
           style={{
-            fontSize: "0.74rem",
+            fontSize: "0.7rem",
             fontWeight: 600,
             color: "var(--color-accent)",
             textDecoration: "none",
@@ -120,13 +120,13 @@ export default function ConsentBanner({
           type="button"
           onClick={handleDecline}
           style={{
-            minHeight: "2.15rem",
-            padding: "0 0.78rem",
+            minHeight: "1.9rem",
+            padding: "0 0.68rem",
             borderRadius: "999px",
             border: "1px solid var(--landing-surface-border)",
             background: "rgba(255, 255, 255, 0.06)",
             color: "var(--color-text-primary)",
-            fontSize: "0.74rem",
+            fontSize: "0.7rem",
             fontWeight: 700,
             cursor: "pointer",
           }}
@@ -137,13 +137,13 @@ export default function ConsentBanner({
           type="button"
           onClick={handleAccept}
           style={{
-            minHeight: "2.15rem",
-            padding: "0 0.78rem",
+            minHeight: "1.9rem",
+            padding: "0 0.68rem",
             borderRadius: "999px",
             border: "1px solid var(--landing-surface-border)",
             background: "var(--color-accent)",
             color: "#fff",
-            fontSize: "0.74rem",
+            fontSize: "0.7rem",
             fontWeight: 700,
             cursor: "pointer",
             boxShadow: "0 8px 18px rgba(232, 73, 106, 0.16)",

@@ -11,6 +11,16 @@ export default function SideMenu() {
   const pathname = usePathname();
   const navItems = [
     {
+      href: "/tools",
+      label: t("tools"),
+      active: pathname === "/tools" || pathname.startsWith("/tools/"),
+    },
+    {
+      href: "/guides",
+      label: t("guides"),
+      active: pathname === "/guides" || pathname.startsWith("/guides/"),
+    },
+    {
       href: "/explore",
       label: t("explore"),
       active: pathname.startsWith("/explore"),

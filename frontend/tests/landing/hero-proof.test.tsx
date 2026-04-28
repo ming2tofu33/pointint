@@ -35,6 +35,6 @@ describe("Hero", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "이미지로 시작하기" })
-    ).toBeInTheDocument();
+    ).toHaveAttribute("href", "/studio?workflow=cur-static-image");
   });
 });

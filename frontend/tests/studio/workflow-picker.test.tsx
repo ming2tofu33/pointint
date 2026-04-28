@@ -2,12 +2,21 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const { trackEventMock } = vi.hoisted(() => ({
+  trackEventMock: vi.fn(),
+}));
+
+vi.mock("@/lib/analytics", () => ({
+  trackEvent: trackEventMock,
+}));
+
 import WorkflowPicker from "@/components/WorkflowPicker";
 import en from "@/i18n/messages/en.json";
 import { WORKFLOW_OPTIONS } from "@/lib/studioWorkflow";
 
 afterEach(() => {
   cleanup();
+  trackEventMock.mockReset();
 });
 
 function renderPicker() {
@@ -117,6 +126,11 @@ describe("WorkflowPicker", () => {
 
     expect(onSelectWorkflow).toHaveBeenCalledTimes(1);
     expect(onSelectWorkflow).toHaveBeenCalledWith("cur-static-image");
+    expect(trackEventMock).toHaveBeenCalledWith("workflow_selected", {
+      availability: "available",
+      family: "cur",
+      workflow_id: "cur-static-image",
+    });
     expect(screen.getByRole("button", { name: /CUR AI/i }).disabled).toBe(true);
   });
 

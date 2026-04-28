@@ -146,4 +146,17 @@ describe("StudioPage analytics", () => {
       source: "studio_page",
     });
   });
+
+  it("tracks workflow-targeted studio entries from tool CTAs", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-animated-gif"
+    );
+
+    render(<StudioPage />);
+
+    expect(trackEventMock).toHaveBeenCalledWith("studio_entry", {
+      source: "studio_page",
+      workflow: "ani-animated-gif",
+    });
+  });
 });

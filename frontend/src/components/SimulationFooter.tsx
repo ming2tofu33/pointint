@@ -5,19 +5,27 @@ import { useTranslations } from "next-intl";
 const COLLAPSED_HEIGHT = "3rem";
 const EXPANDED_BASIS = "46%";
 const EXPANDED_MIN_HEIGHT = "22rem";
+const COMPACT_EXPANDED_BASIS = "32%";
+const COMPACT_EXPANDED_MIN_HEIGHT = "15rem";
 
 export default function SimulationFooter({
   collapsed,
   onToggle,
   headerControls,
+  density = "default",
   children,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   headerControls?: React.ReactNode;
+  density?: "default" | "compact";
   children: React.ReactNode;
 }) {
   const t = useTranslations("studio");
+  const expandedBasis =
+    density === "compact" ? COMPACT_EXPANDED_BASIS : EXPANDED_BASIS;
+  const expandedMinHeight =
+    density === "compact" ? COMPACT_EXPANDED_MIN_HEIGHT : EXPANDED_MIN_HEIGHT;
 
   return (
     <footer
@@ -26,8 +34,8 @@ export default function SimulationFooter({
         height: collapsed ? COLLAPSED_HEIGHT : undefined,
         flexGrow: 0,
         flexShrink: 0,
-        flexBasis: collapsed ? COLLAPSED_HEIGHT : EXPANDED_BASIS,
-        minHeight: collapsed ? COLLAPSED_HEIGHT : EXPANDED_MIN_HEIGHT,
+        flexBasis: collapsed ? COLLAPSED_HEIGHT : expandedBasis,
+        minHeight: collapsed ? COLLAPSED_HEIGHT : expandedMinHeight,
         borderTop: "1px solid var(--simulation-frame-border)",
         backgroundColor: "var(--simulation-frame-bg)",
         overflow: "hidden",

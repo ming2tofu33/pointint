@@ -13,6 +13,16 @@ export default function Header() {
   const pathname = usePathname();
   const navItems = [
     {
+      href: "/tools",
+      label: t("tools"),
+      active: pathname === "/tools" || pathname.startsWith("/tools/"),
+    },
+    {
+      href: "/guides",
+      label: t("guides"),
+      active: pathname === "/guides" || pathname.startsWith("/guides/"),
+    },
+    {
       href: "/explore",
       label: t("explore"),
       active: pathname.startsWith("/explore"),
@@ -99,7 +109,7 @@ export default function Header() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 1.35rem;
+          gap: clamp(0.9rem, 2vw, 1.35rem);
         }
 
         .app-header-link {

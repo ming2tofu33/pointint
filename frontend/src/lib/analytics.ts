@@ -11,11 +11,15 @@ declare global {
 
 export type AnalyticsEventName =
   | "page_view"
+  | "landing_cta_clicked"
   | "studio_entry"
   | "workflow_selected"
+  | "upload_started"
+  | "background_decision_made"
   | "explore_opened"
   | "sample_bundle_downloaded"
   | "download_completed"
+  | "post_download_cta_clicked"
   | "install_guide_opened";
 
 function hasAcceptedConsent() {

@@ -1575,6 +1575,12 @@ export function useStudio() {
 
   const uploadFileToSlot = useCallback(
     async (slotId: WindowsRoleSlotId, file: File, kind: SlotKind) => {
+      trackEvent("upload_started", {
+        input_kind: kind === "static" ? "static_image" : "animated_gif",
+        slot_id: slotId,
+        source: "studio",
+      });
+
       const requestId = beginAssetLoadRequest();
       const previous = takeSnapshot();
       clearActiveHistoryAction();
@@ -1706,6 +1712,13 @@ export function useStudio() {
   const uploadImageSequenceFilesToSlot = useCallback(
     async (slotId: WindowsRoleSlotId, files: File[]) => {
       if (files.length === 0) return;
+
+      trackEvent("upload_started", {
+        file_count: files.length,
+        input_kind: "image_sequence",
+        slot_id: slotId,
+        source: "studio",
+      });
 
       const requestId = beginAssetLoadRequest();
       const previous = takeSnapshot();
@@ -2263,6 +2276,11 @@ export function useStudio() {
 
   const processBgRemoval = useCallback(async () => {
     if (!cursor || bgRemovalInFlightRef.current) return;
+    trackEvent("background_decision_made", {
+      decision: "remove",
+      slot_id: selectedSlotId,
+      source: "studio",
+    });
     const previous = takeSnapshot();
     const requestId = bgRemovalRequestIdRef.current + 1;
     bgRemovalRequestIdRef.current = requestId;
@@ -2331,6 +2349,11 @@ export function useStudio() {
   // UX-1: 배경 제거 건너뛰기
   const skipBgRemoval = useCallback(async () => {
     if (!cursor || bgRemovalInFlightRef.current) return;
+    trackEvent("background_decision_made", {
+      decision: "keep_original",
+      slot_id: selectedSlotId,
+      source: "studio",
+    });
     const previous = takeSnapshot();
     const requestId = bgRemovalRequestIdRef.current + 1;
     bgRemovalRequestIdRef.current = requestId;

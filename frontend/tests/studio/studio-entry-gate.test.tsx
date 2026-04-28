@@ -166,6 +166,8 @@ const {
   insertAniFrameFilesMock,
   setAniFrameDurationMock,
   setAllAniFrameDurationsMock,
+  processBgRemovalMock,
+  skipBgRemovalMock,
   setOffsetMock,
   setHotspotMock,
   setScaleMock,
@@ -201,6 +203,8 @@ const {
   insertAniFrameFilesMock: vi.fn(),
   setAniFrameDurationMock: vi.fn(),
   setAllAniFrameDurationsMock: vi.fn(),
+  processBgRemovalMock: vi.fn(),
+  skipBgRemovalMock: vi.fn(),
   setOffsetMock: vi.fn(),
   setHotspotMock: vi.fn(),
   setScaleMock: vi.fn(),
@@ -577,8 +581,8 @@ function createStudioReturn(
     selectSelectedSlotStaticFile: selectSlotStaticFileMock,
     selectSelectedSlotAnimatedFile: selectSlotAnimatedFileMock,
     selectSelectedSlotImageSequenceFiles: selectSlotImageSequenceFilesMock,
-    processBgRemoval: vi.fn(),
-    skipBgRemoval: vi.fn(),
+    processBgRemoval: processBgRemovalMock,
+    skipBgRemoval: skipBgRemovalMock,
     toggleOriginal: vi.fn(),
     retryBgRemoval: vi.fn(),
     setHotspot: setHotspotMock,
@@ -642,6 +646,8 @@ beforeEach(() => {
   insertAniFrameFilesMock.mockReset();
   setAniFrameDurationMock.mockReset();
   setAllAniFrameDurationsMock.mockReset();
+  processBgRemovalMock.mockReset();
+  skipBgRemovalMock.mockReset();
   setOffsetMock.mockReset();
   setHotspotMock.mockReset();
   setScaleMock.mockReset();
@@ -822,8 +828,39 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
-    expect(screen.getByTestId("studio-inspector-compact-guidance")).not.toBeNull();
+    expect(
+      screen.queryByTestId("studio-inspector-compact-guidance")
+    ).not.toBeInTheDocument();
     expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
+  });
+
+  it("keeps the background-removal decision in the stage flow without duplicating the pending banner", () => {
+    renderStudio("uploaded", {
+      pendingBackgroundRemovalSlotIds: ["normalSelect"],
+    });
+
+    expect(
+      screen.queryByTestId("pending-background-decision-notice")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("background-removal-decision-dock")).toBeVisible();
+    expect(
+      screen.queryByTestId("background-removal-decision-overlay")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("background-removal-decision-dock")
+    ).toHaveStyle({
+      position: "relative",
+      flexShrink: "0",
+    });
+
+    fireEvent.click(
+      within(screen.getByTestId("background-removal-decision-dock")).getByRole(
+        "button",
+        { name: /use as is/i }
+      )
+    );
+
+    expect(skipBgRemovalMock).toHaveBeenCalledTimes(1);
   });
 
   it("groups the empty-slot sources into a dedicated source-card region", () => {
@@ -1381,16 +1418,13 @@ describe("Studio entry gate", () => {
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
   });
 
-  it("keeps uploaded background-removal choice inside the editor with an inline overlay", () => {
+  it("keeps uploaded background-removal choice inside the editor with an inline dock", () => {
     renderStudio("uploaded");
 
-    expect(
-      screen.getByTestId("background-removal-decision-overlay")
-    ).not.toBeNull();
-    expect(
-      screen.getByTestId("background-removal-decision-overlay")
-    ).toHaveStyle({
-      alignItems: "flex-end",
+    expect(screen.getByTestId("background-removal-decision-dock")).not.toBeNull();
+    expect(screen.getByTestId("background-removal-decision-dock")).toHaveStyle({
+      position: "relative",
+      flexShrink: "0",
     });
     expect(screen.getByTestId("cursor-canvas")).not.toBeNull();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
@@ -1398,13 +1432,12 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("upload-zone")).toBeNull();
   });
 
-  it("anchors the processing overlay to the lower edge of the canvas area", () => {
+  it("keeps the processing state in the same inline dock position", () => {
     renderStudio("processing");
 
-    expect(
-      screen.getByTestId("background-removal-processing-overlay")
-    ).toHaveStyle({
-      alignItems: "flex-end",
+    expect(screen.getByTestId("background-removal-processing-dock")).toHaveStyle({
+      position: "relative",
+      flexShrink: "0",
     });
   });
 

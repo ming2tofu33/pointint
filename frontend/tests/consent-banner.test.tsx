@@ -48,8 +48,8 @@ describe("ConsentBanner", () => {
     });
 
     expect(banner).toHaveStyle({
-      width: "min(52rem, calc(100% - 2rem))",
-      padding: "0.75rem 0.9rem",
+      width: "min(44rem, calc(100% - 2rem))",
+      padding: "0.55rem 0.7rem",
       display: "flex",
       alignItems: "center",
     });

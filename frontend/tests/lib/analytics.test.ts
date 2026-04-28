@@ -67,6 +67,26 @@ describe("analytics helper", () => {
     });
   });
 
+  it("forwards growth funnel events after consent", () => {
+    vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "G-TEST123");
+    setAnalyticsConsent("accepted");
+
+    initAnalytics();
+
+    const gtag = vi.fn();
+    (window as Window & { gtag: typeof gtag }).gtag = gtag;
+
+    trackEvent("landing_cta_clicked", {
+      cta: "hero",
+      target: "/studio?workflow=cur-static-image",
+    });
+
+    expect(gtag).toHaveBeenCalledWith("event", "landing_cta_clicked", {
+      cta: "hero",
+      target: "/studio?workflow=cur-static-image",
+    });
+  });
+
   it("loads Clarity after consent when configured", () => {
     vi.stubEnv("NEXT_PUBLIC_CLARITY_PROJECT_ID", "clarity-test");
     setAnalyticsConsent("accepted");

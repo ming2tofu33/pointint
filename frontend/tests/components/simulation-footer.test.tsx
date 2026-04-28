@@ -65,4 +65,17 @@ describe("SimulationFooter", () => {
       "expandSimulation"
     );
   });
+
+  it("can use a compact expanded footprint for decision-heavy editor states", () => {
+    render(
+      <SimulationFooter collapsed={false} density="compact" onToggle={vi.fn()}>
+        <div data-testid="simulation-body">preview</div>
+      </SimulationFooter>
+    );
+
+    expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
+      flexBasis: "32%",
+      minHeight: "15rem",
+    });
+  });
 });

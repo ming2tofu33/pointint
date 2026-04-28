@@ -26,7 +26,6 @@ import StudioSelectionSummary from "@/components/StudioSelectionSummary";
 import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
-  StudioInspectorEmptyNotice,
   StudioInspectorGroup,
   StudioInspectorNumberField,
   StudioInspectorRow,
@@ -55,6 +54,10 @@ import {
   DEFAULT_SIMULATION_SCENE_ID,
   type SimulationSceneId,
 } from "@/lib/simulationScenes";
+import {
+  isSelectableWorkflow,
+  type WorkflowOptionId,
+} from "@/lib/studioWorkflow";
 import { CursorSize, useStudio } from "@/lib/useStudio";
 
 export default function StudioPage() {
@@ -122,12 +125,21 @@ export default function StudioPage() {
   const tu = useTranslations("upload");
   const searchParams = useSearchParams();
   const router = useRouter();
+  const workflowParam = getSelectableWorkflowParam(searchParams.get("workflow"));
 
   useEffect(() => {
-    trackEvent("studio_entry", {
-      source: "studio_page",
-    });
-  }, []);
+    trackEvent(
+      "studio_entry",
+      workflowParam
+        ? {
+            source: "studio_page",
+            workflow: workflowParam,
+          }
+        : {
+            source: "studio_page",
+          }
+    );
+  }, [workflowParam]);
 
   useEffect(() => {
     if (searchParams.get("fromLanding") !== "true") return;
@@ -307,10 +319,17 @@ export default function StudioPage() {
   const showStaticStudioShell =
     state === "editing" ||
     ((state === "uploaded" || state === "processing") && Boolean(cursor));
+  const isBackgroundDecisionState =
+    state === "uploaded" || state === "processing";
+  const isCurrentSlotBackgroundDecision =
+    isBackgroundDecisionState &&
+    pendingBackgroundRemovalSlotIds.includes(selectedSlotId);
+  const showPendingBackgroundDecisionNotice =
+    pendingBackgroundRemovalSlotIds.length > 0 &&
+    !isCurrentSlotBackgroundDecision;
   const showSlotSourceEntry =
     state !== "uploaded" && state !== "processing" && !selectedSlotBound;
-  const showCompactInspectorGuidance =
-    !selectedSlotBound || state === "uploaded" || state === "processing";
+  const showCompactInspectorGuidance = isBackgroundDecisionState;
   const compactGuidanceContent =
     state === "uploaded"
       ? {
@@ -360,7 +379,7 @@ export default function StudioPage() {
             canDownloadGif ? t("downloadGifLabel") : undefined
           }
         />
-        {pendingBackgroundRemovalSlotIds.length > 0 ? (
+        {showPendingBackgroundDecisionNotice ? (
           <PendingBackgroundDecisionNotice
             title={t("backgroundPendingDownloadTitle")}
             summary={t("backgroundPendingDownloadSummary", {
@@ -566,7 +585,7 @@ export default function StudioPage() {
                         />
 
                         {state === "uploaded" ? (
-                          <BackgroundRemovalDecisionOverlay
+                          <BackgroundRemovalDecisionDock
                             title={tu("removeBg")}
                             summary={tu("removeBgSub")}
                             hint={tu("skipBgSub")}
@@ -580,7 +599,7 @@ export default function StudioPage() {
                         ) : null}
 
                         {state === "processing" ? (
-                          <BackgroundRemovalProcessingOverlay
+                          <BackgroundRemovalProcessingDock
                             title={tu("removingBg")}
                             summary={tu("removeBgSub")}
                           />
@@ -621,6 +640,7 @@ export default function StudioPage() {
                 {hasSimulationNormal ? (
                   <SimulationFooter
                     collapsed={simulationCollapsed}
+                    density={isBackgroundDecisionState ? "compact" : "default"}
                     onToggle={() => setSimulationCollapsed((current) => !current)}
                     headerControls={
                       <div
@@ -709,24 +729,15 @@ export default function StudioPage() {
                 lines={compactGuidanceContent.lines}
               />
             ) : (
-              <StudioInspectorEmptyNotice
+              <StudioSelectionSummary
+                slotLabelTitle={t("slotRailTitle")}
                 slotLabel={stageSlotLabel}
-                title={t("slotEmptyTitle")}
-                summary={t("emptySlotDescription")}
-                expectedControlsTitle={t("inspectorExpectedControlsTitle")}
-                expectedControls={[
-                  tp("output"),
-                  tp("framing"),
-                  tp("name"),
-                  tp("hotspot"),
-                  tp("scale"),
-                  tp("position"),
-                ]}
-                formatGuidanceTitle={t("inspectorFormatGuidanceTitle")}
-                formatGuidance={[
-                  t("slotStaticUploadSub"),
-                  t("slotAniUploadSub"),
-                ]}
+                cursorLabelTitle={tp("cursor")}
+                cursorName={cursor?.cursorName ?? t("slotEmpty")}
+                statusLabelTitle={tp("status")}
+                statusLabel={stageHotspotSummary ?? t("slotKindUnset")}
+                typeLabelTitle={t("slotTypeLabel")}
+                typeLabel={stageKindSummary}
               />
             )
           }
@@ -1073,7 +1084,7 @@ function PendingBackgroundDecisionNotice({
   );
 }
 
-function BackgroundRemovalDecisionOverlay({
+function BackgroundRemovalDecisionDock({
   title,
   summary,
   hint,
@@ -1096,32 +1107,29 @@ function BackgroundRemovalDecisionOverlay({
 }) {
   return (
     <div
-      data-testid="background-removal-decision-overlay"
+      data-testid="background-removal-decision-dock"
+      role="status"
       style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: "1rem 1rem 1.375rem",
-        background: "transparent",
-        pointerEvents: "none",
+        position: "relative",
+        flexShrink: 0,
+        width: "min(33rem, 100%)",
       }}
     >
       <StudioSurfaceCard
         style={{
-          width: "min(28rem, 100%)",
-          display: "grid",
-          gap: "0.875rem",
-          pointerEvents: "auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.85rem",
+          padding: "0.78rem 0.85rem",
           boxShadow:
-            "0 12px 24px rgba(8, 12, 18, 0.14), 0 2px 8px rgba(8, 12, 18, 0.08)",
+            "0 10px 22px rgba(8, 12, 18, 0.12), 0 2px 8px rgba(8, 12, 18, 0.08)",
           backgroundColor:
             "color-mix(in srgb, var(--color-bg-secondary) 96%, white 4%)",
           borderColor: "color-mix(in srgb, var(--color-border) 84%, white 6%)",
         }}
       >
-        <div style={{ display: "grid", gap: "0.25rem" }}>
+        <div style={{ display: "grid", gap: "0.2rem", minWidth: 0 }}>
           <div
             style={{
               fontSize: "0.6875rem",
@@ -1135,10 +1143,10 @@ function BackgroundRemovalDecisionOverlay({
           </div>
           <div
             style={{
-              fontSize: "0.9375rem",
+              fontSize: "0.875rem",
               fontWeight: 600,
               color: "var(--color-text-primary)",
-              lineHeight: 1.45,
+              lineHeight: 1.35,
             }}
           >
             {summary}
@@ -1147,7 +1155,7 @@ function BackgroundRemovalDecisionOverlay({
             style={{
               fontSize: "0.75rem",
               color: "var(--color-text-secondary)",
-              lineHeight: 1.45,
+              lineHeight: 1.35,
             }}
           >
             {hint}
@@ -1158,18 +1166,21 @@ function BackgroundRemovalDecisionOverlay({
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: "0.75rem",
+            gap: "0.45rem",
+            minWidth: "12.5rem",
           }}
         >
           <BackgroundRemovalActionButton
             label={removeLabel}
             summary={removeSub}
             accent
+            compact
             onClick={onRemoveBg}
           />
           <BackgroundRemovalActionButton
             label={keepLabel}
             summary={keepSub}
+            compact
             onClick={onSkipBg}
           />
         </div>
@@ -1178,7 +1189,7 @@ function BackgroundRemovalDecisionOverlay({
   );
 }
 
-function BackgroundRemovalProcessingOverlay({
+function BackgroundRemovalProcessingDock({
   title,
   summary,
 }: {
@@ -1187,25 +1198,19 @@ function BackgroundRemovalProcessingOverlay({
 }) {
   return (
     <div
-      data-testid="background-removal-processing-overlay"
+      data-testid="background-removal-processing-dock"
       style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: "1rem 1rem 1.375rem",
-        background: "transparent",
-        pointerEvents: "none",
+        position: "relative",
+        flexShrink: 0,
+        width: "min(24rem, 100%)",
       }}
     >
       <StudioSurfaceCard
         style={{
-          width: "min(22rem, 100%)",
           display: "flex",
           alignItems: "center",
           gap: "0.875rem",
-          pointerEvents: "auto",
+          padding: "0.78rem 0.85rem",
           boxShadow:
             "0 12px 24px rgba(8, 12, 18, 0.14), 0 2px 8px rgba(8, 12, 18, 0.08)",
           backgroundColor:
@@ -1255,11 +1260,13 @@ function BackgroundRemovalActionButton({
   label,
   summary,
   accent,
+  compact = false,
   onClick,
 }: {
   label: string;
   summary: string;
   accent?: boolean;
+  compact?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -1268,10 +1275,10 @@ function BackgroundRemovalActionButton({
       onClick={onClick}
       style={{
         display: "grid",
-        gap: "0.2rem",
+        gap: compact ? "0.1rem" : "0.2rem",
         textAlign: "left",
-        padding: "0.75rem 0.875rem",
-        borderRadius: "0.875rem",
+        padding: compact ? "0.55rem 0.62rem" : "0.75rem 0.875rem",
+        borderRadius: compact ? "0.7rem" : "0.875rem",
         border: `1px solid ${
           accent ? "var(--color-accent)" : "var(--color-border)"
         }`,
@@ -1286,8 +1293,8 @@ function BackgroundRemovalActionButton({
       <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{label}</span>
       <span
         style={{
-          fontSize: "0.6875rem",
-          lineHeight: 1.45,
+          fontSize: compact ? "0.625rem" : "0.6875rem",
+          lineHeight: compact ? 1.25 : 1.45,
           color: "var(--color-text-muted)",
         }}
       >
@@ -1338,6 +1345,14 @@ function ActualSizePreview({
 function capitalizeSlotId(slotId: string | undefined) {
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
+}
+
+function getSelectableWorkflowParam(workflowId: string | null) {
+  if (!workflowId) return null;
+
+  return isSelectableWorkflow(workflowId as WorkflowOptionId)
+    ? workflowId
+    : null;
 }
 
 const studioThemeScopeStyle: CSSProperties = {

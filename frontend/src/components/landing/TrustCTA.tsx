@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+
+import { trackEvent } from "@/lib/analytics";
 
 export type TrustCopy = {
   title: string;
@@ -9,6 +13,8 @@ export type TrustCopy = {
 interface TrustCTAProps {
   copy: TrustCopy;
 }
+
+const primaryStudioCtaHref = "/studio?workflow=cur-static-image";
 
 export default function TrustCTA({ copy }: TrustCTAProps) {
   return (
@@ -78,8 +84,14 @@ export default function TrustCTA({ copy }: TrustCTAProps) {
 
         <div>
           <Link
-            href="/studio"
+            href={primaryStudioCtaHref}
             className="landing-glass-cta"
+            onClick={() =>
+              trackEvent("landing_cta_clicked", {
+                cta: "trust",
+                target: primaryStudioCtaHref,
+              })
+            }
           >
             {copy.cta}
           </Link>

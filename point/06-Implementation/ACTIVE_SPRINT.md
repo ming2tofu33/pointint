@@ -12,8 +12,8 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-04-27
-> **Status:** Phase 1 gate closed, ANI Source Maker / GIF Maker slice is complete
-> **Goal:** Ship source-maker foundations that turn user media into Windows-ready ANI cursor roles
+> **Status:** Phase 1 gate closed, ANI Source Maker complete, Content Growth Wave 0-3 foundation implemented
+> **Goal:** Ship source-maker foundations and search-led entry surfaces that route users into Studio
 > **Phase Flow:** [[Phase-Flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
@@ -32,6 +32,7 @@ aliases:
 - `Phase 1.5` is open with ANI v1 scoped to `Animated GIF -> shared framing/hotspot -> .ani export`.
 - Slot-based studio foundation is now in flight: `normal / text / link / button` slots edit one at a time and the simulation runtime is moving to zone-based source mapping.
 - `Phase 1.5 / STUDIO-UX-01` is now closed with a premium-tool shell refresh across CUR and ANI: slot board, stage header, validation footer, and inspector now read as one system.
+- `CONTENT-GROWTH-01` Wave 0-3 is implemented: `/tools`, `/guides`, `/tools/image-to-cursor`, `/tools/gif-to-ani-cursor`, four `/guides/*` trust pages, sitemap expansion, direct Studio workflow CTAs, and growth-funnel analytics events.
 
 ## Current Doing
 
@@ -40,6 +41,7 @@ aliases:
 | Lane | Task | Status | Note |
 |---|---|---|---|
 | Now | `Phase 1.5 / Video to ANI` | queued | Reuse the GIF Maker source foundation for `Video -> FrameSequenceSource` |
+| Done | `CONTENT-GROWTH-01` | complete | Wave 0-3 search entry foundation: Tools/Guides nav hubs, tool pages, trust guides, sitemap, direct Studio CTAs, funnel events |
 | Done | `ANI-SOURCE-01` | complete | `GIF Maker`: multiple images -> sorted frame sequence -> ANI editor -> image-sequence export |
 | Option | `WIN-INSTALLER-EXE-01` | deferred option | Keep as a later distribution spike; ZIP + INF RC and wording are already validated for now |
 | Option | `BG-FT-01` | deferred option | Fine-tuning/background-removal quality work is intentionally postponed until source-maker work needs it |
@@ -47,6 +49,7 @@ aliases:
 ## Next Session
 
 - Decide whether to start `Video to ANI` now that the GIF Maker source foundation is stable
+- Review the new `/tools`, `/guides`, `/tools/*`, and `/guides/*` pages in browser once visual QA starts; add screenshots/examples after first search-console feedback
 - If yes, design the video source-maker as `video file -> extracted frame sequence -> existing ANI editor`
 - Keep the GIF Maker v1 compact: multi-image upload/drop, sorted frames, shared hotspot/framing, and Windows `.ani` export
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
@@ -73,6 +76,7 @@ aliases:
 - `Phase 1.5 / STUDIO-RC-QA-01` complete: multi-slot background-decision gating, Windows package ZIP structure, and mixed CUR/ANI browser download were regression-tested and documented.
 - `WIN-INSTALLER-ZIP-01` complete enough for now: current ZIP + INF output, Windows install failure modes, and user-facing install wording were audited and clarified. `.exe` stays a deferred option.
 - `ANI-SOURCE-01` complete: GIF Maker is exposed as an empty-slot source, multiple PNG/JPG/WebP frames enter `ani-editing` as an `image-sequence`, backend/frontend sequence export is wired, and Korean/English source copy is synchronized. Evidence: `18d5b6a`, `66c7586`, `8b9d5ca`, `85b4c9c`, `5d860fa`, `3dc411f`.
+- `CONTENT-GROWTH-01` complete: Wave 0-3 content foundation adds top-level Tools/Guides hubs, intent pages for image-to-cursor and GIF-to-ANI, trust guides for Windows apply/hotspot/CUR-vs-ANI/blurry cursors, direct Studio workflow CTAs, sitemap coverage, and funnel analytics tests.
 
 ## Decision Follow-up
 
@@ -92,6 +96,8 @@ aliases:
 - 2026-04-24: A Windows `.exe` installer is worth tracking as an option, but should start as a feasibility spike because code signing, SmartScreen reputation, restore/uninstall behavior, and user trust are the main risks.
 - 2026-04-27: `ANI-SOURCE-01` is closed as a GIF Maker source slice. The source-maker pattern is now established as `source media -> ordered frames -> existing ANI editor -> Windows role export`; `Video to ANI` should reuse this path instead of creating a separate editor.
 - 2026-04-27: `Phase 2.5 / Theme Asset Foundation` is added as a queued future phase after Auth, project storage, 17-role generation, and install trust. It should start with folder icons, wallpaper export, and cursor/icon/wallpaper theme-pack drafts; it is not part of the current Phase 1.5 ANI scope.
+- 2026-04-27: Content Growth Wave 0-3 ships as tool and guide pages rather than blog posts. Search intent pages should route into Studio workflows and remain product-led.
+- 2026-04-27: Content Growth pages are now first-class UI entry points. Header and mobile menu expose `Tools` and `Guides`; `/tools` and `/guides` act as hubs before users drill into specific intent pages.
 
 ## Document Follow-up
 
@@ -117,6 +123,8 @@ aliases:
 | `plans/2026-04-24-windows-exe-installer-option.md` | Windows installer feasibility option | synced |
 | `plans/2026-04-25-studio-rc-qa-hardening.md` | Studio RC QA checklist and regression coverage scope | synced |
 | `plans/2026-04-26-windows-installer-feasibility-spike.md` | Windows installer feasibility spike plan | synced |
+| `plans/2026-04-27-page-cro-follow-up.md` | Landing/Studio/download conversion follow-up from page-cro review | synced |
+| `plans/2026-04-27-content-growth-foundation.md` | Wave 0-3 content growth implementation plan | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---

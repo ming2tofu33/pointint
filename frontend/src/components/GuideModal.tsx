@@ -168,6 +168,13 @@ export default function GuideModal({
         >
           <Link
             href="/explore"
+            onClick={() =>
+              trackEvent("post_download_cta_clicked", {
+                cta: "explore",
+                target: "/explore",
+                variant,
+              })
+            }
             style={{
               flex: "1 1 12rem",
               display: "inline-flex",

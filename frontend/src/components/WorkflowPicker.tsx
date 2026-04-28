@@ -7,6 +7,7 @@ import {
   type WorkflowOption,
   type WorkflowOptionId,
 } from "@/lib/studioWorkflow";
+import { trackEvent } from "@/lib/analytics";
 
 export interface WorkflowPickerProps {
   onSelectWorkflow?: (workflowId: WorkflowOptionId) => void;
@@ -113,7 +114,14 @@ function WorkflowCard({
       type="button"
       disabled={!isAvailable}
       aria-disabled={!isAvailable}
-      onClick={() => onSelectWorkflow?.(option.id)}
+      onClick={() => {
+        trackEvent("workflow_selected", {
+          availability: option.availability,
+          family: option.family,
+          workflow_id: option.id,
+        });
+        onSelectWorkflow?.(option.id);
+      }}
       style={{
         display: "flex",
         flexDirection: "column",

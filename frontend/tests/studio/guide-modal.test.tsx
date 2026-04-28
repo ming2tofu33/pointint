@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -68,6 +68,24 @@ describe("GuideModal", () => {
     expect(trackEventMock).toHaveBeenCalledWith("install_guide_opened", {
       source: "studio_download",
       variant: "package",
+    });
+  });
+
+  it("tracks the post-download Explore CTA", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <GuideModal open={true} onClose={() => {}} variant="ani" />
+      </NextIntlClientProvider>
+    );
+
+    const exploreLink = screen.getByRole("link", { name: "Open Explore" });
+    exploreLink.addEventListener("click", (event) => event.preventDefault());
+    fireEvent.click(exploreLink);
+
+    expect(trackEventMock).toHaveBeenCalledWith("post_download_cta_clicked", {
+      cta: "explore",
+      target: "/explore",
+      variant: "ani",
     });
   });
 
