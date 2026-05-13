@@ -43,8 +43,19 @@ describe("ImageTransformControls", () => {
     expect(screen.queryByText("Rotate 90")).not.toBeInTheDocument();
     expect(screen.queryByText("Flip H")).not.toBeInTheDocument();
     expect(screen.queryByText("Flip V")).not.toBeInTheDocument();
+    [
+      screen.getByRole("button", { name: "Rotate 90" }),
+      screen.getByRole("button", { name: "Flip H" }),
+      screen.getByRole("button", { name: "Flip V" }),
+    ].forEach((button) => {
+      expect(button).toHaveStyle({
+        width: "2.5rem",
+        minHeight: "2.5rem",
+        padding: "0.45rem",
+      });
+    });
     screen.getAllByTestId("image-transform-icon").forEach((icon) => {
-      expect(icon).toHaveStyle({ width: "1.45rem", height: "1.45rem" });
+      expect(icon).toHaveStyle({ width: "1.1rem", height: "1.1rem" });
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Rotate 90" }));

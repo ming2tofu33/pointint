@@ -6,6 +6,7 @@ import {
   STUDIO_INTERACTION_TRANSITION,
   default as StudioSurfaceCard,
 } from "@/components/StudioSurfaceCard";
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 
 interface StudioQuickStartProps {
   title: string;
@@ -72,46 +73,25 @@ export default function StudioQuickStart({
         flex: 1,
         minHeight: 0,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "clamp(1rem, 3vw, 2rem)",
+        alignItems: "stretch",
+        justifyContent: "stretch",
+        padding: "1rem",
         background: "var(--color-bg-primary)",
       }}
     >
       <div
-        style={{
-          width: "min(58rem, 100%)",
-          display: "grid",
-          gap: "0.9rem",
-        }}
-      >
-        <div style={{ display: "grid", gap: "0.35rem", textAlign: "left" }}>
-          <h1
-            style={{
-              margin: 0,
-              color: "var(--color-text-primary)",
-              fontSize: "1.55rem",
-              lineHeight: 1.1,
-              letterSpacing: "0",
-            }}
-          >
-            {title}
-          </h1>
-          <p
-            style={{
-              margin: 0,
-              maxWidth: "40rem",
-              color: "var(--color-text-secondary)",
-              fontSize: "0.875rem",
-              lineHeight: 1.5,
-            }}
-          >
-            {description}
-          </p>
-        </div>
-
+      style={{
+        width: "100%",
+        minHeight: 0,
+        display: "grid",
+        gridTemplateRows: animatedUploadLabel ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
+        gap: "0.85rem",
+      }}
+    >
         <QuickUploadSurface
           dataTestId="studio-quick-start-static"
+          title={title}
+          summary={description}
           label={staticUploadLabel}
           description={staticUploadDescription}
           accept=".png,.jpg,.jpeg,.webp"
@@ -151,6 +131,8 @@ export default function StudioQuickStart({
 
 function QuickUploadSurface({
   dataTestId,
+  title,
+  summary,
   label,
   description,
   accept,
@@ -160,6 +142,8 @@ function QuickUploadSurface({
   onFiles,
 }: {
   dataTestId: string;
+  title?: string;
+  summary?: string;
   label: string;
   description: string;
   accept: string;
@@ -200,74 +184,142 @@ function QuickUploadSurface({
   return (
     <StudioSurfaceCard
       data-testid={dataTestId}
+      data-drop-target="true"
       data-drag-active={isSurfaceDragActive}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       style={{
-        padding: isPrimary ? "0.75rem" : "0.6rem",
-        borderRadius: "0.35rem",
+        minHeight: 0,
+        padding: isPrimary ? "1.35rem" : "0.6rem",
+        borderRadius: "0",
         border: isSurfaceDragActive
           ? "1px solid color-mix(in srgb, var(--color-accent) 76%, white 8%)"
           : "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
-        backgroundColor: "var(--color-bg-secondary)",
+        backgroundColor: isSurfaceDragActive
+          ? "color-mix(in srgb, var(--color-accent) 7%, var(--color-bg-secondary))"
+          : "var(--color-bg-secondary)",
+        position: "relative",
+        overflow: "hidden",
+        display: "grid",
+        alignItems: "center",
+        justifyItems: "center",
         boxShadow: isSurfaceDragActive
           ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent)"
           : "none",
         transition: STUDIO_INTERACTION_TRANSITION,
       }}
+      onPointerMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+        e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+      }}
     >
-      <button
-        type="button"
-        aria-label={label}
-        onClick={() => inputRef.current?.click()}
+      {isPrimary && <InteractiveDotBackground baseColor="color-mix(in srgb, var(--color-text-primary) 13%, transparent)" />}
+      <div
+        data-testid={`${dataTestId}-content`}
         style={{
           width: "100%",
-          minHeight: isPrimary ? "20rem" : "4rem",
-          border: isPrimary
-            ? "1px dashed color-mix(in srgb, var(--color-border) 76%, white 6%)"
-            : "1px solid transparent",
-          borderRadius: "0.25rem",
-          backgroundColor: isSurfaceDragActive
-            ? "color-mix(in srgb, var(--color-accent) 13%, rgba(255,255,255,0.035))"
-            : isPrimary
-              ? "var(--color-bg-primary)"
-              : "transparent",
-          color: "var(--color-text-primary)",
-          cursor: "pointer",
           display: "grid",
-          placeItems: "center",
-          padding: isPrimary ? "2rem" : "0.65rem",
+          justifyItems: "center",
+          gap: isPrimary ? "1.4rem" : "0.35rem",
           textAlign: "center",
-          transition: STUDIO_INTERACTION_TRANSITION,
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <span style={{ display: "grid", gap: isPrimary ? "0.9rem" : "0.25rem" }}>
+        {title || summary ? (
           <span
-            aria-hidden="true"
+            data-testid={`${dataTestId}-copy`}
             style={{
-              margin: "0 auto",
-              width: isPrimary ? "4.5rem" : "2rem",
-              height: isPrimary ? "4.5rem" : "2rem",
-              borderRadius: "0.25rem",
               display: "grid",
-              placeItems: "center",
-              backgroundColor: "var(--color-accent-subtle)",
-              color: "var(--color-accent)",
-              fontSize: isPrimary ? "2.4rem" : "1.2rem",
-              lineHeight: 1,
+              gap: "0.45rem",
+              justifyItems: "center",
+              maxWidth: "34rem",
+              backgroundColor:
+                "color-mix(in srgb, var(--color-bg-secondary) 86%, transparent)",
+              padding: "0.4rem 0.55rem",
             }}
           >
-            +
+            {title ? (
+              <h1
+                style={{
+                  margin: 0,
+                  color: "var(--color-text-primary)",
+                  fontSize: "1.18rem",
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  letterSpacing: "0",
+                }}
+              >
+                {title}
+              </h1>
+            ) : null}
+            {summary ? (
+              <p
+                style={{
+                  margin: 0,
+                  color: "var(--color-text-secondary)",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.45,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {summary}
+              </p>
+            ) : null}
           </span>
+        ) : null}
+
+        <button
+          data-testid={`${dataTestId}-click-target`}
+          type="button"
+          aria-label={label}
+          onClick={() => inputRef.current?.click()}
+          style={{
+            width: isPrimary ? "min(100%, 17rem)" : "min(100%, 15rem)",
+            minHeight: isPrimary ? "6rem" : "3.5rem",
+            border: "1px solid var(--color-border)",
+            borderRadius: "0",
+            backgroundColor: isSurfaceDragActive
+              ? "color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-primary))"
+              : "var(--color-bg-primary)",
+            color: "var(--color-text-primary)",
+            cursor: "pointer",
+            display: "grid",
+            placeItems: "center",
+            padding: isPrimary ? "0.85rem" : "0.65rem",
+            textAlign: "center",
+            transition: STUDIO_INTERACTION_TRANSITION,
+          }}
+        >
           <span
             style={{
               display: "grid",
-              gap: "0.25rem",
+              gap: isPrimary ? "0.42rem" : "0.25rem",
               justifyItems: "center",
             }}
           >
+            <span
+              aria-hidden="true"
+              style={{
+                margin: "0 auto",
+                width: isPrimary ? "2rem" : "1.5rem",
+                height: isPrimary ? "2rem" : "1.5rem",
+                borderRadius: "0.25rem",
+                display: "grid",
+                placeItems: "center",
+                backgroundColor: "var(--color-accent-subtle)",
+                color: "var(--color-accent)",
+                fontSize: isPrimary ? "1.15rem" : "0.9rem",
+                lineHeight: 1,
+              }}
+            >
+              +
+            </span>
             <span style={{ fontSize: isPrimary ? "1rem" : "0.8rem", fontWeight: 760 }}>
               {label}
             </span>
@@ -282,8 +334,8 @@ function QuickUploadSurface({
               {description}
             </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
 
       <input
         ref={inputRef}

@@ -175,7 +175,7 @@ export default function SlotRail({
       data-testid="slot-rail"
       aria-label={t("slotRailTitle")}
       style={{
-        width: "14.5rem",
+        width: "4.25rem",
         borderRight: "1px solid var(--color-border)",
         backgroundColor: "var(--color-bg-secondary)",
         flexShrink: 0,
@@ -194,10 +194,11 @@ export default function SlotRail({
           overflowY: "auto",
           overflowX: "hidden",
           scrollbarGutter: "stable",
-          padding: "0.875rem 0.7rem",
+          padding: "0.75rem 0.55rem",
           display: "grid",
-          gap: "0.5rem",
+          gap: "0.45rem",
           alignContent: "start",
+          justifyItems: "center",
         }}
       >
         {visibleDefinitions.map((definition, index) => {
@@ -243,12 +244,13 @@ export default function SlotRail({
                   aria-controls="slot-rail-additional"
                   onClick={() => setShowAdditionalRoles((current) => !current)}
                   style={{
-                    width: "100%",
+                    width: "3rem",
+                    minHeight: "2.35rem",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "0.75rem",
-                    padding: "0.65rem 0.75rem",
+                    justifyContent: "center",
+                    gap: 0,
+                    padding: 0,
                     borderRadius: "0.25rem",
                     border: `1px solid ${
                       showAdditionalRoles ? "var(--color-accent)" : "var(--color-border)"
@@ -258,15 +260,18 @@ export default function SlotRail({
                       : "var(--color-bg-primary)",
                     color: "var(--color-text-primary)",
                     cursor: "pointer",
-                    textAlign: "left",
+                    textAlign: "center",
                     transition: STUDIO_INTERACTION_TRANSITION,
                   }}
                 >
                   <span
                     style={{
-                      display: "grid",
-                      gap: "0.125rem",
-                      minWidth: 0,
+                      position: "absolute",
+                      width: "1px",
+                      height: "1px",
+                      overflow: "hidden",
+                      clipPath: "inset(50%)",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     <span
@@ -346,17 +351,22 @@ function SlotRailCard({
       type="button"
       data-testid={`slot-${slotId}`}
       aria-pressed={selected}
+      aria-label={`${title}. ${statusLabel}. ${kindLabel}`}
+      title={`${title} - ${hint}`}
       onClick={onSelect}
       style={{
+        position: "relative",
         display: "flex",
-        width: "100%",
-        alignItems: "flex-start",
-        gap: "0.65rem",
-        padding: "0.65rem",
-        minHeight: "4.25rem",
+        width: "3rem",
+        minWidth: "3rem",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 0,
+        padding: 0,
+        minHeight: "3rem",
         borderRadius: "0.25rem",
         border: `1px solid ${selected ? "var(--color-accent)" : "var(--color-border)"}`,
-        borderLeft: selected ? "3px solid var(--color-accent)" : "1px solid var(--color-border)",
+        borderLeft: `1px solid ${selected ? "var(--color-accent)" : "var(--color-border)"}`,
         backgroundColor: selected ? "var(--color-accent-subtle)" : "var(--color-bg-primary)",
         boxShadow: "none",
         color: "var(--color-text-primary)",
@@ -371,17 +381,23 @@ function SlotRailCard({
           width: "2rem",
           flexShrink: 0,
           display: "grid",
-          gap: "0.25rem",
-          alignContent: "start",
+          gap: 0,
+          alignContent: "center",
         }}
       >
         {selected ? (
           <span
             data-testid={`slot-selected-badge-${slotId}`}
             style={{
-              fontSize: "0.5625rem",
-              padding: "0.125rem 0.25rem",
-              borderRadius: "0",
+              position: "absolute",
+              top: "0.25rem",
+              right: "0.25rem",
+              width: "0.42rem",
+              height: "0.42rem",
+              overflow: "hidden",
+              fontSize: 0,
+              padding: 0,
+              borderRadius: "999px",
               backgroundColor: "rgba(38, 132, 255, 0.16)",
               color: "var(--color-accent)",
               lineHeight: 1.2,
@@ -394,9 +410,15 @@ function SlotRailCard({
           <span
             aria-hidden="true"
             style={{
-              fontSize: "0.5625rem",
-              padding: "0.125rem 0.25rem",
-              borderRadius: "0",
+              position: "absolute",
+              top: "0.25rem",
+              right: "0.25rem",
+              width: "0.42rem",
+              height: "0.42rem",
+              overflow: "hidden",
+              fontSize: 0,
+              padding: 0,
+              borderRadius: "999px",
               visibility: "hidden",
               lineHeight: 1.2,
               justifySelf: "start",
@@ -425,34 +447,36 @@ function SlotRailCard({
             position: "relative",
           }}
         >
-          {slot.asset.previewUrl ? (
-            <img
-              src={slot.asset.previewUrl}
-              alt=""
-              aria-hidden="true"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                display: "block",
-              }}
+          <span
+            style={{
+              width: "1.1rem",
+              height: "1.1rem",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: selected
+                ? "color-mix(in srgb, var(--color-accent) 78%, white 8%)"
+                : "var(--color-text-muted)",
+              lineHeight: 1,
+            }}
+          >
+            <SlotContextGlyph
+              glyphSrc={glyphSrc}
+              slotId={slotId}
+              glyphTheme={glyphTheme}
             />
-          ) : (
-            <span
-              style={{
-                fontSize: "0.875rem",
-                color: "var(--color-text-muted)",
-                lineHeight: 1,
-              }}
-            >
-              +
-            </span>
-          )}
+          </span>
         </div>
       </div>
 
       <div
         style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          clipPath: "inset(50%)",
+          whiteSpace: "nowrap",
           minWidth: 0,
           flex: 1,
           display: "grid",
@@ -504,11 +528,6 @@ function SlotRailCard({
                 : "var(--color-text-muted)",
             }}
             >
-              <SlotContextGlyph
-                glyphSrc={glyphSrc}
-                slotId={slotId}
-                glyphTheme={glyphTheme}
-              />
             </span>
           <span
             style={{

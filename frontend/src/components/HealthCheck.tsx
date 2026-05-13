@@ -47,53 +47,108 @@ export default function HealthCheck({
     warn: t("warn"),
     fail: t("fail"),
   };
+  const aggregateStatus = getAggregateStatus([
+    health.visibility,
+    health.hotspot,
+    health.readability,
+  ]);
 
   return (
-    <div>
-      <h3
+    <details
+      data-testid="health-check"
+      style={{
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-bg-primary)",
+      }}
+    >
+      <summary
         style={{
-          fontSize: "0.6875rem",
-          fontWeight: 600,
-          color: "var(--color-text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: "0.75rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+          padding: "0.55rem 0.65rem",
+          cursor: "pointer",
+          listStyle: "none",
+          fontSize: "0.75rem",
         }}
       >
-        {t("title")}
-      </h3>
+        <span
+          style={{
+            color: "var(--color-text-primary)",
+            fontWeight: 650,
+          }}
+        >
+          {t("title")}
+        </span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            color: STATUS_COLORS[aggregateStatus] || "var(--color-text-muted)",
+            fontWeight: 700,
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: "0.45rem",
+              height: "0.45rem",
+              borderRadius: "999px",
+              backgroundColor:
+                STATUS_COLORS[aggregateStatus] || "var(--color-text-muted)",
+            }}
+          />
+          {statusLabels[aggregateStatus] || aggregateStatus}
+        </span>
+      </summary>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.375rem",
+          padding: "0 0.65rem 0.65rem",
+        }}
+      >
         <HealthRow label={t("visibility")} status={health.visibility} statusLabels={statusLabels} />
         <HealthRow label={t("hotspot")} status={health.hotspot} statusLabels={statusLabels} />
         <HealthRow label={t("readability")} status={health.readability} statusLabels={statusLabels} />
-      </div>
 
-      {health.messages.length > 0 && (
-        <div
-          style={{
-            marginTop: "0.625rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.25rem",
-          }}
-        >
-          {health.messages.map((msg, i) => (
-            <p
-              key={i}
-              style={{
-                fontSize: "0.6875rem",
-                color: "var(--color-warning)",
-                lineHeight: 1.4,
-              }}
-            >
-              {msg}
-            </p>
-          ))}
-        </div>
-      )}
-    </div>
+        {health.messages.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.25rem",
+              paddingTop: "0.25rem",
+            }}
+          >
+            {health.messages.map((msg, i) => (
+              <p
+                key={i}
+                style={{
+                  margin: 0,
+                  fontSize: "0.6875rem",
+                  color: "var(--color-warning)",
+                  lineHeight: 1.4,
+                }}
+              >
+                {msg}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </details>
   );
+}
+
+function getAggregateStatus(statuses: string[]) {
+  if (statuses.includes("fail")) return "fail";
+  if (statuses.includes("warn")) return "warn";
+  return "pass";
 }
 
 function HealthRow({ label, status, statusLabels }: { label: string; status: string; statusLabels: Record<string, string> }) {

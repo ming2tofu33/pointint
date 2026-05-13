@@ -8,7 +8,7 @@ describe("StudioQuickStart", () => {
     render(
       <StudioQuickStart
         title="Drop an image. Get a cursor."
-        description="Pointint picks the defaults."
+        description={"Pointint picks the defaults.\nFine-tune later."}
         staticUploadLabel="Choose image"
         staticUploadDescription="PNG, JPG, JPEG, or WebP"
         onStaticFile={vi.fn()}
@@ -19,7 +19,44 @@ describe("StudioQuickStart", () => {
     expect(
       screen.getByRole("button", { name: "Choose image" })
     ).toBeVisible();
+    expect(screen.getByText(/Pointint picks the defaults/)).toHaveStyle({
+      whiteSpace: "pre-line",
+    });
+    expect(screen.getByText(/Pointint picks the defaults/).textContent).toBe(
+      "Pointint picks the defaults.\nFine-tune later."
+    );
     expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
+  });
+
+  it("keeps the drop region broad while making the click target compact", () => {
+    render(
+      <StudioQuickStart
+        title="Drop an image. Get a cursor."
+        description="Pointint picks the defaults."
+        staticUploadLabel="Choose image"
+        staticUploadDescription="PNG, JPG, JPEG, or WebP"
+        onStaticFile={vi.fn()}
+      />
+    );
+
+    const region = screen.getByTestId("studio-quick-start");
+    const surface = screen.getByTestId("studio-quick-start-static");
+    const clickTarget = screen.getByTestId(
+      "studio-quick-start-static-click-target"
+    );
+
+    expect(region).toHaveStyle({
+      flex: "1",
+    });
+    expect(surface).toHaveAttribute("data-drop-target", "true");
+    expect(clickTarget).toHaveStyle({
+      width: "min(100%, 17rem)",
+      minHeight: "6rem",
+    });
+    expect(clickTarget).not.toHaveStyle({
+      width: "100%",
+      minHeight: "100%",
+    });
   });
 
   it("passes the first valid static file from the primary upload input", () => {

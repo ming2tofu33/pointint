@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 
 const INVALID_CHARS = /[\\/:*?"<>|]/;
@@ -10,12 +11,25 @@ interface NameInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  ariaLabel?: string;
+  variant?: "default" | "stageTitle";
+  containerStyle?: CSSProperties;
+  inputStyle?: CSSProperties;
 }
 
-export default function NameInput({ value, onChange, placeholder }: NameInputProps) {
+export default function NameInput({
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+  variant = "default",
+  containerStyle,
+  inputStyle,
+}: NameInputProps) {
   const [warning, setWarning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const t = useTranslations("panel");
+  const isStageTitle = variant === "stageTitle";
 
   function handleChange(raw: string) {
     if (INVALID_CHARS.test(raw)) {
@@ -37,21 +51,35 @@ export default function NameInput({ value, onChange, placeholder }: NameInputPro
   }, []);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", ...containerStyle }}>
       <input
         type="text"
+        aria-label={ariaLabel}
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         maxLength={64}
         style={{
           width: "100%",
-          fontSize: "0.8125rem",
-          padding: "0.375rem 0.5rem",
-          backgroundColor: "var(--color-input-surface)",
-          border: `1px solid ${warning ? "var(--color-warning)" : "var(--color-border)"}`,
+          fontSize: isStageTitle ? "0.9375rem" : "0.8125rem",
+          fontWeight: isStageTitle ? 700 : undefined,
+          lineHeight: isStageTitle ? 1.2 : undefined,
+          padding: isStageTitle ? "0.05rem 0" : "0.375rem 0.5rem",
+          backgroundColor: isStageTitle
+            ? "transparent"
+            : "var(--color-input-surface)",
+          border: isStageTitle
+            ? "1px solid transparent"
+            : `1px solid ${warning ? "var(--color-warning)" : "var(--color-border)"}`,
+          borderBottom: isStageTitle
+            ? `1px solid ${warning ? "var(--color-warning)" : "transparent"}`
+            : undefined,
           color: "var(--color-text-primary)",
           transition: "border-color 0.2s",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          ...inputStyle,
         }}
       />
 

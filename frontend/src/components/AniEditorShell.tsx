@@ -12,21 +12,21 @@ import CanvasViewZoomControl, {
 import type { SimulationThemeMode } from "@/components/CursorSimulationSurface";
 import FramedCursorPreview from "@/components/FramedCursorPreview";
 import ImageTransformControls from "@/components/ImageTransformControls";
-import NameInput from "@/components/NameInput";
 import SimulationThemeModeSwitch from "@/components/SimulationThemeModeSwitch";
 import SimulationSceneContextHint from "@/components/SimulationSceneContextHint";
 import SimulationSceneTabs from "@/components/SimulationSceneTabs";
 import SlotRail from "@/components/SlotRail";
 import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import SimulationFooter from "@/components/SimulationFooter";
-import StudioSelectionSummary from "@/components/StudioSelectionSummary";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
   StudioInspectorGroup,
-  StudioInspectorNumberField,
+  StudioInspectorPreviewStrip,
   StudioInspectorRow,
   StudioInspectorSection,
   StudioInspectorSegmentedControl,
+  StudioInspectorSizeSummary,
+  StudioInspectorSliderControl,
   StudioInspectorTextAction,
 } from "@/components/StudioInspector";
 import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
@@ -257,14 +257,12 @@ export default function AniEditorShell({
   const handleImageTransform = (action: ImageTransformAction) =>
     onImageTransform(action, activeEditScope);
   const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
-  const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "ANI";
-  const stageHotspotBadge =
-    ani && ani.hotspotMode === "auto" ? tp("recommended") : tp("manual");
   const stageKindSummary = selectedSlot.kind
     ? selectedSlot.kind === "static"
       ? t("slotStatic")
       : t("slotAnimated")
     : t("slotKindUnset");
+  const stageFormatSummary = ani ? t("slotAnimated") : stageKindSummary;
   const slotSimulationSources = useMemo(
     () => buildProjectSlotSimulationSources(project),
     [project]
@@ -341,19 +339,16 @@ export default function AniEditorShell({
                 >
                   <StudioStageHeader
                     slotLabel={stageSlotLabel}
-                    typeLabel={stageTypeLabel}
+                    showSlotLabel={false}
                     cursorName={ani.cursorName}
-                    statusBadge={stageHotspotBadge}
-                    actions={
-                      <CanvasViewZoomControl
-                        value={canvasViewZoom}
-                        onChange={onCanvasViewZoomChange}
-                      />
-                    }
+                    cursorNameLabel={tp("name")}
+                    cursorNamePlaceholder={tp("namePlaceholder")}
+                    onCursorNameChange={onAniNameChange}
                     style={{ padding: 0 }}
                   />
 
                   <div
+                    data-testid="studio-stage-canvas"
                     style={{
                       flex: 1,
                       minHeight: 0,
@@ -361,6 +356,14 @@ export default function AniEditorShell({
                       alignItems: "center",
                       justifyContent: "center",
                       overflow: "hidden",
+                      border: "1px solid var(--color-border)",
+                      backgroundColor: "var(--color-bg-secondary)",
+                      backgroundImage:
+                        "radial-gradient(color-mix(in srgb, var(--color-text-primary) 14%, transparent) 1px, transparent 1px)",
+                      backgroundSize: "20px 20px",
+                      padding: "1.25rem",
+                      position: "relative",
+                      boxShadow: "none",
                     }}
                   >
                     <CursorCanvas
@@ -383,6 +386,81 @@ export default function AniEditorShell({
                       onHotspotPickComplete={() => onSetHotspotPickActive(false)}
                       viewScale={canvasViewZoom}
                     />
+
+                    <div
+                      data-testid="studio-stage-actions"
+                      style={{
+                        position: "absolute",
+                        left: "50%",
+                        bottom: "1rem",
+                        transform: "translateX(-50%)",
+                        zIndex: 5,
+                        display: "flex",
+                        alignItems: "center",
+                        alignContent: "center",
+                        justifyContent: "center",
+                        flexWrap: "wrap",
+                        gap: "0.5rem",
+                        width: "max-content",
+                        maxWidth: "calc(100% - 0.75rem)",
+                        boxSizing: "border-box",
+                        border: "1px solid var(--color-border)",
+                        backgroundColor:
+                          "color-mix(in srgb, var(--color-bg-secondary) 92%, rgba(20,24,32,0.08))",
+                        color: "var(--color-text-primary)",
+                        boxShadow: "none",
+                        padding: "0.45rem",
+                      }}
+                    >
+                      <StudioStageActionBar
+                        actions={[
+                          {
+                            id: "ani-pick-hotspot",
+                            label: hotspotPickActive
+                              ? t("clickToSetHotspot")
+                              : tp("hotspot"),
+                            onClick: () =>
+                              onSetHotspotPickActive(!hotspotPickActive),
+                            title: hotspotPickActive
+                              ? t("clickToSetHotspot")
+                              : tp("hotspot"),
+                            ariaLabel: hotspotPickActive
+                              ? t("clickToSetHotspot")
+                              : tp("hotspot"),
+                            group: "tool",
+                            tone: hotspotPickActive
+                              ? ("accent" as const)
+                              : ("default" as const),
+                          },
+                          {
+                            id: "ani-undo",
+                            label: t("undo"),
+                            onClick: onUndo,
+                            disabled: !canUndo,
+                            title: t("undoShortcut"),
+                            ariaLabel: t("undoShortcut"),
+                            group: "history",
+                            icon: <UndoArrowIcon />,
+                            shortcutHint: "Ctrl+Z",
+                          },
+                          {
+                            id: "ani-redo",
+                            label: t("redo"),
+                            onClick: onRedo,
+                            disabled: !canRedo,
+                            title: t("redoShortcut"),
+                            ariaLabel: t("redoShortcut"),
+                            group: "history",
+                            icon: <RedoArrowIcon />,
+                            shortcutHint: "Ctrl+Y",
+                          },
+                        ]}
+                      />
+                      <CanvasViewZoomControl
+                        value={canvasViewZoom}
+                        onChange={onCanvasViewZoomChange}
+                      />
+                    </div>
                   </div>
 
                   {ani.sourceKind === "image-sequence" &&
@@ -425,9 +503,9 @@ export default function AniEditorShell({
                   ) : null}
 
                   <div
-                    data-testid="studio-stage-actions"
+                    aria-hidden="true"
                     style={{
-                      display: "flex",
+                      display: "none",
                       flexDirection: "column",
                       gap: "0.75rem",
                       borderTop: "1px solid var(--color-border)",
@@ -601,18 +679,7 @@ export default function AniEditorShell({
         }}
         summary={
           selectedSlotBound && ani ? (
-            <StudioSelectionSummary
-              slotLabelTitle={t("slotRailTitle")}
-              slotLabel={stageSlotLabel}
-              cursorLabelTitle={tp("cursor")}
-              cursorName={ani.cursorName}
-              statusLabelTitle={tp("status")}
-              statusLabel={
-                ani.hotspotMode === "auto" ? tp("recommended") : tp("manual")
-              }
-              typeLabelTitle={t("slotTypeLabel")}
-              typeLabel={stageKindSummary}
-            />
+            null
           ) : (
             <StudioInspectorCompactGuidance
               title={t("slotEmptyTitle")}
@@ -620,61 +687,6 @@ export default function AniEditorShell({
               lines={[t("slotStaticUploadSub"), t("slotAniUploadSub")]}
             />
           )
-        }
-        previews={
-          selectedSlotBound && ani ? (
-            <div style={{ display: "grid", gap: "0.75rem" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "0.5rem",
-                }}
-              >
-                <ActualSizePreview
-                  background="#ffffff"
-                  border="1px solid var(--color-border)"
-                >
-                  <FramedCursorPreview
-                    imageUrl={activeImageUrl}
-                    sourceWidth={activeSourceWidth}
-                    sourceHeight={activeSourceHeight}
-                    fitMode={activeEdit.fitMode}
-                    offsetX={activeEdit.offsetX}
-                    offsetY={activeEdit.offsetY}
-                    scale={activeEdit.scale}
-                    rotation={activeEdit.rotation}
-                    flipX={activeEdit.flipX}
-                    flipY={activeEdit.flipY}
-                    viewportSize={ani.cursorSize}
-                    alt={tp("lightPreview")}
-                  />
-                </ActualSizePreview>
-                <ActualSizePreview
-                  background="#1a1a1a"
-                  border="1px solid var(--color-border)"
-                >
-                  <FramedCursorPreview
-                    imageUrl={activeImageUrl}
-                    sourceWidth={activeSourceWidth}
-                    sourceHeight={activeSourceHeight}
-                    fitMode={activeEdit.fitMode}
-                    offsetX={activeEdit.offsetX}
-                    offsetY={activeEdit.offsetY}
-                    scale={activeEdit.scale}
-                    rotation={activeEdit.rotation}
-                    flipX={activeEdit.flipX}
-                    flipY={activeEdit.flipY}
-                    viewportSize={ani.cursorSize}
-                    alt={tp("darkPreview")}
-                  />
-                </ActualSizePreview>
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                {tp("actualSize")}
-              </div>
-            </div>
-          ) : null
         }
       >
         {error && (
@@ -688,11 +700,75 @@ export default function AniEditorShell({
 
         {selectedSlotBound && ani ? (
           <>
+            <StudioInspectorGroup data-testid="studio-inspector-group-current">
+              <StudioInspectorSection title={tp("currentCursor")}>
+                <StudioInspectorRow
+                  label={tp("role")}
+                  value={stageSlotLabel}
+                />
+                <StudioInspectorRow
+                  label={tp("fileName")}
+                  value={ani.cursorName}
+                />
+                <StudioInspectorRow
+                  label={tp("format")}
+                  value={stageFormatSummary}
+                />
+              </StudioInspectorSection>
+            </StudioInspectorGroup>
+
             <StudioInspectorGroup data-testid="studio-inspector-group-image">
               <StudioInspectorSection title={tp("output")}>
+                <StudioInspectorPreviewStrip label={tp("actualSize")}>
+                  <ActualSizePreview
+                    background="#ffffff"
+                    border="1px solid var(--color-border)"
+                  >
+                    <FramedCursorPreview
+                      imageUrl={activeImageUrl}
+                      sourceWidth={activeSourceWidth}
+                      sourceHeight={activeSourceHeight}
+                      fitMode={activeEdit.fitMode}
+                      offsetX={activeEdit.offsetX}
+                      offsetY={activeEdit.offsetY}
+                      scale={activeEdit.scale}
+                      rotation={activeEdit.rotation}
+                      flipX={activeEdit.flipX}
+                      flipY={activeEdit.flipY}
+                      viewportSize={ani.cursorSize}
+                      alt={tp("lightPreview")}
+                    />
+                  </ActualSizePreview>
+                  <ActualSizePreview
+                    background="#1a1a1a"
+                    border="1px solid var(--color-border)"
+                  >
+                    <FramedCursorPreview
+                      imageUrl={activeImageUrl}
+                      sourceWidth={activeSourceWidth}
+                      sourceHeight={activeSourceHeight}
+                      fitMode={activeEdit.fitMode}
+                      offsetX={activeEdit.offsetX}
+                      offsetY={activeEdit.offsetY}
+                      scale={activeEdit.scale}
+                      rotation={activeEdit.rotation}
+                      flipX={activeEdit.flipX}
+                      flipY={activeEdit.flipY}
+                      viewportSize={ani.cursorSize}
+                      alt={tp("darkPreview")}
+                    />
+                  </ActualSizePreview>
+                </StudioInspectorPreviewStrip>
                 <StudioInspectorRow
-                  label={tp("original")}
-                  value={`${ani.sourceWidth} x ${ani.sourceHeight}`}
+                  label={tp("sizeSummary")}
+                  value={
+                    <StudioInspectorSizeSummary
+                      sourceLabel={tp("sourceSize")}
+                      sourceValue={`${ani.sourceWidth} x ${ani.sourceHeight}`}
+                      outputLabel={tp("outputSize")}
+                      outputValue={`${ani.cursorSize} x ${ani.cursorSize}`}
+                    />
+                  }
                 />
                 <StudioInspectorSegmentedControl
                   value={ani.cursorSize}
@@ -701,9 +777,6 @@ export default function AniEditorShell({
                   ariaLabel={tp("output")}
                   getLabel={(size) => `${size}`}
                 />
-              </StudioInspectorSection>
-
-              <StudioInspectorSection title={tp("framing")}>
                 <StudioInspectorSegmentedControl
                   value={activeEdit.fitMode}
                   options={["contain", "cover"] as const}
@@ -714,18 +787,21 @@ export default function AniEditorShell({
                   }
                 />
               </StudioInspectorSection>
+            </StudioInspectorGroup>
 
-              <StudioInspectorSection title={tp("imageTransform")}>
-                <ImageTransformControls
-                  rotation={activeEdit.rotation}
-                  flipX={activeEdit.flipX}
-                  flipY={activeEdit.flipY}
-                  onTransform={handleImageTransform}
-                />
-              </StudioInspectorSection>
-
-              {supportsFrameEditScope ? (
-                <StudioInspectorSection title={tp("editScope")}>
+            <StudioInspectorGroup data-testid="studio-inspector-group-adjust">
+              <StudioInspectorSection
+                title={tp("adjust")}
+                action={
+                  <StudioInspectorTextAction
+                    variant="button"
+                    onClick={() => handleOffsetChange(0, 0)}
+                  >
+                    {tp("center")}
+                  </StudioInspectorTextAction>
+                }
+              >
+                {supportsFrameEditScope ? (
                   <StudioInspectorSegmentedControl
                     value={activeEditScope}
                     options={["all-frames", "selected-frame"] as const}
@@ -737,148 +813,107 @@ export default function AniEditorShell({
                         : tp("selectedFrame")
                     }
                   />
-                </StudioInspectorSection>
-              ) : null}
-
-              <StudioInspectorSection title={tp("name")}>
-                <NameInput
-                  value={ani.cursorName}
-                  onChange={onAniNameChange}
-                  placeholder={tp("namePlaceholder")}
+                ) : null}
+                <ImageTransformControls
+                  rotation={activeEdit.rotation}
+                  flipX={activeEdit.flipX}
+                  flipY={activeEdit.flipY}
+                  onTransform={handleImageTransform}
                 />
-              </StudioInspectorSection>
-            </StudioInspectorGroup>
-
-            <StudioInspectorGroup data-testid="studio-inspector-group-transform">
-                <StudioInspectorSection
-                  title={tp("hotspot")}
-                  action={
-                    <StudioInspectorTextAction onClick={onRecommendHotspot}>
-                      {ani.hotspotMode === "auto"
-                        ? tp("recommendHotspotAgain")
-                        : tp("recommendHotspot")}
-                    </StudioInspectorTextAction>
-                  }
-                >
+                <StudioInspectorSliderControl
+                  label={tp("scale")}
+                  value={activeEdit.scale}
+                  valueLabel={`${Math.round(activeEdit.scale * 100)}%`}
+                  editValue={String(Math.round(activeEdit.scale * 100))}
+                  min={0.25}
+                  max={3}
+                  step={0.05}
+                  onChange={handleScaleChange}
+                  onCommit={onEndContinuousHistoryAction}
+                  parseEditValue={(draft) => Number(draft) / 100}
+                />
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "0.5rem",
+                    gap: "0.55rem",
                   }}
                 >
-                  <StudioInspectorNumberField
-                    label={tp("hotspotX")}
-                    aria-label={tp("hotspotX")}
-                    value={ani.hotspotX}
+                  <StudioInspectorSliderControl
+                    label={tp("offsetX")}
+                    aria-label={tp("offsetX")}
+                    value={activeEdit.offsetX}
+                    valueLabel={activeEdit.offsetX}
+                    min={-128}
+                    max={128}
                     step={1}
-                    onChange={(event) => {
-                      const nextX = Number(event.target.value);
-                      onHotspotChange(
-                        Number.isFinite(nextX) ? nextX : 0,
-                        ani.hotspotY
-                      );
-                    }}
+                    onChange={(nextX) =>
+                      handleOffsetChange(nextX, activeEdit.offsetY)
+                    }
+                    onCommit={onEndContinuousHistoryAction}
                   />
-                  <StudioInspectorNumberField
-                    label={tp("hotspotY")}
-                    aria-label={tp("hotspotY")}
-                    value={ani.hotspotY}
+                  <StudioInspectorSliderControl
+                    label={tp("offsetY")}
+                    aria-label={tp("offsetY")}
+                    value={activeEdit.offsetY}
+                    valueLabel={activeEdit.offsetY}
+                    min={-128}
+                    max={128}
                     step={1}
-                    onChange={(event) => {
-                      const nextY = Number(event.target.value);
-                      onHotspotChange(
-                        ani.hotspotX,
-                        Number.isFinite(nextY) ? nextY : 0
-                      );
-                    }}
+                    onChange={(nextY) =>
+                      handleOffsetChange(activeEdit.offsetX, nextY)
+                    }
+                    onCommit={onEndContinuousHistoryAction}
                   />
-                </div>
-                <StudioInspectorRow
-                  label={tp("position")}
-                  value={`${ani.hotspotX}, ${ani.hotspotY}`}
-                />
-                <StudioInspectorRow
-                  label={tp("status")}
-                  value={
-                    ani.hotspotMode === "auto" ? tp("recommended") : tp("manual")
-                  }
-                />
-              </StudioInspectorSection>
-
-              <StudioInspectorSection title={tp("scale")}>
-                <input
-                  type="range"
-                  min="0.25"
-                  max="3"
-                  step="0.05"
-                  value={activeEdit.scale}
-                  onChange={(e) => handleScaleChange(Number(e.target.value))}
-                  onPointerUp={onEndContinuousHistoryAction}
-                  onPointerCancel={onEndContinuousHistoryAction}
-                  onBlur={onEndContinuousHistoryAction}
-                  style={{
-                    width: "100%",
-                    accentColor: "var(--color-accent)",
-                  }}
-                />
-                <div
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "var(--color-text-muted)",
-                    textAlign: "right",
-                    marginTop: "0.25rem",
-                  }}
-                >
-                  {Math.round(activeEdit.scale * 100)}%
                 </div>
               </StudioInspectorSection>
 
               <StudioInspectorSection
-                title={tp("position")}
+                title={tp("hotspot")}
                 action={
                   <StudioInspectorTextAction
-                    onClick={() => handleOffsetChange(0, 0)}
+                    variant="button"
+                    onClick={onRecommendHotspot}
                   >
-                    {tp("center")}
+                    {ani.hotspotMode === "auto"
+                      ? tp("recommendHotspotAgain")
+                      : tp("recommendHotspot")}
                   </StudioInspectorTextAction>
                 }
               >
+                <HotspotModeBadge>
+                  {ani.hotspotMode === "auto"
+                    ? tp("autoHotspot")
+                    : tp("manualHotspot")}
+                </HotspotModeBadge>
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "0.5rem",
+                    gap: "0.55rem",
                   }}
                 >
-                  <StudioInspectorNumberField
-                    label={tp("offsetX")}
-                    aria-label={tp("offsetX")}
-                    value={activeEdit.offsetX}
+                  <StudioInspectorSliderControl
+                    label={tp("hotspotX")}
+                    aria-label={tp("hotspotX")}
+                    value={ani.hotspotX}
+                    valueLabel={ani.hotspotX}
+                    min={0}
+                    max={255}
                     step={1}
-                    onChange={(event) => {
-                      const nextX = Number(event.target.value);
-                      handleOffsetChange(
-                        Number.isFinite(nextX) ? nextX : 0,
-                        activeEdit.offsetY
-                      );
-                    }}
+                    onChange={(nextX) => onHotspotChange(nextX, ani.hotspotY)}
                   />
-                  <StudioInspectorNumberField
-                    label={tp("offsetY")}
-                    aria-label={tp("offsetY")}
-                    value={activeEdit.offsetY}
+                  <StudioInspectorSliderControl
+                    label={tp("hotspotY")}
+                    aria-label={tp("hotspotY")}
+                    value={ani.hotspotY}
+                    valueLabel={ani.hotspotY}
+                    min={0}
+                    max={255}
                     step={1}
-                    onChange={(event) => {
-                      const nextY = Number(event.target.value);
-                      handleOffsetChange(
-                        activeEdit.offsetX,
-                        Number.isFinite(nextY) ? nextY : 0
-                      );
-                    }}
+                    onChange={(nextY) => onHotspotChange(ani.hotspotX, nextY)}
                   />
                 </div>
               </StudioInspectorSection>
+
             </StudioInspectorGroup>
           </>
         ) : null}
@@ -923,6 +958,28 @@ function RedoArrowIcon() {
   );
 }
 
+function HotspotModeBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      data-testid="studio-hotspot-mode"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifySelf: "start",
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-bg-primary)",
+        color: "var(--color-text-primary)",
+        fontSize: "0.75rem",
+        fontWeight: 650,
+        lineHeight: 1,
+        padding: "0.35rem 0.5rem",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function ActualSizePreview({
   background,
   border,
@@ -934,6 +991,7 @@ function ActualSizePreview({
 }) {
   return (
     <div
+      data-testid="studio-output-mini-preview"
       style={{
         width: "4rem",
         height: "4rem",

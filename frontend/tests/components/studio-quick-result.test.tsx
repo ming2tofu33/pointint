@@ -8,6 +8,7 @@ function renderQuickResult(overrides = {}) {
     title: "Your cursor is ready",
     description: "Download it now or fine-tune.",
     previewUrl: "blob:preview",
+    displayPreviewUrl: "blob:display",
     cursorName: "cursor",
     cursorSize: 32,
     hotspotLabel: "Recommended",
@@ -35,7 +36,7 @@ describe("StudioQuickResult", () => {
     renderQuickResult();
 
     expect(screen.getByTestId("studio-quick-result")).toBeVisible();
-    expect(screen.getByAltText("cursor")).toHaveAttribute("src", "blob:preview");
+    expect(screen.getByAltText("cursor")).toHaveAttribute("src", "blob:display");
     expect(screen.getByLabelText("Actual size")).toBeVisible();
     expect(screen.getByAltText("Light preview")).toHaveStyle({
       width: "32px",
@@ -47,6 +48,26 @@ describe("StudioQuickResult", () => {
     });
     expect(screen.getByText("Recommended")).toBeVisible();
     expect(screen.getByText("Static")).toBeVisible();
+  });
+
+  it("uses the rendered cursor only for actual-size previews", () => {
+    renderQuickResult({
+      previewUrl: "blob:rendered-32",
+      displayPreviewUrl: "blob:trimmed-source",
+    });
+
+    expect(screen.getByAltText("cursor")).toHaveAttribute(
+      "src",
+      "blob:trimmed-source"
+    );
+    expect(screen.getByAltText("Light preview")).toHaveAttribute(
+      "src",
+      "blob:rendered-32"
+    );
+    expect(screen.getByAltText("Dark preview")).toHaveAttribute(
+      "src",
+      "blob:rendered-32"
+    );
   });
 
   it("runs the primary download and advanced editor actions", () => {

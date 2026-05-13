@@ -23,6 +23,15 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   slotSelected: "Selected",
   recommended: "Recommended (t)",
   manual: "Manual (t)",
+  currentCursor: "Current cursor",
+  role: "Role",
+  fileName: "File name",
+  format: "Format",
+  adjust: "Adjust",
+  autoHotspot: "Auto hotspot",
+  manualHotspot: "Manual hotspot",
+  fitContain: "Fit whole",
+  fitCover: "Fill area",
   slotFilled: "Configured",
   slotEmpty: "Empty",
   slotStatic: "Static",
@@ -119,6 +128,9 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   aniFrameSpeedFast: "Fast",
   aniFrameSpeedLabel: "{label} speed, {duration} ms per frame",
   actualSize: "Actual size",
+  sizeSummary: "Size",
+  sourceSize: "Source size",
+  outputSize: "Output size",
   lightPreview: "Light preview",
   darkPreview: "Dark preview",
   quickStartTitle: "Drop an image. Get a cursor.",
@@ -195,6 +207,7 @@ const {
   setHotspotMock,
   setScaleMock,
   setFitModeMock,
+  setCursorNameMock,
   undoMock,
   redoMock,
   searchParamsState,
@@ -232,6 +245,7 @@ const {
   setHotspotMock: vi.fn(),
   setScaleMock: vi.fn(),
   setFitModeMock: vi.fn(),
+  setCursorNameMock: vi.fn(),
   undoMock: vi.fn(),
   redoMock: vi.fn(),
   searchParamsState: {
@@ -294,7 +308,22 @@ vi.mock("@/components/AniSimulation", () => ({
 }));
 
 vi.mock("@/components/NameInput", () => ({
-  default: () => <input data-testid="name-input" />,
+  default: ({
+    ariaLabel,
+    onChange,
+    value,
+  }: {
+    ariaLabel?: string;
+    onChange?: (value: string) => void;
+    value?: string;
+  }) => (
+    <input
+      aria-label={ariaLabel}
+      data-testid="name-input"
+      value={value ?? ""}
+      onChange={(event) => onChange?.(event.currentTarget.value)}
+    />
+  ),
 }));
 
 vi.mock("@/components/SettingsBar", () => ({
@@ -626,7 +655,7 @@ function createStudioReturn(
     applyImageTransform: vi.fn(),
     setCursorSize: vi.fn(),
     setAniCursorSize: vi.fn(),
-    setCursorName: vi.fn(),
+    setCursorName: setCursorNameMock,
     selectSlot: selectSlotMock,
     selectAniFrame: selectAniFrameMock,
     deleteAniFrame: deleteAniFrameMock,
@@ -686,6 +715,7 @@ beforeEach(() => {
   setHotspotMock.mockReset();
   setScaleMock.mockReset();
   setFitModeMock.mockReset();
+  setCursorNameMock.mockReset();
   undoMock.mockReset();
   redoMock.mockReset();
   replaceMock.mockReset();
@@ -897,12 +927,20 @@ describe("Studio entry gate", () => {
     expect(screen.getAllByRole("button")).toHaveLength(1);
   });
 
-  it("shows a dedicated stage header and action region in editing mode", () => {
+  it("uses a studio app shell with compact tool rail and floating canvas toolbar", () => {
     renderStudio("editing");
 
+    expect(screen.getByTestId("studio-app-shell")).toBeVisible();
+    expect(screen.getByTestId("studio-stage-canvas")).toBeVisible();
+    expect(screen.getByTestId("slot-rail")).toHaveStyle({
+      width: "4.25rem",
+    });
     expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
-    expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
-    expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
+    expect(screen.getByTestId("studio-stage-actions")).toHaveStyle({
+      position: "absolute",
+      width: "max-content",
+      maxWidth: "calc(100% - 0.75rem)",
+    });
   });
 
   it("renders an ANI editing shell with shared framing controls", () => {
@@ -926,7 +964,10 @@ describe("Studio entry gate", () => {
       flexDirection: "column",
     });
     expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
-    expect(screen.getByTestId("studio-stage-actions")).not.toBeNull();
+    expect(screen.getByTestId("studio-stage-actions")).toHaveStyle({
+      width: "max-content",
+      maxWidth: "calc(100% - 0.75rem)",
+    });
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
@@ -948,8 +989,17 @@ describe("Studio entry gate", () => {
     expect(barProps.secondaryActionDescription).toBe(
       "Download Windows animated cursor file (t)"
     );
-    expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
-    expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
+    expect(screen.queryByTestId("studio-inspector-status-strip")).toBeNull();
+    expect(screen.getByTestId("studio-output-preview-strip")).toBeVisible();
+    expect(screen.getAllByTestId("studio-output-mini-preview")).toHaveLength(2);
+    expect(screen.getByText("Adjust")).toBeVisible();
+    expect(screen.getByText("Auto hotspot")).toBeVisible();
+    expect(
+      screen.queryByTestId("studio-inspector-actual-size-card")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("studio-inspector-summary-card")
+    ).not.toBeInTheDocument();
   });
 
   it("labels the current-slot download as an ANI file in animated editing", () => {
@@ -1200,10 +1250,10 @@ describe("Studio entry gate", () => {
 
     expect(allFrames).toHaveAttribute("aria-pressed", "true");
 
-    fireEvent.change(screen.getByRole("slider"), {
+    fireEvent.change(screen.getByRole("slider", { name: /scale/i }), {
       target: { value: "1.25" },
     });
-    fireEvent.change(screen.getByLabelText(/offset y/i), {
+    fireEvent.change(screen.getByRole("slider", { name: /^offset y$/i }), {
       target: { value: "7" },
     });
 
@@ -1215,13 +1265,13 @@ describe("Studio entry gate", () => {
     setHotspotMock.mockClear();
 
     fireEvent.click(selectedFrame);
-    fireEvent.change(screen.getByRole("slider"), {
+    fireEvent.change(screen.getByRole("slider", { name: /scale/i }), {
       target: { value: "1.5" },
     });
-    fireEvent.change(screen.getByLabelText(/offset x/i), {
+    fireEvent.change(screen.getByRole("slider", { name: /^offset x$/i }), {
       target: { value: "12" },
     });
-    fireEvent.change(screen.getByLabelText(/hotspot x/i), {
+    fireEvent.change(screen.getByRole("slider", { name: /^hotspot x$/i }), {
       target: { value: "9" },
     });
 
@@ -1275,9 +1325,9 @@ describe("Studio entry gate", () => {
     expect(
       within(editScope).getByRole("button", { name: /all frames/i })
     ).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByLabelText(/offset y/i)).toHaveValue(-4);
+    expect(screen.getByRole("slider", { name: /^offset y$/i })).toHaveValue("-4");
 
-    fireEvent.change(screen.getByLabelText(/offset x/i), {
+    fireEvent.change(screen.getByRole("slider", { name: /^offset x$/i }), {
       target: { value: "12" },
     });
 
@@ -1299,14 +1349,59 @@ describe("Studio entry gate", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("reads the ANI inspector as grouped summary and preview sections", () => {
+  it("reads the ANI inspector as a compact properties panel", () => {
     renderStudio("ani-editing");
 
+    const header = screen.getByTestId("studio-stage-header");
     const inspector = screen.getByTestId("studio-inspector");
+    const currentGroup = screen.getByTestId("studio-inspector-group-current");
+    const outputGroup = screen.getByTestId("studio-inspector-group-image");
+    const actualSize = within(outputGroup).getByText("Actual size");
+    const size = within(outputGroup).getByText("Size");
 
+    expect(within(header).getByRole("textbox", { name: /name/i })).toHaveValue(
+      "orbit"
+    );
+    expect(within(header).queryByText("Normal Select")).toBeNull();
+    expect(within(header).queryByText("ANI")).toBeNull();
+    expect(within(header).queryByText("Recommended (t)")).toBeNull();
     expect(inspector).not.toBeNull();
-    expect(screen.getByTestId("studio-inspector-summary-card")).not.toBeNull();
-    expect(screen.getByTestId("studio-inspector-actual-size-card")).not.toBeNull();
+    expect(within(currentGroup).getByText("Current cursor")).toBeVisible();
+    expect(within(currentGroup).getByText("Role")).toBeVisible();
+    expect(within(currentGroup).getByText("Normal Select")).toBeVisible();
+    expect(within(currentGroup).getByText("File name")).toBeVisible();
+    expect(within(currentGroup).getByText("orbit")).toBeVisible();
+    expect(within(currentGroup).getByText("Format")).toBeVisible();
+    expect(within(currentGroup).getByText("Animated")).toBeVisible();
+    expect(
+      within(inspector).queryByTestId("studio-inspector-status-strip")
+    ).toBeNull();
+    expect(screen.getByTestId("studio-output-preview-strip")).toBeVisible();
+    expect(
+      actualSize.compareDocumentPosition(size) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(within(inspector).getByText("Adjust")).toBeVisible();
+    expect(screen.getByRole("button", { name: /center/i })).toHaveStyle({
+      border: "1px solid var(--color-border)",
+      backgroundColor: "var(--color-bg-primary)",
+      padding: "0.35rem 0.55rem",
+    });
+    expect(within(inspector).getByText("Auto hotspot")).toBeVisible();
+    expect(screen.queryByTestId("studio-hotspot-target")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /recommend hotspot again/i })
+    ).toHaveStyle({
+      border: "1px solid var(--color-border)",
+      backgroundColor: "var(--color-bg-primary)",
+      padding: "0.35rem 0.55rem",
+    });
+    expect(
+      screen.queryByTestId("studio-inspector-summary-card")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("studio-inspector-actual-size-card")
+    ).not.toBeInTheDocument();
     expect(screen.queryByTestId("studio-inspector-quick-actions")).toBeNull();
   });
 
@@ -1328,17 +1423,48 @@ describe("Studio entry gate", () => {
     expect(replaceMock).toHaveBeenCalledWith("/studio");
   });
 
-  it("shows hotspot recommendation status in editing mode without inspector duplication", () => {
+  it("shows a contextual hotspot mode without the old inspector status summary", () => {
     renderStudio("editing", {
       cursor: {
+        cursorName: "arrow",
         hotspotMode: "auto",
       },
     });
 
-    expect(screen.getByTestId("studio-inspector-quick-actions")).toBeVisible();
+    const header = screen.getByTestId("studio-stage-header");
+    const inspector = screen.getByTestId("studio-inspector");
+    const currentGroup = screen.getByTestId("studio-inspector-group-current");
+
+    expect(within(header).getByRole("textbox", { name: /name/i })).toHaveValue(
+      "arrow"
+    );
+    expect(within(header).queryByText("Normal Select")).toBeNull();
+    expect(within(header).queryByText(/CUR|STATIC/)).toBeNull();
+    expect(within(header).queryByText("Recommended (t)")).toBeNull();
+    expect(within(currentGroup).getByText("Current cursor")).toBeVisible();
+    expect(within(currentGroup).getByText("Role")).toBeVisible();
+    expect(within(currentGroup).getByText("Normal Select")).toBeVisible();
+    expect(within(currentGroup).getByText("File name")).toBeVisible();
+    expect(within(currentGroup).getByText("arrow")).toBeVisible();
+    expect(within(currentGroup).getByText("Format")).toBeVisible();
+    expect(within(currentGroup).getByText("Static")).toBeVisible();
+    expect(
+      within(inspector).queryByTestId("studio-inspector-status-strip")
+    ).toBeNull();
+    expect(within(inspector).getByText("Auto hotspot")).toBeVisible();
+    expect(screen.getByRole("button", { name: /center/i })).toHaveStyle({
+      border: "1px solid var(--color-border)",
+      backgroundColor: "var(--color-bg-primary)",
+      padding: "0.35rem 0.55rem",
+    });
+    expect(within(inspector).queryByText("Recommended (t)")).toBeNull();
     expect(
       screen.getByRole("button", { name: /recommend hotspot again/i })
-    ).toBeVisible();
+    ).toHaveStyle({
+      border: "1px solid var(--color-border)",
+      backgroundColor: "var(--color-bg-primary)",
+      padding: "0.35rem 0.55rem",
+    });
   });
 
   it("renders the stage view zoom control in editing mode", () => {
@@ -1348,7 +1474,70 @@ describe("Studio entry gate", () => {
     expect(screen.getByRole("button", { name: "1.5x" })).toBeVisible();
   });
 
-  it("renders the simulation footer when the normalSelect slot is configured", () => {
+  it("edits the static cursor name from the stage header instead of the inspector", () => {
+    renderStudio("editing");
+
+    const header = screen.getByTestId("studio-stage-header");
+    const nameInput = within(header).getByRole("textbox", { name: /name/i });
+
+    expect(nameInput).toHaveValue("cursor");
+
+    fireEvent.change(nameInput, { target: { value: "cursor-alt" } });
+
+    expect(setCursorNameMock).toHaveBeenCalledWith("cursor-alt");
+    expect(
+      within(screen.getByTestId("studio-inspector")).queryByTestId("name-input")
+    ).toBeNull();
+  });
+
+  it("edits the animated cursor name from the stage header instead of the inspector", () => {
+    renderStudio("ani-editing", {
+      ani: {
+        cursorName: "orbit",
+      },
+    });
+
+    const header = screen.getByTestId("studio-stage-header");
+    const nameInput = within(header).getByRole("textbox", { name: /name/i });
+
+    expect(nameInput).toHaveValue("orbit");
+
+    fireEvent.change(nameInput, { target: { value: "orbit-alt" } });
+
+    expect(setCursorNameMock).toHaveBeenCalledWith("orbit-alt");
+    expect(
+      within(screen.getByTestId("studio-inspector")).queryByTestId("name-input")
+    ).toBeNull();
+  });
+
+  it("shows actual-size previews before source and output size controls", () => {
+    renderStudio("editing", {
+      previewUrl: "blob:preview",
+      cursor: {
+        sourceWidth: 96,
+        sourceHeight: 80,
+        cursorSize: 48,
+      },
+    });
+
+    const inspector = screen.getByTestId("studio-inspector");
+    const outputGroup = screen.getByTestId("studio-inspector-group-image");
+    const actualSize = within(outputGroup).getByText("Actual size");
+    const size = within(outputGroup).getByText("Size");
+
+    expect(within(inspector).getByText("Size")).toBeVisible();
+    expect(
+      actualSize.compareDocumentPosition(size) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(outputGroup).toHaveTextContent("Source size 96 x 80");
+    expect(outputGroup).toHaveTextContent("Output size 48 x 48");
+    expect(within(outputGroup).getAllByText("Size")).toHaveLength(1);
+    expect(within(outputGroup).getByText("Fit whole")).toBeVisible();
+    expect(screen.queryByText("Framing")).toBeNull();
+  });
+
+  it("starts the static simulation preview expanded and removes simple-view escape", () => {
     const project = createProject();
     project.slots.normalSelect = createStaticSlotAsset(
       "normalSelect",
@@ -1360,7 +1549,18 @@ describe("Studio entry gate", () => {
       cursor: createEditingCursor(),
     });
 
+    expect(screen.getByTestId("studio-simulation-footer")).toBeVisible();
+    expect(screen.getByTestId("studio-simulation-body")).toBeVisible();
     expect(screen.getByTestId("simulation")).not.toBeNull();
+    expect(SimulationMock).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("button", { name: "Back to simple view" })
+    ).toBeNull();
+
+    fireEvent.click(screen.getByTestId("studio-simulation-toggle"));
+
+    expect(screen.queryByTestId("studio-simulation-body")).toBeNull();
+    expect(screen.queryByTestId("simulation")).toBeNull();
     expect(SimulationMock).toHaveBeenCalledTimes(1);
   });
 
@@ -1650,14 +1850,16 @@ describe("Studio entry gate", () => {
     expect(redoMock).toHaveBeenCalledTimes(2);
   });
 
-  it("shows numeric cursor position inputs and wires them to offset updates", () => {
+  it("shows borderless cursor position sliders and wires them to offset updates", () => {
     renderStudio("editing");
 
-    const offsetXInput = screen.getByLabelText(/offset x/i);
-    const offsetYInput = screen.getByLabelText(/offset y/i);
+    const offsetXInput = screen.getByRole("slider", { name: /offset x/i });
+    const offsetYInput = screen.getByRole("slider", { name: /offset y/i });
 
-    expect(offsetXInput).toHaveValue(0);
-    expect(offsetYInput).toHaveValue(0);
+    expect(offsetXInput).toHaveAttribute("data-borderless", "true");
+    expect(offsetYInput).toHaveAttribute("data-borderless", "true");
+    expect(offsetXInput).toHaveValue("0");
+    expect(offsetYInput).toHaveValue("0");
 
     fireEvent.change(offsetXInput, { target: { value: "14" } });
     fireEvent.change(offsetYInput, { target: { value: "-8" } });
@@ -1666,14 +1868,28 @@ describe("Studio entry gate", () => {
     expect(setOffsetMock).toHaveBeenNthCalledWith(2, 0, -8);
   });
 
-  it("shows numeric hotspot inputs and wires them to hotspot updates", () => {
+  it("lets the scale value text edit the static inspector slider", () => {
     renderStudio("editing");
 
-    const hotspotXInput = screen.getByLabelText(/hotspot x/i);
-    const hotspotYInput = screen.getByLabelText(/hotspot y/i);
+    fireEvent.click(screen.getByRole("button", { name: /edit scale value/i }));
+    const input = screen.getByRole("textbox", { name: /scale value/i });
 
-    expect(hotspotXInput).toHaveValue(24);
-    expect(hotspotYInput).toHaveValue(18);
+    expect(input).toHaveValue("100");
+
+    fireEvent.change(input, { target: { value: "150" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(setScaleMock).toHaveBeenLastCalledWith(1.5);
+  });
+
+  it("shows hotspot sliders and wires them to hotspot updates", () => {
+    renderStudio("editing");
+
+    const hotspotXInput = screen.getByRole("slider", { name: /hotspot x/i });
+    const hotspotYInput = screen.getByRole("slider", { name: /hotspot y/i });
+
+    expect(hotspotXInput).toHaveValue("24");
+    expect(hotspotYInput).toHaveValue("18");
 
     fireEvent.change(hotspotXInput, { target: { value: "11" } });
     fireEvent.change(hotspotYInput, { target: { value: "7" } });
@@ -1682,14 +1898,14 @@ describe("Studio entry gate", () => {
     expect(setHotspotMock).toHaveBeenNthCalledWith(2, 24, 7);
   });
 
-  it("shows numeric hotspot inputs for ani editing and wires them to hotspot updates", () => {
+  it("shows hotspot sliders for ani editing and wires them to hotspot updates", () => {
     renderStudio("ani-editing");
 
-    const hotspotXInput = screen.getByLabelText(/hotspot x/i);
-    const hotspotYInput = screen.getByLabelText(/hotspot y/i);
+    const hotspotXInput = screen.getByRole("slider", { name: /hotspot x/i });
+    const hotspotYInput = screen.getByRole("slider", { name: /hotspot y/i });
 
-    expect(hotspotXInput).toHaveValue(24);
-    expect(hotspotYInput).toHaveValue(18);
+    expect(hotspotXInput).toHaveValue("24");
+    expect(hotspotYInput).toHaveValue("18");
 
     fireEvent.change(hotspotXInput, { target: { value: "9" } });
     fireEvent.change(hotspotYInput, { target: { value: "5" } });

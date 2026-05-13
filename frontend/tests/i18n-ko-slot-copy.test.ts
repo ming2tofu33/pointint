@@ -107,6 +107,20 @@ describe("ko slot rail copy", () => {
     );
   });
 
+  it("uses concise image-fit labels in the studio inspector", () => {
+    const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
+    const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
+    const koMessages = JSON.parse(fs.readFileSync(koPath, "utf8"));
+    const enMessages = JSON.parse(fs.readFileSync(enPath, "utf8"));
+
+    expect(koMessages.panel.framing).toBe("\uc774\ubbf8\uc9c0 \ub9de\ucda4");
+    expect(koMessages.panel.fitContain).toBe("\uc804\uccb4 \ub9de\ucda4");
+    expect(koMessages.panel.fitCover).toBe("\uc601\uc5ed \ucc44\uc6c0");
+    expect(enMessages.panel.framing).toBe("Image fit");
+    expect(enMessages.panel.fitContain).toBe("Fit whole");
+    expect(enMessages.panel.fitCover).toBe("Fill area");
+  });
+
   it("keeps the browser preview address aligned across locales", () => {
     const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
     const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
@@ -151,7 +165,7 @@ describe("ko slot rail copy", () => {
       "Drop an image. Get a cursor."
     );
     expect(enMessages.studio.quickStartDescription).toBe(
-      "Pointint will pick the default framing and hotspot for you. You can fine-tune later if you want."
+      "Pointint will pick the default framing and hotspot for you.\nYou can fine-tune later if you want."
     );
     expect(enMessages.studio.quickResultTitle).toBe("Your cursor is ready");
     expect(enMessages.studio.quickResultDescription).toBe(
@@ -183,7 +197,7 @@ describe("ko slot rail copy", () => {
       "\uc774\ubbf8\uc9c0\ub97c \ub123\uc73c\uba74 \ucee4\uc11c\ub85c \uc644\uc131\ud569\ub2c8\ub2e4"
     );
     expect(koMessages.studio.quickStartDescription).toBe(
-      "\uae30\ubcf8 \ud504\ub808\uc774\ubc0d\uacfc \ud56b\uc2a4\ud31f\uc740 Pointint\uac00 \uba3c\uc800 \ub9de\ucda5\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 \ub098\uc911\uc5d0 \uc138\ubd80 \uc870\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."
+      "\uae30\ubcf8 \ud504\ub808\uc774\ubc0d\uacfc \ud56b\uc2a4\ud31f\uc740 Pointint\uac00 \uba3c\uc800 \ub9de\ucda5\ub2c8\ub2e4.\n\ud544\uc694\ud558\uba74 \ub098\uc911\uc5d0 \uc138\ubd80 \uc870\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."
     );
     expect(koMessages.studio.quickResultTitle).toBe(
       "\ucee4\uc11c\uac00 \uc900\ube44\ub410\uc5b4\uc694"

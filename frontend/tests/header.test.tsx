@@ -108,23 +108,16 @@ describe("Header", () => {
     expect(exploreLink).toHaveAttribute("aria-current", "page");
   });
 
-  it("uses shared black-glass header tokens instead of landing-only tokens", () => {
+  it("hides the shared marketing header on the studio app route", () => {
     mockUsePathname.mockReturnValue("/studio");
 
-    render(
+    const { container } = render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Header />
       </NextIntlClientProvider>
     );
 
-    const header = screen.getByRole("banner");
-    const style = header.getAttribute("style") ?? "";
-
-    expect(style).toContain("var(--app-header-border)");
-    expect(style).toContain("var(--app-header-highlight)");
-    expect(style).toContain("var(--app-header-backdrop)");
-    expect(style).toContain("var(--app-header-shadow)");
-    expect(style).not.toContain("--landing-header-backdrop");
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("defines a hover and focus underline for navigation links", () => {
@@ -145,17 +138,16 @@ describe("Header", () => {
     expect(cssText).toContain("inset 0 -2px 0 var(--color-accent)");
   });
 
-  it("marks Studio active on the studio page", () => {
-    mockUsePathname.mockReturnValue("/studio");
+  it("also hides the shared marketing header on studio subroutes", () => {
+    mockUsePathname.mockReturnValue("/studio/assets");
 
-    render(
+    const { container } = render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Header />
       </NextIntlClientProvider>
     );
 
-    const studioLink = screen.getByRole("link", { name: "Studio" });
-    expect(studioLink).toHaveAttribute("aria-current", "page");
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("opens the utility menu with explicit language options and a disabled login action", () => {

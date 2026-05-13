@@ -11,6 +11,10 @@ import ThemeToggle from "@/components/ThemeToggle";
 export default function Header() {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  if (pathname === "/studio" || pathname.startsWith("/studio/")) {
+    return null;
+  }
+
   const navItems = [
     {
       href: "/tools",

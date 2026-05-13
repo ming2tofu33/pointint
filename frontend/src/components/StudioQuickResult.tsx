@@ -6,6 +6,7 @@ interface StudioQuickResultProps {
   title: string;
   description: string;
   previewUrl: string;
+  displayPreviewUrl?: string;
   cursorName: string;
   cursorSize: number;
   hotspotLabel: string;
@@ -30,6 +31,7 @@ export default function StudioQuickResult({
   title,
   description,
   previewUrl,
+  displayPreviewUrl,
   cursorName,
   cursorSize,
   hotspotLabel,
@@ -51,6 +53,7 @@ export default function StudioQuickResult({
 }: StudioQuickResultProps) {
   const canUseDownload = canDownload && !downloading;
   const canUseFullSet = Boolean(canDownloadFullSet && onDownloadFullSet);
+  const heroPreviewUrl = displayPreviewUrl ?? previewUrl;
 
   return (
     <section
@@ -80,7 +83,7 @@ export default function StudioQuickResult({
       >
         <div
           style={{
-            width: "min(19rem, 58vw)",
+            width: "min(16rem, 54vw)",
             aspectRatio: "1 / 1",
             display: "grid",
             placeItems: "center",
@@ -91,12 +94,13 @@ export default function StudioQuickResult({
           }}
         >
           <img
-            src={previewUrl}
+            src={heroPreviewUrl}
             alt={cursorName}
             style={{
-              width: "min(9rem, 42%)",
-              height: "min(9rem, 42%)",
-              imageRendering: "pixelated",
+              width: "min(11rem, 68%)",
+              height: "auto",
+              maxHeight: "min(11rem, 68%)",
+              imageRendering: "auto",
               objectFit: "contain",
             }}
           />

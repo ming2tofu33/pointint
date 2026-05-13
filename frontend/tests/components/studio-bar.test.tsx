@@ -8,6 +8,36 @@ vi.mock("next-intl", () => ({
 import StudioBar from "@/components/StudioBar";
 
 describe("StudioBar", () => {
+  it("omits placeholder section tabs and exposes home through the app menu", () => {
+    render(
+      <StudioBar
+        saveProjectLabel="Save"
+        saveProjectDescription="Save project"
+        projectTitleLabel="Untitled cursor set"
+        hideDownloadActions
+        onDownload={vi.fn()}
+        canDownload={false}
+        canSecondaryDownload={false}
+      />
+    );
+
+    expect(
+      screen.queryByRole("navigation", { name: "Studio sections" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Editor")).not.toBeInTheDocument();
+    expect(screen.queryByText("Assets")).not.toBeInTheDocument();
+    expect(screen.queryByText("Presets")).not.toBeInTheDocument();
+    expect(screen.queryByText("Export")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "openMenu" }));
+
+    expect(screen.getByRole("menu")).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "goHome" })).toHaveAttribute(
+      "href",
+      "/"
+    );
+  });
+
   it("groups GIF export under the current ANI download menu", () => {
     const onSecondaryDownload = vi.fn();
     const onTertiaryDownload = vi.fn();

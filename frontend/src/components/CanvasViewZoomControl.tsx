@@ -17,7 +17,7 @@ export default function CanvasViewZoomControl({
   const t = useTranslations("studio");
 
   return (
-    <div style={{ width: "8.5rem" }}>
+    <div style={{ width: "8.5rem", flex: "0 0 8.5rem", flexShrink: 0 }}>
       <StudioInspectorSegmentedControl
         value={value}
         options={CANVAS_VIEW_ZOOM_OPTIONS}

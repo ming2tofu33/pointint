@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -49,7 +50,10 @@ export default function StudioBar({
   hideDownloadActions = false,
 }: StudioBarProps) {
   const t = useTranslations("studio");
+  const navT = useTranslations("nav");
+  const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [secondaryMenuOpen, setSecondaryMenuOpen] = useState(false);
+  const appMenuRef = useRef<HTMLDivElement>(null);
   const secondaryMenuRef = useRef<HTMLDivElement>(null);
   const hasNestedExportOption = Boolean(tertiaryActionLabel);
   const canUseSaveProject =
@@ -61,16 +65,21 @@ export default function StudioBar({
     : canUseSecondaryAction;
 
   useEffect(() => {
-    if (!secondaryMenuOpen) return;
+    if (!appMenuOpen && !secondaryMenuOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (secondaryMenuRef.current?.contains(event.target as Node)) {
-        return;
+      const target = event.target as Node;
+
+      if (appMenuOpen && !appMenuRef.current?.contains(target)) {
+        setAppMenuOpen(false);
       }
-      setSecondaryMenuOpen(false);
+      if (secondaryMenuOpen && !secondaryMenuRef.current?.contains(target)) {
+        setSecondaryMenuOpen(false);
+      }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        setAppMenuOpen(false);
         setSecondaryMenuOpen(false);
       }
     };
@@ -82,7 +91,7 @@ export default function StudioBar({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [secondaryMenuOpen]);
+  }, [appMenuOpen, secondaryMenuOpen]);
 
   useEffect(() => {
     if (downloading) {
@@ -124,10 +133,11 @@ export default function StudioBar({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0.625rem 1.5rem",
+        gap: "1rem",
+        padding: "0.5rem 1rem",
         borderBottom: "1px solid var(--color-border)",
         backgroundColor: "var(--color-bg-secondary)",
-        height: "3.25rem",
+        height: "3.5rem",
         flexShrink: 0,
       }}
     >
@@ -135,20 +145,117 @@ export default function StudioBar({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "0.5rem",
+          gap: "0.65rem",
           minWidth: 0,
           position: "relative",
-          paddingLeft: "0.9rem",
         }}
       >
+        <div
+          ref={appMenuRef}
+          style={{
+            position: "relative",
+            display: "inline-flex",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            aria-label={appMenuOpen ? navT("closeMenu") : navT("openMenu")}
+            aria-haspopup="menu"
+            aria-expanded={appMenuOpen}
+            aria-controls="studio-app-menu"
+            onClick={() => setAppMenuOpen((open) => !open)}
+            style={{
+              display: "inline-grid",
+              placeItems: "center",
+              width: "1.95rem",
+              height: "1.95rem",
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-bg-primary)",
+              color: "var(--color-text-primary)",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <HamburgerIcon open={appMenuOpen} />
+          </button>
+
+          {appMenuOpen ? (
+            <div
+              id="studio-app-menu"
+              role="menu"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: "calc(100% + 0.45rem)",
+                zIndex: 90,
+                minWidth: "10.5rem",
+                border: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-bg-secondary)",
+                padding: "0.3rem",
+              }}
+            >
+              <Link
+                href="/"
+                role="menuitem"
+                onClick={() => setAppMenuOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  minHeight: "2rem",
+                  color: "var(--color-text-primary)",
+                  fontSize: "0.8125rem",
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  padding: "0 0.55rem",
+                  textDecoration: "none",
+                }}
+              >
+                <HomeIcon />
+                <span>{t("goHome")}</span>
+              </Link>
+            </div>
+          ) : null}
+        </div>
+
         <span
           aria-hidden="true"
           style={{
-            position: "absolute",
-            left: 0,
-            width: "0.35rem",
-            height: "1.45rem",
-            backgroundColor: "var(--color-accent)",
+            width: "1.75rem",
+            height: "1.75rem",
+            border: "1px solid color-mix(in srgb, var(--color-accent) 38%, var(--color-border))",
+            backgroundColor: "var(--color-accent-subtle)",
+            color: "var(--color-accent)",
+            display: "inline-grid",
+            placeItems: "center",
+            fontSize: "1rem",
+            fontWeight: 800,
+            lineHeight: 1,
+            flexShrink: 0,
+          }}
+        >
+          +
+        </span>
+        <span
+          style={{
+            color: "var(--color-text-primary)",
+            fontSize: "0.875rem",
+            fontWeight: 800,
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Pointint Studio
+        </span>
+        <span
+          aria-hidden="true"
+          style={{
+            height: "1rem",
+            width: "1px",
+            backgroundColor: "var(--color-border)",
+            opacity: 0.72,
           }}
         />
         <span
@@ -235,7 +342,15 @@ export default function StudioBar({
       </div>
 
       {!hideDownloadActions ? (
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: "0.5rem",
+          minWidth: 0,
+        }}
+      >
         <div
           ref={secondaryMenuRef}
           style={{
@@ -372,6 +487,63 @@ export default function StudioBar({
         }
       `}</style>
     </header>
+  );
+}
+
+function HamburgerIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 16 16"
+      style={{
+        width: "0.95rem",
+        height: "0.95rem",
+        display: "block",
+      }}
+    >
+      {open ? (
+        <path
+          d="M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.6"
+        />
+      ) : (
+        <path
+          d="M3.5 5h9M3.5 8h9M3.5 11h6"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.6"
+        />
+      )}
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 16 16"
+      style={{
+        width: "0.875rem",
+        height: "0.875rem",
+        display: "block",
+        flexShrink: 0,
+      }}
+    >
+      <path
+        d="M3 7.5 8 3l5 4.5v5a.75.75 0 0 1-.75.75h-2.5V9.5h-3.5v3.75h-2.5A.75.75 0 0 1 3 12.5v-5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="1.35"
+      />
+    </svg>
   );
 }
 

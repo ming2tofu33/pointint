@@ -22,10 +22,10 @@ describe("SimulationFooter", () => {
     const footer = screen.getByTestId("studio-simulation-footer");
 
     expect(footer).toHaveStyle({
-      flexBasis: "34%",
+      flexBasis: "46%",
       flexGrow: "0",
       flexShrink: "0",
-      minHeight: "16rem",
+      minHeight: "22rem",
     });
     expect(footer.getAttribute("style")).not.toMatch(/(?:^|;\s*)flex:/);
     expect(screen.getByTestId("studio-simulation-body")).toHaveStyle({
@@ -37,13 +37,21 @@ describe("SimulationFooter", () => {
     expect(screen.getByTestId("studio-simulation-toggle")).toHaveTextContent(
       "collapseSimulation"
     );
+    expect(screen.getByText("simulationPreview")).toHaveStyle({
+      color: "var(--simulation-panel-text)",
+      fontWeight: "760",
+    });
   });
 
   it("hides the simulation body when collapsed and keeps the toggle visible", () => {
     const onToggle = vi.fn();
 
     render(
-      <SimulationFooter collapsed={true} onToggle={onToggle}>
+      <SimulationFooter
+        collapsed={true}
+        onToggle={onToggle}
+        headerControls={<div data-testid="header-controls">controls</div>}
+      >
         <div data-testid="simulation-body">preview</div>
       </SimulationFooter>
     );
@@ -57,6 +65,8 @@ describe("SimulationFooter", () => {
       height: "3rem",
     });
     expect(footer.getAttribute("style")).not.toMatch(/(?:^|;\s*)flex:/);
+    expect(screen.queryByTestId("header-controls")).toBeNull();
+    expect(screen.queryByTestId("studio-simulation-body")).toBeNull();
     expect(screen.queryByTestId("simulation-body")).toBeNull();
 
     fireEvent.click(screen.getByTestId("studio-simulation-toggle"));
@@ -74,8 +84,8 @@ describe("SimulationFooter", () => {
     );
 
     expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
-      flexBasis: "28%",
-      minHeight: "13rem",
+      flexBasis: "32%",
+      minHeight: "15rem",
     });
   });
 });

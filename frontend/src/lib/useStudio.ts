@@ -12,6 +12,7 @@ import {
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
   suggestViewportHotspot,
+  trimTransparentImageBlob,
 } from "@/lib/cursorFrame";
 import {
   DEFAULT_PRIMARY_ROLE_SLOT_ID,
@@ -2292,26 +2293,19 @@ export function useStudio() {
 
     try {
       const blob = await removeBackground(sourceFile);
-      const url = URL.createObjectURL(blob);
-      const img = new Image();
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to load image"));
-        img.src = url;
-      });
+      const trimmedImage = await trimTransparentImageBlob(blob);
 
       if (bgRemovalRequestIdRef.current !== requestId) {
-        safeRevokeObjectUrl(url);
         return;
       }
 
+      const url = URL.createObjectURL(trimmedImage.blob);
       const processedCursor = {
         ...cursor,
         processedUrl: url,
-        processedBlob: blob,
-        sourceWidth: img.naturalWidth,
-        sourceHeight: img.naturalHeight,
+        processedBlob: trimmedImage.blob,
+        sourceWidth: trimmedImage.width,
+        sourceHeight: trimmedImage.height,
         renderedBlob: null,
       };
 

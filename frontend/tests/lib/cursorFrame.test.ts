@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   applyImageTransformAction,
+  getAlphaContentBounds,
   getFrameRect,
   mapViewportHotspotToOutput,
   rasterizeSquarePng,
@@ -129,6 +130,31 @@ describe("mapViewportHotspotToOutput", () => {
         outputSize: 32,
       })
     ).toEqual({ x: 31, y: 0 });
+  });
+});
+
+describe("getAlphaContentBounds", () => {
+  it("finds the tight opaque bounds inside a transparent canvas", () => {
+    const width = 8;
+    const height = 6;
+    const alpha = new Uint8ClampedArray(width * height);
+
+    for (let y = 2; y <= 4; y += 1) {
+      for (let x = 3; x <= 5; x += 1) {
+        alpha[y * width + x] = 255;
+      }
+    }
+
+    expect(getAlphaContentBounds(alpha, width, height)).toEqual({
+      x: 3,
+      y: 2,
+      width: 3,
+      height: 3,
+    });
+  });
+
+  it("returns null when the image is fully transparent", () => {
+    expect(getAlphaContentBounds(new Uint8ClampedArray(16), 4, 4)).toBeNull();
   });
 });
 

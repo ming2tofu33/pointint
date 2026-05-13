@@ -6,11 +6,13 @@ const {
   generateCursorMock,
   rasterizeSquarePngMock,
   removeBackgroundMock,
+  trimTransparentImageBlobMock,
 } = vi.hoisted(() => ({
   generateAniMock: vi.fn(),
   generateCursorMock: vi.fn(),
   rasterizeSquarePngMock: vi.fn(),
   removeBackgroundMock: vi.fn(),
+  trimTransparentImageBlobMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -27,6 +29,7 @@ vi.mock("@/lib/cursorFrame", async () => {
   return {
     ...actual,
     rasterizeSquarePng: rasterizeSquarePngMock,
+    trimTransparentImageBlob: trimTransparentImageBlobMock,
   };
 });
 
@@ -67,6 +70,13 @@ describe("useStudio slot contract", () => {
     removeBackgroundMock.mockResolvedValue(
       new Blob(["processed"], { type: "image/png" })
     );
+    trimTransparentImageBlobMock.mockReset();
+    trimTransparentImageBlobMock.mockImplementation(async (blob: Blob) => ({
+      blob,
+      width: 128,
+      height: 96,
+      trimmed: false,
+    }));
     rasterizeSquarePngMock.mockReset();
     rasterizeSquarePngMock.mockResolvedValue({
       blob: new Blob(["preview"], { type: "image/png" }),
@@ -678,6 +688,43 @@ describe("useStudio slot contract", () => {
 
     expect(result.current.previewUrl).toBeTruthy();
     vi.useRealTimers();
+  });
+
+  it("trims transparent padding from background removal results before editing", async () => {
+    const removedBlob = new Blob(["removed"], { type: "image/png" });
+    const trimmedBlob = new Blob(["trimmed"], { type: "image/png" });
+    removeBackgroundMock.mockResolvedValueOnce(removedBlob);
+    trimTransparentImageBlobMock.mockResolvedValueOnce({
+      blob: trimmedBlob,
+      width: 42,
+      height: 34,
+      trimmed: true,
+    });
+
+    const { result } = renderHook(() => useStudio());
+    const staticFile = new File(["static"], "cursor.png", {
+      type: "image/png",
+    });
+
+    await act(async () => {
+      await result.current.selectFile(staticFile);
+    });
+
+    await act(async () => {
+      await result.current.processBgRemoval();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(removeBackgroundMock).toHaveBeenCalledWith(staticFile);
+    expect(trimTransparentImageBlobMock).toHaveBeenCalledWith(removedBlob);
+    expect(result.current.state).toBe("editing");
+    expect(result.current.cursor?.processedBlob).toBe(trimmedBlob);
+    expect(result.current.cursor?.sourceWidth).toBe(42);
+    expect(result.current.cursor?.sourceHeight).toBe(34);
+    expect(
+      result.current.project.slots.normalSelect.asset.previewUrl
+    ).toBe(result.current.cursor?.processedUrl);
   });
 
   it("ignores duplicate background-removal requests while one is already running", async () => {

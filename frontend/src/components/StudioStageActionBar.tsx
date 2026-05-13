@@ -47,6 +47,9 @@ export default function StudioStageActionBar({
         flexWrap: "wrap",
         gap: "0.5rem",
         alignItems: "center",
+        justifyContent: "center",
+        maxWidth: "100%",
+        minWidth: 0,
         ...style,
       }}
     >
@@ -59,6 +62,7 @@ export default function StudioStageActionBar({
             backgroundColor: "var(--color-bg-secondary)",
             display: "inline-flex",
             alignItems: "stretch",
+            flexShrink: 0,
             overflow: "hidden",
           }}
         >
@@ -90,6 +94,7 @@ export default function StudioStageActionBar({
                   padding: "0.45rem 0.72rem",
                   cursor: action.disabled ? "default" : "pointer",
                   lineHeight: 1.4,
+                  minHeight: "2.1rem",
                   opacity: action.disabled ? 0.52 : 1,
                   transition: STUDIO_INTERACTION_TRANSITION,
                   borderLeft:
@@ -97,6 +102,8 @@ export default function StudioStageActionBar({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "0.45rem",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {action.icon ? (
@@ -114,7 +121,7 @@ export default function StudioStageActionBar({
                     {action.icon}
                   </span>
                 ) : null}
-                <span>{action.label}</span>
+                <span style={{ whiteSpace: "nowrap" }}>{action.label}</span>
                 {action.shortcutHint ? (
                   <span
                     aria-hidden="true"

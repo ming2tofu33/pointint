@@ -131,8 +131,11 @@ describe("SlotRail", () => {
     expect(screen.getByTestId("slot-rail-scroll")).toHaveStyle({
       overflowY: "auto",
     });
+    expect(screen.getByTestId("slot-rail")).toHaveStyle({
+      width: "4.25rem",
+    });
     expect(screen.getByTestId("slot-normalSelect")).toHaveStyle({
-      minHeight: "4.25rem",
+      minHeight: "3rem",
     });
 
     PRIMARY_ROLE_IDS.forEach((roleId) => {

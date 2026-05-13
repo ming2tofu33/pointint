@@ -3,10 +3,10 @@
 import { useTranslations } from "next-intl";
 
 const COLLAPSED_HEIGHT = "3rem";
-const EXPANDED_BASIS = "34%";
-const EXPANDED_MIN_HEIGHT = "16rem";
-const COMPACT_EXPANDED_BASIS = "28%";
-const COMPACT_EXPANDED_MIN_HEIGHT = "13rem";
+const EXPANDED_BASIS = "46%";
+const EXPANDED_MIN_HEIGHT = "22rem";
+const COMPACT_EXPANDED_BASIS = "32%";
+const COMPACT_EXPANDED_MIN_HEIGHT = "15rem";
 
 export default function SimulationFooter({
   collapsed,
@@ -50,27 +50,44 @@ export default function SimulationFooter({
     >
       <div
         style={{
-          height: COLLAPSED_HEIGHT,
-          padding: "0 1rem",
+          height: collapsed ? COLLAPSED_HEIGHT : undefined,
+          minHeight: COLLAPSED_HEIGHT,
+          padding: collapsed ? "0 1rem" : "0.5rem 1rem",
           position: "relative",
           zIndex: 3,
           overflow: "visible",
           display: "flex",
           alignItems: "center",
+          alignContent: "center",
           justifyContent: "space-between",
-          gap: "1rem",
+          flexWrap: collapsed ? "nowrap" : "wrap",
+          gap: "0.75rem",
           borderBottom:
             collapsed ? "none" : "1px solid var(--simulation-frame-border)",
         }}
       >
         <span
           style={{
-            fontSize: "0.75rem",
-            color: "var(--simulation-panel-muted)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.45rem",
+            fontSize: "0.82rem",
+            color: "var(--simulation-panel-text)",
+            fontWeight: 760,
             textTransform: "uppercase",
-            letterSpacing: "0.08em",
+            letterSpacing: "0.04em",
+            whiteSpace: "nowrap",
           }}
         >
+          <span
+            aria-hidden="true"
+            style={{
+              width: "0.42rem",
+              height: "0.42rem",
+              backgroundColor: "var(--color-accent)",
+              boxShadow: "0 0 0 3px var(--color-accent-subtle)",
+            }}
+          />
           {t("simulationPreview")}
         </span>
 
@@ -78,12 +95,16 @@ export default function SimulationFooter({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
+            gap: "0.35rem",
             position: "relative",
             zIndex: 4,
+            flex: collapsed ? "0 0 auto" : "1 1 28rem",
+            justifyContent: "flex-end",
+            minWidth: 0,
+            marginLeft: "auto",
           }}
         >
-          {headerControls}
+          {collapsed ? null : headerControls}
           <button
             type="button"
             data-testid="studio-simulation-toggle"

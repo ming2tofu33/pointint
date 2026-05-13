@@ -2,18 +2,28 @@
 
 import type { HTMLAttributes, ReactNode } from "react";
 
+import NameInput from "@/components/NameInput";
+
 type StudioStageHeaderProps = HTMLAttributes<HTMLDivElement> & {
   slotLabel: string;
+  showSlotLabel?: boolean;
   typeLabel?: string;
   cursorName?: string | null;
+  cursorNameLabel?: string;
+  cursorNamePlaceholder?: string;
+  onCursorNameChange?: (name: string) => void;
   statusBadge?: ReactNode;
   actions?: ReactNode;
 };
 
 export default function StudioStageHeader({
   slotLabel,
+  showSlotLabel = true,
   typeLabel,
   cursorName,
+  cursorNameLabel,
+  cursorNamePlaceholder,
+  onCursorNameChange,
   statusBadge,
   actions,
   style,
@@ -33,31 +43,54 @@ export default function StudioStageHeader({
         ...style,
       }}
     >
-      <div style={{ minWidth: 0, display: "grid", gap: "0.25rem" }}>
-        <div
-          style={{
-            fontSize: "0.6875rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          {slotLabel}
-        </div>
-        {cursorName ? (
+      <div
+        style={{
+          minWidth: 0,
+          display: "grid",
+          gap: "0.25rem",
+          flex: "1 1 auto",
+        }}
+      >
+        {showSlotLabel ? (
           <div
             style={{
-              fontSize: "0.9375rem",
+              fontSize: "0.6875rem",
               fontWeight: 600,
-              color: "var(--color-text-primary)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--color-text-muted)",
             }}
           >
-            {cursorName}
+            {slotLabel}
           </div>
+        ) : null}
+        {cursorName != null ? (
+          onCursorNameChange ? (
+            <NameInput
+              value={cursorName}
+              onChange={onCursorNameChange}
+              placeholder={cursorNamePlaceholder}
+              ariaLabel={cursorNameLabel}
+              variant="stageTitle"
+              containerStyle={{
+                width: "min(100%, 22rem)",
+                minWidth: 0,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                fontSize: "0.9375rem",
+                fontWeight: 600,
+                color: "var(--color-text-primary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {cursorName}
+            </div>
+          )
         ) : null}
       </div>
 

@@ -31,8 +31,9 @@ export default function ImageTransformControls({
         aria-label={t("imageTransform")}
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: "0.45rem",
+          gridTemplateColumns: "repeat(3, 2.5rem)",
+          gap: "0.4rem",
+          justifyContent: "start",
         }}
       >
         <TransformButton
@@ -80,8 +81,9 @@ function TransformButton({
       title={label}
       style={{
         aspectRatio: "1 / 1",
-        minHeight: "3.05rem",
-        padding: "0.68rem",
+        minHeight: "2.5rem",
+        padding: "0.45rem",
+        width: "2.5rem",
         color: pressed ? "var(--color-accent)" : "var(--color-text-primary)",
         backgroundColor: pressed
           ? "color-mix(in srgb, var(--color-accent) 18%, rgba(255,255,255,0.04))"
@@ -104,7 +106,7 @@ function RotateIcon() {
       data-testid="image-transform-icon"
       focusable="false"
       viewBox="0 0 16 16"
-      style={{ display: "block", width: "1.45rem", height: "1.45rem" }}
+      style={{ display: "block", width: "1.1rem", height: "1.1rem" }}
     >
       <path
         d="M12.8 6.5A4.8 4.8 0 1 0 11.4 11"
@@ -132,7 +134,7 @@ function FlipHorizontalIcon() {
       data-testid="image-transform-icon"
       focusable="false"
       viewBox="0 0 16 16"
-      style={{ display: "block", width: "1.45rem", height: "1.45rem" }}
+      style={{ display: "block", width: "1.1rem", height: "1.1rem" }}
     >
       <path d="M2.5 3.5 7 8l-4.5 4.5V3.5Z" fill="currentColor" opacity="0.42" />
       <path d="M13.5 3.5 9 8l4.5 4.5V3.5Z" fill="currentColor" />
@@ -148,7 +150,7 @@ function FlipVerticalIcon() {
       data-testid="image-transform-icon"
       focusable="false"
       viewBox="0 0 16 16"
-      style={{ display: "block", width: "1.45rem", height: "1.45rem" }}
+      style={{ display: "block", width: "1.1rem", height: "1.1rem" }}
     >
       <path d="M3.5 2.5 8 7l4.5-4.5h-9Z" fill="currentColor" opacity="0.42" />
       <path d="M3.5 13.5 8 9l4.5 4.5h-9Z" fill="currentColor" />

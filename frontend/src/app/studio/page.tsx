@@ -14,7 +14,6 @@ import GuideModal from "@/components/GuideModal";
 import HealthCheck from "@/components/HealthCheck";
 import ImageTransformControls from "@/components/ImageTransformControls";
 import MobileGuard from "@/components/MobileGuard";
-import NameInput from "@/components/NameInput";
 import SimulationThemeModeSwitch from "@/components/SimulationThemeModeSwitch";
 import SimulationSceneContextHint from "@/components/SimulationSceneContextHint";
 import SimulationSceneTabs from "@/components/SimulationSceneTabs";
@@ -30,11 +29,13 @@ import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
   StudioInspectorGroup,
-  StudioInspectorNumberField,
+  StudioInspectorPreviewStrip,
   StudioInspectorRow,
   StudioInspectorSection,
   StudioInspectorSecondaryButton,
   StudioInspectorSegmentedControl,
+  StudioInspectorSizeSummary,
+  StudioInspectorSliderControl,
   StudioInspectorTextAction,
 } from "@/components/StudioInspector";
 import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
@@ -45,6 +46,7 @@ import {
   default as StudioSurfaceCard,
   StudioShellInteractionStyles,
 } from "@/components/StudioSurfaceCard";
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 import type { SimulationThemeMode } from "@/components/CursorSimulationSurface";
 import { trackEvent } from "@/lib/analytics";
 import { FitMode } from "@/lib/cursorFrame";
@@ -214,13 +216,6 @@ export default function StudioPage() {
       ani
   );
   const stageSlotLabel = t(`slot${capitalizeSlotId(selectedSlotId)}`);
-  const stageTypeLabel = selectedSlot.kind ? selectedSlot.kind.toUpperCase() : "CUR";
-  const stageHotspotBadge =
-    state === "editing" && cursor
-      ? cursor.hotspotMode === "auto"
-        ? t("recommended")
-        : t("manual")
-      : null;
   const stageHotspotSummary =
     state === "editing" && cursor
       ? cursor.hotspotMode === "auto"
@@ -232,6 +227,7 @@ export default function StudioPage() {
       ? t("slotStatic")
       : t("slotAnimated")
     : t("slotKindUnset");
+  const stageFormatSummary = cursor ? t("slotStatic") : stageKindSummary;
   const currentSlotDownloadLabel =
     state === "ani-editing" || selectedSlot.kind === "animated"
       ? t("downloadCurrentAni")
@@ -466,6 +462,7 @@ export default function StudioPage() {
         ) : (
           <>
       <div
+        data-testid="studio-app-shell"
         style={{
           display: "flex",
           flex: 1,
@@ -505,10 +502,11 @@ export default function StudioPage() {
               title={t("quickResultTitle")}
               description={t("quickResultDescription")}
               previewUrl={quickPreviewUrl}
+              displayPreviewUrl={displayUrl}
               cursorName={cursor.cursorName}
               cursorSize={cursor.cursorSize}
               hotspotLabel={stageHotspotSummary ?? tp("manual")}
-              typeLabel={stageKindSummary}
+              typeLabel={stageFormatSummary}
               actualSizeLabel={tp("actualSize")}
               lightPreviewAlt={tp("lightPreview")}
               darkPreviewAlt={tp("darkPreview")}
@@ -542,6 +540,7 @@ export default function StudioPage() {
 
           {showAdvancedStaticShell && (
             <div
+              data-testid="studio-workspace"
               style={{
                 flex: 1,
                 minHeight: 0,
@@ -549,6 +548,7 @@ export default function StudioPage() {
                 display: "flex",
                 flexDirection: "row",
                 overflow: "hidden",
+                backgroundColor: "var(--color-bg-primary)",
               }}
             >
               <SlotRail
@@ -567,6 +567,8 @@ export default function StudioPage() {
                   flexDirection: "column",
                   overflow: "hidden",
                   backgroundColor: "var(--color-bg-primary)",
+                  padding: "1rem",
+                  gap: "0.85rem",
                 }}
               >
                 {showSlotSourceEntry ? (
@@ -625,28 +627,23 @@ export default function StudioPage() {
                   >
                   <StudioStageHeader
                     slotLabel={stageSlotLabel}
-                    typeLabel={stageTypeLabel}
+                    showSlotLabel={false}
                     cursorName={cursor.cursorName}
-                    statusBadge={stageHotspotBadge}
-                    actions={
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setExperienceMode("quick")}
-                          style={simpleViewButtonStyle}
-                        >
-                          {t("closeAdvancedEditor")}
-                        </button>
-                        <CanvasViewZoomControl
-                          value={canvasViewZoom}
-                          onChange={setCanvasViewZoom}
-                        />
-                      </>
-                    }
+                    cursorNameLabel={tp("name")}
+                    cursorNamePlaceholder={tp("namePlaceholder")}
+                    onCursorNameChange={setCursorName}
                     style={{ padding: 0 }}
                   />
 
                     <div
+                      data-testid="studio-stage-canvas"
+                      onPointerMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+                        e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                      }}
                       style={{
                         flex: 1,
                         minHeight: 0,
@@ -656,9 +653,12 @@ export default function StudioPage() {
                         overflow: "hidden",
                         border: "1px solid var(--color-border)",
                         backgroundColor: "var(--color-bg-secondary)",
-                        padding: "1rem",
+                        padding: "1.25rem",
+                        position: "relative",
+                        boxShadow: "none",
                       }}
                     >
+                      <InteractiveDotBackground baseColor="color-mix(in srgb, var(--color-text-primary) 14%, transparent)" />
                       <div
                         style={{
                           display: "flex",
@@ -669,6 +669,7 @@ export default function StudioPage() {
                           flex: "1 1 58%",
                           minHeight: 0,
                           position: "relative",
+                          zIndex: 1,
                         }}
                       >
                         <CursorCanvas
@@ -713,34 +714,40 @@ export default function StudioPage() {
                           />
                         ) : null}
                       </div>
-                    </div>
 
-                    <div
-                      data-testid="studio-stage-actions"
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.65rem",
-                        borderTop: "1px solid var(--color-border)",
-                        paddingTop: "0.7rem",
-                        visibility: state === "editing" ? "visible" : "hidden",
-                        pointerEvents: state === "editing" ? "auto" : "none",
-                      }}
-                    >
                       <div
+                        data-testid="studio-stage-actions"
                         style={{
-                          fontSize: "0.6875rem",
-                          color: "var(--color-text-muted)",
+                          position: "absolute",
+                          left: "50%",
+                          bottom: "1rem",
+                          transform: "translateX(-50%)",
+                          zIndex: 5,
                           display: "flex",
-                          gap: "0.5rem",
                           alignItems: "center",
+                          alignContent: "center",
+                          justifyContent: "center",
                           flexWrap: "wrap",
+                          gap: "0.5rem",
+                          width: "max-content",
+                          maxWidth: "calc(100% - 0.75rem)",
+                          boxSizing: "border-box",
+                          border: "1px solid var(--color-border)",
+                          backgroundColor:
+                            "color-mix(in srgb, var(--color-bg-secondary) 92%, rgba(20,24,32,0.08))",
+                          color: "var(--color-text-primary)",
+                          boxShadow: "none",
+                          padding: "0.45rem",
+                          visibility: state === "editing" ? "visible" : "hidden",
+                          pointerEvents: state === "editing" ? "auto" : "none",
                         }}
                       >
-                        <span>{stageGuidance}</span>
+                        <StudioStageActionBar actions={stageActions} />
+                        <CanvasViewZoomControl
+                          value={canvasViewZoom}
+                          onChange={setCanvasViewZoom}
+                        />
                       </div>
-
-                      <StudioStageActionBar actions={stageActions} />
                     </div>
                   </SlotReplacementSurface>
                 ) : null}
@@ -755,9 +762,10 @@ export default function StudioPage() {
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "0.5rem",
-                          flexWrap: "wrap",
+                          gap: "0.35rem",
+                          flexWrap: "nowrap",
                           justifyContent: "flex-end",
+                          minWidth: 0,
                         }}
                       >
                         <SimulationSceneTabs
@@ -805,10 +813,10 @@ export default function StudioPage() {
         {showAdvancedStaticShell ? (
         <StudioInspector
           style={{
-            width: "18rem",
+            width: "20rem",
             borderLeft: "1px solid var(--color-border)",
             backgroundColor: "var(--color-bg-secondary)",
-            padding: "1rem 1.1rem",
+            padding: "1rem 1.15rem",
             flexShrink: 0,
             overflowY: "auto",
           }}
@@ -821,16 +829,7 @@ export default function StudioPage() {
           }
           summary={
             state === "editing" && cursor && selectedSlotBound ? (
-              <StudioSelectionSummary
-                slotLabelTitle={t("slotRailTitle")}
-                slotLabel={stageSlotLabel}
-                cursorLabelTitle={tp("cursor")}
-                cursorName={cursor.cursorName}
-                statusLabelTitle={tp("status")}
-                statusLabel={stageHotspotSummary ?? tp("manual")}
-                typeLabelTitle={t("slotTypeLabel")}
-                typeLabel={stageKindSummary}
-              />
+              null
             ) : showCompactInspectorGuidance ? (
               <StudioInspectorCompactGuidance
                 title={compactGuidanceContent.title}
@@ -850,45 +849,56 @@ export default function StudioPage() {
               />
             )
           }
-          previews={
-            state === "editing" && cursor && selectedSlotBound && previewUrl ? (
-              <div style={{ display: "grid", gap: "0.75rem" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <ActualSizePreview
-                    background="#ffffff"
-                    border="1px solid var(--color-border)"
-                    alt={tp("lightPreview")}
-                    previewUrl={previewUrl}
-                    cursorSize={cursor.cursorSize}
-                  />
-                  <ActualSizePreview
-                    background="#1a1a1a"
-                    border="1px solid var(--color-border)"
-                    alt={tp("darkPreview")}
-                    previewUrl={previewUrl}
-                    cursorSize={cursor.cursorSize}
-                  />
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                  {tp("actualSize")}
-                </div>
-              </div>
-            ) : null
-          }
         >
         {state === "editing" && cursor && selectedSlotBound ? (
           <>
+              <StudioInspectorGroup data-testid="studio-inspector-group-current">
+                <StudioInspectorSection title={tp("currentCursor")}>
+                  <StudioInspectorRow
+                    label={tp("role")}
+                    value={stageSlotLabel}
+                  />
+                  <StudioInspectorRow
+                    label={tp("fileName")}
+                    value={cursor.cursorName}
+                  />
+                  <StudioInspectorRow
+                    label={tp("format")}
+                    value={stageFormatSummary}
+                  />
+                </StudioInspectorSection>
+              </StudioInspectorGroup>
+
               <StudioInspectorGroup data-testid="studio-inspector-group-image">
                 <StudioInspectorSection title={tp("output")}>
+                  {previewUrl ? (
+                    <StudioInspectorPreviewStrip label={tp("actualSize")}>
+                      <ActualSizePreview
+                        background="#ffffff"
+                        border="1px solid var(--color-border)"
+                        alt={tp("lightPreview")}
+                        previewUrl={previewUrl}
+                        cursorSize={cursor.cursorSize}
+                      />
+                      <ActualSizePreview
+                        background="#1a1a1a"
+                        border="1px solid var(--color-border)"
+                        alt={tp("darkPreview")}
+                        previewUrl={previewUrl}
+                        cursorSize={cursor.cursorSize}
+                      />
+                    </StudioInspectorPreviewStrip>
+                  ) : null}
                   <StudioInspectorRow
-                    label={tp("original")}
-                    value={`${cursor.sourceWidth} x ${cursor.sourceHeight}`}
+                    label={tp("sizeSummary")}
+                    value={
+                      <StudioInspectorSizeSummary
+                        sourceLabel={tp("sourceSize")}
+                        sourceValue={`${cursor.sourceWidth} x ${cursor.sourceHeight}`}
+                        outputLabel={tp("outputSize")}
+                        outputValue={`${cursor.cursorSize} x ${cursor.cursorSize}`}
+                      />
+                    }
                   />
                   <StudioInspectorSegmentedControl
                     value={cursor.cursorSize}
@@ -897,9 +907,6 @@ export default function StudioPage() {
                     ariaLabel={tp("output")}
                     getLabel={(size) => `${size}`}
                   />
-                </StudioInspectorSection>
-
-                <StudioInspectorSection title={tp("framing")}>
                   <StudioInspectorSegmentedControl
                     value={cursor.fitMode}
                     options={["contain", "cover"] as const}
@@ -910,155 +917,116 @@ export default function StudioPage() {
                     }
                   />
                 </StudioInspectorSection>
+              </StudioInspectorGroup>
 
-                <StudioInspectorSection title={tp("imageTransform")}>
+              <StudioInspectorGroup data-testid="studio-inspector-group-adjust">
+                <StudioInspectorSection
+                  title={tp("adjust")}
+                  action={
+                    <StudioInspectorTextAction
+                      variant="button"
+                      onClick={() => setOffset(0, 0)}
+                    >
+                      {tp("center")}
+                    </StudioInspectorTextAction>
+                  }
+                >
                   <ImageTransformControls
                     rotation={cursor.rotation}
                     flipX={cursor.flipX}
                     flipY={cursor.flipY}
                     onTransform={applyImageTransform}
                   />
-                </StudioInspectorSection>
-
-                <StudioInspectorSection title={tp("name")}>
-                  <NameInput
-                    value={cursor.cursorName}
-                    onChange={setCursorName}
-                    placeholder={tp("namePlaceholder")}
+                  <StudioInspectorSliderControl
+                    label={tp("scale")}
+                    value={cursor.scale}
+                    valueLabel={`${Math.round(cursor.scale * 100)}%`}
+                    editValue={String(Math.round(cursor.scale * 100))}
+                    min={0.25}
+                    max={3}
+                    step={0.05}
+                    onChange={setScale}
+                    onCommit={endContinuousHistoryAction}
+                    parseEditValue={(draft) => Number(draft) / 100}
                   />
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "0.55rem",
+                    }}
+                  >
+                    <StudioInspectorSliderControl
+                      label={tp("offsetX")}
+                      aria-label={tp("offsetX")}
+                      value={cursor.offsetX}
+                      valueLabel={cursor.offsetX}
+                      min={-128}
+                      max={128}
+                      step={1}
+                      onChange={(nextX) => setOffset(nextX, cursor.offsetY)}
+                      onCommit={endContinuousHistoryAction}
+                    />
+                    <StudioInspectorSliderControl
+                      label={tp("offsetY")}
+                      aria-label={tp("offsetY")}
+                      value={cursor.offsetY}
+                      valueLabel={cursor.offsetY}
+                      min={-128}
+                      max={128}
+                      step={1}
+                      onChange={(nextY) => setOffset(cursor.offsetX, nextY)}
+                      onCommit={endContinuousHistoryAction}
+                    />
+                  </div>
                 </StudioInspectorSection>
-              </StudioInspectorGroup>
 
-              <StudioInspectorGroup data-testid="studio-inspector-group-transform">
                 <StudioInspectorSection
                   title={tp("hotspot")}
                   action={
-                    <StudioInspectorTextAction onClick={recommendHotspot}>
+                    <StudioInspectorTextAction
+                      variant="button"
+                      onClick={recommendHotspot}
+                    >
                       {cursor.hotspotMode === "auto"
                         ? tp("recommendHotspotAgain")
                         : tp("recommendHotspot")}
                     </StudioInspectorTextAction>
                   }
                 >
+                  <HotspotModeBadge>
+                    {cursor.hotspotMode === "auto"
+                      ? tp("autoHotspot")
+                      : tp("manualHotspot")}
+                  </HotspotModeBadge>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: "0.5rem",
+                      gap: "0.55rem",
                     }}
                   >
-                    <StudioInspectorNumberField
+                    <StudioInspectorSliderControl
                       label={tp("hotspotX")}
                       aria-label={tp("hotspotX")}
                       value={cursor.hotspotX}
+                      valueLabel={cursor.hotspotX}
+                      min={0}
+                      max={255}
                       step={1}
-                      onChange={(event) => {
-                        const nextX = Number(event.target.value);
-                        setHotspot(
-                          Number.isFinite(nextX) ? nextX : 0,
-                          cursor.hotspotY
-                        );
-                      }}
+                      onChange={(nextX) => setHotspot(nextX, cursor.hotspotY)}
                     />
-                    <StudioInspectorNumberField
+                    <StudioInspectorSliderControl
                       label={tp("hotspotY")}
                       aria-label={tp("hotspotY")}
                       value={cursor.hotspotY}
+                      valueLabel={cursor.hotspotY}
+                      min={0}
+                      max={255}
                       step={1}
-                      onChange={(event) => {
-                        const nextY = Number(event.target.value);
-                        setHotspot(
-                          cursor.hotspotX,
-                          Number.isFinite(nextY) ? nextY : 0
-                        );
-                      }}
+                      onChange={(nextY) => setHotspot(cursor.hotspotX, nextY)}
                     />
-                  </div>
-                  <StudioInspectorRow
-                    label={tp("position")}
-                    value={`${cursor.hotspotX}, ${cursor.hotspotY}`}
-                  />
-                  <StudioInspectorRow
-                    label={tp("status")}
-                    value={
-                      cursor.hotspotMode === "auto"
-                        ? tp("recommended")
-                        : tp("manual")
-                    }
-                  />
-                </StudioInspectorSection>
-
-                <StudioInspectorSection title={tp("scale")}>
-                  <input
-                    type="range"
-                    min="0.25"
-                    max="3"
-                    step="0.05"
-                    value={cursor.scale}
-                    onChange={(e) => setScale(Number(e.target.value))}
-                    onPointerUp={endContinuousHistoryAction}
-                    onPointerCancel={endContinuousHistoryAction}
-                    onBlur={endContinuousHistoryAction}
-                    style={{
-                      width: "100%",
-                      accentColor: "var(--color-accent)",
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontSize: "0.6875rem",
-                      color: "var(--color-text-muted)",
-                      textAlign: "right",
-                      marginTop: "0.25rem",
-                    }}
-                  >
-                    {Math.round(cursor.scale * 100)}%
                   </div>
                 </StudioInspectorSection>
 
-                <StudioInspectorSection
-                  title={tp("position")}
-                  action={
-                    <StudioInspectorTextAction onClick={() => setOffset(0, 0)}>
-                      {tp("center")}
-                    </StudioInspectorTextAction>
-                  }
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <StudioInspectorNumberField
-                      label={tp("offsetX")}
-                      aria-label={tp("offsetX")}
-                      value={cursor.offsetX}
-                      step={1}
-                      onChange={(event) => {
-                        const nextX = Number(event.target.value);
-                        setOffset(
-                          Number.isFinite(nextX) ? nextX : 0,
-                          cursor.offsetY
-                        );
-                      }}
-                    />
-                    <StudioInspectorNumberField
-                      label={tp("offsetY")}
-                      aria-label={tp("offsetY")}
-                      value={cursor.offsetY}
-                      step={1}
-                      onChange={(event) => {
-                        const nextY = Number(event.target.value);
-                        setOffset(
-                          cursor.offsetX,
-                          Number.isFinite(nextY) ? nextY : 0
-                        );
-                      }}
-                    />
-                  </div>
-                </StudioInspectorSection>
               </StudioInspectorGroup>
 
               <StudioInspectorGroup data-testid="studio-inspector-group-health">
@@ -1087,20 +1055,6 @@ export default function StudioPage() {
 }
 
 type StudioExperienceMode = "quick" | "advanced";
-
-const simpleViewButtonStyle: CSSProperties = {
-  minHeight: "1.95rem",
-  border: "1px solid var(--color-border)",
-  borderRadius: "0",
-  backgroundColor: "var(--color-bg-secondary)",
-  color: "var(--color-text-secondary)",
-  cursor: "pointer",
-  fontSize: "0.72rem",
-  fontWeight: 720,
-  lineHeight: 1,
-  padding: "0 0.65rem",
-  transition: STUDIO_INTERACTION_TRANSITION,
-};
 
 function UndoArrowIcon() {
   return (
@@ -1135,6 +1089,28 @@ function RedoArrowIcon() {
       <path d="m15 14 5-5-5-5" />
       <path d="M4 20a8 8 0 0 1 8-8h8" />
     </svg>
+  );
+}
+
+function HotspotModeBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      data-testid="studio-hotspot-mode"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifySelf: "start",
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-bg-primary)",
+        color: "var(--color-text-primary)",
+        fontSize: "0.75rem",
+        fontWeight: 650,
+        lineHeight: 1,
+        padding: "0.35rem 0.5rem",
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -1445,6 +1421,7 @@ function ActualSizePreview({
 }) {
   return (
     <div
+      data-testid="studio-output-mini-preview"
       style={{
         width: "4rem",
         height: "4rem",
@@ -1484,7 +1461,7 @@ function getSelectableWorkflowParam(workflowId: string | null) {
 const studioThemeScopeStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  height: "calc(100dvh - var(--app-header-height, 4.25rem))",
+  height: "100dvh",
   minHeight: 0,
   overflow: "hidden",
   backgroundColor: "var(--studio-bg-primary)",
