@@ -28,7 +28,6 @@ export default function StudioQuickStart({
   animatedUploadDescription,
   onStaticFile,
   onAnimatedFile,
-  onImageSequenceFiles,
 }: StudioQuickStartProps) {
   return (
     <section
@@ -85,13 +84,6 @@ export default function StudioQuickStart({
           tone="primary"
           onFiles={(files) => {
             const fileList = Array.from(files);
-            const imageSequenceFiles = fileList.filter(isStaticImageFile);
-
-            if (imageSequenceFiles.length >= 2 && onImageSequenceFiles) {
-              onImageSequenceFiles(imageSequenceFiles);
-              return;
-            }
-
             const file = fileList.find(isStaticImageFile);
             if (file) {
               onStaticFile(file);
@@ -251,7 +243,6 @@ function QuickUploadSurface({
         ref={inputRef}
         type="file"
         accept={accept}
-        multiple={Boolean(accept.includes("png"))}
         onChange={(event) => {
           if (event.target.files) {
             onFiles(event.target.files);

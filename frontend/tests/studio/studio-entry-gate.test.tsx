@@ -738,18 +738,13 @@ describe("Studio entry gate", () => {
 
     expect(screen.getByTestId("studio-quick-start")).toBeVisible();
     expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
-    expect(screen.getByTestId("studio-quick-start-animated")).toBeVisible();
+    expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
     expect(screen.queryByTestId("slot-rail")).not.toBeInTheDocument();
     expect(screen.queryByTestId("studio-inspector")).not.toBeInTheDocument();
   });
 
-  it("passes multiple valid image frames from the quick-start static input", () => {
+  it("passes a valid image from the quick-start static input", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
-    const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
-    const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
-    const renamedGifFile = new File(["animated"], "renamed.png", {
-      type: "image/gif",
-    });
     const textFile = new File(["notes"], "notes.txt", { type: "text/plain" });
 
     renderStudio("editing", {
@@ -763,24 +758,19 @@ describe("Studio entry gate", () => {
     ) as HTMLInputElement | null;
 
     expect(fileInput).not.toBeNull();
-    expect(fileInput).toHaveAttribute("multiple");
     expect(fileInput).toHaveAttribute("accept", ".png,.jpg,.jpeg,.webp");
 
     fireEvent.change(fileInput!, {
       target: {
-        files: [textFile, firstFrame, gifFile, renamedGifFile, secondFrame],
+        files: [textFile, firstFrame],
       },
     });
 
-    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledTimes(1);
-    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
-      firstFrame,
-      secondFrame,
-    ]);
-    expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
+    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
   });
 
-  it("passes multiple valid dropped frames from the quick-start static surface", () => {
+  it("uses the first valid dropped frame from the quick-start static surface", () => {
     const firstFrame = new File(["one"], "frame-01.jpg", { type: "image/jpeg" });
     const secondFrame = new File(["two"], "frame-02.png", { type: "image/png" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
@@ -794,12 +784,8 @@ describe("Studio entry gate", () => {
       dataTransfer: { files: [gifFile, firstFrame, secondFrame] },
     });
 
-    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledTimes(1);
-    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
-      firstFrame,
-      secondFrame,
-    ]);
-    expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
+    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
   });
 
   it("uses one valid quick-start image as a static cursor upload", () => {
@@ -831,7 +817,7 @@ describe("Studio entry gate", () => {
     });
     expect(screen.getByTestId("studio-quick-start")).toBeVisible();
     expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
-    expect(screen.getByTestId("studio-quick-start-animated")).toBeVisible();
+    expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
     expect(screen.queryByTestId("studio-stage-header")).toBeNull();
     expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
@@ -874,7 +860,8 @@ describe("Studio entry gate", () => {
     });
 
     expect(screen.getByTestId("studio-quick-start")).toBeVisible();
-    expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
+    expect(screen.getAllByRole("button")).toHaveLength(1);
   });
 
   it("shows a dedicated stage header and action region in editing mode", () => {
@@ -1447,7 +1434,6 @@ describe("Studio entry gate", () => {
 
   it("accepts dropped files in the quick-start source surfaces", () => {
     const staticFile = new File(["static"], "cursor.png", { type: "image/png" });
-    const animatedFile = new File(["animated"], "cursor.gif", { type: "image/gif" });
 
     renderStudio("editing", {
       cursor: null,
@@ -1457,15 +1443,12 @@ describe("Studio entry gate", () => {
     fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
       dataTransfer: { files: [staticFile] },
     });
-    fireEvent.drop(screen.getByTestId("studio-quick-start-animated"), {
-      dataTransfer: { files: [animatedFile] },
-    });
 
     expect(selectFileMock).toHaveBeenCalledWith(staticFile);
-    expect(selectAniFileMock).toHaveBeenCalledWith(animatedFile);
+    expect(selectAniFileMock).not.toHaveBeenCalled();
   });
 
-  it("routes multiple image drops on the quick static surface to GIF Maker frames", () => {
+  it("does not expose GIF Maker routing on the quick static surface", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
 
@@ -1478,11 +1461,8 @@ describe("Studio entry gate", () => {
       dataTransfer: { files: [firstFrame, secondFrame] },
     });
 
-    expect(selectFileMock).not.toHaveBeenCalled();
-    expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
-      firstFrame,
-      secondFrame,
-    ]);
+    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
   });
 
   it("shows an inline confirm before replacing a populated slot from the stage drop surface", () => {

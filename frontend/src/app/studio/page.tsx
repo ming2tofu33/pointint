@@ -472,19 +472,9 @@ export default function StudioPage() {
               description={t("quickStartDescription")}
               staticUploadLabel={t("slotStaticUpload")}
               staticUploadDescription={t("slotStaticUploadSub")}
-              animatedUploadLabel={t("slotAniUpload")}
-              animatedUploadDescription={t("slotAniUploadSub")}
               onStaticFile={(file) => {
                 setExperienceMode("quick");
                 selectFile(file);
-              }}
-              onAnimatedFile={(file) => {
-                setExperienceMode("advanced");
-                selectAniFile(file);
-              }}
-              onImageSequenceFiles={(files) => {
-                setExperienceMode("advanced");
-                selectSelectedSlotImageSequenceFiles(files);
               }}
             />
           ) : null}
@@ -505,10 +495,6 @@ export default function StudioPage() {
               advancedLabel={t("openAdvancedEditor")}
               onDownload={download}
               onOpenAdvanced={() => setExperienceMode("advanced")}
-              fullSetLabel={t("expandToWindowsSet")}
-              fullSetDescription={t("downloadAllRolesLabel")}
-              canDownloadFullSet={canDownloadAll}
-              onDownloadFullSet={downloadAll}
             />
           ) : null}
 

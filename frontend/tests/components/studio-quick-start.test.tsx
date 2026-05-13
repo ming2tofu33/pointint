@@ -22,9 +22,10 @@ describe("StudioQuickStart", () => {
     expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
   });
 
-  it("passes valid static files from the primary upload input", () => {
+  it("passes the first valid static file from the primary upload input", () => {
     const onStaticFile = vi.fn();
     const file = new File(["cursor"], "cursor.png", { type: "image/png" });
+    const extraFile = new File(["extra"], "extra.webp", { type: "image/webp" });
 
     render(
       <StudioQuickStart
@@ -42,7 +43,7 @@ describe("StudioQuickStart", () => {
 
     fireEvent.change(input, {
       target: {
-        files: [file],
+        files: [file, extraFile],
       },
     });
 
