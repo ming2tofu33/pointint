@@ -16,7 +16,6 @@ interface StudioQuickStartProps {
   animatedUploadDescription?: string;
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
-  onImageSequenceFiles?: (files: File[]) => void;
 }
 
 export default function StudioQuickStart({

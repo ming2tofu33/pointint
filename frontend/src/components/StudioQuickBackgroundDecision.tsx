@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
 
 interface StudioQuickBackgroundDecisionProps {
@@ -25,10 +27,12 @@ export default function StudioQuickBackgroundDecision({
   onRemove,
   onKeep,
 }: StudioQuickBackgroundDecisionProps) {
+  const titleId = useId();
+
   return (
     <section
       data-testid="studio-quick-background-decision"
-      role="status"
+      aria-labelledby={titleId}
       style={{
         width: "100%",
         flex: 1,
@@ -77,6 +81,7 @@ export default function StudioQuickBackgroundDecision({
       >
         <div style={{ display: "grid", gap: "0.45rem" }}>
           <h1
+            id={titleId}
             style={{
               margin: 0,
               color: "var(--color-text-primary)",
@@ -102,6 +107,7 @@ export default function StudioQuickBackgroundDecision({
         {processing ? (
           <div
             data-testid="studio-quick-background-processing"
+            role="status"
             style={{
               minHeight: "7.5rem",
               border: "1px solid var(--color-border)",

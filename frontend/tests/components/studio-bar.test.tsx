@@ -140,4 +140,31 @@ describe("StudioBar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save project" }));
     expect(onSaveProject).toHaveBeenCalledOnce();
   });
+
+  it("hides header download actions when quick mode owns the primary action", () => {
+    render(
+      <StudioBar
+        saveProjectLabel="Save"
+        saveProjectDescription="Save project"
+        projectTitleLabel="Untitled cursor set"
+        hideDownloadActions
+        onDownload={vi.fn()}
+        onSecondaryDownload={vi.fn()}
+        canDownload={true}
+        canSecondaryDownload={true}
+        primaryActionLabel="Download all"
+        primaryActionDescription="Download Windows cursor set"
+        secondaryActionLabel="Current cursor"
+        secondaryActionDescription="Download Windows cursor file"
+      />
+    );
+
+    expect(screen.getByText("Untitled cursor set")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Download Windows cursor set" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download Windows cursor file" })
+    ).not.toBeInTheDocument();
+  });
 });

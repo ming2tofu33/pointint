@@ -10,6 +10,9 @@ interface StudioQuickResultProps {
   cursorSize: number;
   hotspotLabel: string;
   typeLabel: string;
+  actualSizeLabel: string;
+  lightPreviewAlt: string;
+  darkPreviewAlt: string;
   downloading: boolean;
   canDownload: boolean;
   downloadLabel: string;
@@ -31,6 +34,9 @@ export default function StudioQuickResult({
   cursorSize,
   hotspotLabel,
   typeLabel,
+  actualSizeLabel,
+  lightPreviewAlt,
+  darkPreviewAlt,
   downloading,
   canDownload,
   downloadLabel,
@@ -138,7 +144,7 @@ export default function StudioQuickResult({
         </div>
 
         <div
-          aria-label="Actual size preview"
+          aria-label={actualSizeLabel}
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(2, 4.75rem)",
@@ -146,13 +152,13 @@ export default function StudioQuickResult({
           }}
         >
           <ActualSizePreview
-            alt="Light background preview"
+            alt={lightPreviewAlt}
             background="#fff"
             previewUrl={previewUrl}
             cursorSize={cursorSize}
           />
           <ActualSizePreview
-            alt="Dark background preview"
+            alt={darkPreviewAlt}
             background="#101216"
             previewUrl={previewUrl}
             cursorSize={cursorSize}

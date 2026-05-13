@@ -388,6 +388,7 @@ export default function StudioPage() {
           saveProjectDescription={t("saveProjectLoginRequiredDescription")}
           saveProjectStatusLabel={t("saveProjectLoginRequired")}
           projectTitleLabel={t("untitledProject")}
+          hideDownloadActions={isQuickExperience}
           onDownload={isQuickExperience ? undefined : downloadAll}
           onSecondaryDownload={isQuickExperience ? undefined : download}
           onTertiaryDownload={isQuickExperience ? undefined : downloadGif}
@@ -395,13 +396,21 @@ export default function StudioPage() {
           canDownload={isQuickExperience ? false : canDownloadAll}
           canSecondaryDownload={isQuickExperience ? false : canDownload}
           canTertiaryDownload={isQuickExperience ? false : canDownloadGif}
-          primaryActionLabel={t("downloadAllRoles")}
-          primaryActionDescription={t("downloadAllRolesLabel")}
-          secondaryActionLabel={currentSlotDownloadLabel}
-          secondaryActionDescription={currentSlotDownloadDescription}
-          tertiaryActionLabel={canDownloadGif ? t("downloadGif") : undefined}
+          primaryActionLabel={isQuickExperience ? undefined : t("downloadAllRoles")}
+          primaryActionDescription={
+            isQuickExperience ? undefined : t("downloadAllRolesLabel")
+          }
+          secondaryActionLabel={
+            isQuickExperience ? undefined : currentSlotDownloadLabel
+          }
+          secondaryActionDescription={
+            isQuickExperience ? undefined : currentSlotDownloadDescription
+          }
+          tertiaryActionLabel={
+            !isQuickExperience && canDownloadGif ? t("downloadGif") : undefined
+          }
           tertiaryActionDescription={
-            canDownloadGif ? t("downloadGifLabel") : undefined
+            !isQuickExperience && canDownloadGif ? t("downloadGifLabel") : undefined
           }
         />
         {showPendingBackgroundDecisionNotice ? (
@@ -478,7 +487,7 @@ export default function StudioPage() {
               staticUploadDescription={t("slotStaticUploadSub")}
               onStaticFile={(file) => {
                 setExperienceMode("quick");
-                selectFile(file);
+                selectSelectedSlotStaticFile(file);
               }}
             />
           ) : null}
@@ -492,6 +501,9 @@ export default function StudioPage() {
               cursorSize={cursor.cursorSize}
               hotspotLabel={stageHotspotSummary ?? tp("manual")}
               typeLabel={stageKindSummary}
+              actualSizeLabel={tp("actualSize")}
+              lightPreviewAlt={tp("lightPreview")}
+              darkPreviewAlt={tp("darkPreview")}
               downloading={downloading}
               canDownload={canDownload}
               downloadLabel={t("quickDownload")}

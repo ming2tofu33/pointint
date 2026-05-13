@@ -118,6 +118,9 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   aniFrameSpeedNormal: "Normal",
   aniFrameSpeedFast: "Fast",
   aniFrameSpeedLabel: "{label} speed, {duration} ms per frame",
+  actualSize: "Actual size",
+  lightPreview: "Light preview",
+  darkPreview: "Dark preview",
   quickStartTitle: "Drop an image. Get a cursor.",
   quickStartDescription:
     "Pointint will pick the default framing and hotspot for you. You can fine-tune later if you want.",
@@ -793,7 +796,8 @@ describe("Studio entry gate", () => {
       },
     });
 
-    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectFileMock).not.toHaveBeenCalled();
     expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
   });
 
@@ -811,7 +815,8 @@ describe("Studio entry gate", () => {
       dataTransfer: { files: [gifFile, firstFrame, secondFrame] },
     });
 
-    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectFileMock).not.toHaveBeenCalled();
     expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
   });
 
@@ -829,7 +834,8 @@ describe("Studio entry gate", () => {
     });
 
     expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
-    expect(selectFileMock).toHaveBeenCalledWith(onlyFrame);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(onlyFrame);
+    expect(selectFileMock).not.toHaveBeenCalled();
   });
 
   it("renders the quick-start entry instead of the workflow picker", () => {
@@ -1471,7 +1477,8 @@ describe("Studio entry gate", () => {
       dataTransfer: { files: [staticFile] },
     });
 
-    expect(selectFileMock).toHaveBeenCalledWith(staticFile);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(staticFile);
+    expect(selectFileMock).not.toHaveBeenCalled();
     expect(selectAniFileMock).not.toHaveBeenCalled();
   });
 
@@ -1488,8 +1495,28 @@ describe("Studio entry gate", () => {
       dataTransfer: { files: [firstFrame, secondFrame] },
     });
 
-    expect(selectFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(firstFrame);
+    expect(selectFileMock).not.toHaveBeenCalled();
     expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
+  });
+
+  it("routes quick-start uploads to the selected empty role", () => {
+    const staticFile = new File(["static"], "text-role.png", {
+      type: "image/png",
+    });
+
+    renderStudio("editing", {
+      selectedSlotId: "textSelect",
+      cursor: null,
+      experienceMode: "quick",
+    });
+
+    fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
+      dataTransfer: { files: [staticFile] },
+    });
+
+    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(staticFile);
+    expect(selectFileMock).not.toHaveBeenCalled();
   });
 
   it("shows an inline confirm before replacing a populated slot from the stage drop surface", () => {

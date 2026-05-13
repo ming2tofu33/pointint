@@ -23,6 +23,7 @@ interface StudioBarProps {
   secondaryActionDescription?: string;
   tertiaryActionLabel?: string;
   tertiaryActionDescription?: string;
+  hideDownloadActions?: boolean;
 }
 
 export default function StudioBar({
@@ -45,6 +46,7 @@ export default function StudioBar({
   secondaryActionDescription,
   tertiaryActionLabel,
   tertiaryActionDescription,
+  hideDownloadActions = false,
 }: StudioBarProps) {
   const t = useTranslations("studio");
   const [secondaryMenuOpen, setSecondaryMenuOpen] = useState(false);
@@ -220,6 +222,7 @@ export default function StudioBar({
         ) : null}
       </div>
 
+      {!hideDownloadActions ? (
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <div
           ref={secondaryMenuRef}
@@ -343,6 +346,7 @@ export default function StudioBar({
           </span>
         </button>
       </div>
+      ) : null}
       <style>{`
         @keyframes studio-download-menu-in {
           from {

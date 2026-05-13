@@ -12,6 +12,9 @@ function renderQuickResult(overrides = {}) {
     cursorSize: 32,
     hotspotLabel: "Recommended",
     typeLabel: "Static",
+    actualSizeLabel: "Actual size",
+    lightPreviewAlt: "Light preview",
+    darkPreviewAlt: "Dark preview",
     downloading: false,
     canDownload: true,
     downloadLabel: "Download cursor",
@@ -33,11 +36,12 @@ describe("StudioQuickResult", () => {
 
     expect(screen.getByTestId("studio-quick-result")).toBeVisible();
     expect(screen.getByAltText("cursor")).toHaveAttribute("src", "blob:preview");
-    expect(screen.getByAltText("Light background preview")).toHaveStyle({
+    expect(screen.getByLabelText("Actual size")).toBeVisible();
+    expect(screen.getByAltText("Light preview")).toHaveStyle({
       width: "32px",
       height: "32px",
     });
-    expect(screen.getByAltText("Dark background preview")).toHaveStyle({
+    expect(screen.getByAltText("Dark preview")).toHaveStyle({
       width: "32px",
       height: "32px",
     });
