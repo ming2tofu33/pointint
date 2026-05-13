@@ -118,6 +118,26 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   aniFrameSpeedNormal: "Normal",
   aniFrameSpeedFast: "Fast",
   aniFrameSpeedLabel: "{label} speed, {duration} ms per frame",
+  quickStartTitle: "Drop an image. Get a cursor.",
+  quickStartDescription:
+    "Pointint will pick the default framing and hotspot for you. You can fine-tune later if you want.",
+  quickResultTitle: "Your cursor is ready",
+  quickResultDescription:
+    "Download it now, or open fine-tuning if you want to adjust the details.",
+  quickDownload: "Download cursor",
+  quickDownloadDescription: "Download the current cursor file",
+  openAdvancedEditor: "Fine-tune",
+  closeAdvancedEditor: "Back to simple view",
+  quickBackgroundRemoveTitle: "Remove the background?",
+  quickBackgroundRemoveDescription:
+    "Use AI background removal for sticker-like cursor images.",
+  quickUseAsIs: "Use as is",
+  quickRemoveBackground: "Remove background",
+  expandToWindowsSet: "Build full Windows set",
+  slotStaticUpload: "Static Image",
+  slotStaticUploadSub: "Upload a PNG, JPG, JPEG, or WebP image.",
+  slotAniUpload: "Animated GIF",
+  slotAniUploadSub: "Upload a GIF for an animated cursor slot.",
 };
 
 function humanizeStudioKey(
@@ -505,11 +525,22 @@ function renderStudio(
     pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
     showGuide?: boolean;
     downloadGuideVariant?: "package" | "cur" | "ani";
+    experienceMode?: "quick" | "advanced";
   } = {}
 ) {
   useStudioMock.mockReturnValue(createStudioReturn(state, options));
 
-  return render(<StudioPage />);
+  const view = render(<StudioPage />);
+  if (options.experienceMode !== "quick") {
+    const advancedButton = screen.queryByRole("button", {
+      name: /open advanced editor|fine-tune|세부 조정/i,
+    });
+    if (advancedButton) {
+      fireEvent.click(advancedButton);
+    }
+  }
+
+  return view;
 }
 
 function createStudioReturn(
@@ -699,27 +730,20 @@ describe("Studio entry gate", () => {
     });
   });
 
-  it("shows GIF Maker as a non-Soon expanded slot source while AI generation stays Soon", () => {
+  it("shows the quick-start upload surface before advanced editing controls", () => {
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "more source options" })
-    );
-
-    expect({
-      gifMakerVisible: Boolean(screen.queryByText("GIF Maker")),
-      aiGenerateVisible: Boolean(screen.queryByText("AI generate")),
-      soonBadgeCount: screen.getAllByText("Soon").length,
-    }).toEqual({
-      gifMakerVisible: true,
-      aiGenerateVisible: true,
-      soonBadgeCount: 1,
-    });
+    expect(screen.getByTestId("studio-quick-start")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start-animated")).toBeVisible();
+    expect(screen.queryByTestId("slot-rail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("studio-inspector")).not.toBeInTheDocument();
   });
 
-  it("passes multiple valid image frames from the GIF Maker source input", () => {
+  it("passes multiple valid image frames from the quick-start static input", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
@@ -730,18 +754,11 @@ describe("Studio entry gate", () => {
 
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    const moreOptionsButton = screen.getByRole("button", {
-      name: "more source options",
-    });
-    expect(moreOptionsButton).toHaveAttribute("aria-expanded", "false");
-
-    fireEvent.click(moreOptionsButton);
-    expect(moreOptionsButton).toHaveAttribute("aria-expanded", "true");
-
-    const gifMaker = screen.getByTestId("studio-empty-slot-source-gif-maker");
-    const fileInput = gifMaker.parentElement?.querySelector(
+    const quickStatic = screen.getByTestId("studio-quick-start-static");
+    const fileInput = quickStatic.querySelector(
       'input[type="file"]'
     ) as HTMLInputElement | null;
 
@@ -749,7 +766,6 @@ describe("Studio entry gate", () => {
     expect(fileInput).toHaveAttribute("multiple");
     expect(fileInput).toHaveAttribute("accept", ".png,.jpg,.jpeg,.webp");
 
-    fireEvent.click(gifMaker);
     fireEvent.change(fileInput!, {
       target: {
         files: [textFile, firstFrame, gifFile, renamedGifFile, secondFrame],
@@ -764,20 +780,17 @@ describe("Studio entry gate", () => {
     expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
   });
 
-  it("passes multiple valid dropped frames from the GIF Maker source", () => {
+  it("passes multiple valid dropped frames from the quick-start static surface", () => {
     const firstFrame = new File(["one"], "frame-01.jpg", { type: "image/jpeg" });
     const secondFrame = new File(["two"], "frame-02.png", { type: "image/png" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
 
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "more source options" })
-    );
-
-    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-gif-maker"), {
+    fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
       dataTransfer: { files: [gifFile, firstFrame, secondFrame] },
     });
 
@@ -789,41 +802,37 @@ describe("Studio entry gate", () => {
     expect(selectSlotAnimatedFileMock).not.toHaveBeenCalled();
   });
 
-  it("requires at least two valid frames before using the GIF Maker source", () => {
+  it("uses one valid quick-start image as a static cursor upload", () => {
     const onlyFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
 
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "more source options" })
-    );
-
-    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-gif-maker"), {
+    fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
       dataTransfer: { files: [onlyFrame, gifFile] },
     });
 
     expect(selectSlotImageSequenceFilesMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Select at least 2 PNG, JPG, or WebP frames."
-    );
+    expect(selectFileMock).toHaveBeenCalledWith(onlyFrame);
   });
 
-  it("renders the default slot source entry instead of the workflow picker", () => {
+  it("renders the quick-start entry instead of the workflow picker", () => {
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
     expect(screen.getByTestId("studio-theme-scope")).toBeVisible();
     expect(screen.getByTestId("studio-theme-scope")).toHaveStyle({
       overflow: "hidden",
     });
-    expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
-    expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
-    expect(screen.getByTestId("studio-empty-slot-source-animated")).toBeVisible();
-    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
+    expect(screen.getByTestId("studio-quick-start")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start-animated")).toBeVisible();
+    expect(screen.queryByTestId("studio-stage-header")).toBeNull();
     expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
@@ -834,27 +843,22 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
   });
 
-  it("keeps the background-removal decision in the stage flow without duplicating the pending banner", () => {
+  it("keeps the background-removal decision in the quick flow without duplicating the pending banner", () => {
     renderStudio("uploaded", {
       pendingBackgroundRemovalSlotIds: ["normalSelect"],
+      experienceMode: "quick",
     });
 
     expect(
       screen.queryByTestId("pending-background-decision-notice")
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("background-removal-decision-dock")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-background-decision")).toBeVisible();
     expect(
       screen.queryByTestId("background-removal-decision-overlay")
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId("background-removal-decision-dock")
-    ).toHaveStyle({
-      position: "relative",
-      flexShrink: "0",
-    });
 
     fireEvent.click(
-      within(screen.getByTestId("background-removal-decision-dock")).getByRole(
+      within(screen.getByTestId("studio-quick-background-decision")).getByRole(
         "button",
         { name: /use as is/i }
       )
@@ -863,12 +867,13 @@ describe("Studio entry gate", () => {
     expect(skipBgRemovalMock).toHaveBeenCalledTimes(1);
   });
 
-  it("groups the empty-slot sources into a dedicated source-card region", () => {
+  it("groups the quick-start sources into a dedicated upload region", () => {
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    expect(screen.getByTestId("studio-empty-slot-source-cards")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start")).toBeVisible();
     expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(2);
   });
 
@@ -1371,6 +1376,7 @@ describe("Studio entry gate", () => {
 
     const view = render(<StudioPage />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Fine-tune" }));
     fireEvent.click(screen.getByRole("switch", { name: "simulation theme mode" }));
 
     currentStudioReturn = createStudioReturn("ani-editing", {
@@ -1408,71 +1414,71 @@ describe("Studio entry gate", () => {
     renderStudio("editing", {
       selectedSlotId: "textSelect",
       cursor: null,
+      experienceMode: "quick",
     });
 
-    expect(screen.getByTestId("slot-textSelect")).not.toBeNull();
-    expect(screen.getByTestId("studio-stage-header")).not.toBeNull();
-    expect(screen.getByTestId("studio-empty-slot-source-static")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("cursor-canvas")).toBeNull();
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
   });
 
-  it("keeps uploaded background-removal choice inside the editor with an inline dock", () => {
-    renderStudio("uploaded");
-
-    expect(screen.getByTestId("background-removal-decision-dock")).not.toBeNull();
-    expect(screen.getByTestId("background-removal-decision-dock")).toHaveStyle({
-      position: "relative",
-      flexShrink: "0",
+  it("keeps uploaded background-removal choice inside the quick flow", () => {
+    renderStudio("uploaded", {
+      experienceMode: "quick",
     });
-    expect(screen.getByTestId("cursor-canvas")).not.toBeNull();
+
+    expect(screen.getByTestId("studio-quick-background-decision")).toBeVisible();
+    expect(screen.queryByTestId("background-removal-decision-dock")).toBeNull();
+    expect(screen.queryByTestId("cursor-canvas")).toBeNull();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
   });
 
-  it("keeps the processing state in the same inline dock position", () => {
-    renderStudio("processing");
-
-    expect(screen.getByTestId("background-removal-processing-dock")).toHaveStyle({
-      position: "relative",
-      flexShrink: "0",
+  it("keeps the processing state in the quick background decision position", () => {
+    renderStudio("processing", {
+      experienceMode: "quick",
     });
+
+    expect(screen.getByTestId("studio-quick-background-processing")).toBeVisible();
   });
 
-  it("accepts dropped files in the slot source entry cards", () => {
+  it("accepts dropped files in the quick-start source surfaces", () => {
     const staticFile = new File(["static"], "cursor.png", { type: "image/png" });
     const animatedFile = new File(["animated"], "cursor.gif", { type: "image/gif" });
 
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-static"), {
+    fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
       dataTransfer: { files: [staticFile] },
     });
-    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-animated"), {
+    fireEvent.drop(screen.getByTestId("studio-quick-start-animated"), {
       dataTransfer: { files: [animatedFile] },
     });
 
-    expect(selectSlotStaticFileMock).toHaveBeenCalledWith(staticFile);
-    expect(selectSlotAnimatedFileMock).toHaveBeenCalledWith(animatedFile);
+    expect(selectFileMock).toHaveBeenCalledWith(staticFile);
+    expect(selectAniFileMock).toHaveBeenCalledWith(animatedFile);
   });
 
-  it("routes multiple image drops on the static source card to GIF Maker frames", () => {
+  it("routes multiple image drops on the quick static surface to GIF Maker frames", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
 
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    fireEvent.drop(screen.getByTestId("studio-empty-slot-source-static"), {
+    fireEvent.drop(screen.getByTestId("studio-quick-start-static"), {
       dataTransfer: { files: [firstFrame, secondFrame] },
     });
 
-    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+    expect(selectFileMock).not.toHaveBeenCalled();
     expect(selectSlotImageSequenceFilesMock).toHaveBeenCalledWith([
       firstFrame,
       secondFrame,
@@ -1531,18 +1537,17 @@ describe("Studio entry gate", () => {
     ]);
   });
 
-  it("highlights the slot source card on hover with the accent border", () => {
+  it("highlights the quick-start static surface during drag", () => {
     renderStudio("editing", {
       cursor: null,
+      experienceMode: "quick",
     });
 
-    const staticButton = screen.getByTestId("studio-empty-slot-source-static");
+    const staticButton = screen.getByTestId("studio-quick-start-static");
 
-    fireEvent.mouseEnter(staticButton);
+    fireEvent.dragEnter(staticButton, { dataTransfer: { files: [] } });
 
-    expect(staticButton).toHaveStyle({
-      border: "1px solid color-mix(in srgb, var(--color-accent-primary) 56%, white 8%)",
-    });
+    expect(staticButton).toHaveAttribute("data-drag-active", "true");
   });
 
   it("enables current-slot export when a configured non-normal role is selected", () => {

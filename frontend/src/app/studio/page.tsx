@@ -22,6 +22,9 @@ import SlotRail from "@/components/SlotRail";
 import Simulation from "@/components/Simulation";
 import SimulationFooter from "@/components/SimulationFooter";
 import SlotReplacementSurface from "@/components/SlotReplacementSurface";
+import StudioQuickBackgroundDecision from "@/components/StudioQuickBackgroundDecision";
+import StudioQuickResult from "@/components/StudioQuickResult";
+import StudioQuickStart from "@/components/StudioQuickStart";
 import StudioSelectionSummary from "@/components/StudioSelectionSummary";
 import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
@@ -120,6 +123,8 @@ export default function StudioPage() {
   const [canvasViewZoom, setCanvasViewZoom] = useState<CanvasViewZoom>(1);
   const [simulationSceneId, setSimulationSceneId] =
     useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
+  const [experienceMode, setExperienceMode] =
+    useState<StudioExperienceMode>("quick");
   const t = useTranslations("studio");
   const tp = useTranslations("panel");
   const tu = useTranslations("upload");
@@ -330,6 +335,22 @@ export default function StudioPage() {
   const showSlotSourceEntry =
     state !== "uploaded" && state !== "processing" && !selectedSlotBound;
   const showCompactInspectorGuidance = isBackgroundDecisionState;
+  const showQuickStart =
+    state !== "ani-editing" &&
+    experienceMode === "quick" &&
+    !selectedSlotBound &&
+    !isBackgroundDecisionState;
+  const showQuickResult =
+    state === "editing" &&
+    experienceMode === "quick" &&
+    Boolean(cursor && selectedSlotBound && (previewUrl || displayUrl));
+  const showQuickBackgroundDecision =
+    isBackgroundDecisionState &&
+    experienceMode === "quick" &&
+    Boolean(cursor && selectedSlotBound);
+  const quickPreviewUrl = previewUrl || displayUrl;
+  const showAdvancedStaticShell =
+    showStaticStudioShell && experienceMode === "advanced";
   const compactGuidanceContent =
     state === "uploaded"
       ? {
@@ -445,7 +466,71 @@ export default function StudioPage() {
             minHeight: 0,
           }}
         >
-          {showStaticStudioShell && (
+          {showQuickStart ? (
+            <StudioQuickStart
+              title={t("quickStartTitle")}
+              description={t("quickStartDescription")}
+              staticUploadLabel={t("slotStaticUpload")}
+              staticUploadDescription={t("slotStaticUploadSub")}
+              animatedUploadLabel={t("slotAniUpload")}
+              animatedUploadDescription={t("slotAniUploadSub")}
+              onStaticFile={(file) => {
+                setExperienceMode("quick");
+                selectFile(file);
+              }}
+              onAnimatedFile={(file) => {
+                setExperienceMode("advanced");
+                selectAniFile(file);
+              }}
+              onImageSequenceFiles={(files) => {
+                setExperienceMode("advanced");
+                selectSelectedSlotImageSequenceFiles(files);
+              }}
+            />
+          ) : null}
+
+          {showQuickResult && cursor && quickPreviewUrl ? (
+            <StudioQuickResult
+              title={t("quickResultTitle")}
+              description={t("quickResultDescription")}
+              previewUrl={quickPreviewUrl}
+              cursorName={cursor.cursorName}
+              cursorSize={cursor.cursorSize}
+              hotspotLabel={stageHotspotSummary ?? tp("manual")}
+              typeLabel={stageKindSummary}
+              downloading={downloading}
+              canDownload={canDownload}
+              downloadLabel={t("quickDownload")}
+              downloadDescription={t("quickDownloadDescription")}
+              advancedLabel={t("openAdvancedEditor")}
+              onDownload={download}
+              onOpenAdvanced={() => setExperienceMode("advanced")}
+              fullSetLabel={t("expandToWindowsSet")}
+              fullSetDescription={t("downloadAllRolesLabel")}
+              canDownloadFullSet={canDownloadAll}
+              onDownloadFullSet={downloadAll}
+            />
+          ) : null}
+
+          {showQuickBackgroundDecision && cursor ? (
+            <StudioQuickBackgroundDecision
+              title={t("quickBackgroundRemoveTitle")}
+              description={
+                state === "processing"
+                  ? tu("removingBg")
+                  : t("quickBackgroundRemoveDescription")
+              }
+              removeLabel={t("quickRemoveBackground")}
+              keepLabel={t("quickUseAsIs")}
+              processing={state === "processing"}
+              previewUrl={displayUrl}
+              cursorName={cursor.cursorName}
+              onRemove={processBgRemoval}
+              onKeep={skipBgRemoval}
+            />
+          ) : null}
+
+          {showAdvancedStaticShell && (
             <div
               style={{
                 flex: 1,
@@ -533,10 +618,19 @@ export default function StudioPage() {
                     cursorName={cursor.cursorName}
                     statusBadge={stageHotspotBadge}
                     actions={
-                      <CanvasViewZoomControl
-                        value={canvasViewZoom}
-                        onChange={setCanvasViewZoom}
-                      />
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setExperienceMode("quick")}
+                          style={simpleViewButtonStyle}
+                        >
+                          {t("closeAdvancedEditor")}
+                        </button>
+                        <CanvasViewZoomControl
+                          value={canvasViewZoom}
+                          onChange={setCanvasViewZoom}
+                        />
+                      </>
                     }
                     style={{ padding: 0 }}
                   />
@@ -694,6 +788,7 @@ export default function StudioPage() {
           )}
         </main>
 
+        {showAdvancedStaticShell ? (
         <StudioInspector
           style={{
             width: "17rem",
@@ -962,6 +1057,7 @@ export default function StudioPage() {
             </>
           ) : null}
         </StudioInspector>
+        ) : null}
       </div>
         </>
       )}
@@ -975,6 +1071,22 @@ export default function StudioPage() {
     </MobileGuard>
   );
 }
+
+type StudioExperienceMode = "quick" | "advanced";
+
+const simpleViewButtonStyle: CSSProperties = {
+  minHeight: "1.95rem",
+  border: "1px solid var(--color-border)",
+  borderRadius: "0.55rem",
+  backgroundColor: "rgba(255,255,255,0.025)",
+  color: "var(--color-text-secondary)",
+  cursor: "pointer",
+  fontSize: "0.72rem",
+  fontWeight: 720,
+  lineHeight: 1,
+  padding: "0 0.65rem",
+  transition: STUDIO_INTERACTION_TRANSITION,
+};
 
 function UndoArrowIcon() {
   return (
