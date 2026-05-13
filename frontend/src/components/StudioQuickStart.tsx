@@ -1,0 +1,283 @@
+"use client";
+
+import { useRef, useState, type DragEvent } from "react";
+
+import {
+  STUDIO_INTERACTION_TRANSITION,
+  default as StudioSurfaceCard,
+} from "@/components/StudioSurfaceCard";
+
+interface StudioQuickStartProps {
+  title: string;
+  description: string;
+  staticUploadLabel: string;
+  staticUploadDescription: string;
+  animatedUploadLabel?: string;
+  animatedUploadDescription?: string;
+  onStaticFile: (file: File) => void;
+  onAnimatedFile?: (file: File) => void;
+  onImageSequenceFiles?: (files: File[]) => void;
+}
+
+export default function StudioQuickStart({
+  title,
+  description,
+  staticUploadLabel,
+  staticUploadDescription,
+  animatedUploadLabel,
+  animatedUploadDescription,
+  onStaticFile,
+  onAnimatedFile,
+  onImageSequenceFiles,
+}: StudioQuickStartProps) {
+  return (
+    <section
+      data-testid="studio-quick-start"
+      style={{
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "clamp(1.25rem, 4vw, 3rem)",
+        background:
+          "radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 34%), var(--color-bg-primary)",
+      }}
+    >
+      <div
+        style={{
+          width: "min(48rem, 100%)",
+          display: "grid",
+          gap: "1rem",
+        }}
+      >
+        <div style={{ display: "grid", gap: "0.5rem", textAlign: "center" }}>
+          <h1
+            style={{
+              margin: 0,
+              color: "var(--color-text-primary)",
+              fontSize: "clamp(2rem, 5vw, 4rem)",
+              lineHeight: 0.96,
+              letterSpacing: "-0.06em",
+            }}
+          >
+            {title}
+          </h1>
+          <p
+            style={{
+              margin: "0 auto",
+              maxWidth: "36rem",
+              color: "var(--color-text-secondary)",
+              fontSize: "0.95rem",
+              lineHeight: 1.6,
+            }}
+          >
+            {description}
+          </p>
+        </div>
+
+        <QuickUploadSurface
+          dataTestId="studio-quick-start-static"
+          label={staticUploadLabel}
+          description={staticUploadDescription}
+          accept=".png,.jpg,.jpeg,.webp"
+          tone="primary"
+          onFiles={(files) => {
+            const fileList = Array.from(files);
+            const imageSequenceFiles = fileList.filter(isStaticImageFile);
+
+            if (imageSequenceFiles.length >= 2 && onImageSequenceFiles) {
+              onImageSequenceFiles(imageSequenceFiles);
+              return;
+            }
+
+            const file = fileList.find(isStaticImageFile);
+            if (file) {
+              onStaticFile(file);
+            }
+          }}
+        />
+
+        {animatedUploadLabel && animatedUploadDescription && onAnimatedFile ? (
+          <QuickUploadSurface
+            dataTestId="studio-quick-start-animated"
+            label={animatedUploadLabel}
+            description={animatedUploadDescription}
+            accept=".gif"
+            tone="secondary"
+            onFiles={(files) => {
+              const file = Array.from(files).find(isGifFile);
+              if (file) {
+                onAnimatedFile(file);
+              }
+            }}
+          />
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function QuickUploadSurface({
+  dataTestId,
+  label,
+  description,
+  accept,
+  tone,
+  onFiles,
+}: {
+  dataTestId: string;
+  label: string;
+  description: string;
+  accept: string;
+  tone: "primary" | "secondary";
+  onFiles: (files: FileList | File[]) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const isPrimary = tone === "primary";
+  const handleDragEnter = (event: DragEvent) => {
+    event.preventDefault();
+    setIsDragActive(true);
+  };
+  const handleDragOver = (event: DragEvent) => {
+    event.preventDefault();
+    setIsDragActive(true);
+  };
+  const handleDragLeave = (event: DragEvent) => {
+    event.preventDefault();
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsDragActive(false);
+    }
+  };
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    onFiles(event.dataTransfer.files);
+  };
+
+  return (
+    <StudioSurfaceCard
+      data-testid={dataTestId}
+      data-drag-active={isDragActive}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{
+        padding: isPrimary ? "1rem" : "0.75rem",
+        borderRadius: isPrimary ? "1.35rem" : "0.95rem",
+        border: isDragActive
+          ? "1px solid color-mix(in srgb, var(--color-accent) 76%, white 8%)"
+          : "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
+        background: isPrimary
+          ? "linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025))"
+          : "rgba(255,255,255,0.018)",
+        boxShadow: isDragActive
+          ? "0 24px 80px rgba(0,0,0,0.34), 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent)"
+          : "0 18px 60px rgba(0,0,0,0.22)",
+        transition: STUDIO_INTERACTION_TRANSITION,
+      }}
+    >
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => inputRef.current?.click()}
+        style={{
+          width: "100%",
+          minHeight: isPrimary ? "18rem" : "4.5rem",
+          border: isPrimary
+            ? "1px dashed color-mix(in srgb, var(--color-border) 76%, white 6%)"
+            : "1px solid transparent",
+          borderRadius: isPrimary ? "1rem" : "0.75rem",
+          backgroundColor: isDragActive
+            ? "color-mix(in srgb, var(--color-accent) 13%, rgba(255,255,255,0.035))"
+            : isPrimary
+              ? "rgba(255,255,255,0.02)"
+              : "transparent",
+          color: "var(--color-text-primary)",
+          cursor: "pointer",
+          display: "grid",
+          placeItems: "center",
+          padding: isPrimary ? "2rem" : "0.65rem",
+          textAlign: "center",
+          transition: STUDIO_INTERACTION_TRANSITION,
+        }}
+      >
+        <span style={{ display: "grid", gap: isPrimary ? "0.9rem" : "0.25rem" }}>
+          <span
+            aria-hidden="true"
+            style={{
+              margin: "0 auto",
+              width: isPrimary ? "4.5rem" : "2rem",
+              height: isPrimary ? "4.5rem" : "2rem",
+              borderRadius: "999px",
+              display: "grid",
+              placeItems: "center",
+              backgroundColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)",
+              color: "var(--color-accent)",
+              fontSize: isPrimary ? "2.4rem" : "1.2rem",
+              lineHeight: 1,
+            }}
+          >
+            +
+          </span>
+          <span
+            style={{
+              display: "grid",
+              gap: "0.25rem",
+              justifyItems: "center",
+            }}
+          >
+            <span style={{ fontSize: isPrimary ? "1rem" : "0.8rem", fontWeight: 760 }}>
+              {label}
+            </span>
+            <span
+              style={{
+                maxWidth: "30rem",
+                color: "var(--color-text-secondary)",
+                fontSize: isPrimary ? "0.82rem" : "0.72rem",
+                lineHeight: 1.45,
+              }}
+            >
+              {description}
+            </span>
+          </span>
+        </span>
+      </button>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={Boolean(accept.includes("png"))}
+        onChange={(event) => {
+          if (event.target.files) {
+            onFiles(event.target.files);
+          }
+          event.currentTarget.value = "";
+        }}
+        style={{ display: "none" }}
+      />
+    </StudioSurfaceCard>
+  );
+}
+
+const STATIC_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+function isStaticImageFile(file: File) {
+  if (file.type) {
+    return STATIC_IMAGE_TYPES.has(file.type);
+  }
+
+  return /\.(png|jpe?g|webp)$/i.test(file.name);
+}
+
+function isGifFile(file: File) {
+  if (file.type) {
+    return file.type === "image/gif";
+  }
+
+  return /\.gif$/i.test(file.name);
+}
