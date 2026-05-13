@@ -348,6 +348,10 @@ export default function StudioPage() {
     isBackgroundDecisionState &&
     experienceMode === "quick" &&
     Boolean(cursor && selectedSlotBound);
+  const isQuickExperience =
+    state !== "ani-editing" &&
+    experienceMode === "quick" &&
+    (showQuickStart || showQuickResult || showQuickBackgroundDecision);
   const quickPreviewUrl = previewUrl || displayUrl;
   const showAdvancedStaticShell =
     showStaticStudioShell && experienceMode === "advanced";
@@ -384,13 +388,13 @@ export default function StudioPage() {
           saveProjectDescription={t("saveProjectLoginRequiredDescription")}
           saveProjectStatusLabel={t("saveProjectLoginRequired")}
           projectTitleLabel={t("untitledProject")}
-          onDownload={downloadAll}
-          onSecondaryDownload={download}
-          onTertiaryDownload={downloadGif}
+          onDownload={isQuickExperience ? undefined : downloadAll}
+          onSecondaryDownload={isQuickExperience ? undefined : download}
+          onTertiaryDownload={isQuickExperience ? undefined : downloadGif}
           downloading={downloading}
-          canDownload={canDownloadAll}
-          canSecondaryDownload={canDownload}
-          canTertiaryDownload={canDownloadGif}
+          canDownload={isQuickExperience ? false : canDownloadAll}
+          canSecondaryDownload={isQuickExperience ? false : canDownload}
+          canTertiaryDownload={isQuickExperience ? false : canDownloadGif}
           primaryActionLabel={t("downloadAllRoles")}
           primaryActionDescription={t("downloadAllRolesLabel")}
           secondaryActionLabel={currentSlotDownloadLabel}

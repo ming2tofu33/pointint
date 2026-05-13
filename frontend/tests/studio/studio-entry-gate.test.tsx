@@ -743,6 +743,33 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-inspector")).not.toBeInTheDocument();
   });
 
+  it("keeps the top bar download actions disabled in quick result mode", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    renderStudio("editing", {
+      project,
+      previewUrl: "blob:preview",
+      experienceMode: "quick",
+    });
+
+    expect(screen.getByTestId("studio-quick-result")).toBeVisible();
+    expect(StudioBarMock.mock.calls[0][0]).toMatchObject({
+      canDownload: false,
+      canSecondaryDownload: false,
+      canTertiaryDownload: false,
+      onDownload: undefined,
+      onSecondaryDownload: undefined,
+      onTertiaryDownload: undefined,
+    });
+    expect(
+      screen.getByRole("button", { name: "Download the current cursor file" })
+    ).toBeEnabled();
+  });
+
   it("passes a valid image from the quick-start static input", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const textFile = new File(["notes"], "notes.txt", { type: "text/plain" });
@@ -1542,8 +1569,9 @@ describe("Studio entry gate", () => {
       selectedSlotId: "textSelect",
     });
 
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(true);
-    expect(StudioBarMock.mock.calls[0][0].canSecondaryDownload).toBe(true);
+    const barProps = StudioBarMock.mock.calls.at(-1)?.[0];
+    expect(barProps.canDownload).toBe(true);
+    expect(barProps.canSecondaryDownload).toBe(true);
   });
 
   it("enables full-set export when only a non-normal slot is populated", () => {
@@ -1558,8 +1586,9 @@ describe("Studio entry gate", () => {
       selectedSlotId: "textSelect",
     });
 
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(true);
-    expect(StudioBarMock.mock.calls[0][0].canSecondaryDownload).toBe(true);
+    const barProps = StudioBarMock.mock.calls.at(-1)?.[0];
+    expect(barProps.canDownload).toBe(true);
+    expect(barProps.canSecondaryDownload).toBe(true);
   });
 
   it("shows pending background decisions before allowing full-set export", () => {
