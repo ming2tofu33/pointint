@@ -140,4 +140,83 @@ describe("ko slot rail copy", () => {
       "Hover the title bar, edges, and corners to test each cursor."
     );
   });
+
+  it("covers quick-finish studio copy in English and Korean", () => {
+    const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
+    const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
+    const koMessages = JSON.parse(fs.readFileSync(koPath, "utf8"));
+    const enMessages = JSON.parse(fs.readFileSync(enPath, "utf8"));
+
+    expect(enMessages.studio.quickStartTitle).toBe(
+      "Drop an image. Get a cursor."
+    );
+    expect(enMessages.studio.quickStartDescription).toBe(
+      "Pointint will pick the default framing and hotspot for you. You can fine-tune later if you want."
+    );
+    expect(enMessages.studio.quickResultTitle).toBe("Your cursor is ready");
+    expect(enMessages.studio.quickResultDescription).toBe(
+      "Download it now, or open fine-tuning if you want to adjust the details."
+    );
+    expect(enMessages.studio.quickDownload).toBe("Download cursor");
+    expect(enMessages.studio.quickDownloadDescription).toBe(
+      "Download the current cursor file"
+    );
+    expect(enMessages.studio.openAdvancedEditor).toBe("Fine-tune");
+    expect(enMessages.studio.closeAdvancedEditor).toBe(
+      "Back to simple view"
+    );
+    expect(enMessages.studio.quickBackgroundRemoveTitle).toBe(
+      "Remove the background?"
+    );
+    expect(enMessages.studio.quickBackgroundRemoveDescription).toBe(
+      "Use AI background removal for sticker-like cursor images."
+    );
+    expect(enMessages.studio.quickUseAsIs).toBe("Use as is");
+    expect(enMessages.studio.quickRemoveBackground).toBe(
+      "Remove background"
+    );
+    expect(enMessages.studio.expandToWindowsSet).toBe(
+      "Build full Windows set"
+    );
+
+    expect(koMessages.studio.quickStartTitle).toBe(
+      "\uc774\ubbf8\uc9c0\ub97c \ub123\uc73c\uba74 \ucee4\uc11c\ub85c \uc644\uc131\ud569\ub2c8\ub2e4"
+    );
+    expect(koMessages.studio.quickStartDescription).toBe(
+      "\uae30\ubcf8 \ud504\ub808\uc774\ubc0d\uacfc \ud56b\uc2a4\ud31f\uc740 Pointint\uac00 \uba3c\uc800 \ub9de\ucda5\ub2c8\ub2e4. \ud544\uc694\ud558\uba74 \ub098\uc911\uc5d0 \uc138\ubd80 \uc870\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."
+    );
+    expect(koMessages.studio.quickResultTitle).toBe(
+      "\ucee4\uc11c\uac00 \uc900\ube44\ub410\uc5b4\uc694"
+    );
+    expect(koMessages.studio.quickResultDescription).toBe(
+      "\ubc14\ub85c \ub2e4\uc6b4\ub85c\ub4dc\ud558\uac70\ub098, \ud544\uc694\ud560 \ub54c\ub9cc \uc138\ubd80 \uc870\uc815\uc744 \uc5f4\uc5b4\ubcf4\uc138\uc694."
+    );
+    expect(koMessages.studio.quickDownload).toBe(
+      "\uc774\ub300\ub85c \ub2e4\uc6b4\ub85c\ub4dc"
+    );
+    expect(koMessages.studio.quickDownloadDescription).toBe(
+      "\ud604\uc7ac \ucee4\uc11c \ud30c\uc77c\uc744 \ub2e4\uc6b4\ub85c\ub4dc\ud569\ub2c8\ub2e4"
+    );
+    expect(koMessages.studio.openAdvancedEditor).toBe(
+      "\uc138\ubd80 \uc870\uc815"
+    );
+    expect(koMessages.studio.closeAdvancedEditor).toBe(
+      "\uac04\ub2e8\ud788 \ubcf4\uae30"
+    );
+    expect(koMessages.studio.quickBackgroundRemoveTitle).toBe(
+      "\ubc30\uacbd\uc744 \uc81c\uac70\ud560\uae4c\uc694?"
+    );
+    expect(koMessages.studio.quickBackgroundRemoveDescription).toBe(
+      "\uc2a4\ud2f0\ucee4\ucc98\ub7fc \ubcf4\uc774\ub294 \ucee4\uc11c\uc5d0\ub294 AI \ubc30\uacbd \uc81c\uac70\uac00 \uc798 \ub9de\uc2b5\ub2c8\ub2e4."
+    );
+    expect(koMessages.studio.quickUseAsIs).toBe(
+      "\uadf8\ub300\ub85c \uc644\uc131"
+    );
+    expect(koMessages.studio.quickRemoveBackground).toBe(
+      "\ubc30\uacbd \uc81c\uac70\ud558\uace0 \uc644\uc131"
+    );
+    expect(koMessages.studio.expandToWindowsSet).toBe(
+      "Windows \uc804\uccb4 \uc138\ud2b8\ub85c \ud655\uc7a5"
+    );
+  });
 });
