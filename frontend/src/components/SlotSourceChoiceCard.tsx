@@ -90,12 +90,12 @@ export default function SlotSourceChoiceCard({
         border: isInteractiveActive
           ? "1px solid color-mix(in srgb, var(--color-accent-primary) 56%, white 8%)"
           : "1px solid var(--color-border)",
-        borderRadius: "0.875rem",
+        borderRadius: "0.25rem",
         minHeight: "15rem",
         padding: "1.125rem",
         backgroundColor: isInteractiveActive
-          ? "rgba(255,255,255,0.05)"
-          : "rgba(255,255,255,0.03)",
+          ? "color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-secondary))"
+          : "var(--color-bg-secondary)",
         display: "flex",
         flexDirection: "column",
         gap: "1rem",
@@ -128,8 +128,8 @@ export default function SlotSourceChoiceCard({
             ? "1px dashed color-mix(in srgb, var(--color-accent-primary) 68%, white 12%)"
             : "1px dashed var(--color-border)",
           backgroundColor: isInteractiveActive
-            ? "rgba(255,255,255,0.045)"
-            : "rgba(255,255,255,0.02)",
+            ? "color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-secondary))"
+            : "var(--color-bg-primary)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

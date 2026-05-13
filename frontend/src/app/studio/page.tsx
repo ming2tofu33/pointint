@@ -465,7 +465,15 @@ export default function StudioPage() {
           />
         ) : (
           <>
-      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <div
+        style={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          backgroundColor: "var(--color-bg-primary)",
+        }}
+      >
         <main
           style={{
             flex: 1,
@@ -570,8 +578,8 @@ export default function StudioPage() {
                       display: "flex",
                       flexDirection: "column",
                       overflow: "hidden",
-                      padding: "1.25rem 1.25rem 0.875rem",
-                      gap: "1rem",
+                      padding: "1.1rem 1.1rem 0.85rem",
+                      gap: "0.85rem",
                     }}
                   >
                     <StudioStageHeader
@@ -610,8 +618,9 @@ export default function StudioPage() {
                       display: "flex",
                       flexDirection: "column",
                       overflow: "hidden",
-                      padding: "1.25rem 1.25rem 0.875rem",
-                      gap: "1rem",
+                      padding: "1.1rem 1.1rem 0.85rem",
+                      gap: "0.85rem",
+                      backgroundColor: "var(--color-bg-primary)",
                     }}
                   >
                   <StudioStageHeader
@@ -645,6 +654,9 @@ export default function StudioPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
+                        border: "1px solid var(--color-border)",
+                        backgroundColor: "var(--color-bg-secondary)",
+                        padding: "1rem",
                       }}
                     >
                       <div
@@ -653,7 +665,7 @@ export default function StudioPage() {
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: "1rem",
+                          gap: "0.85rem",
                           flex: "1 1 58%",
                           minHeight: 0,
                           position: "relative",
@@ -708,9 +720,9 @@ export default function StudioPage() {
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        gap: "0.75rem",
+                        gap: "0.65rem",
                         borderTop: "1px solid var(--color-border)",
-                        paddingTop: "0.875rem",
+                        paddingTop: "0.7rem",
                         visibility: state === "editing" ? "visible" : "hidden",
                         pointerEvents: state === "editing" ? "auto" : "none",
                       }}
@@ -793,10 +805,10 @@ export default function StudioPage() {
         {showAdvancedStaticShell ? (
         <StudioInspector
           style={{
-            width: "17rem",
+            width: "18rem",
             borderLeft: "1px solid var(--color-border)",
             backgroundColor: "var(--color-bg-secondary)",
-            padding: "1.25rem",
+            padding: "1rem 1.1rem",
             flexShrink: 0,
             overflowY: "auto",
           }}
@@ -1079,8 +1091,8 @@ type StudioExperienceMode = "quick" | "advanced";
 const simpleViewButtonStyle: CSSProperties = {
   minHeight: "1.95rem",
   border: "1px solid var(--color-border)",
-  borderRadius: "0.55rem",
-  backgroundColor: "rgba(255,255,255,0.025)",
+  borderRadius: "0",
+  backgroundColor: "var(--color-bg-secondary)",
   color: "var(--color-text-secondary)",
   cursor: "pointer",
   fontSize: "0.72rem",
@@ -1486,5 +1498,7 @@ const studioThemeScopeStyle: CSSProperties = {
   ["--color-text-secondary" as string]: "var(--studio-text-secondary)",
   ["--color-text-muted" as string]: "var(--studio-text-muted)",
   ["--color-shadow" as string]: "rgba(0, 0, 0, 0.42)",
+  ["--color-accent-primary" as string]: "var(--color-accent)",
+  colorScheme: "light",
 };
 

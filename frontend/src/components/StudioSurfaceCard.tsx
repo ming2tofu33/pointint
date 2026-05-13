@@ -44,8 +44,8 @@ export default function StudioSurfaceCard({
       {...props}
       style={{
         border: "1px solid var(--color-border)",
-        borderRadius: "1rem",
-        backgroundColor: "rgba(255,255,255,0.025)",
+        borderRadius: "0.5rem",
+        backgroundColor: "var(--color-bg-secondary)",
         padding: "1rem",
         ...style,
       }}

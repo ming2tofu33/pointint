@@ -28,9 +28,45 @@ export default function StudioQuickStart({
   onStaticFile,
   onAnimatedFile,
 }: StudioQuickStartProps) {
+  const [isRegionDragActive, setIsRegionDragActive] = useState(false);
+
+  const handleFiles = (files: FileList | File[]) => {
+    const fileList = Array.from(files);
+    const staticFile = fileList.find(isStaticImageFile);
+    if (staticFile) {
+      onStaticFile(staticFile);
+      return;
+    }
+
+    const animatedFile = fileList.find(isGifFile);
+    if (animatedFile && onAnimatedFile) {
+      onAnimatedFile(animatedFile);
+    }
+  };
+
   return (
     <section
       data-testid="studio-quick-start"
+      data-drag-active={isRegionDragActive}
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setIsRegionDragActive(true);
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setIsRegionDragActive(true);
+      }}
+      onDragLeave={(event) => {
+        event.preventDefault();
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsRegionDragActive(false);
+        }
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        setIsRegionDragActive(false);
+        handleFiles(event.dataTransfer.files);
+      }}
       style={{
         width: "100%",
         flex: 1,
@@ -38,37 +74,36 @@ export default function StudioQuickStart({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "clamp(1.25rem, 4vw, 3rem)",
-        background:
-          "radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 34%), var(--color-bg-primary)",
+        padding: "clamp(1rem, 3vw, 2rem)",
+        background: "var(--color-bg-primary)",
       }}
     >
       <div
         style={{
-          width: "min(48rem, 100%)",
+          width: "min(58rem, 100%)",
           display: "grid",
-          gap: "1rem",
+          gap: "0.9rem",
         }}
       >
-        <div style={{ display: "grid", gap: "0.5rem", textAlign: "center" }}>
+        <div style={{ display: "grid", gap: "0.35rem", textAlign: "left" }}>
           <h1
             style={{
               margin: 0,
               color: "var(--color-text-primary)",
-              fontSize: "clamp(2rem, 5vw, 4rem)",
-              lineHeight: 0.96,
-              letterSpacing: "-0.06em",
+              fontSize: "1.55rem",
+              lineHeight: 1.1,
+              letterSpacing: "0",
             }}
           >
             {title}
           </h1>
           <p
             style={{
-              margin: "0 auto",
-              maxWidth: "36rem",
+              margin: 0,
+              maxWidth: "40rem",
               color: "var(--color-text-secondary)",
-              fontSize: "0.95rem",
-              lineHeight: 1.6,
+              fontSize: "0.875rem",
+              lineHeight: 1.5,
             }}
           >
             {description}
@@ -81,6 +116,8 @@ export default function StudioQuickStart({
           description={staticUploadDescription}
           accept=".png,.jpg,.jpeg,.webp"
           tone="primary"
+          parentDragActive={isRegionDragActive}
+          onNestedDropHandled={() => setIsRegionDragActive(false)}
           onFiles={(files) => {
             const fileList = Array.from(files);
             const file = fileList.find(isStaticImageFile);
@@ -97,6 +134,8 @@ export default function StudioQuickStart({
             description={animatedUploadDescription}
             accept=".gif"
             tone="secondary"
+            parentDragActive={isRegionDragActive}
+            onNestedDropHandled={() => setIsRegionDragActive(false)}
             onFiles={(files) => {
               const file = Array.from(files).find(isGifFile);
               if (file) {
@@ -116,6 +155,8 @@ function QuickUploadSurface({
   description,
   accept,
   tone,
+  parentDragActive = false,
+  onNestedDropHandled,
   onFiles,
 }: {
   dataTestId: string;
@@ -123,51 +164,57 @@ function QuickUploadSurface({
   description: string;
   accept: string;
   tone: "primary" | "secondary";
+  parentDragActive?: boolean;
+  onNestedDropHandled?: () => void;
   onFiles: (files: FileList | File[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const isPrimary = tone === "primary";
+  const isSurfaceDragActive = isDragActive || parentDragActive;
   const handleDragEnter = (event: DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragActive(true);
   };
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragActive(true);
   };
   const handleDragLeave = (event: DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
       setIsDragActive(false);
     }
   };
   const handleDrop = (event: DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragActive(false);
+    onNestedDropHandled?.();
     onFiles(event.dataTransfer.files);
   };
 
   return (
     <StudioSurfaceCard
       data-testid={dataTestId}
-      data-drag-active={isDragActive}
+      data-drag-active={isSurfaceDragActive}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       style={{
-        padding: isPrimary ? "1rem" : "0.75rem",
-        borderRadius: isPrimary ? "1.35rem" : "0.95rem",
-        border: isDragActive
+        padding: isPrimary ? "0.75rem" : "0.6rem",
+        borderRadius: "0.35rem",
+        border: isSurfaceDragActive
           ? "1px solid color-mix(in srgb, var(--color-accent) 76%, white 8%)"
           : "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
-        background: isPrimary
-          ? "linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025))"
-          : "rgba(255,255,255,0.018)",
-        boxShadow: isDragActive
-          ? "0 24px 80px rgba(0,0,0,0.34), 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent)"
-          : "0 18px 60px rgba(0,0,0,0.22)",
+        backgroundColor: "var(--color-bg-secondary)",
+        boxShadow: isSurfaceDragActive
+          ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 14%, transparent)"
+          : "none",
         transition: STUDIO_INTERACTION_TRANSITION,
       }}
     >
@@ -177,15 +224,15 @@ function QuickUploadSurface({
         onClick={() => inputRef.current?.click()}
         style={{
           width: "100%",
-          minHeight: isPrimary ? "18rem" : "4.5rem",
+          minHeight: isPrimary ? "20rem" : "4rem",
           border: isPrimary
             ? "1px dashed color-mix(in srgb, var(--color-border) 76%, white 6%)"
             : "1px solid transparent",
-          borderRadius: isPrimary ? "1rem" : "0.75rem",
-          backgroundColor: isDragActive
+          borderRadius: "0.25rem",
+          backgroundColor: isSurfaceDragActive
             ? "color-mix(in srgb, var(--color-accent) 13%, rgba(255,255,255,0.035))"
             : isPrimary
-              ? "rgba(255,255,255,0.02)"
+              ? "var(--color-bg-primary)"
               : "transparent",
           color: "var(--color-text-primary)",
           cursor: "pointer",
@@ -203,10 +250,10 @@ function QuickUploadSurface({
               margin: "0 auto",
               width: isPrimary ? "4.5rem" : "2rem",
               height: isPrimary ? "4.5rem" : "2rem",
-              borderRadius: "999px",
+              borderRadius: "0.25rem",
               display: "grid",
               placeItems: "center",
-              backgroundColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)",
+              backgroundColor: "var(--color-accent-subtle)",
               color: "var(--color-accent)",
               fontSize: isPrimary ? "2.4rem" : "1.2rem",
               lineHeight: 1,

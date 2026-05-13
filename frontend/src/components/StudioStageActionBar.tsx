@@ -55,8 +55,8 @@ export default function StudioStageActionBar({
           key={group.map((action) => action.id).join("-")}
           style={{
             border: "1px solid var(--color-border)",
-            borderRadius: "0.75rem",
-            backgroundColor: "rgba(255,255,255,0.03)",
+            borderRadius: "0",
+            backgroundColor: "var(--color-bg-secondary)",
             display: "inline-flex",
             alignItems: "stretch",
             overflow: "hidden",
@@ -123,7 +123,7 @@ export default function StudioStageActionBar({
                       lineHeight: 1,
                       color: "var(--color-text-muted)",
                       border: "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
-                      borderRadius: "0.375rem",
+                      borderRadius: "0",
                       padding: "0.18rem 0.32rem",
                       backgroundColor: "rgba(255,255,255,0.025)",
                       whiteSpace: "nowrap",

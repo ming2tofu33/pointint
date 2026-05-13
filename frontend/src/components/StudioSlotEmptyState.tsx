@@ -39,8 +39,8 @@ export default function StudioSlotEmptyState({
         width,
         minHeight,
         border: boxed ? "1px solid var(--color-border)" : undefined,
-        borderRadius: boxed ? "1.25rem" : undefined,
-        backgroundColor: boxed ? "rgba(255,255,255,0.02)" : undefined,
+        borderRadius: boxed ? "0.35rem" : undefined,
+        backgroundColor: boxed ? "var(--color-bg-secondary)" : undefined,
         padding: boxed ? "1.5rem" : undefined,
         display: "grid",
         gap: "1.25rem",
@@ -86,8 +86,8 @@ export default function StudioSlotEmptyState({
           gap: "1rem",
           padding: boxed ? undefined : "1.125rem",
           border: boxed ? undefined : "1px solid var(--color-border)",
-          borderRadius: boxed ? undefined : "1rem",
-          backgroundColor: boxed ? undefined : "rgba(255,255,255,0.02)",
+          borderRadius: boxed ? undefined : "0.35rem",
+          backgroundColor: boxed ? undefined : "var(--color-bg-secondary)",
         }}
       >
         <SlotSourceChoiceCard
@@ -234,11 +234,11 @@ function AvailableSourceRow({
           border: isInteractiveActive
             ? "1px solid color-mix(in srgb, var(--color-accent-primary) 64%, white 10%)"
             : "1px solid color-mix(in srgb, var(--color-accent-primary) 48%, var(--color-border))",
-          borderRadius: "0.75rem",
+          borderRadius: "0.25rem",
           padding: "0.75rem 0.875rem",
           backgroundColor: isInteractiveActive
-            ? "rgba(255,255,255,0.055)"
-            : "rgba(255,255,255,0.035)",
+            ? "color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-secondary))"
+            : "var(--color-bg-secondary)",
           color: "var(--color-text-primary)",
           cursor: "pointer",
           textAlign: "left",
@@ -304,9 +304,9 @@ function SoonSourceRow({
         justifyContent: "space-between",
         gap: "0.75rem",
         border: "1px solid var(--color-border)",
-        borderRadius: "0.75rem",
+        borderRadius: "0.25rem",
         padding: "0.75rem 0.875rem",
-        backgroundColor: "rgba(255,255,255,0.02)",
+        backgroundColor: "var(--color-bg-secondary)",
       }}
     >
       <span style={{ fontSize: "0.8125rem", color: "var(--color-text-primary)" }}>

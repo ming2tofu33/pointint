@@ -22,10 +22,10 @@ describe("SimulationFooter", () => {
     const footer = screen.getByTestId("studio-simulation-footer");
 
     expect(footer).toHaveStyle({
-      flexBasis: "46%",
+      flexBasis: "34%",
       flexGrow: "0",
       flexShrink: "0",
-      minHeight: "22rem",
+      minHeight: "16rem",
     });
     expect(footer.getAttribute("style")).not.toMatch(/(?:^|;\s*)flex:/);
     expect(screen.getByTestId("studio-simulation-body")).toHaveStyle({
@@ -74,8 +74,8 @@ describe("SimulationFooter", () => {
     );
 
     expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
-      flexBasis: "32%",
-      minHeight: "15rem",
+      flexBasis: "28%",
+      minHeight: "13rem",
     });
   });
 });

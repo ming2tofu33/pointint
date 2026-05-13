@@ -3,10 +3,10 @@
 import { useTranslations } from "next-intl";
 
 const COLLAPSED_HEIGHT = "3rem";
-const EXPANDED_BASIS = "46%";
-const EXPANDED_MIN_HEIGHT = "22rem";
-const COMPACT_EXPANDED_BASIS = "32%";
-const COMPACT_EXPANDED_MIN_HEIGHT = "15rem";
+const EXPANDED_BASIS = "34%";
+const EXPANDED_MIN_HEIGHT = "16rem";
+const COMPACT_EXPANDED_BASIS = "28%";
+const COMPACT_EXPANDED_MIN_HEIGHT = "13rem";
 
 export default function SimulationFooter({
   collapsed,
@@ -41,6 +41,11 @@ export default function SimulationFooter({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        ["--simulation-panel-border" as string]: "var(--color-border)",
+        ["--simulation-panel-muted" as string]: "var(--color-text-muted)",
+        ["--simulation-panel-text" as string]: "var(--color-text-primary)",
+        ["--simulation-card-bg" as string]: "var(--color-bg-secondary)",
+        ["--simulation-tab-active-bg" as string]: "var(--color-bg-secondary)",
       }}
     >
       <div

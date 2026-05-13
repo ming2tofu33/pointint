@@ -78,10 +78,10 @@ export default function StudioStageHeader({
               fontSize: "0.6875rem",
               fontWeight: 600,
               padding: "0.25rem 0.5rem",
-              borderRadius: "999px",
+              borderRadius: "0",
               border: "1px solid var(--color-border)",
               color: "var(--color-text-muted)",
-              backgroundColor: "rgba(255,255,255,0.03)",
+              backgroundColor: "var(--color-bg-primary)",
               lineHeight: 1,
             }}
           >
@@ -94,7 +94,7 @@ export default function StudioStageHeader({
               fontSize: "0.6875rem",
               fontWeight: 600,
               padding: "0.25rem 0.5rem",
-              borderRadius: "999px",
+              borderRadius: "0",
               border: "1px solid var(--color-border)",
               color: "var(--color-accent)",
               backgroundColor: "var(--color-accent-subtle)",

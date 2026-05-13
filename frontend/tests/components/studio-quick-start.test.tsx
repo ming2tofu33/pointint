@@ -71,6 +71,27 @@ describe("StudioQuickStart", () => {
     expect(onStaticFile).toHaveBeenCalledWith(file);
   });
 
+  it("accepts dropped static files from the whole quick-start region", () => {
+    const onStaticFile = vi.fn();
+    const file = new File(["cursor"], "cursor.jpg", { type: "image/jpeg" });
+
+    render(
+      <StudioQuickStart
+        title="Drop an image. Get a cursor."
+        description="Pointint picks the defaults."
+        staticUploadLabel="Choose image"
+        staticUploadDescription="PNG, JPG, JPEG, or WebP"
+        onStaticFile={onStaticFile}
+      />
+    );
+
+    fireEvent.drop(screen.getByTestId("studio-quick-start"), {
+      dataTransfer: { files: [file] },
+    });
+
+    expect(onStaticFile).toHaveBeenCalledWith(file);
+  });
+
   it("exposes quieter animated upload only when callbacks are provided", () => {
     const onAnimatedFile = vi.fn();
     const file = new File(["gif"], "cursor.gif", { type: "image/gif" });

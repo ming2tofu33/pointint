@@ -36,18 +36,22 @@ export default function StudioInspector({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "0.875rem",
+        gap: "0",
         ...style,
       }}
     >
-      <div style={{ display: "grid", gap: "0.75rem" }}>
+      <div style={{ display: "grid", gap: 0 }}>
         <StudioSurfaceCard
           data-testid="studio-inspector-summary-card"
           style={{
             display: "flex",
             flexDirection: "column",
             gap: "0.75rem",
-            padding: "0.9rem 1rem",
+            padding: "0 0 1rem",
+            border: "none",
+            borderBottom: "1px solid var(--color-border)",
+            borderRadius: 0,
+            backgroundColor: "transparent",
           }}
         >
           {summary}
@@ -61,7 +65,11 @@ export default function StudioInspector({
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.75rem",
-                padding: "0.9rem 1rem",
+                padding: "1rem 0",
+                border: "none",
+                borderBottom: "1px solid var(--color-border)",
+                borderRadius: 0,
+                backgroundColor: "transparent",
               }}
             >
               {previews}
@@ -76,7 +84,11 @@ export default function StudioInspector({
               display: "flex",
               flexDirection: "column",
               gap: "0.625rem",
-              padding: "0.9rem 1rem",
+              padding: "1rem 0",
+              border: "none",
+              borderBottom: "1px solid var(--color-border)",
+              borderRadius: 0,
+              backgroundColor: "transparent",
             }}
           >
             {quickActions}
@@ -90,7 +102,10 @@ export default function StudioInspector({
           style={{
             display: "grid",
             gap: 0,
-            padding: "0.2rem 1rem",
+            padding: "0.2rem 0",
+            border: "none",
+            borderRadius: 0,
+            backgroundColor: "transparent",
           }}
         >
           {controlSections.map((child, index) => (
@@ -273,9 +288,9 @@ export function StudioInspectorSecondaryButton({
         justifyContent: "center",
         gap: "0.375rem",
         width: "100%",
-        borderRadius: "0.75rem",
+        borderRadius: "0.25rem",
         border: "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
-        backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "var(--color-bg-primary)",
         color: "var(--color-text-primary)",
         fontSize: "0.75rem",
         lineHeight: 1.4,
@@ -325,9 +340,9 @@ export function StudioInspectorNumberField({
         type={props.type ?? "number"}
         style={{
           width: "100%",
-          borderRadius: "0.75rem",
+          borderRadius: "0.25rem",
           border: "1px solid color-mix(in srgb, var(--color-border) 88%, white 4%)",
-          backgroundColor: "rgba(255,255,255,0.03)",
+          backgroundColor: "var(--color-bg-primary)",
           color: "var(--color-text-primary)",
           fontSize: "0.8125rem",
           lineHeight: 1.4,
@@ -363,9 +378,9 @@ export function StudioInspectorSegmentedControl<T extends string | number>({
         display: "grid",
         gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
         border: "1px solid var(--color-border)",
-        borderRadius: "0.75rem",
+        borderRadius: "0.25rem",
         overflow: "visible",
-        backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "var(--color-bg-primary)",
       }}
     >
       {options.map((option) => {
@@ -391,9 +406,9 @@ export function StudioInspectorSegmentedControl<T extends string | number>({
                 : "var(--color-text-muted)",
               borderRadius:
                 option === options[0]
-                  ? "0.625rem 0 0 0.625rem"
+                  ? "0.2rem 0 0 0.2rem"
                   : option === options[options.length - 1]
-                    ? "0 0.625rem 0.625rem 0"
+                    ? "0 0.2rem 0.2rem 0"
                     : undefined,
               fontSize: "0.75rem",
               lineHeight: 1.4,

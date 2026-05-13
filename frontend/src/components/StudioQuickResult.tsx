@@ -62,32 +62,30 @@ export default function StudioQuickResult({
         display: "grid",
         gridTemplateColumns: "minmax(18rem, 1fr) minmax(18rem, 28rem)",
         alignItems: "center",
-        gap: "clamp(1.5rem, 4vw, 3.5rem)",
-        padding: "clamp(1.5rem, 4vw, 3rem)",
-        background:
-          "radial-gradient(circle at 36% 20%, color-mix(in srgb, var(--color-accent) 15%, transparent), transparent 34%), var(--color-bg-primary)",
+        gap: "clamp(1rem, 3vw, 2rem)",
+        padding: "clamp(1rem, 3vw, 2rem)",
+        background: "var(--color-bg-primary)",
       }}
     >
       <div
         style={{
-          minHeight: "min(32rem, 66vh)",
+          minHeight: "min(33rem, 68vh)",
           border: "1px solid color-mix(in srgb, var(--color-border) 82%, white 5%)",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
+          background: "var(--color-bg-secondary)",
           display: "grid",
           placeItems: "center",
-          boxShadow: "0 24px 90px rgba(0,0,0,0.28)",
+          boxShadow: "none",
           overflow: "hidden",
         }}
       >
         <div
           style={{
-            width: "min(18rem, 58vw)",
+            width: "min(19rem, 58vw)",
             aspectRatio: "1 / 1",
             display: "grid",
             placeItems: "center",
             background:
-              "linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.05) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.05) 75%)",
+              "linear-gradient(45deg, var(--color-bg-tertiary) 25%, transparent 25%), linear-gradient(-45deg, var(--color-bg-tertiary) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--color-bg-tertiary) 75%), linear-gradient(-45deg, transparent 75%, var(--color-bg-tertiary) 75%)",
             backgroundSize: "1.25rem 1.25rem",
             backgroundPosition: "0 0, 0 0.625rem, 0.625rem -0.625rem, -0.625rem 0",
           }}
@@ -105,7 +103,7 @@ export default function StudioQuickResult({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: "1.15rem" }}>
+      <div style={{ display: "grid", gap: "1rem" }}>
         <div style={{ display: "grid", gap: "0.55rem" }}>
           <div
             style={{
@@ -124,9 +122,9 @@ export default function StudioQuickResult({
             style={{
               margin: 0,
               color: "var(--color-text-primary)",
-              fontSize: "clamp(2rem, 4vw, 3.4rem)",
-              lineHeight: 0.98,
-              letterSpacing: "-0.055em",
+              fontSize: "1.75rem",
+              lineHeight: 1.08,
+              letterSpacing: "0",
             }}
           >
             {title}
@@ -135,8 +133,8 @@ export default function StudioQuickResult({
             style={{
               margin: 0,
               color: "var(--color-text-secondary)",
-              fontSize: "0.95rem",
-              lineHeight: 1.6,
+              fontSize: "0.9rem",
+              lineHeight: 1.5,
             }}
           >
             {description}
@@ -173,10 +171,9 @@ export default function StudioQuickResult({
             aria-label={downloadDescription}
             onClick={onDownload}
             style={{
-              minHeight: "3rem",
+              minHeight: "2.85rem",
               border: "1px solid color-mix(in srgb, var(--color-accent) 82%, white 8%)",
-              background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 92%, white 8%), var(--color-accent))",
+              backgroundColor: "var(--color-accent)",
               color: "#0d1016",
               fontSize: "0.95rem",
               fontWeight: 820,
@@ -263,7 +260,7 @@ function ActualSizePreview({
 const secondaryButtonStyle = {
   minHeight: "2.5rem",
   border: "1px solid var(--color-border)",
-  backgroundColor: "rgba(255,255,255,0.025)",
+  backgroundColor: "var(--color-bg-secondary)",
   color: "var(--color-text-primary)",
   fontSize: "0.82rem",
   fontWeight: 740,

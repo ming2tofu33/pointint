@@ -40,17 +40,16 @@ export default function StudioQuickBackgroundDecision({
         display: "grid",
         gridTemplateColumns: "minmax(16rem, 1fr) minmax(18rem, 30rem)",
         alignItems: "center",
-        gap: "clamp(1.25rem, 4vw, 3rem)",
-        padding: "clamp(1.5rem, 4vw, 3rem)",
-        background:
-          "radial-gradient(circle at 36% 20%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 34%), var(--color-bg-primary)",
+        gap: "clamp(1rem, 3vw, 2rem)",
+        padding: "clamp(1rem, 3vw, 2rem)",
+        background: "var(--color-bg-primary)",
       }}
     >
       <div
         style={{
-          minHeight: "min(28rem, 62vh)",
+          minHeight: "min(32rem, 66vh)",
           border: "1px solid color-mix(in srgb, var(--color-border) 82%, white 5%)",
-          background: "rgba(255,255,255,0.025)",
+          backgroundColor: "var(--color-bg-secondary)",
           display: "grid",
           placeItems: "center",
           overflow: "hidden",
@@ -85,9 +84,9 @@ export default function StudioQuickBackgroundDecision({
             style={{
               margin: 0,
               color: "var(--color-text-primary)",
-              fontSize: "clamp(1.7rem, 3.2vw, 2.75rem)",
-              lineHeight: 1,
-              letterSpacing: "-0.045em",
+              fontSize: "1.65rem",
+              lineHeight: 1.08,
+              letterSpacing: "0",
             }}
           >
             {title}
@@ -96,7 +95,7 @@ export default function StudioQuickBackgroundDecision({
             style={{
               margin: 0,
               color: "var(--color-text-secondary)",
-              fontSize: "0.92rem",
+              fontSize: "0.9rem",
               lineHeight: 1.55,
             }}
           >
@@ -111,7 +110,7 @@ export default function StudioQuickBackgroundDecision({
             style={{
               minHeight: "7.5rem",
               border: "1px solid var(--color-border)",
-              backgroundColor: "rgba(255,255,255,0.025)",
+              backgroundColor: "var(--color-bg-secondary)",
               display: "flex",
               alignItems: "center",
               gap: "0.8rem",
@@ -178,7 +177,7 @@ function QuickDecisionButton({
         border: `1px solid ${accent ? "var(--color-accent)" : "var(--color-border)"}`,
         backgroundColor: accent
           ? "var(--color-accent-subtle)"
-          : "rgba(255,255,255,0.025)",
+          : "var(--color-bg-secondary)",
         color: accent ? "var(--color-accent)" : "var(--color-text-primary)",
         cursor: "pointer",
         fontSize: "0.86rem",

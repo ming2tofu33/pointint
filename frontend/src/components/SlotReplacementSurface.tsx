@@ -99,12 +99,12 @@ export default function SlotReplacementSurface({
         display: "flex",
         flexDirection: "column",
         minHeight: 0,
-        borderRadius: "1rem",
+        borderRadius: "0",
         border: dragActive
           ? "1px solid color-mix(in srgb, var(--color-accent-primary) 56%, white 8%)"
           : "1px solid transparent",
         backgroundColor: dragActive
-          ? "rgba(255,255,255,0.025)"
+          ? "var(--color-bg-secondary)"
           : "transparent",
         transition: STUDIO_INTERACTION_TRANSITION,
         ...style,
@@ -121,8 +121,8 @@ export default function SlotReplacementSurface({
             padding: "0.75rem 0.875rem",
             marginBottom: "0.875rem",
             border: "1px solid var(--color-border)",
-            borderRadius: "0.875rem",
-            backgroundColor: "rgba(255,255,255,0.035)",
+            borderRadius: "0.25rem",
+            backgroundColor: "var(--color-bg-secondary)",
           }}
         >
           <div style={{ display: "grid", gap: "0.25rem", minWidth: 0 }}>
@@ -190,8 +190,8 @@ export default function SlotReplacementSurface({
             alignItems: "center",
             justifyContent: "center",
             border: "1px dashed color-mix(in srgb, var(--color-accent-primary) 68%, white 12%)",
-            borderRadius: "0.875rem",
-            backgroundColor: "rgba(255,255,255,0.045)",
+            borderRadius: "0.25rem",
+            backgroundColor: "color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-secondary))",
             color: "var(--color-accent-primary)",
             fontSize: "0.8125rem",
             fontWeight: 600,

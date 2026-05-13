@@ -175,7 +175,7 @@ export default function SlotRail({
       data-testid="slot-rail"
       aria-label={t("slotRailTitle")}
       style={{
-        width: "13.5rem",
+        width: "14.5rem",
         borderRight: "1px solid var(--color-border)",
         backgroundColor: "var(--color-bg-secondary)",
         flexShrink: 0,
@@ -194,9 +194,9 @@ export default function SlotRail({
           overflowY: "auto",
           overflowX: "hidden",
           scrollbarGutter: "stable",
-          padding: "1rem 0.75rem 1rem",
+          padding: "0.875rem 0.7rem",
           display: "grid",
-          gap: "0.75rem",
+          gap: "0.5rem",
           alignContent: "start",
         }}
       >
@@ -248,14 +248,14 @@ export default function SlotRail({
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: "0.75rem",
-                    padding: "0.75rem 0.875rem",
-                    borderRadius: "0.5rem",
+                    padding: "0.65rem 0.75rem",
+                    borderRadius: "0.25rem",
                     border: `1px solid ${
                       showAdditionalRoles ? "var(--color-accent)" : "var(--color-border)"
                     }`,
                     backgroundColor: showAdditionalRoles
                       ? "var(--color-accent-subtle)"
-                      : "transparent",
+                      : "var(--color-bg-primary)",
                     color: "var(--color-text-primary)",
                     cursor: "pointer",
                     textAlign: "left",
@@ -351,13 +351,14 @@ function SlotRailCard({
         display: "flex",
         width: "100%",
         alignItems: "flex-start",
-        gap: "0.75rem",
-        padding: "0.875rem",
-        minHeight: "5.5rem",
-        borderRadius: "0.5rem",
+        gap: "0.65rem",
+        padding: "0.65rem",
+        minHeight: "4.25rem",
+        borderRadius: "0.25rem",
         border: `1px solid ${selected ? "var(--color-accent)" : "var(--color-border)"}`,
+        borderLeft: selected ? "3px solid var(--color-accent)" : "1px solid var(--color-border)",
         backgroundColor: selected ? "var(--color-accent-subtle)" : "var(--color-bg-primary)",
-        boxShadow: selected ? "0 0 0 1px var(--color-accent)" : "none",
+        boxShadow: "none",
         color: "var(--color-text-primary)",
         cursor: "pointer",
         textAlign: "left",
@@ -367,7 +368,7 @@ function SlotRailCard({
       <div
         data-testid={`slot-badge-stack-${slotId}`}
         style={{
-          width: "2.375rem",
+          width: "2rem",
           flexShrink: 0,
           display: "grid",
           gap: "0.25rem",
@@ -380,7 +381,7 @@ function SlotRailCard({
             style={{
               fontSize: "0.5625rem",
               padding: "0.125rem 0.25rem",
-              borderRadius: "0.1875rem",
+              borderRadius: "0",
               backgroundColor: "rgba(38, 132, 255, 0.16)",
               color: "var(--color-accent)",
               lineHeight: 1.2,
@@ -395,7 +396,7 @@ function SlotRailCard({
             style={{
               fontSize: "0.5625rem",
               padding: "0.125rem 0.25rem",
-              borderRadius: "0.1875rem",
+              borderRadius: "0",
               visibility: "hidden",
               lineHeight: 1.2,
               justifySelf: "start",
@@ -408,8 +409,8 @@ function SlotRailCard({
         <div
           data-testid={`slot-thumbnail-${slotId}`}
           style={{
-            width: "2.25rem",
-            height: "2.25rem",
+            width: "2rem",
+            height: "2rem",
             borderRadius: "0",
             border: `1px ${filled ? "solid" : "dashed"} ${
               selected ? "var(--color-accent)" : "var(--color-border)"

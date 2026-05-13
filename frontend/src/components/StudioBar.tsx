@@ -124,10 +124,10 @@ export default function StudioBar({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0.625rem 1.25rem",
+        padding: "0.625rem 1.5rem",
         borderBottom: "1px solid var(--color-border)",
         backgroundColor: "var(--color-bg-secondary)",
-        height: "3rem",
+        height: "3.25rem",
         flexShrink: 0,
       }}
     >
@@ -137,8 +137,20 @@ export default function StudioBar({
           alignItems: "center",
           gap: "0.5rem",
           minWidth: 0,
+          position: "relative",
+          paddingLeft: "0.9rem",
         }}
       >
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: 0,
+            width: "0.35rem",
+            height: "1.45rem",
+            backgroundColor: "var(--color-accent)",
+          }}
+        />
         <span
           title={projectTitleLabel ?? t("untitledProject")}
           style={{
@@ -146,9 +158,9 @@ export default function StudioBar({
             maxWidth: "18rem",
             overflow: "hidden",
             color: "var(--color-text-primary)",
-            fontSize: "0.8125rem",
+            fontSize: "0.875rem",
             fontWeight: 700,
-            letterSpacing: "0.005em",
+            letterSpacing: "0",
             lineHeight: 1,
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -177,7 +189,7 @@ export default function StudioBar({
             gap: "0.32rem",
             minHeight: "1.75rem",
             border: "1px solid transparent",
-            borderRadius: "0.5rem",
+            borderRadius: "0",
             backgroundColor: "transparent",
             color: canUseSaveProject
               ? "var(--color-text-primary)"
@@ -247,9 +259,9 @@ export default function StudioBar({
               alignItems: "center",
               justifyContent: "center",
               gap: "0.375rem",
-              fontSize: "0.8125rem",
+              fontSize: "0.75rem",
               fontWeight: 600,
-              padding: "0.375rem 0.875rem",
+              padding: "0.45rem 0.875rem",
               backgroundColor: "transparent",
               color: canUseSecondaryTrigger
                 ? "var(--color-text-primary)"
@@ -282,7 +294,7 @@ export default function StudioBar({
                 minWidth: "12.25rem",
                 padding: "0.32rem",
                 border: "1px solid color-mix(in srgb, var(--color-border) 86%, white 5%)",
-                borderRadius: "0.85rem",
+                borderRadius: "0.35rem",
                 background:
                   "linear-gradient(180deg, color-mix(in srgb, var(--color-bg-secondary) 92%, white 4%), color-mix(in srgb, var(--color-bg-secondary) 96%, black 8%))",
                 boxShadow:
@@ -316,9 +328,9 @@ export default function StudioBar({
             alignItems: "center",
             justifyContent: "center",
             gap: "0.375rem",
-            fontSize: "0.8125rem",
+            fontSize: "0.75rem",
             fontWeight: 600,
-            padding: "0.375rem 1rem",
+            padding: "0.45rem 1rem",
             backgroundColor: canDownload
               ? "var(--color-accent)"
               : "var(--color-border)",
