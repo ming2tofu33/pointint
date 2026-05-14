@@ -181,6 +181,7 @@ describe("useStudio workflow entry", () => {
   it("loads video uploads as editable ANI frame sequences", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["video"], "orbit.mp4", { type: "video/mp4" });
+    const options = { startMs: 500, durationMs: 2000, fps: 15 };
     const videoFrames = [
       new File(["frame-a"], "orbit-frame-001.png", { type: "image/png" }),
       new File(["frame-b"], "orbit-frame-002.png", { type: "image/png" }),
@@ -196,11 +197,11 @@ describe("useStudio workflow entry", () => {
     });
 
     await act(async () => {
-      await result.current.selectVideoFile(file);
+      await result.current.selectVideoFile(file, options);
       await Promise.resolve();
     });
 
-    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file);
+    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file, options);
     expect(result.current.state).toBe("ani-editing");
     expect(result.current.ani?.sourceKind).toBe("image-sequence");
     expect(result.current.ani?.sourceWidth).toBe(640);
@@ -224,6 +225,7 @@ describe("useStudio workflow entry", () => {
   it("routes selected-slot video uploads into animated slot state", async () => {
     const { result } = renderHook(() => useStudio());
     const file = new File(["video"], "beam.webm", { type: "video/webm" });
+    const options = { startMs: 1200, durationMs: 1000, fps: 6 };
     const videoFrames = [
       new File(["frame-a"], "beam-frame-001.png", { type: "image/png" }),
       new File(["frame-b"], "beam-frame-002.png", { type: "image/png" }),
@@ -243,11 +245,11 @@ describe("useStudio workflow entry", () => {
     });
 
     await act(async () => {
-      await result.current.selectSelectedSlotVideoFile(file);
+      await result.current.selectSelectedSlotVideoFile(file, options);
       await Promise.resolve();
     });
 
-    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file);
+    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file, options);
     expect(result.current.selectedSlotId).toBe("textSelect");
     expect(result.current.state).toBe("ani-editing");
     expect(result.current.ani?.cursorName).toBe("ibeam");

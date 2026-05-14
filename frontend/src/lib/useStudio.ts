@@ -59,6 +59,7 @@ import {
 import {
   extractVideoFrameFiles,
   type ExtractedVideoFrameSequence,
+  type ExtractVideoFrameOptions,
 } from "./videoFrameSequence";
 
 export type CursorSize = ThemeCursorSize;
@@ -1812,7 +1813,11 @@ export function useStudio() {
   );
 
   const uploadVideoFileToSlot = useCallback(
-    async (slotId: WindowsRoleSlotId, file: File) => {
+    async (
+      slotId: WindowsRoleSlotId,
+      file: File,
+      options: ExtractVideoFrameOptions = {}
+    ) => {
       trackEvent("upload_started", {
         input_kind: "video",
         slot_id: slotId,
@@ -1849,7 +1854,7 @@ export function useStudio() {
       let nextAni: AniData | null = null;
 
       try {
-        const extractedVideo = await extractVideoFrameFiles(file);
+        const extractedVideo = await extractVideoFrameFiles(file, options);
         if (!isAssetLoadRequestActive(requestId)) {
           return;
         }
@@ -2042,7 +2047,8 @@ export function useStudio() {
   );
 
   const selectVideoFile = useCallback(
-    (file: File) => uploadVideoFileToSlot(DEFAULT_PRIMARY_ROLE_SLOT_ID, file),
+    (file: File, options?: ExtractVideoFrameOptions) =>
+      uploadVideoFileToSlot(DEFAULT_PRIMARY_ROLE_SLOT_ID, file, options),
     [uploadVideoFileToSlot]
   );
 
@@ -2062,7 +2068,8 @@ export function useStudio() {
   );
 
   const selectSelectedSlotVideoFile = useCallback(
-    (file: File) => uploadVideoFileToSlot(selectedSlotId, file),
+    (file: File, options?: ExtractVideoFrameOptions) =>
+      uploadVideoFileToSlot(selectedSlotId, file, options),
     [selectedSlotId, uploadVideoFileToSlot]
   );
 
