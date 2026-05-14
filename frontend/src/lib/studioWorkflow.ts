@@ -14,6 +14,8 @@ export type StudioState =
   | "workflow-pick"
   | "cur-upload"
   | "ani-upload"
+  | "ani-background-decision"
+  | "ani-background-processing"
   | "uploaded"
   | "processing"
   | "editing"

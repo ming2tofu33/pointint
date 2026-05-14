@@ -171,6 +171,17 @@ interface StudioSnapshot {
   ani: AniData | null;
 }
 
+interface PendingAniBackgroundDecision {
+  slotId: WindowsRoleSlotId;
+  ani: AniData;
+  previous: StudioSnapshot;
+}
+
+interface AniBackgroundProgress {
+  completed: number;
+  total: number;
+}
+
 type HistoryActionKey =
   | "offset"
   | "scale"
@@ -1328,6 +1339,10 @@ export function useStudio() {
   );
   const [cursor, setCursor] = useState<CursorData | null>(null);
   const [ani, setAni] = useState<AniData | null>(null);
+  const [pendingAniBackgroundDecision, setPendingAniBackgroundDecision] =
+    useState<PendingAniBackgroundDecision | null>(null);
+  const [aniBackgroundProgress, setAniBackgroundProgress] =
+    useState<AniBackgroundProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -1606,6 +1621,8 @@ export function useStudio() {
       const previous = takeSnapshot();
       clearActiveHistoryAction();
       setError(null);
+      setPendingAniBackgroundDecision(null);
+      setAniBackgroundProgress(null);
       cleanupSlotReplacement(slotId);
       clearPreview();
       cancelBgRemovalRequest();
@@ -1745,6 +1762,8 @@ export function useStudio() {
       const previous = takeSnapshot();
       clearActiveHistoryAction();
       setError(null);
+      setPendingAniBackgroundDecision(null);
+      setAniBackgroundProgress(null);
       cleanupSlotReplacement(slotId);
       clearPreview();
       cancelBgRemovalRequest();
@@ -1812,6 +1831,32 @@ export function useStudio() {
     ]
   );
 
+  const commitHydratedAniSequence = useCallback(
+    (
+      hydratedAni: AniData,
+      previous: StudioSnapshot,
+      slotId: WindowsRoleSlotId
+    ) => {
+      const { historySnapshot, replacedAni } =
+        prepareImageSequenceReplacementSnapshot(previous, slotId);
+
+      pushHistoryForAction(historySnapshot, "replaceSlot");
+      setCursor(null);
+      setAni(hydratedAni);
+      commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
+      setPendingAniBackgroundDecision(null);
+      setAniBackgroundProgress(null);
+      setState("ani-editing");
+      if (replacedAni?.sourceKind === "image-sequence") {
+        revokeAniObjectUrlsNotRetained(replacedAni, [
+          ...undoStackRef.current,
+          ...redoStackRef.current,
+        ]);
+      }
+    },
+    [commitSlotState, pushHistoryForAction]
+  );
+
   const uploadVideoFileToSlot = useCallback(
     async (
       slotId: WindowsRoleSlotId,
@@ -1846,6 +1891,8 @@ export function useStudio() {
       const previous = takeSnapshot();
       clearActiveHistoryAction();
       setError(null);
+      setPendingAniBackgroundDecision(null);
+      setAniBackgroundProgress(null);
       cleanupSlotReplacement(slotId);
       clearPreview();
       cancelBgRemovalRequest();
@@ -1893,20 +1940,14 @@ export function useStudio() {
           });
         }
 
-        const { historySnapshot, replacedAni } =
-          prepareImageSequenceReplacementSnapshot(previous, slotId);
-
-        pushHistoryForAction(historySnapshot, "replaceSlot");
         setCursor(null);
-        setAni(hydratedAni);
-        commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
-        setState("ani-editing");
-        if (replacedAni?.sourceKind === "image-sequence") {
-          revokeAniObjectUrlsNotRetained(replacedAni, [
-            ...undoStackRef.current,
-            ...redoStackRef.current,
-          ]);
-        }
+        setAni(null);
+        setPendingAniBackgroundDecision({
+          slotId,
+          ani: hydratedAni,
+          previous,
+        });
+        setState("ani-background-decision");
       } catch (err) {
         if (nextAni) {
           revokeAniObjectUrls(nextAni);
@@ -1938,7 +1979,6 @@ export function useStudio() {
       commitSlotState,
       cursor,
       clearActiveHistoryAction,
-      pushHistoryForAction,
       takeSnapshot,
       cancelBgRemovalRequest,
       beginAssetLoadRequest,
@@ -1948,6 +1988,16 @@ export function useStudio() {
       state,
     ]
   );
+
+  const keepExtractedVideoBackground = useCallback(() => {
+    if (!pendingAniBackgroundDecision) return;
+
+    commitHydratedAniSequence(
+      pendingAniBackgroundDecision.ani,
+      pendingAniBackgroundDecision.previous,
+      pendingAniBackgroundDecision.slotId
+    );
+  }, [commitHydratedAniSequence, pendingAniBackgroundDecision]);
 
   const uploadFileToPrimaryRoleSlot = useCallback(
     (file: File, kind: SlotKind) =>
@@ -3059,6 +3109,8 @@ export function useStudio() {
     syncHistoryFlags();
     setCursor(null);
     setAni(null);
+    setPendingAniBackgroundDecision(null);
+    setAniBackgroundProgress(null);
     setProject(createLegacyCompatibleProject());
     setSlotRuntime(createEmptySlotRuntime());
     const defaultSelection = getPrimaryRoleSelection();
@@ -3523,10 +3575,13 @@ export function useStudio() {
     showOriginal,
     previewUrl,
     pendingBackgroundRemovalSlotIds,
+    pendingAniBackgroundDecision,
+    aniBackgroundProgress,
     selectFile,
     selectAniFile,
     selectVideoFile,
     processBgRemoval,
+    keepExtractedVideoBackground,
     skipBgRemoval,
     toggleOriginal,
     retryBgRemoval,
