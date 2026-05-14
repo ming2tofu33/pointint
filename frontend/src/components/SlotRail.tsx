@@ -177,7 +177,7 @@ export default function SlotRail({
       style={{
         width: "4.25rem",
         borderRight: "1px solid var(--color-border)",
-        backgroundColor: "var(--color-bg-secondary)",
+        backgroundColor: "var(--studio-chrome-bg)",
         flexShrink: 0,
         alignSelf: "stretch",
         display: "flex",

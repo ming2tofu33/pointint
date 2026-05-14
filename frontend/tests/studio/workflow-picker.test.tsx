@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -73,6 +73,25 @@ function getBadgeCount(availability: (typeof WORKFLOW_OPTIONS)[number]["availabi
 }
 
 describe("WorkflowPicker", () => {
+  it("uses the same dotted guide surface as the studio upload entry", () => {
+    renderPicker();
+
+    const picker = screen.getByTestId("workflow-picker");
+
+    expect(picker).toBeVisible();
+    expect(picker).toHaveClass("workflow-picker-shell");
+    expect(screen.getByTestId("workflow-picker-panel")).toHaveClass(
+      "workflow-picker-panel"
+    );
+    expect(screen.getByTestId("workflow-picker-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("workflow-picker-dots-hover")).toBeInTheDocument();
+
+    fireEvent.mouseMove(picker, { clientX: 88, clientY: 132 });
+
+    expect(picker.style.getPropertyValue("--mouse-x")).toBe("88px");
+    expect(picker.style.getPropertyValue("--mouse-y")).toBe("132px");
+  });
+
   it("renders CUR and ANI groups with available and soon workflow cards", () => {
     const messages = renderPicker();
 
@@ -93,8 +112,14 @@ describe("WorkflowPicker", () => {
         name: /CUR STATIC.*Available!/i,
       }).disabled
     ).toBe(false);
+    expect(screen.getByTestId("workflow-card-cur-static-image")).toHaveClass(
+      "workflow-picker-card--available"
+    );
     expect(screen.getByRole("button", { name: /CUR AI.*Soon!/i }).disabled).toBe(
       true
+    );
+    expect(screen.getByTestId("workflow-card-cur-ai-generate")).toHaveClass(
+      "workflow-picker-card--soon"
     );
     expect(
       screen.getByRole("button", { name: /ANI GIF.*Available!/i }).disabled

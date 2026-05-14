@@ -1,6 +1,7 @@
 "use client";
 
 import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 
 interface StudioQuickResultProps {
   title: string;
@@ -58,6 +59,28 @@ export default function StudioQuickResult({
   return (
     <section
       data-testid="studio-quick-result"
+      onMouseMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty(
+          "--mouse-x",
+          `${event.clientX - rect.left}px`
+        );
+        event.currentTarget.style.setProperty(
+          "--mouse-y",
+          `${event.clientY - rect.top}px`
+        );
+      }}
+      onPointerMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty(
+          "--mouse-x",
+          `${event.clientX - rect.left}px`
+        );
+        event.currentTarget.style.setProperty(
+          "--mouse-y",
+          `${event.clientY - rect.top}px`
+        );
+      }}
       style={{
         width: "100%",
         flex: 1,
@@ -68,17 +91,26 @@ export default function StudioQuickResult({
         gap: "clamp(1rem, 3vw, 2rem)",
         padding: "clamp(1rem, 3vw, 2rem)",
         background: "var(--color-bg-primary)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <InteractiveDotBackground
+        layerTestId="studio-quick-result-dots"
+        baseColor="color-mix(in srgb, var(--color-text-primary) 13%, transparent)"
+      />
       <div
         style={{
           minHeight: "min(33rem, 68vh)",
           border: "1px solid color-mix(in srgb, var(--color-border) 82%, white 5%)",
-          background: "var(--color-bg-secondary)",
+          background:
+            "color-mix(in srgb, var(--color-bg-secondary) 92%, transparent)",
           display: "grid",
           placeItems: "center",
           boxShadow: "none",
           overflow: "hidden",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div
@@ -107,7 +139,7 @@ export default function StudioQuickResult({
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div style={{ display: "grid", gap: "1rem", position: "relative", zIndex: 1 }}>
         <div style={{ display: "grid", gap: "0.55rem" }}>
           <div
             style={{

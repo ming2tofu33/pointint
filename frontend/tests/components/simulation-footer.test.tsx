@@ -37,6 +37,11 @@ describe("SimulationFooter", () => {
     expect(screen.getByTestId("studio-simulation-toggle")).toHaveTextContent(
       "collapseSimulation"
     );
+    expect(screen.getByTestId("studio-simulation-toggle")).toHaveStyle({
+      color: "var(--color-accent)",
+      backgroundColor: "var(--color-accent-subtle)",
+      border: "1px solid var(--color-accent)",
+    });
     expect(screen.getByText("simulationPreview")).toHaveStyle({
       color: "var(--simulation-panel-text)",
       fontWeight: "760",
@@ -74,6 +79,11 @@ describe("SimulationFooter", () => {
     expect(screen.getByTestId("studio-simulation-toggle")).toHaveTextContent(
       "expandSimulation"
     );
+    expect(screen.getByTestId("studio-simulation-toggle")).toHaveStyle({
+      color: "var(--color-accent)",
+      backgroundColor: "var(--color-accent-subtle)",
+      border: "1px solid var(--color-accent)",
+    });
   });
 
   it("can use a compact expanded footprint for decision-heavy editor states", () => {

@@ -33,6 +33,8 @@ describe("SimulationThemeModeSwitch", () => {
 
     expect(screen.getByTestId("simulation-theme-mode-thumb")).toHaveStyle({
       left: "calc(50% + 0.0625rem)",
+      background:
+        "color-mix(in srgb, var(--color-text-muted) 28%, var(--color-bg-secondary))",
     });
 
     fireEvent.click(screen.getByRole("switch"));
@@ -46,6 +48,8 @@ describe("SimulationThemeModeSwitch", () => {
 
     expect(screen.getByTestId("simulation-theme-mode-thumb")).toHaveStyle({
       left: "0.125rem",
+      background:
+        "color-mix(in srgb, var(--color-text-muted) 28%, var(--color-bg-secondary))",
     });
 
     fireEvent.click(screen.getByRole("switch"));

@@ -60,7 +60,9 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   slotDiagonalResize2: "Diagonal Resize 2",
   slotDiagonalResize2Hint: "Resize diagonally",
   emptySlotStatic: "Static image",
+  emptySlotStaticStart: "Start with Static Image",
   emptySlotAnimated: "Animated GIF",
+  emptySlotAnimatedStart: "Start with Animated GIF",
   emptySlotMore: "More options",
   emptySlotMultiplePngs: "GIF Maker",
   emptySlotAiGenerate: "AI generate",
@@ -149,6 +151,13 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   quickUseAsIs: "Use as is",
   quickRemoveBackground: "Remove background",
   expandToWindowsSet: "Build full Windows set",
+  slotEmptyTitle: "Choose media for this slot",
+  slotEmptySub: "Choose Static Image or Animated GIF to fill the selected slot.",
+  emptySlotDescription:
+    "Choose a source for this slot, then edit and preview it in the simulation.",
+  simulationPreview: "Simulation preview",
+  collapseSimulation: "Collapse",
+  expandSimulation: "Expand",
   slotStaticUpload: "Static Image",
   slotStaticUploadSub: "Upload a PNG, JPG, JPEG, or WebP image.",
   slotAniUpload: "Animated GIF",
@@ -722,6 +731,8 @@ beforeEach(() => {
   getLandingFileMock.mockReset();
   clearLandingFileMock.mockReset();
   searchParamsState.current = new URLSearchParams("");
+  window.localStorage.clear();
+  document.documentElement.setAttribute("data-theme", "dark");
 });
 
 afterEach(() => {
@@ -764,6 +775,10 @@ describe("Studio entry gate", () => {
   });
 
   it("shows the quick-start upload surface before advanced editing controls", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
+
     renderStudio("editing", {
       cursor: null,
       experienceMode: "quick",
@@ -774,6 +789,20 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
     expect(screen.queryByTestId("slot-rail")).not.toBeInTheDocument();
     expect(screen.queryByTestId("studio-inspector")).not.toBeInTheDocument();
+  });
+
+  it("shows the dotted CUR and ANI guide before a direct studio upload choice", () => {
+    renderStudio("editing", {
+      cursor: null,
+      experienceMode: "quick",
+    });
+
+    const picker = screen.getByTestId("workflow-picker");
+
+    expect(picker).toBeVisible();
+    expect(screen.getByTestId("workflow-picker-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("workflow-picker-dots-hover")).toBeInTheDocument();
+    expect(screen.queryByTestId("studio-quick-start")).toBeNull();
   });
 
   it("keeps the top bar download actions disabled in quick result mode", () => {
@@ -806,6 +835,9 @@ describe("Studio entry gate", () => {
   it("passes a valid image from the quick-start static input", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const textFile = new File(["notes"], "notes.txt", { type: "text/plain" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       cursor: null,
@@ -835,6 +867,9 @@ describe("Studio entry gate", () => {
     const firstFrame = new File(["one"], "frame-01.jpg", { type: "image/jpeg" });
     const secondFrame = new File(["two"], "frame-02.png", { type: "image/png" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       cursor: null,
@@ -853,6 +888,9 @@ describe("Studio entry gate", () => {
   it("uses one valid quick-start image as a static cursor upload", () => {
     const onlyFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const gifFile = new File(["animated"], "animated.gif", { type: "image/gif" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       cursor: null,
@@ -868,7 +906,11 @@ describe("Studio entry gate", () => {
     expect(selectFileMock).not.toHaveBeenCalled();
   });
 
-  it("renders the quick-start entry instead of the workflow picker", () => {
+  it("renders the workflow-targeted quick-start entry without the picker", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
+
     renderStudio("editing", {
       cursor: null,
       experienceMode: "quick",
@@ -878,9 +920,13 @@ describe("Studio entry gate", () => {
     expect(screen.getByTestId("studio-theme-scope")).toHaveStyle({
       overflow: "hidden",
     });
+    expect(screen.getByTestId("studio-theme-scope").getAttribute("style")).toContain(
+      "color-scheme: var(--studio-color-scheme)"
+    );
     expect(screen.getByTestId("studio-quick-start")).toBeVisible();
     expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
     expect(screen.queryByTestId("studio-quick-start-animated")).toBeNull();
+    expect(screen.queryByTestId("workflow-picker")).toBeNull();
     expect(screen.queryByTestId("studio-stage-header")).toBeNull();
     expect(screen.queryByTestId("studio-stage-actions")).toBeNull();
     expect(screen.queryByTestId("studio-showcase-rail")).toBeNull();
@@ -890,6 +936,37 @@ describe("Studio entry gate", () => {
       screen.queryByTestId("studio-inspector-compact-guidance")
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("studio-inspector-empty-notice")).toBeNull();
+  });
+
+  it("routes the ANI GIF workflow guide to animated cursor upload", () => {
+    const gifFile = new File(["gif"], "cursor.gif", { type: "image/gif" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-animated-gif"
+    );
+
+    renderStudio("editing", {
+      cursor: null,
+      experienceMode: "quick",
+    });
+
+    const quickAnimated = screen.getByTestId("studio-quick-start-animated");
+    const input = quickAnimated.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement | null;
+
+    expect(screen.queryByTestId("workflow-picker")).toBeNull();
+    expect(screen.queryByTestId("studio-quick-start-static")).toBeNull();
+    expect(input).not.toBeNull();
+    expect(input).toHaveAttribute("accept", ".gif");
+
+    fireEvent.change(input!, {
+      target: {
+        files: [gifFile],
+      },
+    });
+
+    expect(selectAniFileMock).toHaveBeenCalledWith(gifFile);
+    expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
   });
 
   it("keeps the background-removal decision in the quick flow without duplicating the pending banner", () => {
@@ -917,6 +994,10 @@ describe("Studio entry gate", () => {
   });
 
   it("groups the quick-start sources into a dedicated upload region", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
+
     renderStudio("editing", {
       cursor: null,
       experienceMode: "quick",
@@ -941,6 +1022,26 @@ describe("Studio entry gate", () => {
       width: "max-content",
       maxWidth: "calc(100% - 0.75rem)",
     });
+  });
+
+  it("keeps static editor dots inside the stage canvas only", () => {
+    renderStudio("editing");
+
+    const editorMain = screen.getByTestId("studio-editor-main");
+    const stageCanvas = screen.getByTestId("studio-stage-canvas");
+
+    expect(screen.queryByTestId("studio-editor-dots-base")).toBeNull();
+    expect(screen.queryByTestId("studio-editor-dots-hover")).toBeNull();
+    expect(screen.getByTestId("studio-stage-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("studio-stage-dots-hover")).toBeInTheDocument();
+
+    fireEvent.mouseMove(editorMain, { clientX: 128, clientY: 96 });
+    fireEvent.mouseMove(stageCanvas, { clientX: 160, clientY: 104 });
+
+    expect(editorMain.style.getPropertyValue("--mouse-x")).toBe("");
+    expect(editorMain.style.getPropertyValue("--mouse-y")).toBe("");
+    expect(stageCanvas.style.getPropertyValue("--mouse-x")).toBe("160px");
+    expect(stageCanvas.style.getPropertyValue("--mouse-y")).toBe("104px");
   });
 
   it("renders an ANI editing shell with shared framing controls", () => {
@@ -1000,6 +1101,39 @@ describe("Studio entry gate", () => {
     expect(
       screen.queryByTestId("studio-inspector-summary-card")
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps ANI editor dots inside the stage canvas only", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+    project.slots.linkSelect = createAnimatedSlotAsset(
+      "linkSelect",
+      "blob:link-preview"
+    );
+
+    renderStudio("ani-editing", {
+      project,
+      selectedSlotId: "linkSelect",
+    });
+
+    const editorMain = screen.getByTestId("ani-editor-shell-main");
+    const stageCanvas = screen.getByTestId("studio-stage-canvas");
+
+    expect(screen.queryByTestId("ani-editor-dots-base")).toBeNull();
+    expect(screen.queryByTestId("ani-editor-dots-hover")).toBeNull();
+    expect(screen.getByTestId("ani-stage-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("ani-stage-dots-hover")).toBeInTheDocument();
+
+    fireEvent.mouseMove(editorMain, { clientX: 144, clientY: 120 });
+    fireEvent.mouseMove(stageCanvas, { clientX: 180, clientY: 132 });
+
+    expect(editorMain.style.getPropertyValue("--mouse-x")).toBe("");
+    expect(editorMain.style.getPropertyValue("--mouse-y")).toBe("");
+    expect(stageCanvas.style.getPropertyValue("--mouse-x")).toBe("180px");
+    expect(stageCanvas.style.getPropertyValue("--mouse-y")).toBe("132px");
   });
 
   it("labels the current-slot download as an ANI file in animated editing", () => {
@@ -1366,6 +1500,9 @@ describe("Studio entry gate", () => {
     expect(within(header).queryByText("ANI")).toBeNull();
     expect(within(header).queryByText("Recommended (t)")).toBeNull();
     expect(inspector).not.toBeNull();
+    expect(inspector).toHaveStyle({
+      backgroundColor: "var(--studio-chrome-bg)",
+    });
     expect(within(currentGroup).getByText("Current cursor")).toBeVisible();
     expect(within(currentGroup).getByText("Role")).toBeVisible();
     expect(within(currentGroup).getByText("Normal Select")).toBeVisible();
@@ -1451,6 +1588,9 @@ describe("Studio entry gate", () => {
     expect(
       within(inspector).queryByTestId("studio-inspector-status-strip")
     ).toBeNull();
+    expect(inspector).toHaveStyle({
+      backgroundColor: "var(--studio-chrome-bg)",
+    });
     expect(within(inspector).getByText("Auto hotspot")).toBeVisible();
     expect(screen.getByRole("button", { name: /center/i })).toHaveStyle({
       border: "1px solid var(--color-border)",
@@ -1564,6 +1704,44 @@ describe("Studio entry gate", () => {
     expect(SimulationMock).toHaveBeenCalledTimes(1);
   });
 
+  it("defaults the simulation preview to light mode when the current site theme is light", () => {
+    document.documentElement.setAttribute("data-theme", "light");
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    renderStudio("editing", {
+      project,
+      cursor: createEditingCursor(),
+    });
+
+    expect(SimulationMock).toHaveBeenCalled();
+    expect(SimulationMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      themeMode: "light",
+    });
+  });
+
+  it("defaults the simulation preview to dark mode when the current site theme is dark", () => {
+    document.documentElement.setAttribute("data-theme", "dark");
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    renderStudio("editing", {
+      project,
+      cursor: createEditingCursor(),
+    });
+
+    expect(SimulationMock).toHaveBeenCalled();
+    expect(SimulationMock.mock.calls.at(-1)?.[0]).toMatchObject({
+      themeMode: "dark",
+    });
+  });
+
   it("renders the ANI simulation footer when the normalSelect slot is configured", () => {
     const project = createProject();
     project.slots.normalSelect = createStaticSlotAsset(
@@ -1631,6 +1809,10 @@ describe("Studio entry gate", () => {
   });
 
   it("shows an empty editor state when a non-populated slot is selected", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
+
     renderStudio("editing", {
       selectedSlotId: "textSelect",
       cursor: null,
@@ -1642,6 +1824,122 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("cursor-canvas")).toBeNull();
     expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
+  });
+
+  it("shows the dotted static and GIF chooser when switching to an empty slot from the editor", () => {
+    const project = createProject();
+    project.slots.normalSelect = createStaticSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    let currentStudioReturn = createStudioReturn("editing", {
+      project,
+      selectedSlotId: "normalSelect",
+      cursor: createEditingCursor(),
+      previewUrl: "blob:preview",
+    });
+
+    useStudioMock.mockImplementation(() => currentStudioReturn);
+
+    const view = render(<StudioPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Fine-tune" }));
+
+    currentStudioReturn = createStudioReturn("editing", {
+      project,
+      selectedSlotId: "textSelect",
+      cursor: null,
+      previewUrl: null,
+    });
+
+    view.rerender(<StudioPage />);
+
+    expect(screen.queryByTestId("studio-editor-dots-base")).toBeNull();
+    expect(screen.queryByTestId("studio-editor-dots-hover")).toBeNull();
+    expect(screen.getByTestId("studio-empty-slot-state")).toBeVisible();
+    expect(screen.getByTestId("studio-empty-slot-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("studio-empty-slot-dots-hover")).toBeInTheDocument();
+    expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
+      height: "3rem",
+      flexBasis: "3rem",
+    });
+    expect(screen.queryByTestId("studio-simulation-body")).toBeNull();
+    expect(screen.getByTestId("studio-simulation-toggle")).toHaveTextContent(
+      "Expand"
+    );
+    expect(screen.queryByTestId("studio-selection-summary")).toBeNull();
+    expect(screen.queryByTestId("studio-inspector-compact-guidance")).toBeNull();
+    expect(screen.getByTestId("studio-inspector-group-current")).toBeVisible();
+    expect(screen.getByTestId("studio-inspector-group-source")).toBeVisible();
+    expect(
+      within(screen.getByTestId("studio-inspector-group-current")).getByText(
+        "Text Select"
+      )
+    ).toBeVisible();
+    expect(
+      within(screen.getByTestId("studio-inspector-group-current")).getByText(
+        "Empty"
+      )
+    ).toBeVisible();
+    expect(
+      within(screen.getByTestId("studio-inspector-group-current")).getByText(
+        "Unset"
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Start with Static Image" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Start with Animated GIF" })
+    ).toBeVisible();
+  });
+
+  it("keeps the editor shell when an empty slot is selected after starting from the ANI workflow", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-animated-gif"
+    );
+    const project = createProject();
+    project.slots.normalSelect = createAnimatedSlotAsset(
+      "normalSelect",
+      "blob:normal-preview"
+    );
+
+    let currentStudioReturn = createStudioReturn("ani-editing", {
+      project,
+      selectedSlotId: "normalSelect",
+    });
+
+    useStudioMock.mockImplementation(() => currentStudioReturn);
+
+    const view = render(<StudioPage />);
+
+    expect(screen.getByTestId("ani-editor-shell")).toBeVisible();
+
+    fireEvent.click(screen.getByTestId("slot-title-textSelect"));
+
+    expect(selectSlotMock).toHaveBeenCalledWith("textSelect");
+
+    currentStudioReturn = createStudioReturn("editing", {
+      project,
+      selectedSlotId: "textSelect",
+      cursor: null,
+      previewUrl: null,
+    });
+
+    view.rerender(<StudioPage />);
+
+    expect(screen.getByTestId("studio-app-shell")).toBeVisible();
+    expect(screen.getByTestId("studio-empty-slot-state")).toBeVisible();
+    expect(screen.getByTestId("studio-simulation-footer")).toHaveStyle({
+      height: "3rem",
+      flexBasis: "3rem",
+    });
+    expect(screen.queryByTestId("studio-simulation-body")).toBeNull();
+    expect(screen.getByTestId("studio-inspector-group-current")).toBeVisible();
+    expect(screen.getByTestId("studio-inspector-group-source")).toBeVisible();
+    expect(screen.queryByTestId("studio-selection-summary")).toBeNull();
+    expect(screen.queryByTestId("studio-quick-start")).toBeNull();
   });
 
   it("keeps uploaded background-removal choice inside the quick flow", () => {
@@ -1667,6 +1965,9 @@ describe("Studio entry gate", () => {
 
   it("accepts dropped files in the quick-start source surfaces", () => {
     const staticFile = new File(["static"], "cursor.png", { type: "image/png" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       cursor: null,
@@ -1685,6 +1986,9 @@ describe("Studio entry gate", () => {
   it("does not expose GIF Maker routing on the quick static surface", () => {
     const firstFrame = new File(["one"], "frame-01.png", { type: "image/png" });
     const secondFrame = new File(["two"], "frame-02.webp", { type: "image/webp" });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       cursor: null,
@@ -1704,6 +2008,9 @@ describe("Studio entry gate", () => {
     const staticFile = new File(["static"], "text-role.png", {
       type: "image/png",
     });
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
 
     renderStudio("editing", {
       selectedSlotId: "textSelect",
@@ -1772,6 +2079,10 @@ describe("Studio entry gate", () => {
   });
 
   it("highlights the quick-start static surface during drag", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=cur-static-image"
+    );
+
     renderStudio("editing", {
       cursor: null,
       experienceMode: "quick",

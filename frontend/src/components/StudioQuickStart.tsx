@@ -15,9 +15,15 @@ interface StudioQuickStartProps {
   staticUploadDescription: string;
   animatedUploadLabel?: string;
   animatedUploadDescription?: string;
+  imageSequenceUploadLabel?: string;
+  imageSequenceUploadDescription?: string;
+  primarySource?: QuickStartPrimarySource;
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
+  onImageSequenceFiles?: (files: File[]) => void;
 }
+
+type QuickStartPrimarySource = "static" | "animated" | "image-sequence";
 
 export default function StudioQuickStart({
   title,
@@ -26,23 +32,29 @@ export default function StudioQuickStart({
   staticUploadDescription,
   animatedUploadLabel,
   animatedUploadDescription,
+  imageSequenceUploadLabel,
+  imageSequenceUploadDescription,
+  primarySource = "static",
   onStaticFile,
   onAnimatedFile,
+  onImageSequenceFiles,
 }: StudioQuickStartProps) {
   const [isRegionDragActive, setIsRegionDragActive] = useState(false);
+  const primaryUpload = getPrimaryUploadConfig({
+    primarySource,
+    staticUploadLabel,
+    staticUploadDescription,
+    animatedUploadLabel,
+    animatedUploadDescription,
+    imageSequenceUploadLabel,
+    imageSequenceUploadDescription,
+    onStaticFile,
+    onAnimatedFile,
+    onImageSequenceFiles,
+  });
 
   const handleFiles = (files: FileList | File[]) => {
-    const fileList = Array.from(files);
-    const staticFile = fileList.find(isStaticImageFile);
-    if (staticFile) {
-      onStaticFile(staticFile);
-      return;
-    }
-
-    const animatedFile = fileList.find(isGifFile);
-    if (animatedFile && onAnimatedFile) {
-      onAnimatedFile(animatedFile);
-    }
+    primaryUpload.handleFiles(files);
   };
 
   return (
@@ -84,30 +96,31 @@ export default function StudioQuickStart({
         width: "100%",
         minHeight: 0,
         display: "grid",
-        gridTemplateRows: animatedUploadLabel ? "minmax(0, 1fr) auto" : "minmax(0, 1fr)",
+        gridTemplateRows:
+          primarySource === "static" && animatedUploadLabel
+            ? "minmax(0, 1fr) auto"
+            : "minmax(0, 1fr)",
         gap: "0.85rem",
       }}
     >
         <QuickUploadSurface
-          dataTestId="studio-quick-start-static"
+          dataTestId={primaryUpload.dataTestId}
           title={title}
           summary={description}
-          label={staticUploadLabel}
-          description={staticUploadDescription}
-          accept=".png,.jpg,.jpeg,.webp"
+          label={primaryUpload.label}
+          description={primaryUpload.description}
+          accept={primaryUpload.accept}
+          multiple={primaryUpload.multiple}
           tone="primary"
           parentDragActive={isRegionDragActive}
           onNestedDropHandled={() => setIsRegionDragActive(false)}
-          onFiles={(files) => {
-            const fileList = Array.from(files);
-            const file = fileList.find(isStaticImageFile);
-            if (file) {
-              onStaticFile(file);
-            }
-          }}
+          onFiles={primaryUpload.handleFiles}
         />
 
-        {animatedUploadLabel && animatedUploadDescription && onAnimatedFile ? (
+        {primarySource === "static" &&
+        animatedUploadLabel &&
+        animatedUploadDescription &&
+        onAnimatedFile ? (
           <QuickUploadSurface
             dataTestId="studio-quick-start-animated"
             label={animatedUploadLabel}
@@ -136,6 +149,7 @@ function QuickUploadSurface({
   label,
   description,
   accept,
+  multiple = false,
   tone,
   parentDragActive = false,
   onNestedDropHandled,
@@ -147,6 +161,7 @@ function QuickUploadSurface({
   label: string;
   description: string;
   accept: string;
+  multiple?: boolean;
   tone: "primary" | "secondary";
   parentDragActive?: boolean;
   onNestedDropHandled?: () => void;
@@ -341,6 +356,7 @@ function QuickUploadSurface({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         onChange={(event) => {
           if (event.target.files) {
             onFiles(event.target.files);
@@ -354,6 +370,76 @@ function QuickUploadSurface({
 }
 
 const STATIC_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+function getPrimaryUploadConfig({
+  primarySource,
+  staticUploadLabel,
+  staticUploadDescription,
+  animatedUploadLabel,
+  animatedUploadDescription,
+  imageSequenceUploadLabel,
+  imageSequenceUploadDescription,
+  onStaticFile,
+  onAnimatedFile,
+  onImageSequenceFiles,
+}: {
+  primarySource: QuickStartPrimarySource;
+  staticUploadLabel: string;
+  staticUploadDescription: string;
+  animatedUploadLabel?: string;
+  animatedUploadDescription?: string;
+  imageSequenceUploadLabel?: string;
+  imageSequenceUploadDescription?: string;
+  onStaticFile: (file: File) => void;
+  onAnimatedFile?: (file: File) => void;
+  onImageSequenceFiles?: (files: File[]) => void;
+}) {
+  if (primarySource === "animated") {
+    return {
+      dataTestId: "studio-quick-start-animated",
+      label: animatedUploadLabel ?? staticUploadLabel,
+      description: animatedUploadDescription ?? staticUploadDescription,
+      accept: ".gif",
+      multiple: false,
+      handleFiles: (files: FileList | File[]) => {
+        const animatedFile = Array.from(files).find(isGifFile);
+        if (animatedFile) {
+          onAnimatedFile?.(animatedFile);
+        }
+      },
+    };
+  }
+
+  if (primarySource === "image-sequence") {
+    return {
+      dataTestId: "studio-quick-start-image-sequence",
+      label: imageSequenceUploadLabel ?? staticUploadLabel,
+      description: imageSequenceUploadDescription ?? staticUploadDescription,
+      accept: ".png,.jpg,.jpeg,.webp",
+      multiple: true,
+      handleFiles: (files: FileList | File[]) => {
+        const imageFiles = Array.from(files).filter(isStaticImageFile);
+        if (imageFiles.length >= 2) {
+          onImageSequenceFiles?.(imageFiles);
+        }
+      },
+    };
+  }
+
+  return {
+    dataTestId: "studio-quick-start-static",
+    label: staticUploadLabel,
+    description: staticUploadDescription,
+    accept: ".png,.jpg,.jpeg,.webp",
+    multiple: false,
+    handleFiles: (files: FileList | File[]) => {
+      const file = Array.from(files).find(isStaticImageFile);
+      if (file) {
+        onStaticFile(file);
+      }
+    },
+  };
+}
 
 function isStaticImageFile(file: File) {
   if (file.type) {

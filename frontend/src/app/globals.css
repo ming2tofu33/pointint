@@ -60,27 +60,29 @@
   --landing-water-mid: #0a1f4a;
   --landing-water-highlight: #4da3ff;
   --landing-water-opacity-scale: 1;
-  --studio-bg-primary: #f6f6f8;
-  --studio-bg-secondary: #ffffff;
-  --studio-bg-tertiary: #eef0f4;
-  --studio-border: #d9dee8;
-  --studio-text-primary: #141925;
-  --studio-text-secondary: #5f6878;
-  --studio-text-muted: #8a93a3;
-  --simulation-frame-bg: #f6f6f8;
-  --simulation-frame-border: #d9dee8;
+  --studio-color-scheme: dark;
+  --studio-chrome-bg: #0a0a0a;
+  --studio-bg-primary: #0a0a0a;
+  --studio-bg-secondary: #121212;
+  --studio-bg-tertiary: #1a1a1a;
+  --studio-border: #333333;
+  --studio-text-primary: #f9f9f9;
+  --studio-text-secondary: #a0a0a0;
+  --studio-text-muted: #6e6e6e;
+  --simulation-frame-bg: #0a0a0a;
+  --simulation-frame-border: #333333;
   --simulation-shell-dark-bg: #1e1e1e;
   --simulation-shell-dark-fg: #ffffff;
   --simulation-shell-light-bg: #ffffff;
   --simulation-shell-light-fg: #1e1e1e;
-  --simulation-panel-bg: #1e1e1e;
-  --simulation-chrome-bg: #2b2b2b;
-  --simulation-sidebar-bg: #232323;
-  --simulation-input-bg: #1e1e1e;
-  --simulation-panel-elevated: #2c2c2c;
-  --simulation-panel-border: #3e3e3e;
-  --simulation-panel-text: #e6eaf1;
-  --simulation-panel-muted: #a1a1a6;
+  --simulation-panel-bg: #121212;
+  --simulation-chrome-bg: #1a1a1a;
+  --simulation-sidebar-bg: #161616;
+  --simulation-input-bg: #121212;
+  --simulation-panel-elevated: #1d1d1d;
+  --simulation-panel-border: #333333;
+  --simulation-panel-text: #f9f9f9;
+  --simulation-panel-muted: #a0a0a0;
   --simulation-link: #409cff;
   --simulation-button-bg: #409cff;
   --simulation-button-text: #ffffff;
@@ -147,6 +149,8 @@
   --landing-water-mid: #b8e1e9;
   --landing-water-highlight: #7ad1e0;
   --landing-water-opacity-scale: 1.24;
+  --studio-color-scheme: light;
+  --studio-chrome-bg: #ffffff;
   --studio-bg-primary: #f6f6f8;
   --studio-bg-secondary: #ffffff;
   --studio-bg-tertiary: #eef0f4;
@@ -234,6 +238,8 @@
   --landing-water-mid: #eeb3c5;
   --landing-water-highlight: #ff84a6;
   --landing-water-opacity-scale: 1.18;
+  --studio-color-scheme: light;
+  --studio-chrome-bg: #ffffff;
   --studio-bg-primary: #f7f4f6;
   --studio-bg-secondary: #ffffff;
   --studio-bg-tertiary: #f0eaee;
@@ -310,6 +316,174 @@
 
 .landing-glass-cta:active {
   transform: translateY(0);
+}
+
+/* ============================================
+   Studio Workflow Picker
+   ============================================ */
+.workflow-picker-shell {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(2.5rem, 8vh, 5.75rem) clamp(1rem, 4vw, 3rem);
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+}
+
+.workflow-picker-panel {
+  width: min(43rem, 100%);
+  display: grid;
+  gap: 1.8rem;
+  position: relative;
+  z-index: 1;
+}
+
+.workflow-picker-header {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.workflow-picker-header h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(1.22rem, 1rem + 0.8vw, 1.55rem);
+  font-weight: 820;
+  line-height: 1.16;
+  letter-spacing: 0;
+}
+
+.workflow-picker-header p {
+  width: min(34rem, 100%);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.workflow-picker-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.workflow-picker-group {
+  min-width: 0;
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.workflow-picker-group h2 {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.workflow-picker-card-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.workflow-picker-card {
+  width: 100%;
+  min-height: 6.25rem;
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.workflow-picker-card--available {
+  border-color: color-mix(in srgb, var(--color-accent) 62%, var(--color-border));
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 10%, transparent),
+      color-mix(in srgb, var(--color-accent) 4%, transparent)),
+    color-mix(in srgb, var(--color-bg-secondary) 94%, transparent);
+  cursor: pointer;
+}
+
+.workflow-picker-card--available:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-accent) 86%, var(--color-border));
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 14%, transparent),
+      color-mix(in srgb, var(--color-accent) 6%, transparent)),
+    var(--color-bg-secondary);
+}
+
+.workflow-picker-card--soon {
+  border-color: color-mix(in srgb, var(--color-border) 76%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg-secondary) 72%, transparent);
+  opacity: 0.58;
+  cursor: default;
+}
+
+.workflow-picker-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.workflow-picker-card-title {
+  color: var(--color-text-primary);
+  font-size: 0.92rem;
+  font-weight: 780;
+  line-height: 1.25;
+}
+
+.workflow-picker-card-badge {
+  flex: 0 0 auto;
+  color: var(--color-accent);
+  font-size: 0.625rem;
+  font-weight: 780;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.workflow-picker-card--soon .workflow-picker-card-badge {
+  color: var(--color-text-muted);
+}
+
+.workflow-picker-card-description {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .workflow-picker-shell {
+    align-items: start;
+    padding-block: 2.25rem;
+  }
+
+  .workflow-picker-panel {
+    gap: 1.4rem;
+  }
+
+  .workflow-picker-groups {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================================

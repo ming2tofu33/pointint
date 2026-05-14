@@ -8,6 +8,7 @@ interface InteractiveDotBackgroundProps extends HTMLAttributes<HTMLDivElement> {
   dotSize?: number;
   spacing?: number;
   hoverRadius?: number;
+  layerTestId?: string;
 }
 
 export default function InteractiveDotBackground({
@@ -16,12 +17,15 @@ export default function InteractiveDotBackground({
   dotSize = 1,
   spacing = 20,
   hoverRadius = 120,
+  layerTestId,
   style,
   ...props
 }: InteractiveDotBackgroundProps) {
   return (
     <>
       <div
+        aria-hidden="true"
+        data-testid={layerTestId ? `${layerTestId}-base` : undefined}
         style={{
           position: "absolute",
           inset: 0,
@@ -34,6 +38,8 @@ export default function InteractiveDotBackground({
         {...props}
       />
       <div
+        aria-hidden="true"
+        data-testid={layerTestId ? `${layerTestId}-hover` : undefined}
         style={{
           position: "absolute",
           inset: 0,

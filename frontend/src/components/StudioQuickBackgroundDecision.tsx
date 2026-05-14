@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
 
 interface StudioQuickBackgroundDecisionProps {
@@ -33,6 +34,28 @@ export default function StudioQuickBackgroundDecision({
     <section
       data-testid="studio-quick-background-decision"
       aria-labelledby={titleId}
+      onMouseMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty(
+          "--mouse-x",
+          `${event.clientX - rect.left}px`
+        );
+        event.currentTarget.style.setProperty(
+          "--mouse-y",
+          `${event.clientY - rect.top}px`
+        );
+      }}
+      onPointerMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.style.setProperty(
+          "--mouse-x",
+          `${event.clientX - rect.left}px`
+        );
+        event.currentTarget.style.setProperty(
+          "--mouse-y",
+          `${event.clientY - rect.top}px`
+        );
+      }}
       style={{
         width: "100%",
         flex: 1,
@@ -43,16 +66,25 @@ export default function StudioQuickBackgroundDecision({
         gap: "clamp(1rem, 3vw, 2rem)",
         padding: "clamp(1rem, 3vw, 2rem)",
         background: "var(--color-bg-primary)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <InteractiveDotBackground
+        layerTestId="studio-quick-background-dots"
+        baseColor="color-mix(in srgb, var(--color-text-primary) 13%, transparent)"
+      />
       <div
         style={{
           minHeight: "min(32rem, 66vh)",
           border: "1px solid color-mix(in srgb, var(--color-border) 82%, white 5%)",
-          backgroundColor: "var(--color-bg-secondary)",
+          backgroundColor:
+            "color-mix(in srgb, var(--color-bg-secondary) 92%, transparent)",
           display: "grid",
           placeItems: "center",
           overflow: "hidden",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {previewUrl ? (
@@ -76,6 +108,8 @@ export default function StudioQuickBackgroundDecision({
           flexDirection: "column",
           justifyContent: "center",
           gap: "1rem",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div style={{ display: "grid", gap: "0.45rem" }}>

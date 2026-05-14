@@ -21,6 +21,9 @@ describe("StudioBar", () => {
       />
     );
 
+    expect(screen.getByTestId("studio-bar")).toHaveStyle({
+      backgroundColor: "var(--studio-chrome-bg)",
+    });
     expect(
       screen.queryByRole("navigation", { name: "Studio sections" })
     ).not.toBeInTheDocument();
@@ -32,6 +35,9 @@ describe("StudioBar", () => {
     fireEvent.click(screen.getByRole("button", { name: "openMenu" }));
 
     expect(screen.getByRole("menu")).toBeVisible();
+    expect(screen.getByRole("menu")).toHaveStyle({
+      backgroundColor: "var(--studio-chrome-bg)",
+    });
     expect(screen.getByRole("menuitem", { name: "goHome" })).toHaveAttribute(
       "href",
       "/"
@@ -90,6 +96,9 @@ describe("StudioBar", () => {
 
     expect(menuButton).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("menu")).toBeVisible();
+    expect(screen.getByRole("menu")).toHaveStyle({
+      backgroundColor: "var(--studio-chrome-bg)",
+    });
     expect(
       screen.getByRole("menuitem", {
         name: "Download Windows animated cursor file",

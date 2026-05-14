@@ -11,9 +11,9 @@ aliases:
 # ACTIVE SPRINT
 
 > **Sprint Window:** 2026-03-27 onward
-> **Last Updated:** 2026-04-27
-> **Status:** Phase 1 gate closed, ANI Source Maker complete, Content Growth Wave 0-3 foundation implemented
-> **Goal:** Ship source-maker foundations and search-led entry surfaces that route users into Studio
+> **Last Updated:** 2026-05-14
+> **Status:** Phase 1 gate closed, ANI Source Maker complete, Studio Quick Finish ready to commit
+> **Goal:** Reduce Studio start friction, then extend the source-maker foundation to Video to ANI
 > **Phase Flow:** [[Phase-Flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
 > **Ops Refresh:** [[plans/2026-04-11-document-ops-refresh]]
@@ -33,6 +33,8 @@ aliases:
 - Slot-based studio foundation is now in flight: `normal / text / link / button` slots edit one at a time and the simulation runtime is moving to zone-based source mapping.
 - `Phase 1.5 / STUDIO-UX-01` is now closed with a premium-tool shell refresh across CUR and ANI: slot board, stage header, validation footer, and inspector now read as one system.
 - `CONTENT-GROWTH-01` Wave 0-3 is implemented: `/tools`, `/guides`, `/tools/image-to-cursor`, `/tools/gif-to-ani-cursor`, four `/guides/*` trust pages, sitemap expansion, direct Studio workflow CTAs, and growth-funnel analytics events.
+- `STUDIO-QUICK-FINISH-01` is the current Studio simplification slice: static CUR users should start with upload -> optional background decision -> quick result -> download, while advanced controls stay behind `세부 조정`.
+- `Phase 1.5 / Video to ANI` remains the next source-maker extension after the quick-finish work is verified and committed.
 
 ## Current Doing
 
@@ -40,7 +42,8 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
-| Now | `Phase 1.5 / Video to ANI` | queued | Reuse the GIF Maker source foundation for `Video -> FrameSequenceSource` |
+| Now | `STUDIO-QUICK-FINISH-01` | closeout | Browser QA, tests, and build pass; commit the one-way quick-to-advanced flow |
+| Next | `Phase 1.5 / Video to ANI` | queued | Reuse the GIF Maker source foundation for `Video -> FrameSequenceSource` after quick-finish changes are closed |
 | Done | `CONTENT-GROWTH-01` | complete | Wave 0-3 search entry foundation: Tools/Guides nav hubs, tool pages, trust guides, sitemap, direct Studio CTAs, funnel events |
 | Done | `ANI-SOURCE-01` | complete | `GIF Maker`: multiple images -> sorted frame sequence -> ANI editor -> image-sequence export |
 | Option | `WIN-INSTALLER-EXE-01` | deferred option | Keep as a later distribution spike; ZIP + INF RC and wording are already validated for now |
@@ -48,9 +51,11 @@ aliases:
 
 ## Next Session
 
-- Decide whether to start `Video to ANI` now that the GIF Maker source foundation is stable
+- Finish `STUDIO-QUICK-FINISH-01` before starting another feature branch of work
+- Commit the quick-finish code and docs as a clean boundary
+- Start `Video to ANI` only after the quick-finish work is closed
 - Review the new `/tools`, `/guides`, `/tools/*`, and `/guides/*` pages in browser once visual QA starts; add screenshots/examples after first search-console feedback
-- If yes, design the video source-maker as `video file -> extracted frame sequence -> existing ANI editor`
+- Design the video source-maker as `video file -> extracted frame sequence -> existing ANI editor`
 - Keep the GIF Maker v1 compact: multi-image upload/drop, sorted frames, shared hotspot/framing, and Windows `.ani` export
 - Keep `P1-MOCKUP-01` deferred unless trust gaps show up in real usage
 - Keep `BG-FT-01` and `WIN-INSTALLER-EXE-01` as deferred options
@@ -58,7 +63,8 @@ aliases:
 ## Blockers
 
 - No technical blocker is open right now
-- ANI v1 is no longer blocked on phase entry. The GIF Maker source slice is implemented; the next open decision is whether to extend the same foundation to `Video to ANI`.
+- Scope hygiene is the main risk: close and commit the quick-finish changes before starting `Video to ANI`.
+- ANI v1 is no longer blocked on phase entry. The GIF Maker source slice is implemented; the next source-maker extension is `Video to ANI`.
 
 ## Recently Done
 
@@ -98,6 +104,7 @@ aliases:
 - 2026-04-27: `Phase 2.5 / Theme Asset Foundation` is added as a queued future phase after Auth, project storage, 17-role generation, and install trust. It should start with folder icons, wallpaper export, and cursor/icon/wallpaper theme-pack drafts; it is not part of the current Phase 1.5 ANI scope.
 - 2026-04-27: Content Growth Wave 0-3 ships as tool and guide pages rather than blog posts. Search intent pages should route into Studio workflows and remain product-led.
 - 2026-04-27: Content Growth pages are now first-class UI entry points. Header and mobile menu expose `Tools` and `Guides`; `/tools` and `/guides` act as hubs before users drill into specific intent pages.
+- 2026-05-14: Studio static CUR entry should default to a quick-finish flow instead of exposing the full professional editor first. The advanced Studio shell remains available through `세부 조정`; ANI/GIF source work remains on the existing editor shell.
 
 ## Document Follow-up
 
@@ -125,6 +132,7 @@ aliases:
 | `plans/2026-04-26-windows-installer-feasibility-spike.md` | Windows installer feasibility spike plan | synced |
 | `plans/2026-04-27-page-cro-follow-up.md` | Landing/Studio/download conversion follow-up from page-cro review | synced |
 | `plans/2026-04-27-content-growth-foundation.md` | Wave 0-3 content growth implementation plan | synced |
+| `docs/plans/2026-05-13-studio-quick-finish.md` | Studio quick-finish implementation plan and QA boundary | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
@@ -175,17 +183,17 @@ aliases:
 
 | Task | Priority | Note |
 |---|---|---|
-| `P1-MOCKUP-01` | P0 | Extend trust surfaces with desktop context |
-| `Phase 1.5 planning` | P1 | Decide ANI + Media Prep Foundation start point |
+| `STUDIO-QUICK-FINISH-01` | P0 | Finish QA, commit, and close the simplified static CUR flow |
+| `Phase 1.5 / Video to ANI` | P1 | Reuse GIF Maker source foundation for video frame extraction |
+| `P1-MOCKUP-01` | P2 | Keep deferred unless trust gaps show up in real usage |
 
 ## Transition Note
 
 - Phase 1 gate is closed.
 - Landing redesign, editor-confidence parity, hotspot recommendation, and analytics instrumentation are now shipped.
-- The immediate branch point is:
-  - close `P1-MOCKUP-01` first
-  - or open `Phase 1.5` for ANI + Media Prep Foundation
-- Current recommendation: finish the remaining trust/polish slice, then decide whether to switch phases.
+- Phase 1.5 is already open.
+- The immediate branch point is no longer whether to enter Phase 1.5; it is whether the current quick-finish Studio simplification is fully closed before `Video to ANI`.
+- Current recommendation: close `STUDIO-QUICK-FINISH-01`, then start `Video to ANI`.
 
 ## References
 

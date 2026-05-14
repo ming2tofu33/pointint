@@ -30,7 +30,7 @@
     "dropOrClick": "Drop image or click to upload",
     "formats": "PNG, JPG, WebP",
     "workflowTitle": "Choose what to make",
-    "workflowSub": "Start with the output you want. More ANI paths will open here later.",
+    "workflowSub": "Start with the output you want. More ANI paths will open later.",
     "curGroup": "CUR",
     "aniGroup": "ANI",
     "curStaticImage": "Static Image",

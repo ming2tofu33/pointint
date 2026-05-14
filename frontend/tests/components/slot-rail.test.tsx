@@ -133,6 +133,7 @@ describe("SlotRail", () => {
     });
     expect(screen.getByTestId("slot-rail")).toHaveStyle({
       width: "4.25rem",
+      backgroundColor: "var(--studio-chrome-bg)",
     });
     expect(screen.getByTestId("slot-normalSelect")).toHaveStyle({
       minHeight: "3rem",

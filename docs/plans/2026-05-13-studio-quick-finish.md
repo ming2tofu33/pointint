@@ -10,6 +10,45 @@
 
 ---
 
+## Execution Status
+
+> **Updated:** 2026-05-14
+> **Status:** QA passed; ready to commit
+
+Implemented:
+
+- Static CUR entry defaults to the quick-finish path instead of showing the full editor first.
+- Quick mode supports upload -> background decision -> quick result -> current cursor download.
+- Advanced editing remains available through `세부 조정`.
+- Header download actions are suppressed in quick mode so the result screen owns the main CTA.
+- Quick-start static upload routes to the selected slot instead of overwriting the default slot.
+- Drag-and-drop now works from the whole quick-start region, not only the inner upload card.
+- Korean and English copy are kept together for quick-start, quick-result, and background-decision surfaces.
+
+QA evidence:
+
+- Browser QA passed on `http://localhost:3000/studio`: workflow picker -> Static Image -> quick-start -> click upload -> background decision -> use as-is -> quick result.
+- Browser QA passed for whole-region drag-and-drop upload on the quick-start surface.
+- Current cursor download starts successfully from the quick result and produces `pointint_arrow.cur`.
+- `세부 조정` opens the advanced slot rail and inspector.
+- Browser console had no warnings or errors during the scripted QA pass.
+- `npm test --` passed with 60 files and 328 tests.
+- `npm run build` passed.
+
+Closed UX decision:
+
+- The closeout checklist originally included returning from advanced mode to simple view. We are keeping the current one-way advanced entry: after `세부 조정`, users stay in the advanced editor. There is no `Back to simple view` / `간단히 보기` escape in this slice.
+
+Closeout checklist:
+
+- Verify `/studio` in browser for empty quick upload, click upload, drag-and-drop upload, background decision, quick result, download, and `세부 조정`.
+- Run `npm test --` from `frontend`.
+- Run `npm run build` from `frontend`.
+- Commit quick-finish code, tests, and docs as a clean boundary.
+- Start `Video to ANI` only after the quick-finish commit is closed.
+
+---
+
 ## Scope
 
 ### In Scope

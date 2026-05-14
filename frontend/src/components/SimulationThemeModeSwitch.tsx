@@ -4,6 +4,11 @@ import { useTranslations } from "next-intl";
 
 import { type SimulationThemeMode } from "@/components/CursorSimulationSurface";
 
+const SWITCH_TRACK_BACKGROUND =
+  "color-mix(in srgb, var(--color-bg-secondary) 86%, var(--color-text-muted) 8%)";
+const SWITCH_THUMB_BACKGROUND =
+  "color-mix(in srgb, var(--color-text-muted) 28%, var(--color-bg-secondary))";
+
 export default function SimulationThemeModeSwitch({
   value,
   onChange,
@@ -30,9 +35,9 @@ export default function SimulationThemeModeSwitch({
         padding: "0.125rem",
         minWidth: "8rem",
         height: "1.875rem",
-        border: "1px solid var(--simulation-panel-border)",
+        border: "1px solid var(--color-border)",
         borderRadius: "999px",
-        background: "var(--simulation-card-bg)",
+        background: SWITCH_TRACK_BACKGROUND,
         cursor: "pointer",
         transition: "border-color 160ms ease, background 160ms ease, color 160ms ease",
       }}
@@ -47,10 +52,7 @@ export default function SimulationThemeModeSwitch({
           left: value === "light" ? "0.125rem" : "calc(50% + 0.0625rem)",
           width: "calc(50% - 0.1875rem)",
           borderRadius: "999px",
-          background:
-            value === "light"
-              ? "var(--simulation-tab-active-bg)"
-              : "var(--simulation-chrome-top)",
+          background: SWITCH_THUMB_BACKGROUND,
           transition: "left 180ms ease, background 180ms ease",
         }}
       />
@@ -80,7 +82,7 @@ function ModeLabel({
         height: "1.625rem",
         padding: "0 0.625rem",
         color: active
-          ? "var(--simulation-panel-text)"
+          ? "var(--color-text-primary)"
           : "var(--simulation-panel-muted)",
         fontSize: "0.6875rem",
         fontWeight: 600,

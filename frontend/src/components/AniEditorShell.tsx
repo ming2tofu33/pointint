@@ -33,6 +33,7 @@ import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
 import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
 import { StudioShellInteractionStyles } from "@/components/StudioSurfaceCard";
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 import { resolveAniFrameEdit } from "@/lib/aniFrameEdits";
 import { type FitMode, type ImageTransformAction } from "@/lib/cursorFrame";
 import { type CursorThemeProject, type SlotId } from "@/lib/cursorThemeProject";
@@ -319,6 +320,7 @@ export default function AniEditorShell({
               padding: "1.25rem 1.25rem 0.875rem",
               gap: "1rem",
               minHeight: 0,
+              overflow: "hidden",
             }}
           >
             {selectedSlotBound && ani ? (
@@ -335,6 +337,8 @@ export default function AniEditorShell({
                     flexDirection: "column",
                     overflow: "hidden",
                     gap: "1rem",
+                    position: "relative",
+                    zIndex: 1,
                   }}
                 >
                   <StudioStageHeader
@@ -349,6 +353,20 @@ export default function AniEditorShell({
 
                   <div
                     data-testid="studio-stage-canvas"
+                    onMouseMove={(event) => {
+                      setInteractiveDotPosition(
+                        event.currentTarget,
+                        event.clientX,
+                        event.clientY
+                      );
+                    }}
+                    onPointerMove={(event) => {
+                      setInteractiveDotPosition(
+                        event.currentTarget,
+                        event.clientX,
+                        event.clientY
+                      );
+                    }}
                     style={{
                       flex: 1,
                       minHeight: 0,
@@ -358,34 +376,37 @@ export default function AniEditorShell({
                       overflow: "hidden",
                       border: "1px solid var(--color-border)",
                       backgroundColor: "var(--color-bg-secondary)",
-                      backgroundImage:
-                        "radial-gradient(color-mix(in srgb, var(--color-text-primary) 14%, transparent) 1px, transparent 1px)",
-                      backgroundSize: "20px 20px",
                       padding: "1.25rem",
                       position: "relative",
                       boxShadow: "none",
                     }}
                   >
-                    <CursorCanvas
-                      imageUrl={activeImageUrl}
-                      sourceWidth={activeSourceWidth}
-                      sourceHeight={activeSourceHeight}
-                      fitMode={activeEdit.fitMode}
-                      offsetX={activeEdit.offsetX}
-                      offsetY={activeEdit.offsetY}
-                      scale={activeEdit.scale}
-                      rotation={activeEdit.rotation}
-                      flipX={activeEdit.flipX}
-                      flipY={activeEdit.flipY}
-                      hotspotX={ani.hotspotX}
-                      hotspotY={ani.hotspotY}
-                      onOffsetChange={handleOffsetChange}
-                      onHotspotChange={onHotspotChange}
-                      onGestureEnd={onEndContinuousHistoryAction}
-                      hotspotPickActive={hotspotPickActive}
-                      onHotspotPickComplete={() => onSetHotspotPickActive(false)}
-                      viewScale={canvasViewZoom}
+                    <InteractiveDotBackground
+                      layerTestId="ani-stage-dots"
+                      baseColor="color-mix(in srgb, var(--color-text-primary) 14%, transparent)"
                     />
+                    <div style={{ position: "relative", zIndex: 1 }}>
+                      <CursorCanvas
+                        imageUrl={activeImageUrl}
+                        sourceWidth={activeSourceWidth}
+                        sourceHeight={activeSourceHeight}
+                        fitMode={activeEdit.fitMode}
+                        offsetX={activeEdit.offsetX}
+                        offsetY={activeEdit.offsetY}
+                        scale={activeEdit.scale}
+                        rotation={activeEdit.rotation}
+                        flipX={activeEdit.flipX}
+                        flipY={activeEdit.flipY}
+                        hotspotX={ani.hotspotX}
+                        hotspotY={ani.hotspotY}
+                        onOffsetChange={handleOffsetChange}
+                        onHotspotChange={onHotspotChange}
+                        onGestureEnd={onEndContinuousHistoryAction}
+                        hotspotPickActive={hotspotPickActive}
+                        onHotspotPickComplete={() => onSetHotspotPickActive(false)}
+                        viewScale={canvasViewZoom}
+                      />
+                    </div>
 
                     <div
                       data-testid="studio-stage-actions"
@@ -586,6 +607,8 @@ export default function AniEditorShell({
                   flexDirection: "column",
                   overflow: "hidden",
                   gap: "1rem",
+                  position: "relative",
+                  zIndex: 1,
                 }}
               >
                 <StudioStageHeader
@@ -607,9 +630,6 @@ export default function AniEditorShell({
                     onStaticFile={onSelectSlotStaticFile}
                     onAnimatedFile={onSelectSlotAnimatedFile}
                     onImageSequenceFiles={onSelectSlotImageSequenceFiles}
-                    width="min(52rem, 100%)"
-                    minHeight="20rem"
-                    boxed
                   />
                 </div>
               </div>
@@ -672,7 +692,7 @@ export default function AniEditorShell({
         style={{
           width: "17rem",
           borderLeft: "1px solid var(--color-border)",
-          backgroundColor: "var(--color-bg-secondary)",
+          backgroundColor: "var(--studio-chrome-bg)",
           padding: "1.25rem",
           flexShrink: 0,
           overflowY: "auto",
@@ -1010,4 +1030,14 @@ function ActualSizePreview({
 function capitalizeSlotId(slotId: string | undefined) {
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
+}
+
+function setInteractiveDotPosition(
+  element: HTMLElement,
+  clientX: number,
+  clientY: number
+) {
+  const rect = element.getBoundingClientRect();
+  element.style.setProperty("--mouse-x", `${clientX - rect.left}px`);
+  element.style.setProperty("--mouse-y", `${clientY - rect.top}px`);
 }

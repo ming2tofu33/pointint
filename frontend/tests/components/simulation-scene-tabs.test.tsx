@@ -19,9 +19,17 @@ describe("SimulationSceneTabs", () => {
       "aria-pressed",
       "true"
     );
+    expect(screen.getByRole("button", { name: /browser scene/i })).toHaveStyle({
+      color: "var(--color-accent)",
+      backgroundColor: "var(--color-accent-subtle)",
+      borderColor: "var(--color-accent)",
+    });
     expect(
       screen.getByRole("button", { name: /system work scene/i })
     ).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /system work scene/i })).toHaveStyle({
+      color: "var(--simulation-panel-muted)",
+    });
     expect(
       screen.getByRole("button", { name: /window controls scene/i })
     ).toHaveAttribute("aria-pressed", "false");

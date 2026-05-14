@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import InteractiveDotBackground from "@/components/InteractiveDotBackground";
 import SlotSourceChoiceCard from "@/components/SlotSourceChoiceCard";
 import { type SlotId } from "@/lib/cursorThemeProject";
 import { STUDIO_INTERACTION_TRANSITION } from "@/components/StudioSurfaceCard";
@@ -14,7 +15,6 @@ interface StudioSlotEmptyStateProps {
   onImageSequenceFiles: (files: File[]) => void;
   width?: string;
   minHeight?: string;
-  boxed?: boolean;
 }
 
 export default function StudioSlotEmptyState({
@@ -22,9 +22,8 @@ export default function StudioSlotEmptyState({
   onStaticFile,
   onAnimatedFile,
   onImageSequenceFiles,
-  width = "min(56rem, 100%)",
+  width = "100%",
   minHeight,
-  boxed = false,
 }: StudioSlotEmptyStateProps) {
   const t = useTranslations("studio");
   const slotLabel = t(`slot${capitalizeSlotId(slotId)}`);
@@ -35,121 +34,131 @@ export default function StudioSlotEmptyState({
   return (
     <div
       data-testid="studio-empty-slot-state"
+      aria-label={`${slotLabel} ${t("slotLabelSuffix")}`}
+      onMouseMove={(event) => {
+        setInteractiveDotPosition(
+          event.currentTarget,
+          event.clientX,
+          event.clientY
+        );
+      }}
+      onPointerMove={(event) => {
+        setInteractiveDotPosition(
+          event.currentTarget,
+          event.clientX,
+          event.clientY
+        );
+      }}
       style={{
         width,
         minHeight,
-        border: boxed ? "1px solid var(--color-border)" : undefined,
-        borderRadius: boxed ? "0.35rem" : undefined,
-        backgroundColor: boxed ? "var(--color-bg-secondary)" : undefined,
-        padding: boxed ? "1.5rem" : undefined,
-        display: "grid",
-        gap: "1.25rem",
+        flex: "1 1 auto",
+        alignSelf: "stretch",
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--color-bg-secondary)",
+        padding: "1.25rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         color: "var(--color-text-muted)",
         textAlign: "left",
         lineHeight: 1.6,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ display: "grid", gap: "0.375rem" }}>
-        <div
-          style={{
-            fontSize: "0.6875rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          {boxed ? t("slotEmptyTitle") : `${slotLabel} ${t("slotLabelSuffix")}`}
-        </div>
-        {boxed ? (
-          <>
-            <div
-              style={{ fontSize: "0.875rem", color: "var(--color-text-primary)" }}
-            >
-              {slotLabel}
-            </div>
-            <div style={{ fontSize: "0.8125rem" }}>{t("slotEmptySub")}</div>
-          </>
-        ) : (
-          <div
-            style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}
-          >
-            {t("emptySlotDescription")}
-          </div>
-        )}
-      </div>
+      <InteractiveDotBackground
+        layerTestId="studio-empty-slot-dots"
+        baseColor="color-mix(in srgb, var(--color-text-primary) 13%, transparent)"
+      />
 
       <div
-        data-testid="studio-empty-slot-source-cards"
+        data-testid="studio-empty-slot-source-panel"
         style={{
+          width: "min(52rem, 100%)",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
           gap: "1rem",
-          padding: boxed ? undefined : "1.125rem",
-          border: boxed ? undefined : "1px solid var(--color-border)",
-          borderRadius: boxed ? undefined : "0.35rem",
-          backgroundColor: boxed ? undefined : "var(--color-bg-secondary)",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <SlotSourceChoiceCard
-          dataTestId="studio-empty-slot-source-static"
-          title={t("slotStaticUpload")}
-          description={t("slotStaticUploadSub")}
-          ariaLabel={t("emptySlotStaticStart")}
-          mode="cur"
-          onFile={onStaticFile}
-          onImageSequenceFiles={onImageSequenceFiles}
-        />
-        <SlotSourceChoiceCard
-          dataTestId="studio-empty-slot-source-animated"
-          title={t("slotAniUpload")}
-          description={t("slotAniUploadSub")}
-          ariaLabel={t("emptySlotAnimatedStart")}
-          mode="ani"
-          onFile={onAnimatedFile}
-        />
-      </div>
-
-      <div style={{ display: "grid", gap: "0.75rem" }}>
-        <button
-          type="button"
-          aria-controls={extraSourcesId}
-          aria-expanded={showMoreOptions}
-          onClick={() => setShowMoreOptions((current) => !current)}
+        <div
+          data-testid="studio-empty-slot-source-cards"
           style={{
-            alignSelf: "flex-start",
-            background: "none",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(16rem, 1fr))",
+            gap: "1rem",
             border: "none",
-            color: "var(--color-text-secondary)",
-            fontSize: "0.75rem",
-            cursor: "pointer",
-            padding: 0,
-            transition: STUDIO_INTERACTION_TRANSITION,
+            backgroundColor: "transparent",
           }}
         >
-          {t("moreSourceOptions")}
-        </button>
+          <SlotSourceChoiceCard
+            dataTestId="studio-empty-slot-source-static"
+            title={t("slotStaticUpload")}
+            description={t("slotStaticUploadSub")}
+            ariaLabel={t("emptySlotStaticStart")}
+            mode="cur"
+            onFile={onStaticFile}
+            onImageSequenceFiles={onImageSequenceFiles}
+          />
+          <SlotSourceChoiceCard
+            dataTestId="studio-empty-slot-source-animated"
+            title={t("slotAniUpload")}
+            description={t("slotAniUploadSub")}
+            ariaLabel={t("emptySlotAnimatedStart")}
+            mode="ani"
+            onFile={onAnimatedFile}
+          />
+        </div>
 
-        {showMoreOptions ? (
-          <div
-            id={extraSourcesId}
+        <div
+          style={{
+            display: "grid",
+            justifyItems: "center",
+            gap: "0.75rem",
+          }}
+        >
+          <button
+            type="button"
+            aria-controls={extraSourcesId}
+            aria-expanded={showMoreOptions}
+            onClick={() => setShowMoreOptions((current) => !current)}
             style={{
-              display: "grid",
-              gap: "0.625rem",
-              borderTop: "1px solid var(--color-border)",
-              paddingTop: "0.875rem",
+              background: "none",
+              border: "none",
+              color: "var(--color-text-secondary)",
+              fontSize: "0.75rem",
+              cursor: "pointer",
+              padding: 0,
+              transition: STUDIO_INTERACTION_TRANSITION,
             }}
           >
-            <AvailableSourceRow
-              title={t("emptySlotMultiplePngs")}
-              onFiles={onImageSequenceFiles}
-              minimumError={imageSequenceMinimumError}
-            />
-            <SoonSourceRow
-              title={t("emptySlotAiGenerate")}
-              badge={t("soon")}
-            />
-          </div>
-        ) : null}
+            {t("moreSourceOptions")}
+          </button>
+
+          {showMoreOptions ? (
+            <div
+              id={extraSourcesId}
+              style={{
+                width: "min(24rem, 100%)",
+                display: "grid",
+                gap: "0.625rem",
+                borderTop: "1px solid var(--color-border)",
+                paddingTop: "0.875rem",
+              }}
+            >
+              <AvailableSourceRow
+                title={t("emptySlotMultiplePngs")}
+                onFiles={onImageSequenceFiles}
+                minimumError={imageSequenceMinimumError}
+              />
+              <SoonSourceRow
+                title={t("emptySlotAiGenerate")}
+                badge={t("soon")}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -329,4 +338,14 @@ function SoonSourceRow({
 function capitalizeSlotId(slotId: string | undefined) {
   if (!slotId) return "Slot";
   return `${slotId.slice(0, 1).toUpperCase()}${slotId.slice(1)}`;
+}
+
+function setInteractiveDotPosition(
+  element: HTMLElement,
+  clientX: number,
+  clientY: number
+) {
+  const rect = element.getBoundingClientRect();
+  element.style.setProperty("--mouse-x", `${clientX - rect.left}px`);
+  element.style.setProperty("--mouse-y", `${clientY - rect.top}px`);
 }

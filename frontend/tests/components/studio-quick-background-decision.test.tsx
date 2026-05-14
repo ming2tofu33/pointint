@@ -22,6 +22,12 @@ describe("StudioQuickBackgroundDecision", () => {
     );
 
     expect(screen.getByTestId("studio-quick-background-decision")).toBeVisible();
+    expect(
+      screen.getByTestId("studio-quick-background-dots-base")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("studio-quick-background-dots-hover")
+    ).toBeInTheDocument();
     expect(screen.getByAltText("cursor")).toHaveAttribute("src", "blob:preview");
 
     fireEvent.click(screen.getByRole("button", { name: "Remove background" }));
@@ -29,6 +35,28 @@ describe("StudioQuickBackgroundDecision", () => {
 
     expect(onRemove).toHaveBeenCalledOnce();
     expect(onKeep).toHaveBeenCalledOnce();
+  });
+
+  it("updates the interactive dot mask from cursor movement", () => {
+    render(
+      <StudioQuickBackgroundDecision
+        title="Remove the background?"
+        description="Use AI background removal."
+        removeLabel="Remove background"
+        keepLabel="Use as is"
+        previewUrl="blob:preview"
+        cursorName="cursor"
+        onRemove={vi.fn()}
+        onKeep={vi.fn()}
+      />
+    );
+
+    const stage = screen.getByTestId("studio-quick-background-decision");
+
+    fireEvent.mouseMove(stage, { clientX: 42, clientY: 64 });
+
+    expect(stage.style.getPropertyValue("--mouse-x")).toBe("42px");
+    expect(stage.style.getPropertyValue("--mouse-y")).toBe("64px");
   });
 
   it("keeps a stable inline processing state", () => {

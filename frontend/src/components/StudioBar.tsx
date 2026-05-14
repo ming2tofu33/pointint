@@ -129,6 +129,7 @@ export default function StudioBar({
 
   return (
     <header
+      data-testid="studio-bar"
       style={{
         display: "flex",
         alignItems: "center",
@@ -136,7 +137,7 @@ export default function StudioBar({
         gap: "1rem",
         padding: "0.5rem 1rem",
         borderBottom: "1px solid var(--color-border)",
-        backgroundColor: "var(--color-bg-secondary)",
+        backgroundColor: "var(--studio-chrome-bg)",
         height: "3.5rem",
         flexShrink: 0,
       }}
@@ -192,7 +193,7 @@ export default function StudioBar({
                 zIndex: 90,
                 minWidth: "10.5rem",
                 border: "1px solid var(--color-border)",
-                backgroundColor: "var(--color-bg-secondary)",
+                backgroundColor: "var(--studio-chrome-bg)",
                 padding: "0.3rem",
               }}
             >
@@ -408,10 +409,9 @@ export default function StudioBar({
                 gap: "0.2rem",
                 minWidth: "12.25rem",
                 padding: "0.32rem",
-                border: "1px solid color-mix(in srgb, var(--color-border) 86%, white 5%)",
-                borderRadius: "0.35rem",
-                background:
-                  "linear-gradient(180deg, color-mix(in srgb, var(--color-bg-secondary) 92%, white 4%), color-mix(in srgb, var(--color-bg-secondary) 96%, black 8%))",
+                border: "1px solid var(--color-border)",
+                borderRadius: "0",
+                backgroundColor: "var(--studio-chrome-bg)",
                 boxShadow:
                   "0 18px 42px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)",
                 animation: "studio-download-menu-in 150ms ease-out",

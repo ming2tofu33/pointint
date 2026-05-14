@@ -36,6 +36,8 @@ describe("StudioQuickResult", () => {
     renderQuickResult();
 
     expect(screen.getByTestId("studio-quick-result")).toBeVisible();
+    expect(screen.getByTestId("studio-quick-result-dots-base")).toBeInTheDocument();
+    expect(screen.getByTestId("studio-quick-result-dots-hover")).toBeInTheDocument();
     expect(screen.getByAltText("cursor")).toHaveAttribute("src", "blob:display");
     expect(screen.getByLabelText("Actual size")).toBeVisible();
     expect(screen.getByAltText("Light preview")).toHaveStyle({
@@ -48,6 +50,17 @@ describe("StudioQuickResult", () => {
     });
     expect(screen.getByText("Recommended")).toBeVisible();
     expect(screen.getByText("Static")).toBeVisible();
+  });
+
+  it("updates the interactive dot mask from cursor movement", () => {
+    renderQuickResult();
+
+    const stage = screen.getByTestId("studio-quick-result");
+
+    fireEvent.mouseMove(stage, { clientX: 88, clientY: 116 });
+
+    expect(stage.style.getPropertyValue("--mouse-x")).toBe("88px");
+    expect(stage.style.getPropertyValue("--mouse-y")).toBe("116px");
   });
 
   it("uses the rendered cursor only for actual-size previews", () => {

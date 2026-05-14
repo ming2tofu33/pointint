@@ -111,11 +111,13 @@ export default function SimulationFooter({
             onClick={onToggle}
             style={{
               fontSize: "0.6875rem",
-              color: "var(--simulation-panel-muted)",
-              background: "none",
-              border: "1px solid var(--simulation-panel-border)",
+              color: "var(--color-accent)",
+              backgroundColor: "var(--color-accent-subtle)",
+              border: "1px solid var(--color-accent)",
               padding: "0.25rem 0.5rem",
               cursor: "pointer",
+              boxShadow:
+                "inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent)",
             }}
           >
             {collapsed ? t("expandSimulation") : t("collapseSimulation")}

@@ -61,14 +61,17 @@ export default function SimulationSceneTabs({
             style={{
               ...tabStyle,
               color: active
-                ? "var(--simulation-panel-text)"
+                ? "var(--color-accent)"
                 : "var(--simulation-panel-muted)",
               backgroundColor: active
-                ? "var(--simulation-tab-active-bg)"
+                ? "var(--color-accent-subtle)"
                 : "transparent",
               borderColor: active
-                ? "var(--simulation-panel-border)"
+                ? "var(--color-accent)"
                 : "transparent",
+              boxShadow: active
+                ? "inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 14%, transparent)"
+                : "none",
             }}
           >
             {label}

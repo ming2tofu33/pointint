@@ -24,7 +24,6 @@ import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import StudioQuickBackgroundDecision from "@/components/StudioQuickBackgroundDecision";
 import StudioQuickResult from "@/components/StudioQuickResult";
 import StudioQuickStart from "@/components/StudioQuickStart";
-import StudioSelectionSummary from "@/components/StudioSelectionSummary";
 import StudioBar from "@/components/StudioBar";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
@@ -41,6 +40,7 @@ import StudioInspector, {
 import StudioSlotEmptyState from "@/components/StudioSlotEmptyState";
 import StudioStageActionBar from "@/components/StudioStageActionBar";
 import StudioStageHeader from "@/components/StudioStageHeader";
+import WorkflowPicker from "@/components/WorkflowPicker";
 import {
   STUDIO_INTERACTION_TRANSITION,
   default as StudioSurfaceCard,
@@ -60,6 +60,9 @@ import {
   type SimulationSceneId,
 } from "@/lib/simulationScenes";
 import {
+  ANI_ANIMATED_GIF_WORKFLOW_ID,
+  ANI_MULTIPLE_PNGS_WORKFLOW_ID,
+  CUR_STATIC_IMAGE_WORKFLOW_ID,
   isSelectableWorkflow,
   type WorkflowOptionId,
 } from "@/lib/studioWorkflow";
@@ -120,8 +123,12 @@ export default function StudioPage() {
   } = useStudio();
   const [hotspotPickActive, setHotspotPickActive] = useState(false);
   const [simulationCollapsed, setSimulationCollapsed] = useState(false);
-  const [simulationThemeMode, setSimulationThemeMode] =
-    useState<SimulationThemeMode>("dark");
+  const [simulationThemeMode, setSimulationThemeModeState] =
+    useState<SimulationThemeMode>(() => resolveInitialSimulationThemeMode());
+  const [
+    simulationThemeModeManuallyChanged,
+    setSimulationThemeModeManuallyChanged,
+  ] = useState(false);
   const [canvasViewZoom, setCanvasViewZoom] = useState<CanvasViewZoom>(1);
   const [simulationSceneId, setSimulationSceneId] =
     useState<SimulationSceneId>(DEFAULT_SIMULATION_SCENE_ID);
@@ -133,6 +140,13 @@ export default function StudioPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const workflowParam = getSelectableWorkflowParam(searchParams.get("workflow"));
+  const [selectedWorkflowId, setSelectedWorkflowId] =
+    useState<WorkflowOptionId | null>(workflowParam);
+  const activeWorkflowId = workflowParam ?? selectedWorkflowId;
+  const handleSimulationThemeModeChange = (next: SimulationThemeMode) => {
+    setSimulationThemeModeManuallyChanged(true);
+    setSimulationThemeModeState(next);
+  };
 
   useEffect(() => {
     trackEvent(
@@ -147,6 +161,30 @@ export default function StudioPage() {
           }
     );
   }, [workflowParam]);
+
+  useEffect(() => {
+    if (workflowParam) {
+      setSelectedWorkflowId(workflowParam);
+    }
+  }, [workflowParam]);
+
+  useEffect(() => {
+    if (simulationThemeModeManuallyChanged) return;
+
+    if (typeof MutationObserver === "undefined") return;
+
+    const themeObserver = new MutationObserver(() => {
+      setSimulationThemeModeState(resolveDocumentSimulationThemeMode());
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      themeObserver.disconnect();
+    };
+  }, [simulationThemeModeManuallyChanged]);
 
   useEffect(() => {
     if (searchParams.get("fromLanding") !== "true") return;
@@ -331,11 +369,18 @@ export default function StudioPage() {
   const showSlotSourceEntry =
     state !== "uploaded" && state !== "processing" && !selectedSlotBound;
   const showCompactInspectorGuidance = isBackgroundDecisionState;
+  const showWorkflowGuide =
+    state !== "ani-editing" &&
+    experienceMode === "quick" &&
+    !selectedSlotBound &&
+    !isBackgroundDecisionState &&
+    !activeWorkflowId;
   const showQuickStart =
     state !== "ani-editing" &&
     experienceMode === "quick" &&
     !selectedSlotBound &&
-    !isBackgroundDecisionState;
+    !isBackgroundDecisionState &&
+    !showWorkflowGuide;
   const showQuickResult =
     state === "editing" &&
     experienceMode === "quick" &&
@@ -347,8 +392,12 @@ export default function StudioPage() {
   const isQuickExperience =
     state !== "ani-editing" &&
     experienceMode === "quick" &&
-    (showQuickStart || showQuickResult || showQuickBackgroundDecision);
+    (showWorkflowGuide ||
+      showQuickStart ||
+      showQuickResult ||
+      showQuickBackgroundDecision);
   const quickPreviewUrl = previewUrl || displayUrl;
+  const quickStartConfig = getQuickStartConfig(activeWorkflowId, t, tu);
   const showAdvancedStaticShell =
     showStaticStudioShell && experienceMode === "advanced";
   const compactGuidanceContent =
@@ -369,6 +418,12 @@ export default function StudioPage() {
             summary: t("emptySlotDescription"),
             lines: [t("slotStaticUploadSub"), t("slotAniUploadSub")],
           };
+
+  useEffect(() => {
+    if (showAdvancedStaticShell && showSlotSourceEntry) {
+      setSimulationCollapsed(true);
+    }
+  }, [selectedSlotId, showAdvancedStaticShell, showSlotSourceEntry]);
 
   return (
     <MobileGuard>
@@ -429,7 +484,10 @@ export default function StudioPage() {
             error={error}
             hotspotPickActive={hotspotPickActive}
             onSetHotspotPickActive={setHotspotPickActive}
-            onSelectSlot={selectSlot}
+            onSelectSlot={(slotId) => {
+              setExperienceMode("advanced");
+              selectSlot(slotId);
+            }}
             onSelectSlotStaticFile={selectSelectedSlotStaticFile}
             onSelectSlotAnimatedFile={selectSelectedSlotAnimatedFile}
             onSelectSlotImageSequenceFiles={selectSelectedSlotImageSequenceFiles}
@@ -453,7 +511,7 @@ export default function StudioPage() {
             canUndo={canUndo}
             canRedo={canRedo}
             simulationThemeMode={simulationThemeMode}
-            onSimulationThemeModeChange={setSimulationThemeMode}
+            onSimulationThemeModeChange={handleSimulationThemeModeChange}
             onResetHotspot={() => setHotspot(0, 0)}
             onReset={reset}
             canvasViewZoom={canvasViewZoom}
@@ -484,15 +542,59 @@ export default function StudioPage() {
             minHeight: 0,
           }}
         >
+          {showWorkflowGuide ? (
+            <WorkflowPicker
+              onSelectWorkflow={(workflowId) => setSelectedWorkflowId(workflowId)}
+            />
+          ) : null}
+
           {showQuickStart ? (
             <StudioQuickStart
-              title={t("quickStartTitle")}
-              description={t("quickStartDescription")}
+              title={quickStartConfig.title}
+              description={quickStartConfig.description}
               staticUploadLabel={t("slotStaticUpload")}
               staticUploadDescription={t("slotStaticUploadSub")}
+              animatedUploadLabel={
+                quickStartConfig.primarySource === "animated"
+                  ? t("slotAniUpload")
+                  : undefined
+              }
+              animatedUploadDescription={
+                quickStartConfig.primarySource === "animated"
+                  ? t("slotAniUploadSub")
+                  : undefined
+              }
+              imageSequenceUploadLabel={t("emptySlotMultiplePngs")}
+              imageSequenceUploadDescription={tu("aniMultiplePngsSub")}
+              primarySource={quickStartConfig.primarySource}
               onStaticFile={(file) => {
                 setExperienceMode("quick");
                 selectSelectedSlotStaticFile(file);
+              }}
+              onAnimatedFile={
+                quickStartConfig.primarySource === "animated"
+                  ? (file) => {
+                      setExperienceMode(
+                        activeWorkflowId === ANI_ANIMATED_GIF_WORKFLOW_ID
+                          ? "advanced"
+                          : "quick"
+                      );
+                      if (activeWorkflowId === ANI_ANIMATED_GIF_WORKFLOW_ID) {
+                        selectAniFile(file);
+                        return;
+                      }
+
+                      selectSelectedSlotAnimatedFile(file);
+                    }
+                  : undefined
+              }
+              onImageSequenceFiles={(files) => {
+                setExperienceMode(
+                  activeWorkflowId === ANI_MULTIPLE_PNGS_WORKFLOW_ID
+                    ? "advanced"
+                    : "quick"
+                );
+                selectSelectedSlotImageSequenceFiles(files);
               }}
             />
           ) : null}
@@ -560,6 +662,7 @@ export default function StudioPage() {
               />
 
               <div
+                data-testid="studio-editor-main"
                 style={{
                   flex: 1,
                   minWidth: 0,
@@ -569,6 +672,7 @@ export default function StudioPage() {
                   backgroundColor: "var(--color-bg-primary)",
                   padding: "1rem",
                   gap: "0.85rem",
+                  position: "relative",
                 }}
               >
                 {showSlotSourceEntry ? (
@@ -582,6 +686,8 @@ export default function StudioPage() {
                       overflow: "hidden",
                       padding: "1.1rem 1.1rem 0.85rem",
                       gap: "0.85rem",
+                      position: "relative",
+                      zIndex: 1,
                     }}
                   >
                     <StudioStageHeader
@@ -623,6 +729,8 @@ export default function StudioPage() {
                       padding: "1.1rem 1.1rem 0.85rem",
                       gap: "0.85rem",
                       backgroundColor: "var(--color-bg-primary)",
+                      position: "relative",
+                      zIndex: 1,
                     }}
                   >
                   <StudioStageHeader
@@ -637,12 +745,19 @@ export default function StudioPage() {
 
                     <div
                       data-testid="studio-stage-canvas"
-                      onPointerMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-                        e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+                      onMouseMove={(event) => {
+                        setInteractiveDotPosition(
+                          event.currentTarget,
+                          event.clientX,
+                          event.clientY
+                        );
+                      }}
+                      onPointerMove={(event) => {
+                        setInteractiveDotPosition(
+                          event.currentTarget,
+                          event.clientX,
+                          event.clientY
+                        );
                       }}
                       style={{
                         flex: 1,
@@ -658,7 +773,10 @@ export default function StudioPage() {
                         boxShadow: "none",
                       }}
                     >
-                      <InteractiveDotBackground baseColor="color-mix(in srgb, var(--color-text-primary) 14%, transparent)" />
+                      <InteractiveDotBackground
+                        layerTestId="studio-stage-dots"
+                        baseColor="color-mix(in srgb, var(--color-text-primary) 14%, transparent)"
+                      />
                       <div
                         style={{
                           display: "flex",
@@ -775,7 +893,7 @@ export default function StudioPage() {
                         <SimulationSceneContextHint sceneId={simulationSceneId} />
                         <SimulationThemeModeSwitch
                           value={simulationThemeMode}
-                          onChange={setSimulationThemeMode}
+                          onChange={handleSimulationThemeModeChange}
                         />
                       </div>
                     }
@@ -815,7 +933,7 @@ export default function StudioPage() {
           style={{
             width: "20rem",
             borderLeft: "1px solid var(--color-border)",
-            backgroundColor: "var(--color-bg-secondary)",
+            backgroundColor: "var(--studio-chrome-bg)",
             padding: "1rem 1.15rem",
             flexShrink: 0,
             overflowY: "auto",
@@ -836,20 +954,43 @@ export default function StudioPage() {
                 summary={compactGuidanceContent.summary}
                 lines={compactGuidanceContent.lines}
               />
-            ) : (
-              <StudioSelectionSummary
-                slotLabelTitle={t("slotRailTitle")}
-                slotLabel={stageSlotLabel}
-                cursorLabelTitle={tp("cursor")}
-                cursorName={cursor?.cursorName ?? t("slotEmpty")}
-                statusLabelTitle={tp("status")}
-                statusLabel={stageHotspotSummary ?? t("slotKindUnset")}
-                typeLabelTitle={t("slotTypeLabel")}
-                typeLabel={stageKindSummary}
-              />
-            )
+            ) : null
           }
         >
+        {state === "editing" && !cursor && !selectedSlotBound ? (
+          <>
+            <StudioInspectorGroup data-testid="studio-inspector-group-current">
+              <StudioInspectorSection title={tp("currentCursor")}>
+                <StudioInspectorRow
+                  label={tp("role")}
+                  value={stageSlotLabel}
+                />
+                <StudioInspectorRow
+                  label={tp("fileName")}
+                  value={t("slotEmpty")}
+                />
+                <StudioInspectorRow
+                  label={tp("format")}
+                  value={stageKindSummary}
+                />
+              </StudioInspectorSection>
+            </StudioInspectorGroup>
+
+            <StudioInspectorGroup data-testid="studio-inspector-group-source">
+              <StudioInspectorSection title={t("slotEmptyTitle")}>
+                <StudioInspectorRow
+                  label={t("slotStaticUpload")}
+                  value={t("slotStaticUploadSub")}
+                />
+                <StudioInspectorRow
+                  label={t("slotAniUpload")}
+                  value={t("slotAniUploadSub")}
+                />
+              </StudioInspectorSection>
+            </StudioInspectorGroup>
+          </>
+        ) : null}
+
         {state === "editing" && cursor && selectedSlotBound ? (
           <>
               <StudioInspectorGroup data-testid="studio-inspector-group-current">
@@ -1454,8 +1595,88 @@ function getSelectableWorkflowParam(workflowId: string | null) {
   if (!workflowId) return null;
 
   return isSelectableWorkflow(workflowId as WorkflowOptionId)
-    ? workflowId
+    ? (workflowId as WorkflowOptionId)
     : null;
+}
+
+function getQuickStartConfig(
+  workflowId: WorkflowOptionId | null,
+  t: ReturnType<typeof useTranslations>,
+  tu: ReturnType<typeof useTranslations>
+) {
+  if (workflowId === ANI_ANIMATED_GIF_WORKFLOW_ID) {
+    return {
+      title: tu("aniAnimatedGif"),
+      description: tu("aniAnimatedGifSub"),
+      primarySource: "animated" as const,
+    };
+  }
+
+  if (workflowId === ANI_MULTIPLE_PNGS_WORKFLOW_ID) {
+    return {
+      title: tu("aniMultiplePngs"),
+      description: tu("aniMultiplePngsSub"),
+      primarySource: "image-sequence" as const,
+    };
+  }
+
+  return {
+    title: t("quickStartTitle"),
+    description: t("quickStartDescription"),
+    primarySource: "static" as const,
+  };
+}
+
+function setInteractiveDotPosition(
+  element: HTMLElement,
+  clientX: number,
+  clientY: number
+) {
+  const rect = element.getBoundingClientRect();
+  element.style.setProperty("--mouse-x", `${clientX - rect.left}px`);
+  element.style.setProperty("--mouse-y", `${clientY - rect.top}px`);
+}
+
+const POINTINT_THEME_STORAGE_KEY = "pointint-theme";
+
+function resolveInitialSimulationThemeMode(): SimulationThemeMode {
+  const documentTheme = getDocumentThemeName();
+  if (documentTheme && documentTheme !== "dark") {
+    return siteThemeToSimulationThemeMode(documentTheme);
+  }
+
+  const storedTheme = getStoredThemeName();
+  if (storedTheme) {
+    return siteThemeToSimulationThemeMode(storedTheme);
+  }
+
+  return siteThemeToSimulationThemeMode(documentTheme);
+}
+
+function resolveDocumentSimulationThemeMode(): SimulationThemeMode {
+  return siteThemeToSimulationThemeMode(getDocumentThemeName());
+}
+
+function getDocumentThemeName() {
+  if (typeof document === "undefined") return null;
+
+  return document.documentElement.getAttribute("data-theme");
+}
+
+function getStoredThemeName() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return window.localStorage.getItem(POINTINT_THEME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function siteThemeToSimulationThemeMode(
+  themeName: string | null
+): SimulationThemeMode {
+  return themeName === "light" || themeName === "custom" ? "light" : "dark";
 }
 
 const studioThemeScopeStyle: CSSProperties = {
@@ -1476,6 +1697,6 @@ const studioThemeScopeStyle: CSSProperties = {
   ["--color-text-muted" as string]: "var(--studio-text-muted)",
   ["--color-shadow" as string]: "rgba(0, 0, 0, 0.42)",
   ["--color-accent-primary" as string]: "var(--color-accent)",
-  colorScheme: "light",
+  ["colorScheme" as string]: "var(--studio-color-scheme)",
 };
 

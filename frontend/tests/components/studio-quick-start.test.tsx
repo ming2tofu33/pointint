@@ -161,6 +161,42 @@ describe("StudioQuickStart", () => {
     expect(onAnimatedFile).toHaveBeenCalledWith(file);
   });
 
+  it("can use an animated GIF as the primary guide upload", () => {
+    const onAnimatedFile = vi.fn();
+    const gif = new File(["gif"], "cursor.gif", { type: "image/gif" });
+    const png = new File(["png"], "cursor.png", { type: "image/png" });
+
+    render(
+      <StudioQuickStart
+        title="Drop a GIF. Get an animated cursor."
+        description="Pointint picks the defaults."
+        staticUploadLabel="Choose image"
+        staticUploadDescription="PNG, JPG, JPEG, or WebP"
+        animatedUploadLabel="Choose GIF"
+        animatedUploadDescription="GIF"
+        primarySource="animated"
+        onStaticFile={vi.fn()}
+        onAnimatedFile={onAnimatedFile}
+      />
+    );
+
+    const animatedSurface = screen.getByTestId("studio-quick-start-animated");
+    const input = animatedSurface.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+
+    expect(screen.queryByTestId("studio-quick-start-static")).toBeNull();
+    expect(input).toHaveAttribute("accept", ".gif");
+
+    fireEvent.change(input, {
+      target: {
+        files: [png, gif],
+      },
+    });
+
+    expect(onAnimatedFile).toHaveBeenCalledWith(gif);
+  });
+
   it("shows drag state without replacing the upload layout", () => {
     render(
       <StudioQuickStart
