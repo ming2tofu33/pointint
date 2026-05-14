@@ -5,11 +5,33 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-export default function SideMenu() {
+interface SideMenuProps {
+  variant?: "default" | "studio";
+}
+
+export default function SideMenu({ variant = "default" }: SideMenuProps) {
   const [open, setOpen] = useState(false);
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const isStudioVariant = variant === "studio";
+  const menuId = isStudioVariant
+    ? "studio-navigation-drawer"
+    : "site-navigation-drawer";
   const navItems = [
+    ...(isStudioVariant
+      ? [
+          {
+            href: "/",
+            label: t("home"),
+            active: pathname === "/",
+          },
+        ]
+      : []),
+    {
+      href: "/studio",
+      label: t("studio"),
+      active: pathname.startsWith("/studio"),
+    },
     {
       href: "/tools",
       label: t("tools"),
@@ -25,11 +47,6 @@ export default function SideMenu() {
       label: t("explore"),
       active: pathname.startsWith("/explore"),
     },
-    {
-      href: "/studio",
-      label: t("studio"),
-      active: pathname.startsWith("/studio"),
-    },
   ];
 
   return (
@@ -37,6 +54,9 @@ export default function SideMenu() {
       <button
         onClick={() => setOpen(true)}
         aria-label={t("openMenu")}
+        aria-controls={menuId}
+        aria-expanded={open}
+        data-testid={isStudioVariant ? "studio-header-menu-trigger" : undefined}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -44,10 +64,15 @@ export default function SideMenu() {
           gap: "4px",
           width: "2rem",
           height: "2rem",
-          background: "none",
-          border: "none",
+          background: isStudioVariant
+            ? "var(--studio-button-bg, transparent)"
+            : "none",
+          border: isStudioVariant
+            ? "1px solid var(--color-border)"
+            : "none",
           cursor: "pointer",
           padding: "0.25rem",
+          color: "var(--color-text-secondary)",
         }}
       >
         <span
@@ -80,6 +105,8 @@ export default function SideMenu() {
           style={{
             position: "fixed",
             inset: 0,
+            width: "100vw",
+            height: "100dvh",
             backgroundColor: "rgba(0, 0, 0, 0.4)",
             zIndex: 90,
             transition: "opacity 0.2s",
@@ -87,22 +114,34 @@ export default function SideMenu() {
         />
       )}
 
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: "15rem",
-          backgroundColor: "var(--color-bg-secondary)",
-          borderRight: "1px solid var(--color-border)",
-          zIndex: 100,
-          transform: open ? "translateX(0)" : "translateX(-100%)",
-          transition: open ? "transform 0.25s ease-out" : "transform 0.2s ease-in",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+      {open ? (
+        <aside
+          id={menuId}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`${menuId}-title`}
+          data-testid={
+            isStudioVariant ? "studio-navigation-drawer" : "site-navigation-drawer"
+          }
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: isStudioVariant ? "17.5rem" : "15rem",
+            height: "100dvh",
+            backgroundColor: isStudioVariant
+              ? "var(--studio-chrome-bg, var(--color-bg-secondary))"
+              : "var(--color-bg-secondary)",
+            borderRight: "1px solid var(--color-border)",
+            boxShadow: isStudioVariant
+              ? "18px 0 52px rgba(0, 0, 0, 0.22)"
+              : undefined,
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
         <div
           style={{
             display: "flex",
@@ -110,18 +149,20 @@ export default function SideMenu() {
             justifyContent: "space-between",
             padding: "0.75rem 1.25rem",
             borderBottom: "1px solid var(--color-border)",
-            height: "3rem",
+            minHeight: "3.5rem",
           }}
         >
           <Link
+            id={`${menuId}-title`}
             href="/"
             onClick={() => setOpen(false)}
             style={{
-              fontSize: "0.875rem",
-              fontWeight: 700,
+              fontSize: "0.95rem",
+              fontWeight: 760,
               color: "var(--color-text-primary)",
               textDecoration: "none",
-              letterSpacing: "-0.02em",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
             }}
           >
             poin+tint
@@ -131,12 +172,14 @@ export default function SideMenu() {
             aria-label={t("closeMenu")}
             style={{
               background: "none",
-              border: "none",
+              border: "1px solid var(--color-border)",
               color: "var(--color-text-muted)",
               cursor: "pointer",
-              fontSize: "1rem",
+              fontSize: "0.9rem",
               fontWeight: 700,
               lineHeight: 1,
+              width: "2rem",
+              height: "2rem",
             }}
           >
             x
@@ -144,9 +187,13 @@ export default function SideMenu() {
         </div>
 
         <nav
+          aria-label={
+            isStudioVariant ? "Studio navigation drawer" : "Site navigation drawer"
+          }
           style={{
             display: "flex",
             flexDirection: "column",
+            gap: "0.2rem",
             padding: "1rem 0",
             flex: 1,
           }}
@@ -161,7 +208,8 @@ export default function SideMenu() {
             />
           ))}
         </nav>
-      </div>
+        </aside>
+      ) : null}
     </>
   );
 }
@@ -184,14 +232,18 @@ function MenuItem({
       aria-current={active ? "page" : undefined}
       style={{
         display: "block",
-        padding: "0.5rem 1.25rem",
+        padding: "0.58rem 1.25rem",
         fontSize: "0.8125rem",
+        fontWeight: active ? 760 : 650,
         color: active ? "var(--color-accent)" : "var(--color-text-secondary)",
         textDecoration: "none",
-        transition: "color 0.15s",
+        transition: "color 0.15s, background-color 0.15s",
         borderLeft: active
           ? "2px solid var(--color-accent)"
           : "2px solid transparent",
+        backgroundColor: active
+          ? "color-mix(in srgb, var(--color-accent) 9%, transparent)"
+          : "transparent",
       }}
     >
       {label}

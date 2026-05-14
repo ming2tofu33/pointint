@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Header from "@/components/Header";
@@ -29,6 +29,11 @@ const messages = {
     login: "Log in",
     comingSoon: "Coming soon",
   },
+  studio: {
+    untitledProject: "Untitled cursor set",
+    saveProject: "Save",
+    saveProjectLoginRequired: "Login required",
+  },
 };
 
 describe("Header", () => {
@@ -54,6 +59,11 @@ describe("Header", () => {
     const logoLink = screen.getByRole("link", { name: "poin+tint" });
 
     expect(logoLink).toHaveAttribute("href", "/");
+    expect(
+      within(screen.getByRole("navigation", { name: "Primary navigation" }))
+        .getAllByRole("link")
+        .map((link) => link.textContent)
+    ).toEqual(["Studio", "Tools", "Guides", "Explore"]);
     expect(toolsLink).toHaveAttribute("href", "/tools");
     expect(guidesLink).toHaveAttribute("href", "/guides");
     expect(exploreLink).toHaveAttribute("href", "/explore");
@@ -108,16 +118,41 @@ describe("Header", () => {
     expect(exploreLink).toHaveAttribute("aria-current", "page");
   });
 
-  it("hides the shared marketing header on the studio app route", () => {
+  it("uses the shared header on the studio app route and moves navigation into the drawer", () => {
     mockUsePathname.mockReturnValue("/studio");
 
-    const { container } = render(
+    render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Header />
       </NextIntlClientProvider>
     );
 
-    expect(container).toBeEmptyDOMElement();
+    const header = screen.getByTestId("app-header");
+
+    expect(header).toHaveAttribute("data-studio-header", "true");
+    expect(
+      screen.queryByRole("navigation", { name: "Primary navigation" })
+    ).not.toBeInTheDocument();
+    expect(header.querySelector(".app-header-studio-title")?.textContent).toBe(
+      "Studio"
+    );
+    expect(screen.getByTestId("studio-header-project-meta")).toHaveAttribute(
+      "aria-label",
+      "Untitled cursor set"
+    );
+
+    fireEvent.click(screen.getByTestId("studio-header-menu-trigger"));
+
+    const drawer = screen.getByTestId("studio-navigation-drawer");
+    expect(
+      within(
+        within(drawer).getByRole("navigation", {
+          name: "Studio navigation drawer",
+        })
+      )
+        .getAllByRole("link")
+        .map((link) => link.textContent)
+    ).toEqual(["Home", "Studio", "Tools", "Guides", "Explore"]);
   });
 
   it("defines a hover and focus underline for navigation links", () => {
@@ -138,16 +173,22 @@ describe("Header", () => {
     expect(cssText).toContain("inset 0 -2px 0 var(--color-accent)");
   });
 
-  it("also hides the shared marketing header on studio subroutes", () => {
+  it("uses the studio header treatment on studio subroutes", () => {
     mockUsePathname.mockReturnValue("/studio/assets");
 
-    const { container } = render(
+    render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Header />
       </NextIntlClientProvider>
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByTestId("app-header")).toHaveAttribute(
+      "data-studio-header",
+      "true"
+    );
+    expect(
+      screen.queryByRole("navigation", { name: "Primary navigation" })
+    ).not.toBeInTheDocument();
   });
 
   it("opens the utility menu with explicit language options and a disabled login action", () => {

@@ -48,8 +48,8 @@ vi.mock("@/components/MobileGuard", () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock("@/components/StudioBar", () => ({
-  default: () => <div data-testid="studio-bar" />,
+vi.mock("@/components/StudioHeaderControls", () => ({
+  default: () => <div data-testid="studio-header-controls" />,
 }));
 
 vi.mock("@/components/CursorCanvas", () => ({

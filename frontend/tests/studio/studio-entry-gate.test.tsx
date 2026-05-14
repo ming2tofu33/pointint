@@ -187,7 +187,7 @@ function humanizeStudioKey(
 const {
   UploadZoneMock,
   MobileGuardMock,
-  StudioBarMock,
+  StudioHeaderControlsMock,
   GuideModalMock,
   SimulationMock,
   AniSimulationMock,
@@ -225,7 +225,9 @@ const {
   MobileGuardMock: vi.fn(({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   )),
-  StudioBarMock: vi.fn(() => <div data-testid="studio-bar" />),
+  StudioHeaderControlsMock: vi.fn(() => (
+    <div data-testid="studio-header-controls" />
+  )),
   GuideModalMock: vi.fn(() => null),
   SimulationMock: vi.fn(() => <div data-testid="simulation" />),
   AniSimulationMock: vi.fn(() => <div data-testid="ani-simulation" />),
@@ -292,8 +294,8 @@ vi.mock("@/components/MobileGuard", () => ({
   default: MobileGuardMock,
 }));
 
-vi.mock("@/components/StudioBar", () => ({
-  default: StudioBarMock,
+vi.mock("@/components/StudioHeaderControls", () => ({
+  default: StudioHeaderControlsMock,
 }));
 
 vi.mock("@/components/CursorCanvas", () => ({
@@ -698,7 +700,7 @@ function createStudioReturn(
 beforeEach(() => {
   UploadZoneMock.mockClear();
   MobileGuardMock.mockClear();
-  StudioBarMock.mockClear();
+  StudioHeaderControlsMock.mockClear();
   GuideModalMock.mockClear();
   SimulationMock.mockClear();
   AniSimulationMock.mockClear();
@@ -819,7 +821,7 @@ describe("Studio entry gate", () => {
     });
 
     expect(screen.getByTestId("studio-quick-result")).toBeVisible();
-    expect(StudioBarMock.mock.calls[0][0]).toMatchObject({
+    expect(StudioHeaderControlsMock.mock.calls[0][0]).toMatchObject({
       canDownload: false,
       canSecondaryDownload: false,
       canTertiaryDownload: false,
@@ -1072,9 +1074,9 @@ describe("Studio entry gate", () => {
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     expect(screen.queryByTestId("upload-zone")).toBeNull();
-    expect(StudioBarMock).toHaveBeenCalledTimes(1);
+    expect(StudioHeaderControlsMock).toHaveBeenCalledTimes(1);
 
-    const barProps = StudioBarMock.mock.calls[0][0];
+    const barProps = StudioHeaderControlsMock.mock.calls[0][0];
     expect(barProps.onDownload).toBeDefined();
     expect(barProps.onSecondaryDownload).toBeDefined();
     expect(barProps.canSaveProject).toBe(false);
@@ -1139,7 +1141,7 @@ describe("Studio entry gate", () => {
   it("labels the current-slot download as an ANI file in animated editing", () => {
     renderStudio("ani-editing");
 
-    const barProps = StudioBarMock.mock.calls[0][0];
+    const barProps = StudioHeaderControlsMock.mock.calls[0][0];
 
     expect(barProps.secondaryActionLabel).toBe("ANI cursor (t)");
     expect(barProps.secondaryActionDescription).toBe(
@@ -1174,7 +1176,7 @@ describe("Studio entry gate", () => {
       },
     });
 
-    const barProps = StudioBarMock.mock.calls[0][0];
+    const barProps = StudioHeaderControlsMock.mock.calls[0][0];
 
     expect(barProps.tertiaryActionLabel).toBe("Save GIF (t)");
     expect(barProps.tertiaryActionDescription).toBe("Export as GIF file (t)");
@@ -1823,7 +1825,7 @@ describe("Studio entry gate", () => {
     expect(screen.getByTestId("studio-quick-start-static")).toBeVisible();
     expect(screen.queryByTestId("studio-tool-rail")).toBeNull();
     expect(screen.queryByTestId("cursor-canvas")).toBeNull();
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
+    expect(StudioHeaderControlsMock.mock.calls[0][0].canDownload).toBe(false);
   });
 
   it("shows the dotted static and GIF chooser when switching to an empty slot from the editor", () => {
@@ -2107,7 +2109,7 @@ describe("Studio entry gate", () => {
       selectedSlotId: "textSelect",
     });
 
-    const barProps = StudioBarMock.mock.calls.at(-1)?.[0];
+    const barProps = StudioHeaderControlsMock.mock.calls.at(-1)?.[0];
     expect(barProps.canDownload).toBe(true);
     expect(barProps.canSecondaryDownload).toBe(true);
   });
@@ -2124,7 +2126,7 @@ describe("Studio entry gate", () => {
       selectedSlotId: "textSelect",
     });
 
-    const barProps = StudioBarMock.mock.calls.at(-1)?.[0];
+    const barProps = StudioHeaderControlsMock.mock.calls.at(-1)?.[0];
     expect(barProps.canDownload).toBe(true);
     expect(barProps.canSecondaryDownload).toBe(true);
   });
@@ -2142,7 +2144,7 @@ describe("Studio entry gate", () => {
       pendingBackgroundRemovalSlotIds: ["textSelect"],
     });
 
-    expect(StudioBarMock.mock.calls[0][0].canDownload).toBe(false);
+    expect(StudioHeaderControlsMock.mock.calls[0][0].canDownload).toBe(false);
     expect(screen.getByTestId("pending-background-decision-notice")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Review slot" }));

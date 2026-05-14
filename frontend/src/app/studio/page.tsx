@@ -24,7 +24,7 @@ import SlotReplacementSurface from "@/components/SlotReplacementSurface";
 import StudioQuickBackgroundDecision from "@/components/StudioQuickBackgroundDecision";
 import StudioQuickResult from "@/components/StudioQuickResult";
 import StudioQuickStart from "@/components/StudioQuickStart";
-import StudioBar from "@/components/StudioBar";
+import StudioHeaderControls from "@/components/StudioHeaderControls";
 import StudioInspector, {
   StudioInspectorCompactGuidance,
   StudioInspectorGroup,
@@ -433,7 +433,7 @@ export default function StudioPage() {
         style={studioThemeScopeStyle}
       >
         <StudioShellInteractionStyles />
-        <StudioBar
+        <StudioHeaderControls
           canSaveProject={false}
           saveProjectLabel={t("saveProject")}
           saveProjectDescription={t("saveProjectLoginRequiredDescription")}
@@ -1682,7 +1682,7 @@ function siteThemeToSimulationThemeMode(
 const studioThemeScopeStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  height: "100dvh",
+  height: "calc(100dvh - var(--app-header-height, 4.25rem))",
   minHeight: 0,
   overflow: "hidden",
   backgroundColor: "var(--studio-bg-primary)",
