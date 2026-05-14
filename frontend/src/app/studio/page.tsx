@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import CursorCanvas from "@/components/CursorCanvas";
 import AniEditorShell from "@/components/AniEditorShell";
+import AniBackgroundDecision from "@/components/AniBackgroundDecision";
 import AniSimulation from "@/components/AniSimulation";
 import CanvasViewZoomControl, {
   type CanvasViewZoom,
@@ -83,6 +84,8 @@ export default function StudioPage() {
     showOriginal,
     previewUrl,
     pendingBackgroundRemovalSlotIds,
+    pendingAniBackgroundDecision,
+    aniBackgroundProgress,
     selectFile,
     selectAniFile,
     selectVideoFile,
@@ -98,6 +101,8 @@ export default function StudioPage() {
     setAniFrameDuration,
     setAllAniFrameDurations,
     processBgRemoval,
+    keepExtractedVideoBackground,
+    removeExtractedVideoBackground,
     skipBgRemoval,
     toggleOriginal,
     retryBgRemoval,
@@ -363,6 +368,11 @@ export default function StudioPage() {
     ((state === "uploaded" || state === "processing") && Boolean(cursor));
   const isBackgroundDecisionState =
     state === "uploaded" || state === "processing";
+  const isAniBackgroundDecisionState =
+    state === "ani-background-decision" ||
+    state === "ani-background-processing";
+  const showAniBackgroundDecision =
+    isAniBackgroundDecisionState && Boolean(pendingAniBackgroundDecision);
   const isCurrentSlotBackgroundDecision =
     isBackgroundDecisionState &&
     pendingBackgroundRemovalSlotIds.includes(selectedSlotId);
@@ -370,19 +380,24 @@ export default function StudioPage() {
     pendingBackgroundRemovalSlotIds.length > 0 &&
     !isCurrentSlotBackgroundDecision;
   const showSlotSourceEntry =
-    state !== "uploaded" && state !== "processing" && !selectedSlotBound;
+    state !== "uploaded" &&
+    state !== "processing" &&
+    !isAniBackgroundDecisionState &&
+    !selectedSlotBound;
   const showCompactInspectorGuidance = isBackgroundDecisionState;
   const showWorkflowGuide =
     state !== "ani-editing" &&
     experienceMode === "quick" &&
     !selectedSlotBound &&
     !isBackgroundDecisionState &&
+    !isAniBackgroundDecisionState &&
     !activeWorkflowId;
   const showQuickStart =
     state !== "ani-editing" &&
     experienceMode === "quick" &&
     !selectedSlotBound &&
     !isBackgroundDecisionState &&
+    !isAniBackgroundDecisionState &&
     !showWorkflowGuide;
   const showQuickResult =
     state === "editing" &&
@@ -394,11 +409,12 @@ export default function StudioPage() {
     Boolean(cursor && selectedSlotBound);
   const isQuickExperience =
     state !== "ani-editing" &&
-    experienceMode === "quick" &&
-    (showWorkflowGuide ||
-      showQuickStart ||
-      showQuickResult ||
-      showQuickBackgroundDecision);
+    ((experienceMode === "quick" &&
+      (showWorkflowGuide ||
+        showQuickStart ||
+        showQuickResult ||
+        showQuickBackgroundDecision)) ||
+      showAniBackgroundDecision);
   const quickPreviewUrl = previewUrl || displayUrl;
   const quickStartConfig = getQuickStartConfig(activeWorkflowId, t, tu);
   const showAdvancedStaticShell =
@@ -670,6 +686,32 @@ export default function StudioPage() {
               cursorName={cursor.cursorName}
               onRemove={processBgRemoval}
               onKeep={skipBgRemoval}
+            />
+          ) : null}
+
+          {showAniBackgroundDecision && pendingAniBackgroundDecision ? (
+            <AniBackgroundDecision
+              title={t("videoBackgroundDecisionTitle")}
+              description={t("videoBackgroundDecisionDescription")}
+              keepLabel={t("videoBackgroundKeep")}
+              removeLabel={t("videoBackgroundRemove")}
+              processing={state === "ani-background-processing"}
+              processingTitle={t("videoBackgroundProcessingTitle")}
+              processingDescription={t(
+                "videoBackgroundProcessingDescription",
+                {
+                  completed: aniBackgroundProgress?.completed ?? 0,
+                  total:
+                    aniBackgroundProgress?.total ??
+                    pendingAniBackgroundDecision.ani.frames.length,
+                }
+              )}
+              progress={aniBackgroundProgress}
+              framePreviewUrls={pendingAniBackgroundDecision.ani.frames
+                .slice(0, 3)
+                .map((frame) => frame.url)}
+              onKeep={keepExtractedVideoBackground}
+              onRemove={removeExtractedVideoBackground}
             />
           ) : null}
 

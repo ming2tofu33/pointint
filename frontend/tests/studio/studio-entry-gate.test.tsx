@@ -109,6 +109,13 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   videoDurationLabel: "Length",
   videoFpsLabel: "FPS",
   videoFrameEstimate: "Up to {count} frames",
+  videoBackgroundDecisionTitle: "Remove the background?",
+  videoBackgroundDecisionDescription:
+    "Use transparent frames for sticker-like animated cursors.",
+  videoBackgroundKeep: "Use as is",
+  videoBackgroundRemove: "Remove background",
+  videoBackgroundProcessingTitle: "Removing backgrounds",
+  videoBackgroundProcessingDescription: "{completed} / {total} frames processed",
   imageSequenceMinimumError: "Select at least 2 PNG, JPG, or WebP frames.",
   aniFrameTimeline: "ANI frame timeline",
   aniFrameCountSingular: "{count} frame",
@@ -223,6 +230,8 @@ const {
   setAllAniFrameDurationsMock,
   processBgRemovalMock,
   skipBgRemovalMock,
+  keepExtractedVideoBackgroundMock,
+  removeExtractedVideoBackgroundMock,
   setOffsetMock,
   setHotspotMock,
   setScaleMock,
@@ -265,6 +274,8 @@ const {
   setAllAniFrameDurationsMock: vi.fn(),
   processBgRemovalMock: vi.fn(),
   skipBgRemovalMock: vi.fn(),
+  keepExtractedVideoBackgroundMock: vi.fn(),
+  removeExtractedVideoBackgroundMock: vi.fn(),
   setOffsetMock: vi.fn(),
   setHotspotMock: vi.fn(),
   setScaleMock: vi.fn(),
@@ -433,6 +444,53 @@ function createAniAsset(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function createPendingVideoAniDecision() {
+  return {
+    slotId: "normalSelect",
+    previous: {},
+    ani: createAniAsset({
+      sourceKind: "image-sequence",
+      originalFile: new File(["frame-1"], "frame-001.png", {
+        type: "image/png",
+      }),
+      originalUrl: "blob:video-frame-1",
+      selectedFrameId: "video-frame-1",
+      frames: [
+        {
+          id: "video-frame-1",
+          file: new File(["frame-1"], "frame-001.png", {
+            type: "image/png",
+          }),
+          url: "blob:video-frame-1",
+          sourceWidth: 96,
+          sourceHeight: 96,
+          durationMs: 100,
+        },
+        {
+          id: "video-frame-2",
+          file: new File(["frame-2"], "frame-002.png", {
+            type: "image/png",
+          }),
+          url: "blob:video-frame-2",
+          sourceWidth: 96,
+          sourceHeight: 96,
+          durationMs: 100,
+        },
+        {
+          id: "video-frame-3",
+          file: new File(["frame-3"], "frame-003.png", {
+            type: "image/png",
+          }),
+          url: "blob:video-frame-3",
+          sourceWidth: 96,
+          sourceHeight: 96,
+          durationMs: 100,
+        },
+      ],
+    }),
+  };
+}
+
 function createProject() {
   const slot = (id: WindowsRoleId) => ({
     id,
@@ -579,6 +637,10 @@ function renderStudio(
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
     pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
+    pendingAniBackgroundDecision?:
+      | ReturnType<typeof createPendingVideoAniDecision>
+      | null;
+    aniBackgroundProgress?: { completed: number; total: number } | null;
     showGuide?: boolean;
     downloadGuideVariant?: "package" | "cur" | "ani";
     experienceMode?: "quick" | "advanced";
@@ -608,6 +670,10 @@ function createStudioReturn(
     project?: ReturnType<typeof createProject>;
     previewUrl?: string | null;
     pendingBackgroundRemovalSlotIds?: WindowsRoleId[];
+    pendingAniBackgroundDecision?:
+      | ReturnType<typeof createPendingVideoAniDecision>
+      | null;
+    aniBackgroundProgress?: { completed: number; total: number } | null;
     showGuide?: boolean;
     downloadGuideVariant?: "package" | "cur" | "ani";
   } = {}
@@ -663,6 +729,8 @@ function createStudioReturn(
     previewUrl: options.previewUrl ?? null,
     pendingBackgroundRemovalSlotIds:
       options.pendingBackgroundRemovalSlotIds ?? [],
+    pendingAniBackgroundDecision: options.pendingAniBackgroundDecision ?? null,
+    aniBackgroundProgress: options.aniBackgroundProgress ?? null,
     selectFile: selectFileMock,
     selectAniFile: selectAniFileMock,
     selectVideoFile: selectVideoFileMock,
@@ -672,6 +740,8 @@ function createStudioReturn(
     selectSelectedSlotImageSequenceFiles: selectSlotImageSequenceFilesMock,
     processBgRemoval: processBgRemovalMock,
     skipBgRemoval: skipBgRemovalMock,
+    keepExtractedVideoBackground: keepExtractedVideoBackgroundMock,
+    removeExtractedVideoBackground: removeExtractedVideoBackgroundMock,
     toggleOriginal: vi.fn(),
     retryBgRemoval: vi.fn(),
     setHotspot: setHotspotMock,
@@ -739,6 +809,8 @@ beforeEach(() => {
   setAllAniFrameDurationsMock.mockReset();
   processBgRemovalMock.mockReset();
   skipBgRemovalMock.mockReset();
+  keepExtractedVideoBackgroundMock.mockReset();
+  removeExtractedVideoBackgroundMock.mockReset();
   setOffsetMock.mockReset();
   setHotspotMock.mockReset();
   setScaleMock.mockReset();
@@ -1026,6 +1098,58 @@ describe("Studio entry gate", () => {
         "Pointint is turning the video into editable animation frames."
       )
     ).toBeInTheDocument();
+  });
+
+  it("routes extracted video frames to the background decision screen", () => {
+    renderStudio("ani-background-decision", {
+      pendingAniBackgroundDecision: createPendingVideoAniDecision(),
+      experienceMode: "advanced",
+    });
+
+    const decision = screen.getByTestId("ani-background-decision");
+
+    expect(decision).toBeVisible();
+    expect(screen.getByText("Remove the background?")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Use transparent frames for sticker-like animated cursors."
+      )
+    ).toBeVisible();
+    expect(screen.getAllByRole("img")).toHaveLength(3);
+
+    fireEvent.click(
+      within(decision).getByRole("button", { name: "Use as is" })
+    );
+    fireEvent.click(
+      within(decision).getByRole("button", { name: "Remove background" })
+    );
+
+    expect(keepExtractedVideoBackgroundMock).toHaveBeenCalledTimes(1);
+    expect(removeExtractedVideoBackgroundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows extracted video background-removal progress without allowing duplicate actions", () => {
+    renderStudio("ani-background-processing", {
+      pendingAniBackgroundDecision: createPendingVideoAniDecision(),
+      aniBackgroundProgress: { completed: 7, total: 30 },
+      experienceMode: "advanced",
+    });
+
+    const decision = screen.getByTestId("ani-background-decision");
+
+    expect(screen.getByText("Removing backgrounds")).toBeVisible();
+    expect(screen.getByText("7 / 30 frames processed")).toBeVisible();
+    expect(
+      screen.getByRole("status", {
+        name: "7 / 30 frames processed",
+      })
+    ).toBeInTheDocument();
+    expect(
+      within(decision).getByRole("button", { name: "Use as is" })
+    ).toBeDisabled();
+    expect(
+      within(decision).getByRole("button", { name: "Remove background" })
+    ).toBeDisabled();
   });
 
   it("keeps the background-removal decision in the quick flow without duplicating the pending banner", () => {

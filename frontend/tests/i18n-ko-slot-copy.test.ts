@@ -282,4 +282,39 @@ describe("ko slot rail copy", () => {
       "30"
     );
   });
+
+  it("covers Video to ANI background-removal decision copy in English and Korean", () => {
+    const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
+    const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
+    const ko = JSON.parse(fs.readFileSync(koPath, "utf8"));
+    const en = JSON.parse(fs.readFileSync(enPath, "utf8"));
+
+    expect(en.studio.videoBackgroundDecisionTitle).toBe(
+      "Remove the background?"
+    );
+    expect(en.studio.videoBackgroundDecisionDescription).toBe(
+      "Use transparent frames for sticker-like animated cursors."
+    );
+    expect(en.studio.videoBackgroundKeep).toBe("Use as is");
+    expect(en.studio.videoBackgroundRemove).toBe("Remove background");
+    expect(en.studio.videoBackgroundProcessingTitle).toBe(
+      "Removing backgrounds"
+    );
+    expect(en.studio.videoBackgroundProcessingDescription).toBe(
+      "{completed} / {total} frames processed"
+    );
+
+    expect(ko.studio.videoBackgroundDecisionTitle).toBe(
+      "배경을 제거할까요?"
+    );
+    expect(ko.studio.videoBackgroundDecisionDescription).toBe(
+      "스티커처럼 보이는 애니메이션 커서에는 투명 프레임이 잘 맞습니다."
+    );
+    expect(ko.studio.videoBackgroundKeep).toBe("그대로 사용");
+    expect(ko.studio.videoBackgroundRemove).toBe("배경 제거");
+    expect(ko.studio.videoBackgroundProcessingTitle).toBe("배경 제거 중");
+    expect(ko.studio.videoBackgroundProcessingDescription).toBe(
+      "{completed} / {total}프레임 처리 중"
+    );
+  });
 });
