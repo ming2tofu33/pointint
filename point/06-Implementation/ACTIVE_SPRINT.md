@@ -12,7 +12,7 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-05-14
-> **Status:** Phase 1 gate closed, ANI Source Maker complete, Video to ANI controls planned
+> **Status:** Phase 1 gate closed, ANI Source Maker complete, Video to ANI controls complete
 > **Goal:** Reduce Studio start friction, then extend the source-maker foundation to Video to ANI
 > **Phase Flow:** [[Phase-Flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
@@ -35,7 +35,7 @@ aliases:
 - `CONTENT-GROWTH-01` Wave 0-3 is implemented: `/tools`, `/guides`, `/tools/image-to-cursor`, `/tools/gif-to-ani-cursor`, four `/guides/*` trust pages, sitemap expansion, direct Studio workflow CTAs, and growth-funnel analytics events.
 - `STUDIO-QUICK-FINISH-01` is closed: static CUR users start with upload -> optional background decision -> quick result -> download, while advanced controls stay behind `세부 조정`.
 - `Phase 1.5 / Video to ANI` is implemented: MP4/WebM uploads extract browser-side frames and open the existing ANI editor/export path.
-- `Phase 1.5 / Video to ANI Controls` is planned at `docs/plans/2026-05-14-video-to-ani-controls.md`: compact pre-upload start/duration/FPS settings without a separate video editor.
+- `Phase 1.5 / Video to ANI Controls` is complete: compact pre-upload start/duration/FPS settings now feed the existing browser frame extractor and ANI editor handoff.
 
 ## Current Doing
 
@@ -43,7 +43,7 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
-| Now | `Phase 1.5 / Video to ANI Controls` | planned | Add compact start/duration/FPS controls before video upload; keep existing ANI editor handoff |
+| Done | `Phase 1.5 / Video to ANI Controls` | complete | Compact start/duration/FPS controls before video upload; focused tests, full tests, build, and browser QA passed |
 | Done | `Phase 1.5 / Video to ANI` | complete | MP4/WebM -> extracted PNG frame sequence -> existing ANI editor/export path; tests, build, and browser QA passed |
 | Done | `STUDIO-QUICK-FINISH-01` | complete | Browser QA, tests, build, and commit are closed for the one-way quick-to-advanced flow |
 | Done | `CONTENT-GROWTH-01` | complete | Wave 0-3 search entry foundation: Tools/Guides nav hubs, tool pages, trust guides, sitemap, direct Studio CTAs, funnel events |
@@ -53,7 +53,7 @@ aliases:
 
 ## Next Session
 
-- Implement `Video to ANI Controls` from `docs/plans/2026-05-14-video-to-ani-controls.md`.
+- Use `Video to ANI Controls` as the stable source-maker baseline for the next acquisition or polish slice.
 - Keep the shipped v1 source path frontend-only: video -> extracted PNG frames -> existing image-sequence ANI editor.
 - Defer visual trim scrubbers, MOV/HEVC, and backend FFmpeg unless usage shows the need.
 - Review the new `/tools`, `/guides`, `/tools/*`, and `/guides/*` pages in browser once visual QA starts; add screenshots/examples after first search-console feedback
@@ -86,6 +86,7 @@ aliases:
 - `ANI-SOURCE-01` complete: GIF Maker is exposed as an empty-slot source, multiple PNG/JPG/WebP frames enter `ani-editing` as an `image-sequence`, backend/frontend sequence export is wired, and Korean/English source copy is synchronized. Evidence: `18d5b6a`, `66c7586`, `8b9d5ca`, `85b4c9c`, `5d860fa`, `3dc411f`.
 - `CONTENT-GROWTH-01` complete: Wave 0-3 content foundation adds top-level Tools/Guides hubs, intent pages for image-to-cursor and GIF-to-ANI, trust guides for Windows apply/hotspot/CUR-vs-ANI/blurry cursors, direct Studio workflow CTAs, sitemap coverage, and funnel analytics tests.
 - `Phase 1.5 / Video to ANI` complete: selectable Studio workflow, MP4/WebM source upload, client-side frame extraction, image-sequence ANI editor handoff, and QA evidence are recorded in `docs/plans/2026-05-14-video-to-ani.md`.
+- `Phase 1.5 / Video to ANI Controls` complete: pre-upload start/duration/FPS options, option plumbing, extractor edge coverage, i18n, tests, build, and browser QA are recorded in `docs/plans/2026-05-14-video-to-ani-controls.md`.
 
 ## Decision Follow-up
 
@@ -188,7 +189,7 @@ aliases:
 
 | Task | Priority | Note |
 |---|---|---|
-| `Phase 1.5 / Video to ANI Controls` | P0 | Compact start/duration/FPS controls before upload |
+| `/tools/video-to-ani-cursor` acquisition page | P0 | Now that the controlled workflow is stable, add the product-led SEO entry point |
 | `STUDIO-QUICK-FINISH-01` | Done | Simplified static CUR flow is closed |
 | `P1-MOCKUP-01` | P2 | Keep deferred unless trust gaps show up in real usage |
 

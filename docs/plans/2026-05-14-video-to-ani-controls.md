@@ -13,14 +13,21 @@
 ## Execution Status
 
 > **Updated:** 2026-05-14
-> **Status:** planned / ready for implementation
+> **Status:** implemented / QA passed
 
-Planned:
+Implemented:
 
-- Add start-time, duration, and FPS controls to the Video to ANI upload surface.
-- Preserve current defaults: start `0s`, duration `3s`, FPS `10`, max frames `30`.
-- Pass selected extraction options into the existing browser frame extractor.
-- Keep post-extraction editing in the existing ANI timeline.
+- Added start-time, duration, and FPS controls to the Video to ANI upload surface.
+- Preserved current defaults: start `0s`, duration `3s`, FPS `10`, max frames `30`.
+- Passed selected extraction options into the existing browser frame extractor.
+- Kept post-extraction editing in the existing ANI timeline.
+
+QA evidence:
+
+- Focused suite passed: `134` tests across extractor, workflow hook, quick-start, route, and i18n coverage.
+- Full frontend test suite passed: `359` tests.
+- Production build passed with `npm run build`.
+- Browser QA passed on `/studio?workflow=ani-video-to-ani`: changed settings to `0s / 1s / 6fps`, uploaded a real WebM sample, and entered the ANI editor with `5` extracted frames and no console errors.
 
 ---
 
