@@ -62,6 +62,7 @@ import {
 import {
   ANI_ANIMATED_GIF_WORKFLOW_ID,
   ANI_MULTIPLE_PNGS_WORKFLOW_ID,
+  ANI_VIDEO_TO_ANI_WORKFLOW_ID,
   CUR_STATIC_IMAGE_WORKFLOW_ID,
   isSelectableWorkflow,
   type WorkflowOptionId,
@@ -84,9 +85,11 @@ export default function StudioPage() {
     pendingBackgroundRemovalSlotIds,
     selectFile,
     selectAniFile,
+    selectVideoFile,
     selectSlot,
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
+    selectSelectedSlotVideoFile,
     selectSelectedSlotImageSequenceFiles,
     selectAniFrame,
     deleteAniFrame,
@@ -566,7 +569,15 @@ export default function StudioPage() {
               }
               imageSequenceUploadLabel={t("emptySlotMultiplePngs")}
               imageSequenceUploadDescription={tu("aniMultiplePngsSub")}
+              videoUploadLabel={tu("aniVideoToAni")}
+              videoUploadDescription={tu("aniVideoToAniSub")}
               primarySource={quickStartConfig.primarySource}
+              busy={
+                state === "ani-upload" &&
+                activeWorkflowId === ANI_VIDEO_TO_ANI_WORKFLOW_ID
+              }
+              busyLabel={t("videoExtractingTitle")}
+              busyDescription={t("videoExtractingDescription")}
               onStaticFile={(file) => {
                 setExperienceMode("quick");
                 selectSelectedSlotStaticFile(file);
@@ -585,6 +596,19 @@ export default function StudioPage() {
                       }
 
                       selectSelectedSlotAnimatedFile(file);
+                    }
+                  : undefined
+              }
+              onVideoFile={
+                quickStartConfig.primarySource === "video"
+                  ? (file) => {
+                      setExperienceMode("advanced");
+                      if (activeWorkflowId === ANI_VIDEO_TO_ANI_WORKFLOW_ID) {
+                        selectVideoFile(file);
+                        return;
+                      }
+
+                      selectSelectedSlotVideoFile(file);
                     }
                   : undefined
               }
@@ -1617,6 +1641,14 @@ function getQuickStartConfig(
       title: tu("aniMultiplePngs"),
       description: tu("aniMultiplePngsSub"),
       primarySource: "image-sequence" as const,
+    };
+  }
+
+  if (workflowId === ANI_VIDEO_TO_ANI_WORKFLOW_ID) {
+    return {
+      title: tu("aniVideoToAni"),
+      description: tu("aniVideoToAniSub"),
+      primarySource: "video" as const,
     };
   }
 

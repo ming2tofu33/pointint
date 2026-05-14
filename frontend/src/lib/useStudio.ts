@@ -56,6 +56,10 @@ import {
   extractGifFrameFiles,
   type ExtractedGifFrameSequence,
 } from "./gifFrameSequence";
+import {
+  extractVideoFrameFiles,
+  type ExtractedVideoFrameSequence,
+} from "./videoFrameSequence";
 
 export type CursorSize = ThemeCursorSize;
 export type AniFrameMoveDirection = "previous" | "next";
@@ -709,6 +713,21 @@ function createAniFromExtractedGifFrames(
       sourceHeight: extractedGif.height,
     }
   );
+}
+
+function createAniFromExtractedVideoFrames(
+  extractedVideo: ExtractedVideoFrameSequence,
+  slotId: WindowsRoleSlotId
+): AniData {
+  if (extractedVideo.frames.length === 0) {
+    throw new Error("Video did not contain any frames");
+  }
+
+  return createAniFromFrameFiles(extractedVideo.frames, slotId, {
+    preserveOrder: true,
+    sourceWidth: extractedVideo.width,
+    sourceHeight: extractedVideo.height,
+  });
 }
 
 function createAniFromFrameFiles(
@@ -1792,6 +1811,139 @@ export function useStudio() {
     ]
   );
 
+  const uploadVideoFileToSlot = useCallback(
+    async (slotId: WindowsRoleSlotId, file: File) => {
+      trackEvent("upload_started", {
+        input_kind: "video",
+        slot_id: slotId,
+        source: "studio",
+      });
+
+      if (
+        selectedSlotBound &&
+        cursor &&
+        (state === "editing" || isBackgroundRemovalDecisionState(state))
+      ) {
+        commitSlotState(
+          selectedSlotId,
+          createStaticSlotState(
+            cursor,
+            isBackgroundRemovalDecisionState(state)
+          )
+        );
+      }
+
+      if (selectedSlotBound && ani && state === "ani-editing") {
+        commitSlotState(selectedSlotId, createAnimatedSlotState(ani));
+      }
+
+      const requestId = beginAssetLoadRequest();
+      const previous = takeSnapshot();
+      clearActiveHistoryAction();
+      setError(null);
+      cleanupSlotReplacement(slotId);
+      clearPreview();
+      cancelBgRemovalRequest();
+      setState("ani-upload");
+
+      let nextAni: AniData | null = null;
+
+      try {
+        const extractedVideo = await extractVideoFrameFiles(file);
+        if (!isAssetLoadRequestActive(requestId)) {
+          return;
+        }
+
+        nextAni = createAniFromExtractedVideoFrames(extractedVideo, slotId);
+
+        let hydratedAni: AniData;
+
+        if (
+          nextAni.frames.every(
+            (frame) => frame.sourceWidth > 0 && frame.sourceHeight > 0
+          )
+        ) {
+          hydratedAni = syncAniActiveFrame(nextAni);
+        } else {
+          const dimensions = await loadImageDimensions(nextAni.originalUrl);
+          if (!isAssetLoadRequestActive(requestId)) {
+            revokeAniObjectUrls(nextAni);
+            return;
+          }
+
+          const hydratedFrames = await loadAniFrameDimensions(
+            nextAni.frames,
+            dimensions,
+            () => isAssetLoadRequestActive(requestId)
+          );
+
+          if (!hydratedFrames) {
+            revokeAniObjectUrls(nextAni);
+            return;
+          }
+
+          hydratedAni = syncAniActiveFrame({
+            ...nextAni,
+            frames: hydratedFrames,
+          });
+        }
+
+        const { historySnapshot, replacedAni } =
+          prepareImageSequenceReplacementSnapshot(previous, slotId);
+
+        pushHistoryForAction(historySnapshot, "replaceSlot");
+        setCursor(null);
+        setAni(hydratedAni);
+        commitSlotState(slotId, createAnimatedSlotState(hydratedAni));
+        setState("ani-editing");
+        if (replacedAni?.sourceKind === "image-sequence") {
+          revokeAniObjectUrlsNotRetained(replacedAni, [
+            ...undoStackRef.current,
+            ...redoStackRef.current,
+          ]);
+        }
+      } catch (err) {
+        if (nextAni) {
+          revokeAniObjectUrls(nextAni);
+        }
+        if (!isAssetLoadRequestActive(requestId)) return;
+        const message =
+          err instanceof Error ? err.message : "Failed to load video";
+        setPreviewUrl((prev) => {
+          if (prev) {
+            safeRevokeObjectUrl(prev);
+          }
+          return null;
+        });
+        setProject(previous.project);
+        setSlotRuntime(previous.slotRuntime);
+        setSelectedSlotId(previous.selectedSlotId);
+        setEditingSlotId(previous.editingSlotId);
+        setCursor(previous.cursor);
+        setAni(previous.ani);
+        setState(previous.state);
+        setShowOriginal(false);
+        setError(message);
+      }
+    },
+    [
+      ani,
+      cleanupSlotReplacement,
+      clearPreview,
+      commitSlotState,
+      cursor,
+      clearActiveHistoryAction,
+      pushHistoryForAction,
+      takeSnapshot,
+      cancelBgRemovalRequest,
+      beginAssetLoadRequest,
+      isAssetLoadRequestActive,
+      selectedSlotBound,
+      selectedSlotId,
+      state,
+    ]
+  );
+
   const uploadFileToPrimaryRoleSlot = useCallback(
     (file: File, kind: SlotKind) =>
       uploadFileToSlot(DEFAULT_PRIMARY_ROLE_SLOT_ID, file, kind),
@@ -1889,6 +2041,11 @@ export function useStudio() {
     [uploadFileToPrimaryRoleSlot]
   );
 
+  const selectVideoFile = useCallback(
+    (file: File) => uploadVideoFileToSlot(DEFAULT_PRIMARY_ROLE_SLOT_ID, file),
+    [uploadVideoFileToSlot]
+  );
+
   const selectSelectedSlotStaticFile = useCallback(
     (file: File) => uploadFileToSlot(selectedSlotId, file, "static"),
     [selectedSlotId, uploadFileToSlot]
@@ -1902,6 +2059,11 @@ export function useStudio() {
   const selectSelectedSlotImageSequenceFiles = useCallback(
     (files: File[]) => uploadImageSequenceFilesToSlot(selectedSlotId, files),
     [selectedSlotId, uploadImageSequenceFilesToSlot]
+  );
+
+  const selectSelectedSlotVideoFile = useCallback(
+    (file: File) => uploadVideoFileToSlot(selectedSlotId, file),
+    [selectedSlotId, uploadVideoFileToSlot]
   );
 
   const selectAniFrame = useCallback((frameId: string) => {
@@ -3356,6 +3518,7 @@ export function useStudio() {
     pendingBackgroundRemovalSlotIds,
     selectFile,
     selectAniFile,
+    selectVideoFile,
     processBgRemoval,
     skipBgRemoval,
     toggleOriginal,
@@ -3372,6 +3535,7 @@ export function useStudio() {
     selectSelectedSlotStaticFile,
     selectSelectedSlotAnimatedFile,
     selectSelectedSlotImageSequenceFiles,
+    selectSelectedSlotVideoFile,
     selectAniFrame,
     deleteAniFrame,
     moveAniFrame,

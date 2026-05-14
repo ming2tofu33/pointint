@@ -233,4 +233,22 @@ describe("ko slot rail copy", () => {
       "Windows \uc804\uccb4 \uc138\ud2b8\ub85c \ud655\uc7a5"
     );
   });
+
+  it("covers Video to ANI upload workflow copy in English and Korean", () => {
+    const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
+    const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
+    const ko = JSON.parse(fs.readFileSync(koPath, "utf8"));
+    const en = JSON.parse(fs.readFileSync(enPath, "utf8"));
+
+    expect(en.upload.aniVideoToAni).toBe("Video to ANI");
+    expect(en.upload.aniVideoToAniSub).toBe(
+      "Turn a short MP4 or WebM clip into an animated Windows cursor"
+    );
+    expect(ko.upload.aniVideoToAni).toBe(
+      "\ub3d9\uc601\uc0c1\uc73c\ub85c \uc560\ub2c8\uba54\uc774\uc158 \ub9cc\ub4e4\uae30"
+    );
+    expect(ko.upload.aniVideoToAniSub).toBe(
+      "\uc9e7\uc740 MP4 \ub610\ub294 WebM \uc601\uc0c1\uc744 \uc560\ub2c8\uba54\uc774\uc158 Windows \ucee4\uc11c\ub85c \ubc14\uafc9\ub2c8\ub2e4"
+    );
+  });
 });

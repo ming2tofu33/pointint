@@ -127,6 +127,12 @@ describe("WorkflowPicker", () => {
     expect(
       screen.getByRole("button", { name: /ANI PNGS.*Available!/i }).disabled
     ).toBe(false);
+    expect(screen.getByTestId("workflow-card-ani-video-to-ani")).toHaveClass(
+      "workflow-picker-card--available"
+    );
+    expect(
+      screen.getByRole("button", { name: /Video to ANI.*Available!/i })
+    ).toBeEnabled();
     expect(screen.getByRole("button", { name: /ANI AI.*Soon!/i }).disabled).toBe(
       true
     );
@@ -176,5 +182,22 @@ describe("WorkflowPicker", () => {
 
     expect(onSelectWorkflow).toHaveBeenCalledTimes(1);
     expect(onSelectWorkflow).toHaveBeenCalledWith("ani-animated-gif");
+  });
+
+  it("calls the workflow callback for the enabled Video to ANI card", () => {
+    const onSelectWorkflow = vi.fn();
+    const messages = JSON.parse(JSON.stringify(en));
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <WorkflowPicker onSelectWorkflow={onSelectWorkflow} />
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Video to ANI.*Available/i })
+    );
+
+    expect(onSelectWorkflow).toHaveBeenCalledWith("ani-video-to-ani");
   });
 });

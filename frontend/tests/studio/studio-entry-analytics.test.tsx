@@ -97,9 +97,11 @@ describe("StudioPage analytics", () => {
       pendingBackgroundRemovalSlotIds: [],
       selectFile: vi.fn(),
       selectAniFile: vi.fn(),
+      selectVideoFile: vi.fn(),
       selectSlot: vi.fn(),
       selectSelectedSlotStaticFile: vi.fn(),
       selectSelectedSlotAnimatedFile: vi.fn(),
+      selectSelectedSlotVideoFile: vi.fn(),
       selectSelectedSlotImageSequenceFiles: vi.fn(),
       selectAniFrame: vi.fn(),
       deleteAniFrame: vi.fn(),
@@ -157,6 +159,19 @@ describe("StudioPage analytics", () => {
     expect(trackEventMock).toHaveBeenCalledWith("studio_entry", {
       source: "studio_page",
       workflow: "ani-animated-gif",
+    });
+  });
+
+  it("tracks Video to ANI workflow-targeted studio entries", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-video-to-ani"
+    );
+
+    render(<StudioPage />);
+
+    expect(trackEventMock).toHaveBeenCalledWith("studio_entry", {
+      source: "studio_page",
+      workflow: "ani-video-to-ani",
     });
   });
 });

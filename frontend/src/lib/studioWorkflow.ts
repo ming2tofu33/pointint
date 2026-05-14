@@ -5,6 +5,7 @@ export type WorkflowOptionId =
   | "cur-ai-generate"
   | "ani-animated-gif"
   | "ani-multiple-pngs"
+  | "ani-video-to-ani"
   | "ani-ai-generate";
 
 export type WorkflowAvailability = "available" | "soon";
@@ -56,6 +57,13 @@ export const WORKFLOW_OPTIONS: WorkflowOption[] = [
     availability: "available",
   },
   {
+    id: "ani-video-to-ani",
+    family: "ani",
+    titleKey: "aniVideoToAni",
+    descriptionKey: "aniVideoToAniSub",
+    availability: "available",
+  },
+  {
     id: "ani-ai-generate",
     family: "ani",
     titleKey: "aniAiGenerate",
@@ -67,11 +75,13 @@ export const WORKFLOW_OPTIONS: WorkflowOption[] = [
 export const CUR_STATIC_IMAGE_WORKFLOW_ID: WorkflowOptionId = "cur-static-image";
 export const ANI_ANIMATED_GIF_WORKFLOW_ID: WorkflowOptionId = "ani-animated-gif";
 export const ANI_MULTIPLE_PNGS_WORKFLOW_ID: WorkflowOptionId = "ani-multiple-pngs";
+export const ANI_VIDEO_TO_ANI_WORKFLOW_ID: WorkflowOptionId = "ani-video-to-ani";
 
 export function isSelectableWorkflow(workflowId: WorkflowOptionId): boolean {
   return (
     workflowId === CUR_STATIC_IMAGE_WORKFLOW_ID ||
     workflowId === ANI_ANIMATED_GIF_WORKFLOW_ID ||
-    workflowId === ANI_MULTIPLE_PNGS_WORKFLOW_ID
+    workflowId === ANI_MULTIPLE_PNGS_WORKFLOW_ID ||
+    workflowId === ANI_VIDEO_TO_ANI_WORKFLOW_ID
   );
 }

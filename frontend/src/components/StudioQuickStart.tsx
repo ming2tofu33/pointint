@@ -17,13 +17,19 @@ interface StudioQuickStartProps {
   animatedUploadDescription?: string;
   imageSequenceUploadLabel?: string;
   imageSequenceUploadDescription?: string;
+  videoUploadLabel?: string;
+  videoUploadDescription?: string;
   primarySource?: QuickStartPrimarySource;
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
   onImageSequenceFiles?: (files: File[]) => void;
+  onVideoFile?: (file: File) => void;
+  busy?: boolean;
+  busyLabel?: string;
+  busyDescription?: string;
 }
 
-type QuickStartPrimarySource = "static" | "animated" | "image-sequence";
+type QuickStartPrimarySource = "static" | "animated" | "image-sequence" | "video";
 
 export default function StudioQuickStart({
   title,
@@ -34,10 +40,16 @@ export default function StudioQuickStart({
   animatedUploadDescription,
   imageSequenceUploadLabel,
   imageSequenceUploadDescription,
+  videoUploadLabel,
+  videoUploadDescription,
   primarySource = "static",
   onStaticFile,
   onAnimatedFile,
   onImageSequenceFiles,
+  onVideoFile,
+  busy = false,
+  busyLabel,
+  busyDescription,
 }: StudioQuickStartProps) {
   const [isRegionDragActive, setIsRegionDragActive] = useState(false);
   const primaryUpload = getPrimaryUploadConfig({
@@ -48,12 +60,18 @@ export default function StudioQuickStart({
     animatedUploadDescription,
     imageSequenceUploadLabel,
     imageSequenceUploadDescription,
+    videoUploadLabel,
+    videoUploadDescription,
     onStaticFile,
     onAnimatedFile,
     onImageSequenceFiles,
+    onVideoFile,
   });
 
   const handleFiles = (files: FileList | File[]) => {
+    if (busy) {
+      return;
+    }
     primaryUpload.handleFiles(files);
   };
 
@@ -107,14 +125,17 @@ export default function StudioQuickStart({
           dataTestId={primaryUpload.dataTestId}
           title={title}
           summary={description}
-          label={primaryUpload.label}
-          description={primaryUpload.description}
+          label={busy && busyLabel ? busyLabel : primaryUpload.label}
+          description={
+            busy && busyDescription ? busyDescription : primaryUpload.description
+          }
           accept={primaryUpload.accept}
           multiple={primaryUpload.multiple}
           tone="primary"
+          disabled={busy}
           parentDragActive={isRegionDragActive}
           onNestedDropHandled={() => setIsRegionDragActive(false)}
-          onFiles={primaryUpload.handleFiles}
+          onFiles={handleFiles}
         />
 
         {primarySource === "static" &&
@@ -127,9 +148,13 @@ export default function StudioQuickStart({
             description={animatedUploadDescription}
             accept=".gif"
             tone="secondary"
+            disabled={busy}
             parentDragActive={isRegionDragActive}
             onNestedDropHandled={() => setIsRegionDragActive(false)}
             onFiles={(files) => {
+              if (busy) {
+                return;
+              }
               const file = Array.from(files).find(isGifFile);
               if (file) {
                 onAnimatedFile(file);
@@ -151,6 +176,7 @@ function QuickUploadSurface({
   accept,
   multiple = false,
   tone,
+  disabled = false,
   parentDragActive = false,
   onNestedDropHandled,
   onFiles,
@@ -163,6 +189,7 @@ function QuickUploadSurface({
   accept: string;
   multiple?: boolean;
   tone: "primary" | "secondary";
+  disabled?: boolean;
   parentDragActive?: boolean;
   onNestedDropHandled?: () => void;
   onFiles: (files: FileList | File[]) => void;
@@ -193,6 +220,9 @@ function QuickUploadSurface({
     event.stopPropagation();
     setIsDragActive(false);
     onNestedDropHandled?.();
+    if (disabled) {
+      return;
+    }
     onFiles(event.dataTransfer.files);
   };
 
@@ -293,7 +323,12 @@ function QuickUploadSurface({
           data-testid={`${dataTestId}-click-target`}
           type="button"
           aria-label={label}
-          onClick={() => inputRef.current?.click()}
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled) {
+              inputRef.current?.click();
+            }
+          }}
           style={{
             width: isPrimary ? "min(100%, 17rem)" : "min(100%, 15rem)",
             minHeight: isPrimary ? "6rem" : "3.5rem",
@@ -303,7 +338,7 @@ function QuickUploadSurface({
               ? "color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-primary))"
               : "var(--color-bg-primary)",
             color: "var(--color-text-primary)",
-            cursor: "pointer",
+            cursor: disabled ? "not-allowed" : "pointer",
             display: "grid",
             placeItems: "center",
             padding: isPrimary ? "0.85rem" : "0.65rem",
@@ -358,7 +393,7 @@ function QuickUploadSurface({
         accept={accept}
         multiple={multiple}
         onChange={(event) => {
-          if (event.target.files) {
+          if (!disabled && event.target.files) {
             onFiles(event.target.files);
           }
           event.currentTarget.value = "";
@@ -379,9 +414,12 @@ function getPrimaryUploadConfig({
   animatedUploadDescription,
   imageSequenceUploadLabel,
   imageSequenceUploadDescription,
+  videoUploadLabel,
+  videoUploadDescription,
   onStaticFile,
   onAnimatedFile,
   onImageSequenceFiles,
+  onVideoFile,
 }: {
   primarySource: QuickStartPrimarySource;
   staticUploadLabel: string;
@@ -390,9 +428,12 @@ function getPrimaryUploadConfig({
   animatedUploadDescription?: string;
   imageSequenceUploadLabel?: string;
   imageSequenceUploadDescription?: string;
+  videoUploadLabel?: string;
+  videoUploadDescription?: string;
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
   onImageSequenceFiles?: (files: File[]) => void;
+  onVideoFile?: (file: File) => void;
 }) {
   if (primarySource === "animated") {
     return {
@@ -421,6 +462,22 @@ function getPrimaryUploadConfig({
         const imageFiles = Array.from(files).filter(isStaticImageFile);
         if (imageFiles.length >= 2) {
           onImageSequenceFiles?.(imageFiles);
+        }
+      },
+    };
+  }
+
+  if (primarySource === "video") {
+    return {
+      dataTestId: "studio-quick-start-video",
+      label: videoUploadLabel ?? staticUploadLabel,
+      description: videoUploadDescription ?? staticUploadDescription,
+      accept: "video/mp4,video/webm,.mp4,.webm",
+      multiple: false,
+      handleFiles: (files: FileList | File[]) => {
+        const videoFile = Array.from(files).find(isVideoFile);
+        if (videoFile) {
+          onVideoFile?.(videoFile);
         }
       },
     };
@@ -455,4 +512,12 @@ function isGifFile(file: File) {
   }
 
   return /\.gif$/i.test(file.name);
+}
+
+function isVideoFile(file: File) {
+  if (file.type) {
+    return file.type === "video/mp4" || file.type === "video/webm";
+  }
+
+  return /\.(mp4|webm)$/i.test(file.name);
 }

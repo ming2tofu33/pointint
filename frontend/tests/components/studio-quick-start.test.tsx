@@ -215,4 +215,168 @@ describe("StudioQuickStart", () => {
     expect(surface).toHaveAttribute("data-drag-active", "true");
     expect(screen.getByRole("button", { name: "Choose image" })).toBeVisible();
   });
+
+  it("can use a video as the primary guide upload", () => {
+    const onVideoFile = vi.fn();
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Upload a short clip"
+        staticUploadLabel="Choose image"
+        staticUploadDescription="Image"
+        videoUploadLabel="Choose video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        onStaticFile={vi.fn()}
+        onVideoFile={onVideoFile}
+      />
+    );
+    const surface = screen.getByTestId("studio-quick-start-video");
+    const input = surface.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement;
+    const file = new File(["video"], "cat.webm", { type: "video/webm" });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(onVideoFile).toHaveBeenCalledWith(file);
+    expect(input.accept).toContain(".webm");
+    expect(input.accept).toContain(".mp4");
+  });
+
+  it("passes dropped video files from the primary video surface", () => {
+    const onVideoFile = vi.fn();
+    const file = new File(["video"], "cat.mp4", { type: "video/mp4" });
+
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Upload a short clip"
+        staticUploadLabel="Choose image"
+        staticUploadDescription="Image"
+        videoUploadLabel="Choose video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        onStaticFile={vi.fn()}
+        onVideoFile={onVideoFile}
+      />
+    );
+
+    fireEvent.drop(screen.getByTestId("studio-quick-start-video"), {
+      dataTransfer: { files: [file] },
+    });
+
+    expect(onVideoFile).toHaveBeenCalledWith(file);
+  });
+
+  it("keeps the upload layout present but blocks uploads while busy", () => {
+    const onVideoFile = vi.fn();
+    const file = new File(["video"], "cat.webm", { type: "video/webm" });
+
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Upload a short clip"
+        staticUploadLabel="Choose image"
+        staticUploadDescription="Image"
+        videoUploadLabel="Choose video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        onStaticFile={vi.fn()}
+        onVideoFile={onVideoFile}
+        busy
+        busyLabel="Preparing upload"
+        busyDescription="Encoding preview"
+      />
+    );
+
+    const surface = screen.getByTestId("studio-quick-start-video");
+    const clickTarget = screen.getByRole("button", {
+      name: "Preparing upload",
+    });
+
+    expect(surface).toBeVisible();
+    expect(clickTarget).toBeDisabled();
+    expect(clickTarget).toHaveStyle({
+      minHeight: "6rem",
+    });
+    expect(screen.getByText("Encoding preview")).toBeVisible();
+
+    fireEvent.drop(surface, {
+      dataTransfer: { files: [file] },
+    });
+
+    expect(onVideoFile).not.toHaveBeenCalled();
+  });
+
+  it("disables secondary animated uploads while busy", () => {
+    const onAnimatedFile = vi.fn();
+    const inputFile = new File(["gif"], "input.gif", { type: "image/gif" });
+    const droppedFile = new File(["gif"], "drop.gif", { type: "image/gif" });
+
+    render(
+      <StudioQuickStart
+        title="Drop an image. Get a cursor."
+        description="Pointint picks the defaults."
+        staticUploadLabel="Choose image"
+        staticUploadDescription="PNG, JPG, JPEG, or WebP"
+        animatedUploadLabel="Make animated cursor"
+        animatedUploadDescription="GIF or image frames"
+        onStaticFile={vi.fn()}
+        onAnimatedFile={onAnimatedFile}
+        busy
+      />
+    );
+
+    const animatedSurface = screen.getByTestId("studio-quick-start-animated");
+    const clickTarget = screen.getByTestId(
+      "studio-quick-start-animated-click-target"
+    );
+    const input = animatedSurface.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+
+    expect(clickTarget).toBeDisabled();
+
+    fireEvent.change(input, {
+      target: {
+        files: [inputFile],
+      },
+    });
+    fireEvent.drop(animatedSurface, {
+      dataTransfer: { files: [droppedFile] },
+    });
+
+    expect(onAnimatedFile).not.toHaveBeenCalled();
+  });
+
+  it("uses video filename fallback when MIME is empty and rejects invalid videos", () => {
+    const onVideoFile = vi.fn();
+    const invalidFile = new File(["video"], "cat.mov", { type: "" });
+    const validFile = new File(["video"], "cat.webm", { type: "" });
+
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Upload a short clip"
+        staticUploadLabel="Choose image"
+        staticUploadDescription="Image"
+        videoUploadLabel="Choose video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        onStaticFile={vi.fn()}
+        onVideoFile={onVideoFile}
+      />
+    );
+
+    const input = screen
+      .getByTestId("studio-quick-start-video")
+      .querySelector("input[type='file']") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { files: [invalidFile] } });
+
+    expect(onVideoFile).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { files: [validFile] } });
+
+    expect(onVideoFile).toHaveBeenCalledWith(validFile);
+  });
 });

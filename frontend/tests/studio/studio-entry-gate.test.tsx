@@ -100,6 +100,9 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   backgroundProcessingTitle: "Removing background",
   backgroundProcessingSummary:
     "Pointtint is preparing a transparent version of this image. Stay in the studio and keep reviewing the canvas.",
+  videoExtractingTitle: "Extracting frames...",
+  videoExtractingDescription:
+    "Pointint is turning the video into editable animation frames.",
   imageSequenceMinimumError: "Select at least 2 PNG, JPG, or WebP frames.",
   aniFrameTimeline: "ANI frame timeline",
   aniFrameCountSingular: "{count} frame",
@@ -199,9 +202,11 @@ const {
   clearLandingFileMock,
   selectFileMock,
   selectAniFileMock,
+  selectVideoFileMock,
   selectSlotMock,
   selectSlotStaticFileMock,
   selectSlotAnimatedFileMock,
+  selectSelectedSlotVideoFileMock,
   selectSlotImageSequenceFilesMock,
   selectAniFrameMock,
   deleteAniFrameMock,
@@ -239,9 +244,11 @@ const {
   clearLandingFileMock: vi.fn(),
   selectFileMock: vi.fn(),
   selectAniFileMock: vi.fn(),
+  selectVideoFileMock: vi.fn(),
   selectSlotMock: vi.fn(),
   selectSlotStaticFileMock: vi.fn(),
   selectSlotAnimatedFileMock: vi.fn(),
+  selectSelectedSlotVideoFileMock: vi.fn(),
   selectSlotImageSequenceFilesMock: vi.fn(),
   selectAniFrameMock: vi.fn(),
   deleteAniFrameMock: vi.fn(),
@@ -652,8 +659,10 @@ function createStudioReturn(
       options.pendingBackgroundRemovalSlotIds ?? [],
     selectFile: selectFileMock,
     selectAniFile: selectAniFileMock,
+    selectVideoFile: selectVideoFileMock,
     selectSelectedSlotStaticFile: selectSlotStaticFileMock,
     selectSelectedSlotAnimatedFile: selectSlotAnimatedFileMock,
+    selectSelectedSlotVideoFile: selectSelectedSlotVideoFileMock,
     selectSelectedSlotImageSequenceFiles: selectSlotImageSequenceFilesMock,
     processBgRemoval: processBgRemovalMock,
     skipBgRemoval: skipBgRemovalMock,
@@ -709,9 +718,11 @@ beforeEach(() => {
   useStudioMock.mockReset();
   selectFileMock.mockReset();
   selectAniFileMock.mockReset();
+  selectVideoFileMock.mockReset();
   selectSlotMock.mockReset();
   selectSlotStaticFileMock.mockReset();
   selectSlotAnimatedFileMock.mockReset();
+  selectSelectedSlotVideoFileMock.mockReset();
   selectSlotImageSequenceFilesMock.mockReset();
   selectAniFrameMock.mockReset();
   deleteAniFrameMock.mockReset();
@@ -969,6 +980,35 @@ describe("Studio entry gate", () => {
 
     expect(selectAniFileMock).toHaveBeenCalledWith(gifFile);
     expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
+  });
+
+  it("routes the Video to ANI workflow guide to video upload", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-video-to-ani"
+    );
+    renderStudio("editing", { cursor: null, experienceMode: "quick" });
+    expect(screen.queryByTestId("workflow-picker")).toBeNull();
+    const videoSurface = screen.getByTestId("studio-quick-start-video");
+    const input = videoSurface.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    const file = new File(["video"], "cat.webm", { type: "video/webm" });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(selectVideoFileMock).toHaveBeenCalledWith(file);
+    expect(selectSelectedSlotVideoFileMock).not.toHaveBeenCalled();
+  });
+
+  it("shows video extraction progress while the hook is in ani-upload state", () => {
+    searchParamsState.current = new URLSearchParams(
+      "workflow=ani-video-to-ani"
+    );
+    renderStudio("ani-upload", { experienceMode: "quick" });
+    expect(screen.getByText("Extracting frames...")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Pointint is turning the video into editable animation frames."
+      )
+    ).toBeInTheDocument();
   });
 
   it("keeps the background-removal decision in the quick flow without duplicating the pending banner", () => {

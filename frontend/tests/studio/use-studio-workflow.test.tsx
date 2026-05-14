@@ -3,11 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   extractGifFrameFilesMock,
+  extractVideoFrameFilesMock,
   generateAniMock,
   generateAniSequenceMock,
   generateGifSequenceMock,
 } = vi.hoisted(() => ({
   extractGifFrameFilesMock: vi.fn(),
+  extractVideoFrameFilesMock: vi.fn(),
   generateAniMock: vi.fn(),
   generateAniSequenceMock: vi.fn(),
   generateGifSequenceMock: vi.fn(),
@@ -23,6 +25,10 @@ vi.mock("@/lib/api", () => ({
 
 vi.mock("@/lib/gifFrameSequence", () => ({
   extractGifFrameFiles: extractGifFrameFilesMock,
+}));
+
+vi.mock("@/lib/videoFrameSequence", () => ({
+  extractVideoFrameFiles: extractVideoFrameFilesMock,
 }));
 
 import {
@@ -46,6 +52,7 @@ function createSequenceFiles(names: string[]) {
 describe("useStudio workflow entry", () => {
   beforeEach(() => {
     extractGifFrameFilesMock.mockReset();
+    extractVideoFrameFilesMock.mockReset();
     generateAniMock.mockReset();
     generateAniSequenceMock.mockReset();
     generateGifSequenceMock.mockReset();
@@ -169,6 +176,201 @@ describe("useStudio workflow entry", () => {
         sourceHeight: 40,
       }),
     ]);
+  });
+
+  it("loads video uploads as editable ANI frame sequences", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["video"], "orbit.mp4", { type: "video/mp4" });
+    const videoFrames = [
+      new File(["frame-a"], "orbit-frame-001.png", { type: "image/png" }),
+      new File(["frame-b"], "orbit-frame-002.png", { type: "image/png" }),
+    ];
+
+    extractVideoFrameFilesMock.mockResolvedValueOnce({
+      width: 640,
+      height: 360,
+      frames: [
+        { file: videoFrames[0], durationMs: 42 },
+        { file: videoFrames[1], durationMs: 58 },
+      ],
+    });
+
+    await act(async () => {
+      await result.current.selectVideoFile(file);
+      await Promise.resolve();
+    });
+
+    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file);
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.ani?.sourceKind).toBe("image-sequence");
+    expect(result.current.ani?.sourceWidth).toBe(640);
+    expect(result.current.ani?.sourceHeight).toBe(360);
+    expect(result.current.ani?.frames).toEqual([
+      expect.objectContaining({
+        file: videoFrames[0],
+        durationMs: 42,
+        sourceWidth: 640,
+        sourceHeight: 360,
+      }),
+      expect.objectContaining({
+        file: videoFrames[1],
+        durationMs: 58,
+        sourceWidth: 640,
+        sourceHeight: 360,
+      }),
+    ]);
+  });
+
+  it("routes selected-slot video uploads into animated slot state", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["video"], "beam.webm", { type: "video/webm" });
+    const videoFrames = [
+      new File(["frame-a"], "beam-frame-001.png", { type: "image/png" }),
+      new File(["frame-b"], "beam-frame-002.png", { type: "image/png" }),
+    ];
+
+    extractVideoFrameFilesMock.mockResolvedValueOnce({
+      width: 320,
+      height: 240,
+      frames: [
+        { file: videoFrames[0], durationMs: 90 },
+        { file: videoFrames[1], durationMs: 110 },
+      ],
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotVideoFile(file);
+      await Promise.resolve();
+    });
+
+    expect(extractVideoFrameFilesMock).toHaveBeenCalledWith(file);
+    expect(result.current.selectedSlotId).toBe("textSelect");
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.ani?.cursorName).toBe("ibeam");
+    expect(result.current.project.slots.textSelect.kind).toBe("animated");
+    expect(result.current.project.slots.textSelect.asset.fileName).toBe(
+      "beam-frame-001.png"
+    );
+    expect(result.current.project.slots.normalSelect.kind).toBeNull();
+  });
+
+  it("surfaces video extraction errors", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["video"], "unsupported.mov", {
+      type: "video/quicktime",
+    });
+
+    extractVideoFrameFilesMock.mockRejectedValueOnce(
+      new Error("Unsupported video")
+    );
+
+    await act(async () => {
+      await result.current.selectVideoFile(file);
+      await Promise.resolve();
+    });
+
+    expect(result.current.error).toBe("Unsupported video");
+  });
+
+  it("restores the existing animated editor when video extraction fails during replacement", async () => {
+    const { result } = renderHook(() => useStudio());
+    const existingFrames = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+    const file = new File(["video"], "unsupported.mov", {
+      type: "video/quicktime",
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(existingFrames);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setScale(1.5);
+    });
+
+    extractVideoFrameFilesMock.mockRejectedValueOnce(
+      new Error("Unsupported video")
+    );
+
+    await act(async () => {
+      await result.current.selectVideoFile(file);
+      await Promise.resolve();
+    });
+
+    expect(result.current.error).toBe("Unsupported video");
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.ani?.frames[0]?.file).toBe(existingFrames[0]);
+    expect(result.current.ani?.globalEdit.scale).toBe(1.5);
+  });
+
+  it("commits current animated edits before pending video upload slot switches", async () => {
+    const { result } = renderHook(() => useStudio());
+    const existingFrames = createSequenceFiles(["frame-001.png", "frame-002.png"]);
+    const videoFrames = createSequenceFiles([
+      "video-frame-001.png",
+      "video-frame-002.png",
+    ]);
+    let resolveVideo:
+      | ((value: {
+          width: number;
+          height: number;
+          frames: Array<{ file: File; durationMs: number }>;
+        }) => void)
+      | null = null;
+    const pendingVideo = new Promise<{
+      width: number;
+      height: number;
+      frames: Array<{ file: File; durationMs: number }>;
+    }>((resolve) => {
+      resolveVideo = resolve;
+    });
+
+    await act(async () => {
+      await result.current.selectSelectedSlotImageSequenceFiles(existingFrames);
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.setScale(1.5);
+    });
+
+    extractVideoFrameFilesMock.mockReturnValueOnce(pendingVideo);
+
+    let uploadPromise: Promise<void> = Promise.resolve();
+    act(() => {
+      uploadPromise = result.current.selectVideoFile(
+        new File(["video"], "replacement.mp4", { type: "video/mp4" })
+      );
+    });
+
+    act(() => {
+      result.current.selectSlot("textSelect");
+    });
+
+    await act(async () => {
+      resolveVideo?.({
+        width: 640,
+        height: 360,
+        frames: [
+          { file: videoFrames[0], durationMs: 70 },
+          { file: videoFrames[1], durationMs: 80 },
+        ],
+      });
+      await uploadPromise;
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.selectSlot("normalSelect");
+    });
+
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.ani?.frames[0]?.file).toBe(existingFrames[0]);
+    expect(result.current.ani?.globalEdit.scale).toBe(1.5);
   });
 
   it("creates selectable image sequence frames by filename before entering the ANI editor", async () => {
