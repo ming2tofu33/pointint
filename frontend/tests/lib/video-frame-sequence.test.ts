@@ -59,6 +59,57 @@ describe("extractVideoFrameFiles", () => {
     expect(captureFrame.mock.calls.map((call) => call[1])).toEqual([0, 100]);
   });
 
+  it("uses option-driven start, duration, and fps to choose capture times", async () => {
+    const file = new File(["video"], "custom-options.webm", {
+      type: "video/webm",
+    });
+    const captureFrame = vi.fn(async () => document.createElement("canvas"));
+
+    const result = await extractVideoFrameFiles(
+      file,
+      { startMs: 500, durationMs: 2000, fps: 4 },
+      {
+        loadMetadata: async () => ({
+          width: 640,
+          height: 360,
+          durationMs: 5000,
+        }),
+        captureFrame,
+        canvasToBlob: async () => new Blob(["frame"], { type: "image/png" }),
+      }
+    );
+
+    expect(result.frames).toHaveLength(8);
+    expect(result.frames.map((frame) => frame.durationMs)).toEqual(
+      Array(8).fill(250)
+    );
+    expect(captureFrame.mock.calls.map((call) => call[1])).toEqual([
+      500, 750, 1000, 1250, 1500, 1750, 2000, 2250,
+    ]);
+  });
+
+  it("caps high-FPS extraction at maxFrames", async () => {
+    const file = new File(["video"], "high-fps.webm", { type: "video/webm" });
+    const captureFrame = vi.fn(async () => document.createElement("canvas"));
+
+    const result = await extractVideoFrameFiles(
+      file,
+      { durationMs: 3000, fps: 30, maxFrames: 30 },
+      {
+        loadMetadata: async () => ({
+          width: 640,
+          height: 360,
+          durationMs: 5000,
+        }),
+        captureFrame,
+        canvasToBlob: async () => new Blob(["frame"], { type: "image/png" }),
+      }
+    );
+
+    expect(result.frames).toHaveLength(30);
+    expect(captureFrame).toHaveBeenCalledTimes(30);
+  });
+
   it("captures the first browser frame without waiting for a zero-time seek", async () => {
     vi.useFakeTimers();
 
