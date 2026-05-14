@@ -1,12 +1,40 @@
 "use client";
 
-import { useRef, useState, type DragEvent } from "react";
+import { useId, useRef, useState, type DragEvent, type ReactNode } from "react";
 
 import {
   STUDIO_INTERACTION_TRANSITION,
   default as StudioSurfaceCard,
 } from "@/components/StudioSurfaceCard";
 import InteractiveDotBackground from "@/components/InteractiveDotBackground";
+import {
+  DEFAULT_VIDEO_TO_ANI_DURATION_MS,
+  DEFAULT_VIDEO_TO_ANI_FPS,
+  DEFAULT_VIDEO_TO_ANI_MAX_FRAMES,
+} from "@/lib/videoFrameSequence";
+
+export interface VideoToAniQuickOptions {
+  startMs: number;
+  durationMs: number;
+  fps: number;
+}
+
+interface VideoToAniOptionsCopy {
+  title: string;
+  startLabel: string;
+  durationLabel: string;
+  fpsLabel: string;
+  frameEstimate: (count: number) => string;
+}
+
+const DEFAULT_VIDEO_TO_ANI_QUICK_OPTIONS: VideoToAniQuickOptions = {
+  startMs: 0,
+  durationMs: DEFAULT_VIDEO_TO_ANI_DURATION_MS,
+  fps: DEFAULT_VIDEO_TO_ANI_FPS,
+};
+
+const VIDEO_DURATION_OPTIONS_MS = [1000, 2000, 3000] as const;
+const VIDEO_FPS_OPTIONS = [6, 10, 15] as const;
 
 interface StudioQuickStartProps {
   title: string;
@@ -19,11 +47,12 @@ interface StudioQuickStartProps {
   imageSequenceUploadDescription?: string;
   videoUploadLabel?: string;
   videoUploadDescription?: string;
+  videoOptionsCopy?: VideoToAniOptionsCopy;
   primarySource?: QuickStartPrimarySource;
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
   onImageSequenceFiles?: (files: File[]) => void;
-  onVideoFile?: (file: File) => void;
+  onVideoFile?: (file: File, options: VideoToAniQuickOptions) => void;
   busy?: boolean;
   busyLabel?: string;
   busyDescription?: string;
@@ -42,6 +71,7 @@ export default function StudioQuickStart({
   imageSequenceUploadDescription,
   videoUploadLabel,
   videoUploadDescription,
+  videoOptionsCopy,
   primarySource = "static",
   onStaticFile,
   onAnimatedFile,
@@ -52,6 +82,9 @@ export default function StudioQuickStart({
   busyDescription,
 }: StudioQuickStartProps) {
   const [isRegionDragActive, setIsRegionDragActive] = useState(false);
+  const [videoOptions, setVideoOptions] = useState<VideoToAniQuickOptions>(
+    DEFAULT_VIDEO_TO_ANI_QUICK_OPTIONS
+  );
   const primaryUpload = getPrimaryUploadConfig({
     primarySource,
     staticUploadLabel,
@@ -66,7 +99,17 @@ export default function StudioQuickStart({
     onAnimatedFile,
     onImageSequenceFiles,
     onVideoFile,
+    videoOptions,
   });
+  const videoOptionsPanel =
+    primarySource === "video" && videoOptionsCopy ? (
+      <VideoToAniOptionsPanel
+        copy={videoOptionsCopy}
+        value={videoOptions}
+        onChange={setVideoOptions}
+        disabled={busy}
+      />
+    ) : undefined;
 
   const handleFiles = (files: FileList | File[]) => {
     if (busy) {
@@ -134,6 +177,7 @@ export default function StudioQuickStart({
           tone="primary"
           disabled={busy}
           parentDragActive={isRegionDragActive}
+          beforeUpload={videoOptionsPanel}
           onNestedDropHandled={() => setIsRegionDragActive(false)}
           onFiles={handleFiles}
         />
@@ -178,6 +222,7 @@ function QuickUploadSurface({
   tone,
   disabled = false,
   parentDragActive = false,
+  beforeUpload,
   onNestedDropHandled,
   onFiles,
 }: {
@@ -191,6 +236,7 @@ function QuickUploadSurface({
   tone: "primary" | "secondary";
   disabled?: boolean;
   parentDragActive?: boolean;
+  beforeUpload?: ReactNode;
   onNestedDropHandled?: () => void;
   onFiles: (files: FileList | File[]) => void;
 }) {
@@ -319,6 +365,8 @@ function QuickUploadSurface({
           </span>
         ) : null}
 
+        {beforeUpload}
+
         <button
           data-testid={`${dataTestId}-click-target`}
           type="button"
@@ -404,6 +452,232 @@ function QuickUploadSurface({
   );
 }
 
+function VideoToAniOptionsPanel({
+  copy,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  copy: VideoToAniOptionsCopy;
+  value: VideoToAniQuickOptions;
+  onChange: (value: VideoToAniQuickOptions) => void;
+  disabled?: boolean;
+}) {
+  const frameEstimate = getVideoToAniFrameEstimate(value);
+  const startUnitId = useId();
+
+  return (
+    <div
+      style={{
+        width: "min(100%, 30rem)",
+        display: "grid",
+        gap: "0.65rem",
+        padding: "0.85rem",
+        border: "1px solid var(--color-border)",
+        backgroundColor: "color-mix(in srgb, var(--color-bg-primary) 86%, transparent)",
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+        }}
+      >
+        <strong
+          style={{
+            color: "var(--color-text-primary)",
+            fontSize: "0.82rem",
+            fontWeight: 780,
+          }}
+        >
+          {copy.title}
+        </strong>
+        <span
+          style={{
+            color: "var(--color-text-secondary)",
+            fontSize: "0.72rem",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {copy.frameEstimate(frameEstimate)}
+        </span>
+      </div>
+
+      <label
+        style={{
+          display: "grid",
+          gap: "0.32rem",
+          color: "var(--color-text-secondary)",
+          fontSize: "0.72rem",
+          fontWeight: 650,
+        }}
+      >
+        {copy.startLabel}
+        <span
+          style={{
+            position: "relative",
+            display: "block",
+          }}
+        >
+          <input
+            aria-label={copy.startLabel}
+            aria-describedby={startUnitId}
+            type="number"
+            min={0}
+            step={0.1}
+            disabled={disabled}
+            value={value.startMs / 1000}
+            onChange={(event) => {
+              const seconds = Number(event.currentTarget.value);
+              onChange({
+                ...value,
+                startMs: Number.isFinite(seconds)
+                  ? Math.round(Math.max(0, seconds) * 1000)
+                  : 0,
+              });
+            }}
+            style={{
+              width: "100%",
+              height: "2.1rem",
+              border: "1px solid var(--color-border)",
+              backgroundColor: "var(--color-bg-secondary)",
+              color: "var(--color-text-primary)",
+              padding: "0 1.8rem 0 0.65rem",
+            }}
+          />
+          <span
+            id={startUnitId}
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: "0.65rem",
+              transform: "translateY(-50%)",
+              color: "var(--color-text-secondary)",
+              fontSize: "0.72rem",
+              fontWeight: 760,
+              pointerEvents: "none",
+            }}
+          >
+            s
+          </span>
+        </span>
+      </label>
+
+      <OptionButtonGroup label={copy.durationLabel}>
+        {VIDEO_DURATION_OPTIONS_MS.map((durationMs) => (
+          <OptionButton
+            key={durationMs}
+            pressed={value.durationMs === durationMs}
+            disabled={disabled}
+            onClick={() => onChange({ ...value, durationMs })}
+          >
+            {durationMs / 1000}s
+          </OptionButton>
+        ))}
+      </OptionButtonGroup>
+
+      <OptionButtonGroup label={copy.fpsLabel}>
+        {VIDEO_FPS_OPTIONS.map((fps) => (
+          <OptionButton
+            key={fps}
+            pressed={value.fps === fps}
+            disabled={disabled}
+            onClick={() => onChange({ ...value, fps })}
+          >
+            {fps} fps
+          </OptionButton>
+        ))}
+      </OptionButtonGroup>
+    </div>
+  );
+}
+
+function OptionButtonGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      style={{
+        display: "grid",
+        gap: "0.32rem",
+      }}
+    >
+      <span
+        style={{
+          color: "var(--color-text-secondary)",
+          fontSize: "0.72rem",
+          fontWeight: 650,
+        }}
+      >
+        {label}
+      </span>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: "0.35rem",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function OptionButton({
+  pressed,
+  disabled = false,
+  onClick,
+  children,
+}: {
+  pressed: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        minHeight: "2rem",
+        border: pressed
+          ? "1px solid var(--color-accent)"
+          : "1px solid var(--color-border)",
+        backgroundColor: pressed
+          ? "color-mix(in srgb, var(--color-accent) 18%, var(--color-bg-secondary))"
+          : "var(--color-bg-secondary)",
+        color: pressed ? "var(--color-accent)" : "var(--color-text-secondary)",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.58 : 1,
+        fontSize: "0.75rem",
+        fontWeight: 760,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function getVideoToAniFrameEstimate(value: VideoToAniQuickOptions) {
+  const frameDurationMs = Math.round(1000 / value.fps);
+  return Math.min(
+    DEFAULT_VIDEO_TO_ANI_MAX_FRAMES,
+    Math.floor(value.durationMs / frameDurationMs)
+  );
+}
+
 const STATIC_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 function getPrimaryUploadConfig({
@@ -420,6 +694,7 @@ function getPrimaryUploadConfig({
   onAnimatedFile,
   onImageSequenceFiles,
   onVideoFile,
+  videoOptions,
 }: {
   primarySource: QuickStartPrimarySource;
   staticUploadLabel: string;
@@ -433,7 +708,8 @@ function getPrimaryUploadConfig({
   onStaticFile: (file: File) => void;
   onAnimatedFile?: (file: File) => void;
   onImageSequenceFiles?: (files: File[]) => void;
-  onVideoFile?: (file: File) => void;
+  onVideoFile?: (file: File, options: VideoToAniQuickOptions) => void;
+  videoOptions: VideoToAniQuickOptions;
 }) {
   if (primarySource === "animated") {
     return {
@@ -477,7 +753,7 @@ function getPrimaryUploadConfig({
       handleFiles: (files: FileList | File[]) => {
         const videoFile = Array.from(files).find(isVideoFile);
         if (videoFile) {
-          onVideoFile?.(videoFile);
+          onVideoFile?.(videoFile, videoOptions);
         }
       },
     };

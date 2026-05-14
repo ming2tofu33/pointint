@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import StudioQuickStart from "@/components/StudioQuickStart";
 
 describe("StudioQuickStart", () => {
+  const defaultVideoOptions = { startMs: 0, durationMs: 3000, fps: 10 };
+
   it("renders one dominant static upload surface", () => {
     render(
       <StudioQuickStart
@@ -237,9 +239,90 @@ describe("StudioQuickStart", () => {
     ) as HTMLInputElement;
     const file = new File(["video"], "cat.webm", { type: "video/webm" });
     fireEvent.change(input, { target: { files: [file] } });
-    expect(onVideoFile).toHaveBeenCalledWith(file);
+    expect(onVideoFile).toHaveBeenCalledWith(file, defaultVideoOptions);
     expect(input.accept).toContain(".webm");
     expect(input.accept).toContain(".mp4");
+  });
+
+  it("renders compact video extraction controls for video quick-start", () => {
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Turn video into frames"
+        staticUploadLabel="Upload image"
+        staticUploadDescription="PNG"
+        videoUploadLabel="Upload video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        videoOptionsCopy={{
+          title: "Extract settings",
+          startLabel: "Start",
+          durationLabel: "Length",
+          fpsLabel: "FPS",
+          frameEstimate: (count) => `Up to ${count} frames`,
+        }}
+        onStaticFile={vi.fn()}
+        onVideoFile={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Extract settings")).toBeInTheDocument();
+    const startInput = screen.getByLabelText("Start");
+    expect(startInput).toHaveValue(0);
+    expect(startInput).toHaveAccessibleDescription("s");
+    expect(screen.getByRole("button", { name: "3s" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByRole("button", { name: "10 fps" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByText("Up to 30 frames")).toBeInTheDocument();
+  });
+
+  it("passes selected extraction options when uploading a video", () => {
+    const onVideoFile = vi.fn();
+    const file = new File(["video"], "cat.webm", { type: "video/webm" });
+
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Turn video into frames"
+        staticUploadLabel="Upload image"
+        staticUploadDescription="PNG"
+        videoUploadLabel="Upload video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        videoOptionsCopy={{
+          title: "Extract settings",
+          startLabel: "Start",
+          durationLabel: "Length",
+          fpsLabel: "FPS",
+          frameEstimate: (count) => `Up to ${count} frames`,
+        }}
+        onStaticFile={vi.fn()}
+        onVideoFile={onVideoFile}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Start"), {
+      target: { value: "1.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "2s" }));
+    fireEvent.click(screen.getByRole("button", { name: "15 fps" }));
+
+    const input = screen
+      .getByTestId("studio-quick-start-video")
+      .querySelector("input[type='file']") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onVideoFile).toHaveBeenCalledWith(file, {
+      startMs: 1500,
+      durationMs: 2000,
+      fps: 15,
+    });
   });
 
   it("passes dropped video files from the primary video surface", () => {
@@ -264,7 +347,7 @@ describe("StudioQuickStart", () => {
       dataTransfer: { files: [file] },
     });
 
-    expect(onVideoFile).toHaveBeenCalledWith(file);
+    expect(onVideoFile).toHaveBeenCalledWith(file, defaultVideoOptions);
   });
 
   it("keeps the upload layout present but blocks uploads while busy", () => {
@@ -305,6 +388,38 @@ describe("StudioQuickStart", () => {
     });
 
     expect(onVideoFile).not.toHaveBeenCalled();
+  });
+
+  it("disables video extraction controls while busy", () => {
+    render(
+      <StudioQuickStart
+        title="Video to ANI"
+        description="Upload a short clip"
+        staticUploadLabel="Choose image"
+        staticUploadDescription="Image"
+        videoUploadLabel="Choose video"
+        videoUploadDescription="MP4 or WebM"
+        primarySource="video"
+        videoOptionsCopy={{
+          title: "Extract settings",
+          startLabel: "Start",
+          durationLabel: "Length",
+          fpsLabel: "FPS",
+          frameEstimate: (count) => `Up to ${count} frames`,
+        }}
+        onStaticFile={vi.fn()}
+        onVideoFile={vi.fn()}
+        busy
+      />
+    );
+
+    expect(screen.getByLabelText("Start")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "1s" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "2s" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "3s" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "6 fps" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "10 fps" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "15 fps" })).toBeDisabled();
   });
 
   it("disables secondary animated uploads while busy", () => {
@@ -377,6 +492,6 @@ describe("StudioQuickStart", () => {
 
     fireEvent.change(input, { target: { files: [validFile] } });
 
-    expect(onVideoFile).toHaveBeenCalledWith(validFile);
+    expect(onVideoFile).toHaveBeenCalledWith(validFile, defaultVideoOptions);
   });
 });
