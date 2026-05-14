@@ -7,12 +7,16 @@ const {
   generateAniMock,
   generateAniSequenceMock,
   generateGifSequenceMock,
+  removeBackgroundMock,
+  trimTransparentImageBlobMock,
 } = vi.hoisted(() => ({
   extractGifFrameFilesMock: vi.fn(),
   extractVideoFrameFilesMock: vi.fn(),
   generateAniMock: vi.fn(),
   generateAniSequenceMock: vi.fn(),
   generateGifSequenceMock: vi.fn(),
+  removeBackgroundMock: vi.fn(),
+  trimTransparentImageBlobMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -20,8 +24,19 @@ vi.mock("@/lib/api", () => ({
   generateAniSequence: generateAniSequenceMock,
   generateGifSequence: generateGifSequenceMock,
   generateCursor: vi.fn(),
-  removeBackground: vi.fn(),
+  removeBackground: removeBackgroundMock,
 }));
+
+vi.mock("@/lib/cursorFrame", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/cursorFrame")>(
+    "@/lib/cursorFrame"
+  );
+
+  return {
+    ...actual,
+    trimTransparentImageBlob: trimTransparentImageBlobMock,
+  };
+});
 
 vi.mock("@/lib/gifFrameSequence", () => ({
   extractGifFrameFiles: extractGifFrameFilesMock,
@@ -56,7 +71,18 @@ describe("useStudio workflow entry", () => {
     generateAniMock.mockReset();
     generateAniSequenceMock.mockReset();
     generateGifSequenceMock.mockReset();
+    removeBackgroundMock.mockReset();
+    trimTransparentImageBlobMock.mockReset();
     extractGifFrameFilesMock.mockRejectedValue(new Error("not a real GIF"));
+    removeBackgroundMock.mockResolvedValue(
+      new Blob(["removed"], { type: "image/png" })
+    );
+    trimTransparentImageBlobMock.mockImplementation(async (blob: Blob) => ({
+      blob,
+      width: 128,
+      height: 96,
+      trimmed: false,
+    }));
     let objectUrlIndex = 0;
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -269,6 +295,130 @@ describe("useStudio workflow entry", () => {
         durationMs: 58,
       }),
     ]);
+  });
+
+  it("removes backgrounds from extracted video frames before ANI editing", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["video"], "orbit.mp4", { type: "video/mp4" });
+    const videoFrames = [
+      new File(["frame-a"], "orbit-frame-001.png", { type: "image/png" }),
+      new File(["frame-b"], "orbit-frame-002.png", { type: "image/png" }),
+    ];
+    const removedFrames = [
+      new Blob(["removed-a"], { type: "image/png" }),
+      new Blob(["removed-b"], { type: "image/png" }),
+    ];
+    const trimmedFrames = [
+      new Blob(["trimmed-a"], { type: "image/png" }),
+      new Blob(["trimmed-b"], { type: "image/png" }),
+    ];
+
+    extractVideoFrameFilesMock.mockResolvedValueOnce({
+      width: 640,
+      height: 360,
+      frames: [
+        { file: videoFrames[0], durationMs: 42 },
+        { file: videoFrames[1], durationMs: 58 },
+      ],
+    });
+    removeBackgroundMock
+      .mockResolvedValueOnce(removedFrames[0])
+      .mockResolvedValueOnce(removedFrames[1]);
+    trimTransparentImageBlobMock
+      .mockResolvedValueOnce({
+        blob: trimmedFrames[0],
+        width: 80,
+        height: 60,
+        trimmed: true,
+      })
+      .mockResolvedValueOnce({
+        blob: trimmedFrames[1],
+        width: 82,
+        height: 62,
+        trimmed: true,
+      });
+
+    await act(async () => {
+      await result.current.selectVideoFile(file);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await result.current.removeExtractedVideoBackground();
+      await Promise.resolve();
+    });
+
+    expect(removeBackgroundMock).toHaveBeenCalledTimes(2);
+    expect(removeBackgroundMock).toHaveBeenNthCalledWith(1, videoFrames[0]);
+    expect(removeBackgroundMock).toHaveBeenNthCalledWith(2, videoFrames[1]);
+    expect(trimTransparentImageBlobMock).toHaveBeenNthCalledWith(
+      1,
+      removedFrames[0]
+    );
+    expect(trimTransparentImageBlobMock).toHaveBeenNthCalledWith(
+      2,
+      removedFrames[1]
+    );
+    expect(result.current.state).toBe("ani-editing");
+    expect(result.current.pendingAniBackgroundDecision).toBeNull();
+    expect(result.current.aniBackgroundProgress).toBeNull();
+    expect(result.current.ani?.frames).toEqual([
+      expect.objectContaining({
+        file: expect.objectContaining({
+          name: "orbit-frame-001-transparent.png",
+          type: "image/png",
+        }),
+        durationMs: 42,
+        sourceWidth: 80,
+        sourceHeight: 60,
+      }),
+      expect.objectContaining({
+        file: expect.objectContaining({
+          name: "orbit-frame-002-transparent.png",
+          type: "image/png",
+        }),
+        durationMs: 58,
+        sourceWidth: 82,
+        sourceHeight: 62,
+      }),
+    ]);
+  });
+
+  it("returns to video background decision if frame background removal fails", async () => {
+    const { result } = renderHook(() => useStudio());
+    const file = new File(["video"], "orbit.mp4", { type: "video/mp4" });
+    const videoFrames = [
+      new File(["frame-a"], "orbit-frame-001.png", { type: "image/png" }),
+      new File(["frame-b"], "orbit-frame-002.png", { type: "image/png" }),
+    ];
+
+    extractVideoFrameFilesMock.mockResolvedValueOnce({
+      width: 640,
+      height: 360,
+      frames: [
+        { file: videoFrames[0], durationMs: 42 },
+        { file: videoFrames[1], durationMs: 58 },
+      ],
+    });
+    removeBackgroundMock.mockRejectedValueOnce(
+      new Error("Background service failed")
+    );
+
+    await act(async () => {
+      await result.current.selectVideoFile(file);
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await result.current.removeExtractedVideoBackground();
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("ani-background-decision");
+    expect(result.current.error).toBe("Background service failed");
+    expect(result.current.pendingAniBackgroundDecision?.ani.frames).toHaveLength(
+      2
+    );
   });
 
   it("routes selected-slot video uploads into animated slot state", async () => {

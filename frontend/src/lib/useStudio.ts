@@ -742,6 +742,11 @@ function createAniFromExtractedVideoFrames(
   });
 }
 
+function buildTransparentFrameFileName(fileName: string) {
+  const renamed = fileName.replace(/\.png$/i, "-transparent.png");
+  return renamed === fileName ? `${fileName}-transparent.png` : renamed;
+}
+
 function createAniFromFrameFiles(
   frameInputs: Array<{
     file: File;
@@ -1997,6 +2002,75 @@ export function useStudio() {
       pendingAniBackgroundDecision.previous,
       pendingAniBackgroundDecision.slotId
     );
+  }, [commitHydratedAniSequence, pendingAniBackgroundDecision]);
+
+  const removeExtractedVideoBackground = useCallback(async () => {
+    if (!pendingAniBackgroundDecision || bgRemovalInFlightRef.current) return;
+
+    bgRemovalInFlightRef.current = true;
+    setError(null);
+    setState("ani-background-processing");
+
+    const sourceAni = pendingAniBackgroundDecision.ani;
+    const total = sourceAni.frames.length;
+    const cleanedUrls: string[] = [];
+    setAniBackgroundProgress({ completed: 0, total });
+
+    try {
+      const cleanedFrames: AniFrameData[] = [];
+
+      for (const [index, frame] of sourceAni.frames.entries()) {
+        const removedBlob = await removeBackground(frame.file);
+        const trimmedImage = await trimTransparentImageBlob(removedBlob);
+        const cleanedFile = new File(
+          [trimmedImage.blob],
+          buildTransparentFrameFileName(frame.file.name),
+          { type: "image/png" }
+        );
+        const cleanedUrl = URL.createObjectURL(cleanedFile);
+        cleanedUrls.push(cleanedUrl);
+
+        cleanedFrames.push({
+          ...frame,
+          file: cleanedFile,
+          url: cleanedUrl,
+          sourceWidth: trimmedImage.width,
+          sourceHeight: trimmedImage.height,
+        });
+
+        setAniBackgroundProgress({ completed: index + 1, total });
+      }
+
+      const firstFrame = cleanedFrames[0];
+      if (!firstFrame) {
+        throw new Error("Video did not contain any frames");
+      }
+
+      const cleanedAni = syncAniActiveFrame({
+        ...sourceAni,
+        originalFile: firstFrame.file,
+        originalUrl: firstFrame.url,
+        sourceWidth: firstFrame.sourceWidth,
+        sourceHeight: firstFrame.sourceHeight,
+        frames: cleanedFrames,
+      });
+
+      commitHydratedAniSequence(
+        cleanedAni,
+        pendingAniBackgroundDecision.previous,
+        pendingAniBackgroundDecision.slotId
+      );
+      revokeAniObjectUrls(sourceAni);
+    } catch (err) {
+      cleanedUrls.forEach((url) => safeRevokeObjectUrl(url));
+      setError(
+        err instanceof Error ? err.message : "Failed to remove backgrounds"
+      );
+      setAniBackgroundProgress(null);
+      setState("ani-background-decision");
+    } finally {
+      bgRemovalInFlightRef.current = false;
+    }
   }, [commitHydratedAniSequence, pendingAniBackgroundDecision]);
 
   const uploadFileToPrimaryRoleSlot = useCallback(
@@ -3582,6 +3656,7 @@ export function useStudio() {
     selectVideoFile,
     processBgRemoval,
     keepExtractedVideoBackground,
+    removeExtractedVideoBackground,
     skipBgRemoval,
     toggleOriginal,
     retryBgRemoval,
