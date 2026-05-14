@@ -571,6 +571,14 @@ export default function StudioPage() {
               imageSequenceUploadDescription={tu("aniMultiplePngsSub")}
               videoUploadLabel={tu("aniVideoToAni")}
               videoUploadDescription={tu("aniVideoToAniSub")}
+              videoOptionsCopy={{
+                title: t("videoOptionsTitle"),
+                startLabel: t("videoStartLabel"),
+                durationLabel: t("videoDurationLabel"),
+                fpsLabel: t("videoFpsLabel"),
+                frameEstimate: (count) =>
+                  t("videoFrameEstimate", { count }),
+              }}
               primarySource={quickStartConfig.primarySource}
               busy={
                 state === "ani-upload" &&
@@ -601,14 +609,14 @@ export default function StudioPage() {
               }
               onVideoFile={
                 quickStartConfig.primarySource === "video"
-                  ? (file) => {
+                  ? (file, options) => {
                       setExperienceMode("advanced");
                       if (activeWorkflowId === ANI_VIDEO_TO_ANI_WORKFLOW_ID) {
-                        selectVideoFile(file);
+                        selectVideoFile(file, options);
                         return;
                       }
 
-                      selectSelectedSlotVideoFile(file);
+                      selectSelectedSlotVideoFile(file, options);
                     }
                   : undefined
               }

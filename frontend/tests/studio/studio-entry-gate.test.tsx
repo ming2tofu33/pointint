@@ -103,6 +103,11 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   videoExtractingTitle: "Extracting frames...",
   videoExtractingDescription:
     "Pointint is turning the video into editable animation frames.",
+  videoOptionsTitle: "Extract settings",
+  videoStartLabel: "Start",
+  videoDurationLabel: "Length",
+  videoFpsLabel: "FPS",
+  videoFrameEstimate: "Up to {count} frames",
   imageSequenceMinimumError: "Select at least 2 PNG, JPG, or WebP frames.",
   aniFrameTimeline: "ANI frame timeline",
   aniFrameCountSingular: "{count} frame",
@@ -982,19 +987,29 @@ describe("Studio entry gate", () => {
     expect(selectSlotStaticFileMock).not.toHaveBeenCalled();
   });
 
-  it("routes the Video to ANI workflow guide to video upload", () => {
+  it("routes the Video to ANI workflow guide to video upload with extraction options", () => {
     searchParamsState.current = new URLSearchParams(
       "workflow=ani-video-to-ani"
     );
     renderStudio("editing", { cursor: null, experienceMode: "quick" });
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     const videoSurface = screen.getByTestId("studio-quick-start-video");
+    fireEvent.change(screen.getByLabelText("Start"), {
+      target: { value: "1.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "2s" }));
+    fireEvent.click(screen.getByRole("button", { name: "15 fps" }));
+
     const input = videoSurface.querySelector(
       'input[type="file"]'
     ) as HTMLInputElement;
     const file = new File(["video"], "cat.webm", { type: "video/webm" });
     fireEvent.change(input, { target: { files: [file] } });
-    expect(selectVideoFileMock).toHaveBeenCalledWith(file);
+    expect(selectVideoFileMock).toHaveBeenCalledWith(file, {
+      startMs: 1500,
+      durationMs: 2000,
+      fps: 15,
+    });
     expect(selectSelectedSlotVideoFileMock).not.toHaveBeenCalled();
   });
 

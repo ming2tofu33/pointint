@@ -251,4 +251,33 @@ describe("ko slot rail copy", () => {
       "\uc9e7\uc740 MP4 \ub610\ub294 WebM \uc601\uc0c1\uc744 \uc560\ub2c8\uba54\uc774\uc158 Windows \ucee4\uc11c\ub85c \ubc14\uafc9\ub2c8\ub2e4"
     );
   });
+
+  it("covers Video to ANI extraction option copy in English and Korean", () => {
+    const koPath = path.resolve(process.cwd(), "src/i18n/messages/ko.json");
+    const enPath = path.resolve(process.cwd(), "src/i18n/messages/en.json");
+    const ko = JSON.parse(fs.readFileSync(koPath, "utf8"));
+    const en = JSON.parse(fs.readFileSync(enPath, "utf8"));
+
+    expect(en.studio.videoOptionsTitle).toBe("Extract settings");
+    expect(en.studio.videoStartLabel).toBe("Start");
+    expect(en.studio.videoDurationLabel).toBe("Length");
+    expect(en.studio.videoFpsLabel).toBe("FPS");
+    expect(en.studio.videoFrameEstimate).toBe("Up to {count} frames");
+    expect(typeof en.studio.videoFrameEstimate).toBe("string");
+    expect(en.studio.videoFrameEstimate.replace("{count}", "30")).toContain(
+      "30"
+    );
+
+    expect(ko.studio.videoOptionsTitle).toBe("\ucd94\ucd9c \uc124\uc815");
+    expect(ko.studio.videoStartLabel).toBe("\uc2dc\uc791");
+    expect(ko.studio.videoDurationLabel).toBe("\uae38\uc774");
+    expect(ko.studio.videoFpsLabel).toBe("FPS");
+    expect(ko.studio.videoFrameEstimate).toBe(
+      "\ucd5c\ub300 {count}\ud504\ub808\uc784"
+    );
+    expect(typeof ko.studio.videoFrameEstimate).toBe("string");
+    expect(ko.studio.videoFrameEstimate.replace("{count}", "30")).toContain(
+      "30"
+    );
+  });
 });
