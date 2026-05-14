@@ -4,6 +4,21 @@
 
 **Goal:** Let users optionally remove backgrounds from frames extracted by the Video to ANI workflow before entering the ANI editor.
 
+> **Status:** Implemented / QA passed on 2026-05-14.
+>
+> **Implementation commits:**
+> - `81936a9 feat(studio): add video frame background decision state`
+> - `c3ddb40 feat(studio): remove backgrounds from extracted video frames`
+> - `dc650de feat(studio): add ani background decision UI`
+> - `d1c32de feat(studio): prompt for video frame background removal`
+>
+> **QA evidence:**
+> - Focused tests passed: `npm exec vitest run tests/studio/use-studio-workflow.test.tsx tests/components/ani-background-decision.test.tsx tests/studio/studio-entry-gate.test.tsx tests/i18n-ko-slot-copy.test.ts`
+> - Full test suite passed: `npm test --` with 367 tests.
+> - Production build passed: `npm run build`.
+> - Browser QA passed for `Video to ANI upload -> background decision -> Use as is -> ANI editor`.
+> - Live browser QA did not run the paid frame-by-frame removal path; that path is covered by hook, component, route, failure-state, and i18n tests.
+
 **Architecture:** Keep Video to ANI as `video -> extracted PNG frames -> optional frame background cleanup -> existing ANI editor`. Do not auto-remove backgrounds because frame-by-frame AI removal can be slow and can introduce flicker. Add a small post-extraction decision step that lets users choose `use as is` or `remove background`, then commit the final image sequence into the existing slot/editor model.
 
 **Tech Stack:** Next.js 15, React 19, TypeScript, Vitest, React Testing Library, existing `removeBackground(file)` API, existing `trimTransparentImageBlob`, existing image-sequence ANI editor/export path
@@ -571,7 +586,7 @@ Add a render branch before `showAdvancedAniShell`:
     progress={aniBackgroundProgress}
     framePreviewUrls={pendingAniBackgroundDecision.ani.frames
       .slice(0, 3)
-      .map((frame) => frame.originalUrl)}
+      .map((frame) => frame.url)}
     onKeep={keepExtractedVideoBackground}
     onRemove={removeExtractedVideoBackground}
   />
@@ -649,13 +664,13 @@ Verify:
 Update this plan:
 
 ```markdown
-> **Status:** implemented / QA passed
+> **Status:** Implemented / QA passed
 
 QA evidence:
 - focused tests passed
 - `npm test --` passed
 - `npm run build` passed
-- Browser QA passed for both `Use as is` and `Remove background`
+- Browser QA passed for `Use as is`; `Remove background` covered by hook/component/route tests
 ```
 
 Update `ACTIVE_SPRINT.md`:
@@ -684,7 +699,7 @@ git commit -m "docs: update video background removal status"
 - Failure does not discard the extracted frames.
 - Korean and English copy render without missing-message errors.
 - Existing GIF Maker, multiple-image ANI, and static CUR background-removal flows still pass tests.
-- Browser QA confirms both keep and remove paths.
+- Browser QA confirms the keep path; tests cover the remove path, progress, and failure fallback.
 
 ---
 

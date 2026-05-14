@@ -12,7 +12,7 @@ aliases:
 
 > **Sprint Window:** 2026-03-27 onward
 > **Last Updated:** 2026-05-14
-> **Status:** Phase 1 gate closed, ANI Source Maker complete, Video to ANI controls complete
+> **Status:** Phase 1 gate closed, ANI Source Maker complete, Video to ANI background decision complete
 > **Goal:** Reduce Studio start friction, then extend the source-maker foundation to Video to ANI
 > **Phase Flow:** [[Phase-Flow]]
 > **Implementation Plan:** [[Implementation-Plan]]
@@ -36,6 +36,7 @@ aliases:
 - `STUDIO-QUICK-FINISH-01` is closed: static CUR users start with upload -> optional background decision -> quick result -> download, while advanced controls stay behind `세부 조정`.
 - `Phase 1.5 / Video to ANI` is implemented: MP4/WebM uploads extract browser-side frames and open the existing ANI editor/export path.
 - `Phase 1.5 / Video to ANI Controls` is complete: compact pre-upload start/duration/FPS settings now feed the existing browser frame extractor and ANI editor handoff.
+- `Phase 1.5 / Video to ANI Background Removal` is complete: extracted video frames now stop at a post-extraction choice, can keep original frames, or can run per-frame AI background removal before entering the ANI editor.
 
 ## Current Doing
 
@@ -43,6 +44,7 @@ aliases:
 
 | Lane | Task | Status | Note |
 |---|---|---|---|
+| Done | `Phase 1.5 / Video to ANI Background Removal` | complete | Post-extraction decision screen, keep-as-is path, per-frame removal path, progress state, focused tests, full tests, build, and browser QA for keep path passed |
 | Done | `Phase 1.5 / Video to ANI Controls` | complete | Compact start/duration/FPS controls before video upload; focused tests, full tests, build, and browser QA passed |
 | Done | `Phase 1.5 / Video to ANI` | complete | MP4/WebM -> extracted PNG frame sequence -> existing ANI editor/export path; tests, build, and browser QA passed |
 | Done | `STUDIO-QUICK-FINISH-01` | complete | Browser QA, tests, build, and commit are closed for the one-way quick-to-advanced flow |
@@ -55,6 +57,8 @@ aliases:
 
 - Use `Video to ANI Controls` as the stable source-maker baseline for the next acquisition or polish slice.
 - Keep the shipped v1 source path frontend-only: video -> extracted PNG frames -> existing image-sequence ANI editor.
+- Keep Video to ANI background cleanup as an optional post-extraction step; do not move it into the first upload card unless usage shows users expect it earlier.
+- If users need cleaner video cutouts, evaluate a batch backend endpoint, chroma-key/solid-color remover, or temporal segmentation/fine-tuned model as separate follow-up spikes.
 - Defer visual trim scrubbers, MOV/HEVC, and backend FFmpeg unless usage shows the need.
 - Review the new `/tools`, `/guides`, `/tools/*`, and `/guides/*` pages in browser once visual QA starts; add screenshots/examples after first search-console feedback
 - Design the video source-maker as `video file -> extracted frame sequence -> existing ANI editor`
@@ -87,6 +91,7 @@ aliases:
 - `CONTENT-GROWTH-01` complete: Wave 0-3 content foundation adds top-level Tools/Guides hubs, intent pages for image-to-cursor and GIF-to-ANI, trust guides for Windows apply/hotspot/CUR-vs-ANI/blurry cursors, direct Studio workflow CTAs, sitemap coverage, and funnel analytics tests.
 - `Phase 1.5 / Video to ANI` complete: selectable Studio workflow, MP4/WebM source upload, client-side frame extraction, image-sequence ANI editor handoff, and QA evidence are recorded in `docs/plans/2026-05-14-video-to-ani.md`.
 - `Phase 1.5 / Video to ANI Controls` complete: pre-upload start/duration/FPS options, option plumbing, extractor edge coverage, i18n, tests, build, and browser QA are recorded in `docs/plans/2026-05-14-video-to-ani-controls.md`.
+- `Phase 1.5 / Video to ANI Background Removal` complete: extracted frames now show an optional background-removal decision before ANI editing, with keep-as-is, per-frame removal, progress, failure fallback, i18n, tests, build, and browser QA evidence recorded in `docs/plans/2026-05-14-video-to-ani-background-removal.md`.
 
 ## Decision Follow-up
 
@@ -109,6 +114,7 @@ aliases:
 - 2026-04-27: Content Growth Wave 0-3 ships as tool and guide pages rather than blog posts. Search intent pages should route into Studio workflows and remain product-led.
 - 2026-04-27: Content Growth pages are now first-class UI entry points. Header and mobile menu expose `Tools` and `Guides`; `/tools` and `/guides` act as hubs before users drill into specific intent pages.
 - 2026-05-14: Studio static CUR entry should default to a quick-finish flow instead of exposing the full professional editor first. The advanced Studio shell remains available through `세부 조정`; ANI/GIF source work remains on the existing editor shell.
+- 2026-05-14: Video to ANI background removal should happen after frame extraction, not in the first upload card. The default path stays fast with `Use as is`; AI cleanup remains optional because per-frame removal is slower and can introduce flicker.
 
 ## Document Follow-up
 
@@ -139,6 +145,7 @@ aliases:
 | `docs/plans/2026-05-13-studio-quick-finish.md` | Studio quick-finish implementation plan and QA boundary | synced |
 | `docs/plans/2026-05-14-video-to-ani.md` | Video to ANI source-maker implementation plan | synced |
 | `docs/plans/2026-05-14-video-to-ani-controls.md` | Video to ANI extraction controls implementation plan | synced |
+| `docs/plans/2026-05-14-video-to-ani-background-removal.md` | Video to ANI post-extraction background-removal decision plan | synced |
 | `10-Journal/QUICK-DECISIONS.md` | Workflow and showcase decisions recorded | synced |
 
 ---
