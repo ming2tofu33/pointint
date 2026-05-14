@@ -180,6 +180,7 @@
     "videoExtractingTitle": "Extracting frames...",
     "videoExtractingDescription": "Pointint is turning the video into editable animation frames.",
     "videoOptionsTitle": "Extract settings",
+    "videoOptionsDisclosure": "More settings",
     "videoStartLabel": "Start",
     "videoDurationLabel": "Length",
     "videoFpsLabel": "FPS",

@@ -180,6 +180,7 @@
     "videoExtractingTitle": "프레임을 추출하는 중...",
     "videoExtractingDescription": "동영상을 편집 가능한 애니메이션 프레임으로 바꾸고 있습니다.",
     "videoOptionsTitle": "추출 설정",
+    "videoOptionsDisclosure": "세부 설정",
     "videoStartLabel": "시작",
     "videoDurationLabel": "길이",
     "videoFpsLabel": "FPS",

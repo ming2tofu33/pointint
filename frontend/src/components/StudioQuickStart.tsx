@@ -21,6 +21,7 @@ export interface VideoToAniQuickOptions {
 
 interface VideoToAniOptionsCopy {
   title: string;
+  disclosureLabel?: string;
   startLabel: string;
   durationLabel: string;
   fpsLabel: string;
@@ -177,7 +178,7 @@ export default function StudioQuickStart({
           tone="primary"
           disabled={busy}
           parentDragActive={isRegionDragActive}
-          beforeUpload={videoOptionsPanel}
+          afterUpload={videoOptionsPanel}
           onNestedDropHandled={() => setIsRegionDragActive(false)}
           onFiles={handleFiles}
         />
@@ -222,7 +223,7 @@ function QuickUploadSurface({
   tone,
   disabled = false,
   parentDragActive = false,
-  beforeUpload,
+  afterUpload,
   onNestedDropHandled,
   onFiles,
 }: {
@@ -236,7 +237,7 @@ function QuickUploadSurface({
   tone: "primary" | "secondary";
   disabled?: boolean;
   parentDragActive?: boolean;
-  beforeUpload?: ReactNode;
+  afterUpload?: ReactNode;
   onNestedDropHandled?: () => void;
   onFiles: (files: FileList | File[]) => void;
 }) {
@@ -365,8 +366,6 @@ function QuickUploadSurface({
           </span>
         ) : null}
 
-        {beforeUpload}
-
         <button
           data-testid={`${dataTestId}-click-target`}
           type="button"
@@ -433,6 +432,8 @@ function QuickUploadSurface({
             </span>
           </span>
         </button>
+
+        {afterUpload}
       </div>
 
       <input
@@ -463,134 +464,184 @@ function VideoToAniOptionsPanel({
   onChange: (value: VideoToAniQuickOptions) => void;
   disabled?: boolean;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const frameEstimate = getVideoToAniFrameEstimate(value);
   const startUnitId = useId();
+  const collapsedSummary = `${value.durationMs / 1000}s / ${value.fps} fps / ${copy.frameEstimate(
+    frameEstimate
+  )}`;
 
   return (
     <div
       style={{
-        width: "min(100%, 30rem)",
+        width: "min(100%, 17rem)",
         display: "grid",
-        gap: "0.65rem",
-        padding: "0.85rem",
-        border: "1px solid var(--color-border)",
-        backgroundColor: "color-mix(in srgb, var(--color-bg-primary) 86%, transparent)",
+        gap: isExpanded ? "0.65rem" : 0,
+        padding: isExpanded ? "0.75rem" : 0,
+        border: isExpanded ? "1px solid var(--color-border)" : "0",
+        backgroundColor: isExpanded
+          ? "color-mix(in srgb, var(--color-bg-primary) 86%, transparent)"
+          : "transparent",
         textAlign: "left",
+        transition: STUDIO_INTERACTION_TRANSITION,
       }}
     >
-      <div
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        disabled={disabled}
+        onClick={(event) => {
+          event.stopPropagation();
+          setIsExpanded((current) => !current);
+        }}
         style={{
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "space-between",
-          gap: "0.75rem",
+          gap: "0.65rem",
+          width: "100%",
+          minHeight: "2.15rem",
+          border: isExpanded ? "0" : "1px solid var(--color-border)",
+          backgroundColor: isExpanded
+            ? "transparent"
+            : "var(--color-bg-primary)",
+          color: "var(--color-text-primary)",
+          cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.58 : 1,
+          padding: isExpanded ? "0 0 0.05rem" : "0 0.7rem",
+          textAlign: "left",
+          transition: STUDIO_INTERACTION_TRANSITION,
         }}
       >
-        <strong
+        <span
+          style={{
+            display: "grid",
+            gap: "0.08rem",
+            minWidth: 0,
+          }}
+        >
+          <strong
+            style={{
+              color: "var(--color-text-primary)",
+              fontSize: "0.76rem",
+              fontWeight: 780,
+            }}
+          >
+            {copy.disclosureLabel ?? copy.title}
+          </strong>
+          <span
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "0.68rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {collapsedSummary}
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
           style={{
             color: "var(--color-text-primary)",
             fontSize: "0.82rem",
             fontWeight: 780,
           }}
         >
-          {copy.title}
-        </strong>
-        <span
-          style={{
-            color: "var(--color-text-secondary)",
-            fontSize: "0.72rem",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {copy.frameEstimate(frameEstimate)}
+          {isExpanded ? "^" : "v"}
         </span>
-      </div>
+      </button>
 
-      <label
-        style={{
-          display: "grid",
-          gap: "0.32rem",
-          color: "var(--color-text-secondary)",
-          fontSize: "0.72rem",
-          fontWeight: 650,
-        }}
-      >
-        {copy.startLabel}
-        <span
-          style={{
-            position: "relative",
-            display: "block",
-          }}
-        >
-          <input
-            aria-label={copy.startLabel}
-            aria-describedby={startUnitId}
-            type="number"
-            min={0}
-            step={0.1}
-            disabled={disabled}
-            value={value.startMs / 1000}
-            onChange={(event) => {
-              const seconds = Number(event.currentTarget.value);
-              onChange({
-                ...value,
-                startMs: Number.isFinite(seconds)
-                  ? Math.round(Math.max(0, seconds) * 1000)
-                  : 0,
-              });
-            }}
+      {isExpanded ? (
+        <>
+          <label
             style={{
-              width: "100%",
-              height: "2.1rem",
-              border: "1px solid var(--color-border)",
-              backgroundColor: "var(--color-bg-secondary)",
-              color: "var(--color-text-primary)",
-              padding: "0 1.8rem 0 0.65rem",
-            }}
-          />
-          <span
-            id={startUnitId}
-            style={{
-              position: "absolute",
-              top: "50%",
-              right: "0.65rem",
-              transform: "translateY(-50%)",
+              display: "grid",
+              gap: "0.32rem",
               color: "var(--color-text-secondary)",
               fontSize: "0.72rem",
-              fontWeight: 760,
-              pointerEvents: "none",
+              fontWeight: 650,
             }}
           >
-            s
-          </span>
-        </span>
-      </label>
+            {copy.startLabel}
+            <span
+              style={{
+                position: "relative",
+                display: "block",
+              }}
+            >
+              <input
+                aria-label={copy.startLabel}
+                aria-describedby={startUnitId}
+                type="number"
+                min={0}
+                step={0.1}
+                disabled={disabled}
+                value={value.startMs / 1000}
+                onChange={(event) => {
+                  const seconds = Number(event.currentTarget.value);
+                  onChange({
+                    ...value,
+                    startMs: Number.isFinite(seconds)
+                      ? Math.round(Math.max(0, seconds) * 1000)
+                      : 0,
+                  });
+                }}
+                style={{
+                  width: "100%",
+                  height: "2.1rem",
+                  border: "1px solid var(--color-border)",
+                  backgroundColor: "var(--color-bg-secondary)",
+                  color: "var(--color-text-primary)",
+                  padding: "0 1.8rem 0 0.65rem",
+                }}
+              />
+              <span
+                id={startUnitId}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  right: "0.65rem",
+                  transform: "translateY(-50%)",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "0.72rem",
+                  fontWeight: 760,
+                  pointerEvents: "none",
+                }}
+              >
+                s
+              </span>
+            </span>
+          </label>
 
-      <OptionButtonGroup label={copy.durationLabel}>
-        {VIDEO_DURATION_OPTIONS_MS.map((durationMs) => (
-          <OptionButton
-            key={durationMs}
-            pressed={value.durationMs === durationMs}
-            disabled={disabled}
-            onClick={() => onChange({ ...value, durationMs })}
-          >
-            {durationMs / 1000}s
-          </OptionButton>
-        ))}
-      </OptionButtonGroup>
+          <OptionButtonGroup label={copy.durationLabel}>
+            {VIDEO_DURATION_OPTIONS_MS.map((durationMs) => (
+              <OptionButton
+                key={durationMs}
+                pressed={value.durationMs === durationMs}
+                disabled={disabled}
+                onClick={() => onChange({ ...value, durationMs })}
+              >
+                {durationMs / 1000}s
+              </OptionButton>
+            ))}
+          </OptionButtonGroup>
 
-      <OptionButtonGroup label={copy.fpsLabel}>
-        {VIDEO_FPS_OPTIONS.map((fps) => (
-          <OptionButton
-            key={fps}
-            pressed={value.fps === fps}
-            disabled={disabled}
-            onClick={() => onChange({ ...value, fps })}
-          >
-            {fps} fps
-          </OptionButton>
-        ))}
-      </OptionButtonGroup>
+          <OptionButtonGroup label={copy.fpsLabel}>
+            {VIDEO_FPS_OPTIONS.map((fps) => (
+              <OptionButton
+                key={fps}
+                pressed={value.fps === fps}
+                disabled={disabled}
+                onClick={() => onChange({ ...value, fps })}
+              >
+                {fps} fps
+              </OptionButton>
+            ))}
+          </OptionButtonGroup>
+        </>
+      ) : null}
     </div>
   );
 }

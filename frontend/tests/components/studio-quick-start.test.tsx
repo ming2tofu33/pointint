@@ -244,7 +244,7 @@ describe("StudioQuickStart", () => {
     expect(input.accept).toContain(".mp4");
   });
 
-  it("renders compact video extraction controls for video quick-start", () => {
+  it("keeps video extraction controls collapsed until requested", () => {
     render(
       <StudioQuickStart
         title="Video to ANI"
@@ -266,7 +266,16 @@ describe("StudioQuickStart", () => {
       />
     );
 
-    expect(screen.getByText("Extract settings")).toBeInTheDocument();
+    const disclosure = screen.getByRole("button", {
+      name: /Extract settings/,
+    });
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("3s / 10 fps / Up to 30 frames")).toBeVisible();
+    expect(screen.queryByLabelText("Start")).toBeNull();
+
+    fireEvent.click(disclosure);
+
+    expect(disclosure).toHaveAttribute("aria-expanded", "true");
     const startInput = screen.getByLabelText("Start");
     expect(startInput).toHaveValue(0);
     expect(startInput).toHaveAccessibleDescription("s");
@@ -278,7 +287,7 @@ describe("StudioQuickStart", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getByText("Up to 30 frames")).toBeInTheDocument();
+    expect(screen.getByText(/Up to 30 frames/)).toBeInTheDocument();
   });
 
   it("passes selected extraction options when uploading a video", () => {
@@ -306,6 +315,7 @@ describe("StudioQuickStart", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /Extract settings/ }));
     fireEvent.change(screen.getByLabelText("Start"), {
       target: { value: "1.5" },
     });
@@ -390,7 +400,7 @@ describe("StudioQuickStart", () => {
     expect(onVideoFile).not.toHaveBeenCalled();
   });
 
-  it("disables video extraction controls while busy", () => {
+  it("disables the collapsed video extraction settings while busy", () => {
     render(
       <StudioQuickStart
         title="Video to ANI"
@@ -413,13 +423,12 @@ describe("StudioQuickStart", () => {
       />
     );
 
-    expect(screen.getByLabelText("Start")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "1s" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "2s" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "3s" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "6 fps" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "10 fps" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "15 fps" })).toBeDisabled();
+    const disclosure = screen.getByRole("button", {
+      name: /Extract settings/,
+    });
+    expect(disclosure).toBeDisabled();
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("Start")).toBeNull();
   });
 
   it("disables secondary animated uploads while busy", () => {

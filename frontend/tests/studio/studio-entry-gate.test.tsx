@@ -104,6 +104,7 @@ const STUDIO_TRANSLATIONS: Record<string, string> = {
   videoExtractingDescription:
     "Pointint is turning the video into editable animation frames.",
   videoOptionsTitle: "Extract settings",
+  videoOptionsDisclosure: "More settings",
   videoStartLabel: "Start",
   videoDurationLabel: "Length",
   videoFpsLabel: "FPS",
@@ -994,6 +995,7 @@ describe("Studio entry gate", () => {
     renderStudio("editing", { cursor: null, experienceMode: "quick" });
     expect(screen.queryByTestId("workflow-picker")).toBeNull();
     const videoSurface = screen.getByTestId("studio-quick-start-video");
+    fireEvent.click(screen.getByRole("button", { name: /More settings/ }));
     fireEvent.change(screen.getByLabelText("Start"), {
       target: { value: "1.5" },
     });

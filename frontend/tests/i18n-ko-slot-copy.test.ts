@@ -259,6 +259,7 @@ describe("ko slot rail copy", () => {
     const en = JSON.parse(fs.readFileSync(enPath, "utf8"));
 
     expect(en.studio.videoOptionsTitle).toBe("Extract settings");
+    expect(en.studio.videoOptionsDisclosure).toBe("More settings");
     expect(en.studio.videoStartLabel).toBe("Start");
     expect(en.studio.videoDurationLabel).toBe("Length");
     expect(en.studio.videoFpsLabel).toBe("FPS");
@@ -269,6 +270,7 @@ describe("ko slot rail copy", () => {
     );
 
     expect(ko.studio.videoOptionsTitle).toBe("\ucd94\ucd9c \uc124\uc815");
+    expect(ko.studio.videoOptionsDisclosure).toBe("\uc138\ubd80 \uc124\uc815");
     expect(ko.studio.videoStartLabel).toBe("\uc2dc\uc791");
     expect(ko.studio.videoDurationLabel).toBe("\uae38\uc774");
     expect(ko.studio.videoFpsLabel).toBe("FPS");

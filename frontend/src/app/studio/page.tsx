@@ -573,6 +573,7 @@ export default function StudioPage() {
               videoUploadDescription={tu("aniVideoToAniSub")}
               videoOptionsCopy={{
                 title: t("videoOptionsTitle"),
+                disclosureLabel: t("videoOptionsDisclosure"),
                 startLabel: t("videoStartLabel"),
                 durationLabel: t("videoDurationLabel"),
                 fpsLabel: t("videoFpsLabel"),
