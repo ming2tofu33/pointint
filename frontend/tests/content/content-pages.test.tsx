@@ -13,7 +13,7 @@ import {
 } from "@/lib/contentGrowth";
 
 describe("content growth pages", () => {
-  it("renders a tools hub that exposes both tool entry points", () => {
+  it("renders a tools hub that exposes all tool entry points", () => {
     render(
       <ContentHubSurface
         eyebrow="Tools"
@@ -32,6 +32,9 @@ describe("content growth pages", () => {
     expect(
       screen.getByRole("link", { name: "GIF to ANI Cursor Converter" })
     ).toHaveAttribute("href", "/tools/gif-to-ani-cursor");
+    expect(
+      screen.getByRole("link", { name: "Video to ANI Cursor Converter" })
+    ).toHaveAttribute("href", "/tools/video-to-ani-cursor");
   });
 
   it("renders a guides hub that exposes all trust guides", () => {
@@ -56,10 +59,11 @@ describe("content growth pages", () => {
     }
   });
 
-  it("defines Wave 1-2 tool pages with direct Studio workflow CTAs", () => {
+  it("defines Wave 1-3 tool pages with direct Studio workflow CTAs", () => {
     expect(toolPages.map((page) => page.slug)).toEqual([
       "image-to-cursor",
       "gif-to-ani-cursor",
+      "video-to-ani-cursor",
     ]);
 
     expect(getToolPage("image-to-cursor")?.cta.href).toBe(
@@ -67,6 +71,12 @@ describe("content growth pages", () => {
     );
     expect(getToolPage("gif-to-ani-cursor")?.cta.href).toBe(
       "/studio?workflow=ani-animated-gif"
+    );
+    expect(getToolPage("video-to-ani-cursor")?.cta.href).toBe(
+      "/studio?workflow=ani-video-to-ani"
+    );
+    expect(getToolPage("video-to-ani-cursor")?.description).toMatch(
+      /MP4|WebM/
     );
   });
 

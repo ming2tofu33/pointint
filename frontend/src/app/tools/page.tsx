@@ -6,7 +6,7 @@ import { absoluteUrl, toolPages } from "@/lib/contentGrowth";
 export const metadata: Metadata = {
   title: "Cursor Tools | Pointint",
   description:
-    "Choose a Pointint cursor tool: make a Windows cursor from an image or convert a GIF into a Windows .ani cursor.",
+    "Choose a Pointint cursor tool: make a Windows cursor from an image, convert a GIF into .ani, or turn a short video into an animated Windows cursor.",
   alternates: {
     canonical: absoluteUrl("/tools"),
   },

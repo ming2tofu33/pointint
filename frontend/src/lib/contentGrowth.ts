@@ -19,7 +19,10 @@ export type ContentFaq = {
   answer: string;
 };
 
-export type ToolPageSlug = "image-to-cursor" | "gif-to-ani-cursor";
+export type ToolPageSlug =
+  | "image-to-cursor"
+  | "gif-to-ani-cursor"
+  | "video-to-ani-cursor";
 
 export type GuidePageSlug =
   | "how-to-change-cursor-windows"
@@ -223,6 +226,91 @@ export const toolPages: ToolPageContent[] = [
       {
         label: "Hotspot guide",
         href: "/guides/what-is-cursor-hotspot",
+      },
+    ],
+  },
+  {
+    slug: "video-to-ani-cursor",
+    path: "/tools/video-to-ani-cursor",
+    eyebrow: "Video to animated cursor",
+    title: "Video to ANI Cursor Converter",
+    description:
+      "Turn a short MP4 or WebM clip into editable animation frames, then export it as a Windows .ani cursor from Pointint Studio.",
+    cta: {
+      label: "Make an ANI from video",
+      href: "/studio?workflow=ani-video-to-ani",
+    },
+    secondaryCta: {
+      label: "Compare CUR and ANI",
+      href: "/guides/cur-vs-ani",
+    },
+    proofPoints: [
+      "MP4 and WebM input",
+      "Start, duration, and FPS extraction controls",
+      "Optional frame background removal after extraction",
+      "Windows .ani export through the shared editor",
+    ],
+    sections: [
+      {
+        title: "What this tool does",
+        body: "Video sources need a short, controlled path before they become usable cursor animation. Pointint extracts frames first, then hands them to the same ANI editor used by GIF and image-sequence workflows.",
+        items: [
+          "Uploads a short MP4 or WebM clip in the Studio.",
+          "Extracts a limited frame sequence using start, length, and FPS settings.",
+          "Lets you keep the frames as-is or remove backgrounds before editing.",
+        ],
+      },
+      {
+        title: "Best video sources",
+        items: [
+          "Use short clips with one clear subject and simple motion.",
+          "Avoid camera shake, heavy blur, and busy backgrounds.",
+          "Keep the final motion readable at Windows cursor sizes.",
+        ],
+      },
+      {
+        title: "After extraction",
+        items: [
+          "Preview the extracted frames before entering the ANI editor.",
+          "Use optional background removal when the cursor should feel sticker-like.",
+          "Adjust shared framing, hotspot, size, and timing before downloading the .ani file.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: "Can I convert MP4 to an animated Windows cursor?",
+        answer:
+          "Yes. Pointint extracts frames from a short MP4 or WebM clip and uses those frames to build a Windows .ani cursor workflow.",
+      },
+      {
+        question: "Does Video to ANI remove the background automatically?",
+        answer:
+          "No. After extraction, you choose whether to keep the original frames or run background removal. This keeps the default path fast and avoids unnecessary frame-by-frame processing.",
+      },
+      {
+        question: "Can I control how many frames are extracted?",
+        answer:
+          "Yes. The Studio includes start, duration, and FPS controls so you can keep the animated cursor compact and readable.",
+      },
+      {
+        question: "Should I use video or GIF for ANI cursors?",
+        answer:
+          "Use video when your source is an MP4 or WebM clip. Use GIF-to-ANI when your animation is already a GIF and does not need video frame extraction.",
+      },
+    ],
+    related: [
+      {
+        label: "GIF to ANI Cursor Converter",
+        href: "/tools/gif-to-ani-cursor",
+      },
+      {
+        label: "CUR vs ANI guide",
+        href: "/guides/cur-vs-ani",
+      },
+      {
+        label: "Windows cursor install guide",
+        href: "/guides/how-to-change-cursor-windows",
       },
     ],
   },

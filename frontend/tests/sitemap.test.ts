@@ -13,6 +13,7 @@ describe("sitemap", () => {
     expect(urls).toContain("https://pointtint.com/guides");
     expect(urls).toContain("https://pointtint.com/tools/image-to-cursor");
     expect(urls).toContain("https://pointtint.com/tools/gif-to-ani-cursor");
+    expect(urls).toContain("https://pointtint.com/tools/video-to-ani-cursor");
     expect(urls).toContain(
       "https://pointtint.com/guides/how-to-change-cursor-windows"
     );
